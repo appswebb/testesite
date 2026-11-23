@@ -130,7 +130,7 @@ async function selectImage(page){
      const img=document.querySelector('.profile-preview .avatar img');
      return img&&img.src.includes(window.__profile.avatar_path);
   },{timeout:9000});
-  assert.equal(typeof (await profile.evaluate(()=>window.__onAvatarChange)),'function','Realtime profile subscription absent');
+  assert.equal(await profile.evaluate(()=>typeof window.__onAvatarChange),'function','Realtime profile subscription absent');
   tests++;console.log('PASS updated photo appears immediately and profile subscribes to realtime');
   await profile.evaluate(async()=>{
    await window.__onAvatarChange({new:{id:window.__profile.id,avatar_path:null,avatar_uploaded_at:null}});
