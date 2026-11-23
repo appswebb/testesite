@@ -7,6 +7,21 @@
 .profile-dropdown button{display:flex;align-items:center;gap:12px;padding:13px 14px;width:100%;font-size:12px;font-weight:800;color:#36523b;border:0;background:transparent;text-align:left;border-radius:12px;cursor:pointer}
 .profile-dropdown button:hover,.profile-dropdown button:focus-visible{background:#ecf4e8;color:#254c2d}
 @keyframes profile-menu-open{from{opacity:0;translate:0 -8px}to{opacity:1;translate:0 0}}
+/* Keep the primary live action reachable above lengthy location selectors. */
+.live-quick-action{position:sticky;top:8px;z-index:35;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0 0;padding:11px 14px;background:#f5faf0f5;border:1px solid #bdd3bb;border-radius:16px;box-shadow:0 8px 28px #2039231a;backdrop-filter:blur(14px)}
+.live-quick-action>span{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:#284932}
+.live-quick-action .ui-btn{min-height:42px;white-space:nowrap}
+.support-access{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0 0 18px}
+.support-access-card{background:#fffef9;border:1px solid #dce7d9;border-radius:19px;padding:23px;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.support-access-card.premium{background:linear-gradient(125deg,#203b2b,#365e42);color:#f6f4e7;border-color:#486a50}
+.support-access-card>span{font-weight:850;font-size:10px;letter-spacing:.14em;color:#7a947d}
+.support-access-card.premium>span{color:#f1d796}
+.support-access-card h3{font-size:21px;line-height:1.2;margin:0}
+.support-access-card p{font-size:12px;line-height:1.65;margin:0 0 8px;flex:1}
+.support-access-card .ui-btn{min-height:42px}
+.notifications-official{margin-top:30px;padding-top:12px;border-top:1px solid #dce7d9}
+.profile-dropdown a[role="menuitem"]{display:flex;align-items:center;gap:12px;padding:13px 14px;font-size:12px;font-weight:800;text-decoration:none;border-radius:12px}
+@media(max-width:650px){.live-quick-action{top:6px;padding:9px 11px}.live-quick-action>span{font-size:10px}.support-access{grid-template-columns:1fr}.support-access-card{padding:18px}.support-access-card h3{font-size:18px}}
 /* Live mode chooser + strict Premium gender filters */
 .live-select-panel{overflow:visible}
 .live-choice-title{display:flex;gap:12px;align-items:baseline;justify-content:space-between;flex-wrap:wrap;padding-bottom:14px}
