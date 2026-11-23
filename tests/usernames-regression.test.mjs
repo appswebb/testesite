@@ -17,6 +17,9 @@ test('cadastro, perfil, busca e link usam o mesmo username',()=>{
  assert.match(app,/openUsernameProfile/);
  assert.match(search,/entre_user_search/);
  assert.match(html,/connect-usernames\.js/);
+ assert.match(html,/site-search\.js/);
+ assert.match(read('docs/social-conversations.js'),/conversationSearchMarkup/);
+ assert.doesNotMatch(read('docs/social-online.js'),/peopleSearchInput/);
 });
 test('SQL reserva usernames e impede enumeração anônima',()=>{
  const sql=read('supabase/migrations/20261123163000_connect_usernames.sql');
