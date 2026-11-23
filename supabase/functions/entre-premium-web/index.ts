@@ -107,7 +107,7 @@ Deno.serve(async(req:Request)=>{
   });
   if(insertError)return err("payment_request_already_registered",409);
   const payload:any={
-   transaction_amount:cents/100,description:"CONNECT Premium - 30 dias",
+   transaction_amount:cents/100,description:"entre. Premium - 30 dias",
    payment_method_id:method,external_reference:"connect-premium:"+user.id+":"+requestId,
    notification_url:apiUrl+"/functions/v1/entre-premium-payment-webhook",
    payer:{email:user.email,identification:{type,number}}

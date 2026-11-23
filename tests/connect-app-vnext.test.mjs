@@ -23,7 +23,7 @@ test('profiles menu keeps data rules; settings do not duplicate core actions',()
  assert.match(settings,/motionForce/);
 });
 test('comment threads are bounded, expandable, and owner scoped',()=>{
- const js=read('docs/entre-features.js'),css=read('docs/connect-app.css');
+ const js=read('docs/entre-features.js'),css=read('docs/functional-updates.css');
  assert.match(js,/post-comments-sheet/);
  assert.match(js,/post-comment-edit-form/);
  assert.match(js,/post-comment-report-form/);
@@ -53,4 +53,22 @@ test('browser payment integration never trusts client pricing or status',()=>{
  assert.match(webhook,/transaction_amount/);
  assert.match(webhook,/entre_premium_subscriptions/);
  assert.match(read('docs/entre-features.js'),/sdk\.mercadopago\.com\/js\/v2/);
+});
+
+test('original entre. identity is restored without removing feature code',()=>{
+ const html=read('docs/index.html'),admin=read('docs/admin/index.html');
+ const manifest=JSON.parse(read('docs/manifest.webmanifest'));
+ const app=read('docs/app.js'),extras=read('docs/entre-features.js');
+ assert.match(html,/<title>entre\. — O próximo oi pode mudar tudo\.<\/title>/);
+ assert.match(html,/functional-updates\.css/);
+ assert.doesNotMatch(html,/connect-app\.css/);
+ assert.doesNotMatch(admin,/connect-admin\.css/);
+ assert.match(admin,/comment-report-updates\.css/);
+ assert.equal(manifest.short_name,'entre.');
+ assert.equal(manifest.theme_color,'#17271e');
+ assert.match(app,/aria-label="entre\. início"/);
+ assert.doesNotMatch(app,/aria-label="CONNECT início"/);
+ assert.match(extras,/ENTRE\. PREMIUM/);
+ assert.match(extras,/entre_post_comment_delete/);
+ assert.match(extras,/entre-premium-web/);
 });

@@ -1,15 +1,15 @@
 {
   "id": "/testesite/",
-  "name": "CONNECT — Conversas que aproximam",
-  "short_name": "CONNECT",
+  "name": "entre. — Conversas que importam",
+  "short_name": "entre.",
   "description": "Uma conversa por vez. Cinco minutos para conhecer alguém de verdade.",
   "lang": "pt-BR",
   "dir": "ltr",
   "start_url": "./?installed=1",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#101016",
-  "theme_color": "#101016",
+  "background_color": "#17271e",
+  "theme_color": "#17271e",
   "orientation": "any",
   "icons": [
     {

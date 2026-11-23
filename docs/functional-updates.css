@@ -1,0 +1,102 @@
+/* entre. — complementos funcionais. Mantém a identidade original (creme, verde e coral). */
+/* Ao Vivo: card compacto sem alterar as filas, filtros ou ações */
+.connect-app-screen{width:min(100%,780px);margin:8px auto 30px}
+.live-app-card{background:#fffefa;border:1px solid #dfe7d9;border-radius:25px;padding:clamp(18px,3.4vw,30px);box-shadow:0 12px 34px #27372a10;min-width:0}
+.live-app-eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:11px;font-weight:850;letter-spacing:.12em;color:#69816b}
+.live-app-eyebrow svg{color:#e48c70}
+.live-app-card h2{font:800 clamp(24px,3.4vw,35px)/1.15 'Space Grotesk',system-ui,sans-serif;letter-spacing:-.05em;color:#203c2a;margin:18px 0 20px}
+.live-app-card .live-modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:0 0 14px}
+.live-app-card .live-mode{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:11px;padding:clamp(12px,2.3vw,19px);min-width:0;min-height:87px;border-radius:17px;background:#fffdf9;border:1px solid #dde6d8;color:#354f3a}
+.live-app-card .live-mode.selected{background:#edf5e8;border-color:#82a889;box-shadow:0 0 0 1px #a9c6a8}
+.live-app-card .live-mode>span{display:flex;flex-direction:column;min-width:0;gap:3px}
+.live-app-card .live-mode>svg{flex:none;color:#62866a}
+.live-app-card .live-mode>svg:last-child:not(:first-child){margin-left:auto}
+.live-app-card .live-mode strong{font-size:clamp(14px,2.1vw,17px);color:#23402b}
+.live-app-card .live-mode small{font-size:11px;line-height:1.4;color:#798879}
+.live-app-filters{border:1px solid #dfe7d9;border-radius:15px;background:#f5f7f2;margin-bottom:15px;overflow:hidden}
+.live-app-filters>summary{cursor:pointer;display:flex;align-items:center;gap:12px;min-height:56px;padding:13px 15px;list-style:none;color:#294832;font-size:13px;font-weight:750}
+.live-app-filters>summary::-webkit-details-marker{display:none}
+.live-app-filters>summary>span{flex:1;min-width:0}
+.live-app-filters>summary small{color:#7e8b7e;font-size:11px;font-weight:500}
+.live-app-filters>summary svg{flex:none;color:#688772}
+.live-app-filters>summary svg:last-child{transform:rotate(90deg);transition:transform .2s}
+.live-app-filters[open]>summary svg:last-child{transform:rotate(180deg)}
+.live-app-filter-body{border-top:1px solid #dfe7d9;padding:13px}
+.live-app-filter-body .filter-bar{margin:0 0 14px}
+.live-app-filter-body .filter-bar h3{font-size:14px;color:#304938}
+.live-app-filter-body .geo-discovery{margin:0;max-width:100%;min-width:0}
+.live-app-find{width:100%;display:flex;align-items:center;justify-content:center;gap:11px;padding:15px 18px;border:0;border-radius:14px;background:#e99176;color:#183024;min-height:57px;font:850 clamp(14px,2vw,17px) 'DM Sans',system-ui,sans-serif;cursor:pointer;transition:filter .2s,transform .2s;box-shadow:0 9px 22px #e9917620}
+.live-app-find:hover{filter:brightness(1.04)}
+.live-app-find:active{transform:scale(.98)}
+.live-app-info{margin:14px 2px 0;font-size:12px;line-height:1.6;color:#778a7a}
+.live-app-progress{margin-top:12px;display:flex;align-items:center;gap:9px;font-size:12px;font-weight:750;color:#4d7355}
+.live-app-progress .live-dot{background:#6fac80}
+/* Comentários em aba recolhível e altura controlada */
+.post-comments-sheet{margin-top:8px;border-top:1px solid #e5eadf}
+.post-comments-sheet>summary{list-style:none;display:flex;align-items:center;gap:9px;min-height:47px;padding:12px 3px;cursor:pointer;color:#47644e;font-size:12px;font-weight:800}
+.post-comments-sheet>summary::-webkit-details-marker{display:none}
+.post-comments-sheet>summary svg{flex:none;color:#628269}
+.post-comments-sheet>summary svg:last-child{margin-left:auto;transform:rotate(90deg);transition:transform .2s}
+.post-comments-sheet[open]>summary svg:last-child{transform:rotate(180deg)}
+.post-comments-sheet .post-comments{padding:8px 0 2px;gap:11px}
+.post-comment-list{max-height:min(38dvh,320px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;display:grid;gap:9px;padding:2px 3px 12px}
+.post-comment-list .post-comment{position:relative;display:grid;grid-template-columns:31px minmax(0,1fr);gap:9px;align-items:start;padding:12px;background:#f4f8f0;border:1px solid #e9f0e5;border-radius:13px}
+.comment-initial{height:30px;width:30px;border-radius:50%;display:grid;place-items:center;background:#dfebd9;color:#3c6848;font-size:10px;font-weight:850}
+.post-comment-content{min-width:0;position:relative}
+.post-comment-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding-right:28px}
+.post-comment-head strong{font-size:11px;color:#375a40}
+.post-comment-head small{color:#839187;font-size:10px;white-space:nowrap}
+.post-comment-content>p{margin:5px 30px 5px 0;color:#405847;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.comment-actions{position:absolute;right:0;top:0;z-index:4}
+.comment-actions summary{cursor:pointer;list-style:none;min-height:29px;display:grid;place-items:center;padding:3px 7px;border-radius:9px;color:#618069;font-weight:800}
+.comment-actions summary::-webkit-details-marker{display:none}
+.comment-actions summary:hover{background:#e7efe2}
+.comment-actions-menu{position:absolute;right:0;top:28px;min-width:155px;display:grid;gap:3px;padding:5px;border-radius:12px;border:1px solid #d7e3d3;background:#fffefa;box-shadow:0 12px 35px #22332525}
+.comment-actions-menu button{padding:10px 11px;background:transparent;border:0;border-radius:9px;color:#33533a;cursor:pointer;text-align:left;font-size:12px}
+.comment-actions-menu button:hover{background:#edf4e9}
+.comment-inline-form{display:grid;gap:8px;padding-top:9px}
+.comment-inline-form[hidden],.post-comment-content>p[hidden],.web-checkout-embed[hidden]{display:none!important}
+.comment-inline-form input,.comment-inline-form select,.comment-inline-form textarea{min-width:0;max-width:100%;width:100%;font:inherit;font-size:12px;background:#fffefa;color:#27432e;border:1px solid #d2dfce;border-radius:10px;padding:10px 11px}
+.comment-inline-form textarea{min-height:62px;resize:vertical}
+.comment-inline-form label{font-size:11px;color:#49654f;font-weight:700}
+.comment-inline-form button{background:#e9f1e4;border:1px solid #c4d9c0;padding:9px 12px;border-radius:10px;color:#2e5038;cursor:pointer;font-size:12px;font-weight:750}
+.post-comments-sheet .post-comment-form{padding-top:6px}
+/* Checkout embutido: classes funcionais sem alterar o cartão Premium antigo */
+.web-checkout-embed{width:100%;max-width:100%;padding:12px;border-radius:14px;background:#fff;border:1px solid #dbe5d6;overflow:hidden;margin:8px 0}
+.web-checkout-embed iframe{max-width:100%}
+.web-payment-status{width:100%;font-size:12px;line-height:1.55}
+.web-payment-status:empty{display:none}
+.web-pay-pending{width:100%;display:grid;gap:10px;background:#f4f8ef;border:1px solid #d9e6d4;border-radius:13px;padding:14px;color:#35513c}
+.web-pay-pending strong{display:flex;align-items:center;gap:8px}
+.web-pay-pending p{margin:0;color:#738473}
+.web-pay-pending label{font-weight:800}
+.web-pay-pending textarea{width:100%;min-height:70px;max-width:100%;border-radius:10px;border:1px solid #c9ddc7;padding:9px;background:#fff;color:#2b4130;font-size:11px;resize:none;overflow-wrap:anywhere}
+.web-pix-qr{display:block;width:205px;max-width:100%;height:auto;margin:0 auto;padding:8px;border-radius:12px;background:#fff}
+.web-pay-error{padding:12px;background:#fff0ec;color:#9a493b;border-radius:10px}
+.web-pay-success{display:flex;gap:8px;align-items:center;color:#38734b;font-weight:800}
+@media(max-width:650px){
+ .connect-app-screen{margin-top:5px}
+ .live-app-card{padding:17px;border-radius:19px}
+ .live-app-card h2{font-size:25px;margin:16px 0}
+ .live-app-card .live-modes{gap:9px}
+ .live-app-card .live-mode{min-height:78px;gap:7px;padding:11px;border-radius:13px}
+ .live-app-card .live-mode>svg{width:20px;height:20px}
+ .live-app-card .live-mode small{font-size:10px}
+ .live-app-filters>summary{min-height:53px}
+ .live-app-find{min-height:54px}
+ .post-comment-head{flex-wrap:wrap;gap:2px}
+ .web-checkout-embed{padding:8px 4px}
+}
+/* Respeitar preferência do sistema; quem ativar manualmente no app pode usar microanimações. */
+@media(prefers-reduced-motion:reduce){
+ body.motion-force:not(.motion-off) .landing-hero .portrait-a{animation:entre-float-a 6s ease-in-out infinite!important}
+ body.motion-force:not(.motion-off) .landing-hero .portrait-b{animation:entre-float-b 6.8s ease-in-out infinite!important}
+ body.motion-force:not(.motion-off) .hero-kicker{animation:entre-soft-in .8s ease both!important}
+ body.motion-force:not(.motion-off) .bubble-row:last-child .bubble{animation:entre-bubble .4s ease both!important}
+ body.motion-force:not(.motion-off) .press-ripple{display:block!important;animation:entre-press .58s ease forwards!important}
+ body.motion-force:not(.motion-off) [data-motion-reveal]{transition:opacity .45s ease,transform .45s ease!important}
+ body.motion-force:not(.motion-off) [data-motion-reveal]:not(.is-revealed){opacity:0!important;transform:translateY(18px)!important}
+ body.motion-force:not(.motion-off) [data-motion-reveal].is-revealed{opacity:1!important;transform:none!important}
+ body.motion-force:not(.motion-off) .entre-celebration{display:block!important}
+}
+body.motion-off *{animation-duration:.01ms!important;transition-duration:.01ms!important}

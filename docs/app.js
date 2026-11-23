@@ -51,7 +51,7 @@ const avatar=(person,size='')=>{
   return '<span class="avatar '+esc(size)+extra+'"'+attrs+'><img loading="eager" decoding="async" referrerpolicy="no-referrer" data-avatar-path="'+esc(person.avatar_path)+'" src="'+esc(url.url)+'" alt="Foto de '+esc(person?.display_name||'perfil')+'">'+mark+'</span>';
  return '<span class="avatar '+esc(size)+extra+'"'+attrs+' style="background:'+colorFor(person?.id)+'">'+esc(initials(person?.display_name))+mark+'</span>';
 };
-const brand=()=>`<a href="#" class="brand connect-brand" data-action="logo" aria-label="CONNECT início"><span class="brand-glyph"><i></i><i></i></span><span>CONNECT<span class="dot">.</span></span></a>`;
+const brand=()=>`<a href="#" class="brand" data-action="logo" aria-label="entre. início"><span class="brand-glyph"><i></i><i></i></span><span>entre<span class="dot">.</span></span></a>`;
 const fmtTime=date=>new Date(date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 const fmtDate=date=>new Date(date).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
 let toastTimer;
@@ -494,7 +494,7 @@ function settingsView(){return heading('VOCÊ NO CONTROLE','Configurações<em>.
  '<div class="setting-row"><div><strong>Animações mesmo com redução do sistema</strong><p>Ative para permitir as microinterações do app, mesmo quando o Android reduz animações. Não se aplica se “Reduzir animações” estiver ligado.</p></div><button type="button" class="toggle '+(state.motionForce?'on':'')+'" data-action="motionForce" aria-label="Ativar animações apesar do sistema" aria-pressed="'+state.motionForce+'"></button></div></div>'+
  '<div class="settings-card"><h3>Privacidade e segurança</h3><div class="setting-row"><div><strong>Conta conectada</strong><p>'+esc(state.session.user.email)+'</p></div><span class="pill">'+ico('shield',15)+' Protegida</span></div>'+
  '<div class="danger-zone"><strong>Excluir meus dados</strong><p>Remove definitivamente seu perfil, mensagens e conexões do aplicativo. Sua conta de autenticação compartilhada pode permanecer.</p><button class="ui-btn btn-danger btn-sm" data-action="delete1">'+ico('trash',15)+' Excluir meus dados</button></div></div>'+
- '<div class="settings-card"><h3>Instalação</h3><div class="setting-row"><div><strong>Instalar como aplicativo</strong><p>Adicione o CONNECT à tela inicial do celular.</p></div><a class="admin-entry" href="./instalar.html">Instalar app</a></div></div>';
+ '<div class="settings-card"><h3>Instalação</h3><div class="setting-row"><div><strong>Instalar como aplicativo</strong><p>Adicione o entre. à tela inicial do celular.</p></div><a class="admin-entry" href="./instalar.html">Instalar app</a></div></div>';
 }
 function reportDialog(){
  const name=esc(state.peer?.display_name||'esta pessoa');
@@ -669,10 +669,7 @@ function nav(view){
  }
  const previousView=state.view;state.view=view;
  if(previousView==='premium'&&view!=='premium')void window.entreExtras?.unmountPaymentBrick?.();
- const renderRoute=()=>render();
- if(!state.motionOff&&typeof document.startViewTransition==='function'&&(!matchMedia('(prefers-reduced-motion: reduce)').matches||state.motionForce))
-  document.startViewTransition(renderRoute);
- else renderRoute();
+ render();
  if(window.entreSocial?.enter&&['online','conversations','avisos','notifications'].includes(view))void window.entreSocial.enter(view);
  if(window.entreExtras?.enter&&['posts','premium','support'].includes(view))void window.entreExtras.enter(view);
  window.scrollTo({top:0,behavior:state.motionOff?'instant':'smooth'});
