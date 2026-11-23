@@ -1,0 +1,29 @@
+/* Unified accent overrides, responsive account menu and live discovery. */
+html[data-theme] .startup-pulse,html[data-theme] .startup-pulse::after,
+html[data-theme] .brand-glyph,html[data-theme] .loading-spinner,
+html[data-theme] .spinner{border-color:var(--ui-accent)!important}
+html[data-theme] .startup-pulse{background:var(--ui-accent)!important;box-shadow:0 0 0 7px var(--ui-accent-soft)!important}
+html[data-theme] .app-heading h2 em::after,html[data-theme] .app-heading h2 i::after{background:var(--ui-accent-soft)!important}
+html[data-theme] .profile-menu-identity,html[data-theme] .profile-dropdown .profile-menu-admin,
+html[data-theme] .profile-dropdown .profile-menu-share{background:var(--ui-accent-soft)!important;color:var(--ui-text)!important}
+html[data-theme] .profile-dropdown .profile-menu-identity strong{color:var(--ui-text)!important}
+html[data-theme] .profile-dropdown .profile-menu-identity small{color:var(--ui-muted)!important;overflow-wrap:anywhere}
+html[data-theme] .profile-toolbar-wrap{position:relative!important;display:flex;align-items:center;flex:none;min-width:0}
+html[data-theme] .app-toolbar{isolation:isolate;overflow:visible!important}
+html[data-theme] .profile-dropdown{position:absolute!important;top:calc(100% + 9px)!important;right:0!important;left:auto!important;bottom:auto!important;width:min(310px,calc(100vw - 24px))!important;max-height:min(72dvh,620px);overflow-y:auto;overscroll-behavior:contain;transform:none!important;z-index:1100!important}
+html[data-theme] .app-toolbar .toolbar-right{display:flex!important;align-items:center!important;flex-wrap:nowrap;min-width:0}
+html[data-theme] .app-toolbar h1{min-width:0;overflow-wrap:anywhere}
+html[data-theme] .camera-live-hero[hidden]{display:none!important}
+html[data-theme] .camera-live-shell{min-width:0}
+.camera-live-list-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.camera-live-list-head small{font-size:.7em;color:var(--ui-muted)}
+.camera-live-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+html[data-theme] .camera-live-head-actions button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:9px 13px;border:1px solid var(--ui-line);border-radius:12px;background:var(--ui-panel);color:var(--ui-text);cursor:pointer}
+html[data-theme] .camera-live-head-actions button[data-live-action=create]{background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;border-color:var(--ui-accent)!important}
+.camera-live-filters{display:flex;gap:11px;flex-wrap:wrap;padding:12px 0 20px}
+.camera-live-filters label{display:grid;gap:5px;min-width:135px;flex:1;font-size:12px;font-weight:700;color:var(--ui-text)}
+html[data-theme] .camera-live-filters select,html[data-theme] .camera-live-filters input{width:100%;min-height:44px;border:1px solid var(--ui-line);background:var(--ui-panel);color:var(--ui-text);border-radius:12px;padding:10px 12px;outline-offset:2px}
+html[data-theme] .camera-live-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
+html[data-theme] .camera-live-card{min-width:0;overflow:hidden}
+html[data-theme] .camera-live-info strong,html[data-theme] .camera-live-info small{overflow-wrap:anywhere}
+@media(max-width:760px){html[data-theme] .app-toolbar{z-index:100!important}html[data-theme] .profile-dropdown{position:fixed!important;right:12px!important;top:calc(env(safe-area-inset-top) + 67px)!important;max-height:calc(100dvh - 155px)!important;box-sizing:border-box!important}html[data-theme] .camera-live-head-actions{width:100%}html[data-theme] .camera-live-filters{flex-direction:column}html[data-theme] .camera-live-filters label{width:100%;min-width:0}html[data-theme] .camera-live-head-actions button{flex:1}html[data-theme] .camera-live-list{grid-template-columns:1fr}}
