@@ -1,7 +1,6 @@
 (function(){
 'use strict';
 const api=window.entreSocial,d=api.data;
-const DAY=86400000;
 function conversationMenu(pair){
  const pref=api.pref(pair),folder=pref.folder||pair.origin||'live',archived=Boolean(pref.archived_at);
  return '<details class="conversation-menu" data-pair-menu="'+esc(pair.id)+'">'+
@@ -40,22 +39,6 @@ function conversationsView(){
  '<div class="social-empty"><h3>Nenhuma conversa nesta categoria.</h3><p>As conversas aparecem quando os dois escolhem continuar, ou quando um pedido para seguir é aceito.</p><button class="ui-btn btn-dark btn-sm" data-action="nav" data-view="connect">Conhecer alguém</button></div>')+
  '<p class="retention-small">Apagar uma conversa remove o histórico apenas da sua conta. Se chegar uma nova mensagem, o chat volta sem as mensagens que você apagou.</p>';
 }
-function recentPair(pair,now){
- const peer=state.pairsProfiles?.[pair.id]||{id:pair.a===state.session.user.id?pair.b:pair.a,display_name:'Pessoa indisponível'};
- const closed=new Date(pair.closed_at||pair.expires_at||pair.created_at).getTime();
- const hours=Math.max(1,Math.ceil((closed+DAY-now)/3600000));
- return '<article class="recent-connection">'+avatar(peer,'large')+'<div class="recent-connection-body"><strong>'+esc(peer.display_name)+'</strong><small>Encontro ao vivo encerrado · '+hours+'h restantes</small><p>Se quiserem se reencontrar, envie um pedido para seguir. A conversa normal só é liberada após o aceite.</p></div><div class="recent-actions"><button class="ui-btn btn-outline btn-sm" type="button" data-action="profileOpen" data-id="'+esc(peer.id)+'">Ver perfil</button><button class="ui-btn btn-dark btn-sm" type="button" data-action="socialFollow" data-id="'+esc(peer.id)+'">Seguir</button></div></article>';
-}
-function connectionsView(){
- const now=Date.now();
- const pairs=state.pairs.filter(p=>p.status==='closed'&&p.origin==='live'&&
-  new Date(p.closed_at||p.expires_at||p.created_at).getTime()>now-DAY &&
-  new Date(p.closed_at||p.expires_at||p.created_at).getTime()<=now);
- return heading('ATÉ 24 HORAS','Suas <em>conexões.</em>','Pessoas de encontros ao vivo encerrados ficam aqui por apenas 24 horas. Nenhum chat temporário é salvo.')+
- '<div class="connections-info"><strong>Gostou de alguém?</strong><p>Abra o perfil ou envie uma solicitação para seguir. Se a pessoa aceitar, vocês poderão conversar normalmente na aba Conversas.</p></div>'+
- (pairs.length?'<div class="recent-connections">'+pairs.slice(0,40).map(p=>recentPair(p,now)).join('')+'</div>':
- '<div class="social-empty">'+ico('link',30)+'<h3>Nenhuma conexão recente.</h3><p>Depois de um encontro ao vivo que não virou match, o perfil fica disponível por 24 horas. Aproveite para seguir quem você gostaria de reencontrar.</p><button class="ui-btn btn-dark btn-sm" data-action="nav" data-view="connect">Conhecer alguém ao vivo</button></div>');
-}
 function profileModal(){
  const p=d.socialProfile;if(!p)return '';
  return '<div class="modal-backdrop" id="modalBackdrop"><div class="modal-card social-profile-modal" role="dialog" aria-modal="true" aria-labelledby="socialProfileTitle">'+
@@ -64,5 +47,5 @@ function profileModal(){
  '<div class="modal-actions"><button class="ui-btn btn-outline btn-sm" data-action="closemodal">Fechar</button>'+
  '<button class="ui-btn btn-dark btn-sm" data-action="socialFollow" data-id="'+esc(p.id)+'">Solicitar para seguir</button></div></div></div>';
 }
-Object.assign(api,{conversationsView,conversationRow:row,conversationMenu,connectionsView,profileModal});
+Object.assign(api,{conversationsView,conversationRow:row,conversationMenu,profileModal});
 })();
