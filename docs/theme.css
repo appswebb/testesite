@@ -34,13 +34,13 @@ html[data-theme] ::selection{background:var(--ui-accent);color:var(--ui-accent-o
 html[data-theme] .brand .brand-glyph,html[data-theme] .startup .brand-glyph{
  display:inline-block!important;flex:none!important;position:relative!important;
  width:35px!important;height:35px!important;border:0!important;border-radius:12px!important;
- background:transparent url("./brand-mark.svg") center/contain no-repeat!important;
+ background:transparent url("./brand-mark.svg?v=neutral-20261123") center/contain no-repeat!important;
  transform:none!important;box-shadow:none!important
 }
 html[data-theme] .brand-glyph i{display:none!important}
 html[data-theme] .maint-logo-icon{
  display:inline-block!important;width:39px!important;height:39px!important;border:0!important;border-radius:13px!important;
- background:transparent url("./brand-mark.svg") center/contain no-repeat!important;
+ background:transparent url("./brand-mark.svg?v=neutral-20261123") center/contain no-repeat!important;
  color:transparent!important;font-size:0!important;box-shadow:none!important
 }
 html[data-theme] .maint-logo-icon span{display:none!important}
@@ -48,10 +48,10 @@ html[data-theme] .maint-logo-icon span{display:none!important}
 html[data-theme] .brand-mark{
  display:inline-flex!important;align-items:center!important;justify-content:center!important;
  width:42px!important;height:42px!important;flex:none!important;border-radius:13px!important;
- color:transparent!important;font-size:0!important;background:transparent url("./brand-mark.svg") center/contain no-repeat!important
+ color:transparent!important;font-size:0!important;background:transparent url("./brand-mark.svg?v=neutral-20261123") center/contain no-repeat!important
 }
 html[data-theme] .home-header .brand .brand-glyph,html[data-theme] .auth-visual .brand-glyph{
- background:transparent url("./brand-mark.svg") center/contain no-repeat!important;box-shadow:none!important
+ background:transparent url("./brand-mark.svg?v=neutral-20261123") center/contain no-repeat!important;box-shadow:none!important
 }
 html[data-theme] .app-toolbar h1 .dot,html[data-theme] .brand .dot,
 html[data-theme] .brand>span:last-child .dot{color:var(--ui-accent)!important}
