@@ -22,6 +22,14 @@ on:
       - 'docs/interface-polish.css'
       - 'docs/live-experience.css'
       - 'docs/experience-hub.css'
+      - 'docs/once-ui.css'
+      - 'docs/once-public.css'
+      - 'docs/once-maintenance.css'
+      - 'docs/once-info.css'
+      - 'docs/perfil-once.css'
+      - 'tests/once-redesign-mobile-audit.cjs'
+      - 'docs/favicon.svg'
+      - 'docs/offline.html'
       - 'docs/site-search.js'
       - 'docs/rooms.js'
       - 'docs/camera-lives.js'
@@ -100,5 +108,6 @@ jobs:
           node tests/encounter-mobile-audit.cjs
           node tests/live-sheet-viewport-audit.cjs
           node tests/community-mobile-audit.cjs
+          node tests/once-redesign-mobile-audit.cjs
           node tests/admin-mobile-audit.cjs
           node tests/avatar-mobile-audit.cjs
