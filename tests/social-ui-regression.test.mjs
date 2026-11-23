@@ -257,7 +257,7 @@ test('Google OAuth callbacks do not persist stale access_denied errors or mask v
  assert.match(app,/entre\.app\.oauth\.started/);
  assert.match(app,/function getOAuthError\(\)/);
  assert.match(app,/window\.history\.replaceState/);
- assert.match(app,/return fresh\?infoError/);
+ assert.match(app,/return fresh\?googleOAuthCallbackMessage/);
  assert.match(app,/sessionStorage\.removeItem\('entre\.app\.oauth\.started'\)/);
  assert.match(app,/showFormMessage\(infoError\(e\)\)/);
  assert.doesNotMatch(app,/showFormMessage\(oauthError\|\|infoError\(e\)\)/);
@@ -268,4 +268,22 @@ test('Optional social services do not block a successful Google login',()=>{
  assert.match(app,/try\{await window\.entreSocial\?\.refreshBulletins\?\.\(true\);\}catch\(e\)/);
  assert.match(app,/try\{await window\.entreSocial\?\.init\?\.\(\);\}catch\(e\)/);
  assert.match(app,/state\.profile=await getProfile\(\)/);
+});
+
+test('OAuth errors preserve the actual Google rejection reason rather than claiming users cancelled',()=>{
+ const src=read('app.js'),admin=read('admin/app.js');
+ assert.match(src,/function googleOAuthCallbackMessage\(code,description\)/);
+ assert.match(src,/Motivo informado pelo Google/);
+ assert.match(src,/Público-alvo/);
+ assert.match(src,/Usuários de teste/);
+ assert.match(src,/scopes:'openid email profile'/);
+ assert.match(admin,/scopes:"openid email profile"/);
+ const from=src.indexOf('function googleOAuthCallbackMessage(');
+ const to=src.indexOf('function getOAuthError()',from);
+ const callback=new Function('infoError',src.slice(from,to)+'return googleOAuthCallbackMessage;')(e=>e.message);
+ const result=callback('access_denied','Access blocked: user is not authorized');
+ assert.match(result,/access_denied/);
+ assert.match(result,/Access blocked: user is not authorized/);
+ assert.match(result,/Google Cloud/);
+ assert.doesNotMatch(result,/foi cancelada ou não foi autorizada/);
 });
