@@ -78,7 +78,7 @@ async function postAction(a,btn){
   if(report)report.hidden=a!=='postCommentReport';
   const text=card.querySelector('.post-comment-content>p');
   if(text)text.hidden=a==='postCommentEdit';
-  btn.closest('details')?.removeAttribute('open');
+  btn.closest('.comment-actions')?.removeAttribute('open');
   if(a==='postCommentEdit')edit?.querySelector('input')?.focus();
   return true;
  }
