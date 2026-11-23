@@ -30,6 +30,7 @@ async function loadPosts(more=false){
   data.postMore=arr.length===15;
   data.postBefore=data.posts[data.posts.length-1]?.id||null;
   await Promise.allSettled(data.posts.filter(p=>p.author_avatar).map(p=>signAvatar({id:p.author_id,display_name:p.author_name,avatar_path:p.author_avatar,avatar_uploaded_at:p.author_avatar_uploaded_at})));
+  await window.entreMedia?.signPosts?.(data.posts);
   const ids=data.posts.filter(p=>p.premium).map(p=>p.author_id);
   for(const id of ids)data.premiumIds.add(id);
   renderView();
@@ -91,15 +92,15 @@ async function loadCommentPage(more=false){
 function postsView(){
  return heading('UMA COMUNIDADE DE VERDADE','Feed <em>da comunidade.</em>','Compartilhe ideias, conheça pontos de vista e converse com respeito. Publicações são públicas para usuários conectados.')+
  '<section class="posts-shell"><div class="posts-stream"><form id="postCreateForm" class="post-compose"><div class="post-compose-top">'+avatar(state.profile)+'<div><strong>O que você quer compartilhar?</strong><small>Seu espaço para começar uma conversa.</small></div>'+badge(state.profile)+'</div>'+
- '<textarea name="body" minlength="3" maxlength="900" placeholder="Uma ideia, uma pergunta ou algo que vale a pena contar…" required></textarea>'+
- '<div class="post-compose-footer"><small>Até 900 caracteres · respeite os outros.</small><button type="submit" class="ui-btn btn-dark btn-sm">Publicar '+ico('arrow',15)+'</button></div></form>'+
+ '<textarea name="body" minlength="3" maxlength="900" placeholder="Uma ideia, uma pergunta ou uma legenda para sua foto ou vídeo…"></textarea>'+ (window.entreMedia?.composeMarkup?.()||'')+
+ '<div class="post-compose-footer"><small>Texto, foto ou vídeo · respeite os outros.</small><button type="submit" class="ui-btn btn-dark btn-sm">Publicar '+ico('arrow',15)+'</button></div></form>'+
  (data.posts.length?data.posts.map(p=>{
   const person={id:p.author_id,display_name:p.author_name,avatar_path:p.author_avatar,avatar_uploaded_at:p.author_avatar_uploaded_at};
   const own=p.author_id===state.session?.user?.id;
   return '<article class="post-card '+(p.premium?'premium-surface':'')+'"><div class="post-card-head">'+avatar(person)+
   '<div class="post-author"><strong>'+esc(p.author_name||'Pessoa')+badge(person)+'</strong><small>'+new Date(p.created_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+'</small></div>'+
   (own?'<button type="button" class="post-remove" data-action="postDelete" data-id="'+Number(p.id)+'" aria-label="Apagar meu post">'+ico('trash',16)+'</button>':'')+'</div>'+
-  '<p class="post-body">'+esc(p.body)+'</p><div class="post-interactions"><button type="button" class="'+(p.liked?'liked':'')+'" data-action="postLike" data-id="'+Number(p.id)+'">'+ico('heart',17)+' '+Number(p.likes||0)+' curtidas</button><span>'+ico('chat',15)+' '+(p.comments?.length||0)+' comentários recentes</span></div>'+
+  (p.body?'<p class="post-body">'+esc(p.body)+'</p>':'')+(window.entreMedia?.postMarkup?.(p)||'')+'<div class="post-interactions"><button type="button" class="'+(p.liked?'liked':'')+'" data-action="postLike" data-id="'+Number(p.id)+'">'+ico('heart',17)+' '+Number(p.likes||0)+' curtidas</button><span>'+ico('chat',15)+' '+(p.comments?.length||0)+' comentários recentes</span></div>'+
   '<button type="button" class="post-comments-launch" data-action="postCommentsOpen" data-id="'+Number(p.id)+'">'+ico('chat',18)+' <span>Ver comentários e participar</span>'+ico('arrow',16)+'</button></article>';
  }).join(''):'<div class="social-empty"><h3>A comunidade está começando.</h3><p>Seu post pode ser o primeiro. Faça uma pergunta ou compartilhe uma ideia.</p></div>')+
  (data.postMore?'<button class="ui-btn btn-outline" data-action="postsMore">Carregar mais posts</button>':'')+'</div>'+
@@ -116,7 +117,8 @@ async function postAction(a,btn){
  if(a==='postsMore'){await loadPosts(true);return true;}
  if(a==='postDelete'){
   if(!confirm('Apagar esta publicação e seus comentários?'))return true;
-  await call('entre_post_delete',{_post:id});await loadPosts();toast('Post apagado.');return true;
+  const oldPost=data.posts.find(p=>Number(p.id)===id);
+  await call('entre_post_delete',{_post:id});await window.entreMedia?.removePostMedia?.(oldPost);await loadPosts();toast('Post apagado.');return true;
  }
  if(a==='postCommentEdit'||a==='postCommentReport'||a==='postCommentCancel'){
   const card=btn.closest('[data-comment-id]');if(!card)return true;
@@ -139,6 +141,9 @@ async function postAction(a,btn){
 async function postForm(form){
  const body=form.elements.body?.value?.trim();
  if(form.id==='postCreateForm'){
+  if(window.entreMedia?.pending?.()){
+   await window.entreMedia.publish(body||'');await loadPosts();return true;
+  }
   if(!body||body.length<3||body.length>900)throw Error('Post precisa ter de 3 a 900 caracteres.');
   await call('entre_post_create',{_body:body});await loadPosts();toast('Seu post foi publicado.');return true;
  }
