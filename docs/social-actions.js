@@ -4,6 +4,7 @@ const api=window.entreSocial;
 async function action(type,btn){
  const id=btn?.dataset.id,call=api.rpc;
  try{
+ if(type.startsWith('bulletin')&&api.bulletinAction)return await api.bulletinAction(type,btn);
  if(type==='onlineVisibility'||type==='onlineDirect'){
   const p=api.data.presence;
   const v=type==='onlineVisibility'?!p.visible:!!p.visible,d=type==='onlineDirect'?!p.allow_requests:!!p.allow_requests;
