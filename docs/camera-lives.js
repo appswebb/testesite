@@ -24,7 +24,7 @@ async function sdk(){
   script.async=true;script.onload=()=>window.LivekitClient?.Room?resolve(window.LivekitClient):reject(Error('LiveKit não foi carregado.'));
   script.onerror=()=>reject(Error('Não foi possível carregar o vídeo.'));document.head.appendChild(script);
  });
- return sdkPromise;
+ return sdkPromise.catch(error=>{sdkPromise=null;throw error;});
 }
 function card(l){
  const host=l.is_host,guest=l.is_guest;
@@ -77,12 +77,14 @@ async function refresh(paint=true){
    if(!found){await leave(false);toast('A transmissão foi encerrada.');}
    else{
     const oldRole=s.localRole;
+    const updated=found.guest_requested_by!==s.active.guest_requested_by||found.guest_id!==s.active.guest_id||found.requested!==s.active.requested;
     s.active={...s.active,...found};
     if(oldRole==='viewer'&&found.is_guest){await join(found.id);}
+    else if(updated&&state.view==='lives'){renderView();attachAll();}
    }
   }
-  if(paint&&state.view==='lives')renderView();
- }catch(e){console.warn('Lives indisponíveis',e);s.error=infoError(e);}
+  if(paint&&state.view==='lives'){renderView();if(s.active)attachAll();}
+ }catch(e){console.warn('Lives indisponíveis',e);s.error=infoError(e);if(paint&&state.view==='lives'&&!s.active)renderView();}
  finally{s.loading=false;}
 }
 function attach(participant,track,unique){
@@ -169,7 +171,7 @@ async function action(type,button){
  if(type==='create'){s.showCreate=!s.showCreate;if(state.view==='lives'){renderView();if(s.showCreate)document.getElementById('cameraLiveTitle')?.focus();}return;}
  if(type==='resetFilters'){s.region='global';s.state='';s.city='';s.search='';if(state.view==='lives')renderView();return;}
  if(type==='join'){try{await join(button.dataset.id);}catch(e){}return;}
- if(type==='leave'){await leave();await refresh();return;}
+ if(type==='leave'){if(s.localRole==='host'&&!confirm('Sair agora encerrará sua transmissão. Encerrar a live?'))return;await leave();await refresh();return;}
  if(type==='end'){if(confirm('Encerrar sua live agora?')){await leave();await refresh();}return;}
  if(type==='request'){
   const {error}=await db.rpc('entre_live_request_guest',{_live:s.active?.id});if(error)throw error;toast('Pedido enviado. Aguarde o apresentador.');await refresh();return;
@@ -179,8 +181,8 @@ async function action(type,button){
   if(error)throw error;toast(type==='approve'?'Convidado aceito.':'Pedido recusado.');await refresh();return;
  }
  if((type==='mic'||type==='camera')&&s.room&&(s.localRole==='host'||s.localRole==='guest')){
-  if(type==='mic'){s.mic=!s.mic;await s.room.localParticipant.setMicrophoneEnabled(s.mic);}
-  else{s.camera=!s.camera;await s.room.localParticipant.setCameraEnabled(s.camera);}
+  if(type==='mic'){const next=!s.mic;await s.room.localParticipant.setMicrophoneEnabled(next);s.mic=next;}
+  else{const next=!s.camera;await s.room.localParticipant.setCameraEnabled(next);s.camera=next;}
   if(state.view==='lives'){renderView();attachAll();}
  }
 }
