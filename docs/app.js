@@ -541,8 +541,18 @@ async function initializeAccount(){
    state.liveMode=active.mode||'chat';
   }
  }
+ const premiumReturn=new URLSearchParams(window.location.search).get('premium')==='return';
+ if(premiumReturn&&!state.pair?.id)state.view='premium';
+ if(premiumReturn){
+  const clean=new URL(window.location.href);clean.searchParams.delete('premium');
+  window.history.replaceState(null,'',clean.pathname+clean.search+clean.hash);
+ }
  render();
- if(state.profile){void window.entreGeo?.init?.();if(state.view==='posts')void window.entreExtras?.enter?.('posts');}
+ if(state.profile){
+  void window.entreGeo?.init?.();
+  if(state.view==='posts'||state.view==='premium')void window.entreExtras?.enter?.(state.view);
+  if(premiumReturn)toast('Retorno do Mercado Pago recebido. A assinatura será liberada apenas após confirmação do pagamento.');
+ }
  if(state.pair?.mode==='video')void window.entreVideo?.start?.(state.pair);
 }
 function getProfileData(form){return {display_name:form.display_name.value.trim(),age:Number(form.age.value),gender:form.gender.value,preference:form.preference.value}}
