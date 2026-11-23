@@ -8,7 +8,7 @@ if(!window.supabase || !window.supabase.createClient){
  app.innerHTML='<div class="preload"><h1>Falha de conexão</h1><p>Atualize a página quando estiver conectado à internet.</p></div>';return;
 }
 var db=window.supabase.createClient(URL,KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
-var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[]};
+var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[]};
 var perPage=20, searchTimer=null, toastTimer=null, lastLoad=0;
 var sections=[
  ["overview","Visão geral","layout-dashboard"],
@@ -16,6 +16,7 @@ var sections=[
  ["users","Usuários","users"],
  ["reports","Denúncias","flag"],
  ["pairs","Conexões","heart-handshake"],
+  ["bulletins","Avisos","message-circle"],
  ["settings","Configurações","sliders-horizontal"],
  ["security","Segurança","shield-check"]
 ];
@@ -106,7 +107,7 @@ function settings(){
  releaseShortcut(Boolean(x.maintenance_enabled),"Atualizações do site","Ative a tela de manutenção ou libere a nova versão.")+'<form id="settings-form" class="form-card"><h2 class="section-heading">Experiência e segurança</h2><p class="section-desc">Controle operacional da plataforma. Novas regras são aplicadas sem publicar outra versão do site.</p>'+
  '<div class="setting-item"><div><strong>Permitir novas conexões</strong><small>Se desativado, a busca por novas pessoas será pausada no servidor.</small></div><label class="switch"><input type="checkbox" name="matchmaking" '+(x.matchmaking_enabled?"checked":"")+'><span></span></label></div>'+
  '<div class="setting-item"><div><strong>Aceitar denúncias</strong><small>Habilita o formulário de denúncia entre participantes de conversas.</small></div><label class="switch"><input type="checkbox" name="reporting" '+(x.reporting_enabled?"checked":"")+'><span></span></label></div>'+
- '<div class="setting-item" style="display:block"><label class="form-label" for="announcement">Aviso para usuários</label><textarea name="announcement" id="announcement" class="form-textarea" maxlength="240" placeholder="Ex.: Vamos fazer uma atualização rápida em breve…">'+e(x.announcement||"")+'</textarea><span class="form-hint">Até 240 caracteres. Clique em Enviar para mostrar o aviso por 10 segundos.</span><button type="button" class="btn-main coral admin-broadcast-btn" data-action="send-announcement">Enviar aviso · 10 segundos</button></div>'+
+ '<div class="setting-item" style="display:block"><strong>Comunicação oficial</strong><p class="section-desc">Avisos com respostas e enquetes obrigatórias, publicados por 24 horas.</p><button type="button" class="btn-main coral" data-view="bulletins">Abrir avisos e enquetes</button></div>'+
  '<div class="setting-actions"><button type="submit" class="btn-main" '+(state.busy?"disabled":"")+'>'+ico("check-circle",17)+' Salvar configurações</button></div></form>';
 }
 
@@ -160,7 +161,7 @@ function renderView(){
  var target=document.getElementById("admin-view");if(!target)return;
  document.querySelectorAll("[data-view]").forEach(function(el){el.classList.toggle("active",el.getAttribute("data-view")===state.view);});
  var loc=document.getElementById("topbar-location");if(loc)loc.textContent=viewTitle();
- target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="pairs"?pairs():state.view==="settings"?settings():security());
+ target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="pairs"?pairs():state.view==="bulletins"?heading("COMUNICAÇÃO OFICIAL","Avisos <em>e enquetes.</em>","Gerencie suas publicações por 24 horas.")+window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico}):state.view==="settings"?settings():security());
 }
 async function load(view){
  state.loading=true;renderView();
@@ -171,6 +172,7 @@ async function load(view){
   if(view==="users")state.users=await rpc("entre_admin_users",{_query:state.search,_limit:perPage,_offset:state.userPage*perPage});
   if(view==="reports")state.reports=await rpc("entre_admin_reports",{_status:state.reportStatus,_limit:100});
   if(view==="pairs")state.pairs=await rpc("entre_admin_pairs",{_limit:60});
+   if(view==="bulletins")state.bulletins=await rpc("entre_admin_bulletins");
   if(view==="security"){state.appeals=await rpc("entre_admin_appeals");state.privacyRequests=await rpc("entre_admin_privacy_requests");}
   state.refreshAt=new Date();lastLoad=Date.now();
  }catch(err){toast(errorText(err),true);}
@@ -209,16 +211,6 @@ document.addEventListener("click",async function(ev){
  if(a==="close-modal"){closeModal();return;}
  if(a==="google"){await googleLogin();return;}
  if(a==="refresh"){await load(state.view);toast("Dados atualizados.");return;}
- if(a==="send-announcement"){
-  if(state.busy)return;
-  var field=document.getElementById('announcement'),notice=field&&field.value.trim();
-  if(!notice||notice.length<3||notice.length>240){toast('O aviso deve ter entre 3 e 240 caracteres.',true);return;}
-  if(!window.confirm('Mostrar este aviso na tela inteira por 10 segundos?'))return;
-  state.busy=true;
-  try{var sent=await rpc('entre_admin_publish_announcement',{_message:notice});state.settings=Object.assign({},state.settings,sent);toast('Aviso enviado por 10 segundos!');await load('settings');}
-  catch(err){toast(errorText(err),true);}finally{state.busy=false;}
-  return;
- }
  if(a==="review-appeal"||a==="reject-appeal"){
   if(!window.confirm(a==="review-appeal"?'Aprovar contestação e reativar?':'Rejeitar contestação?'))return;
   try{await rpc('entre_admin_review_appeal',{_id:Number(n.dataset.id),_approve:a==="review-appeal"});toast('Revisão registrada.');await load('security');}
@@ -236,7 +228,8 @@ document.addEventListener("click",async function(ev){
  if(a==="prev-users"&&state.userPage>0){state.userPage--;await load("users");return;}
  if(a==="next-users"&&(state.userPage+1)*perPage<(state.users.total||0)){state.userPage++;await load("users");return;}
 });
-document.addEventListener("input",function(ev){
+document.addEventListener("change",function(ev){if(ev.target?.id==="bulletin-kind")window.entreAdminBulletins.syncType();});
+ document.addEventListener("input",function(ev){
  if(ev.target.id==="user-search"){
   clearTimeout(searchTimer);var input=ev.target;state.search=input.value;state.userPage=0;
   searchTimer=setTimeout(async function(){if(state.view==="users"){var active=document.activeElement===input;await load("users");if(active){var next=document.getElementById("user-search");if(next){next.focus();next.setSelectionRange(next.value.length,next.value.length);}}}},420);
@@ -246,8 +239,14 @@ document.addEventListener("submit",async function(ev){
  var form=ev.target;if(!(form instanceof HTMLFormElement))return;ev.preventDefault();if(form.id==="release-form"){await saveRelease(Boolean(state.settings?.maintenance_enabled),true);return;}if(state.busy)return;
  state.busy=true;var btn=form.querySelector('[type="submit"]');if(btn)btn.disabled=true;
  try{
-  if(form.id==="settings-form"){
-   var s=await rpc("entre_admin_save_settings",{_matchmaking:form.elements.matchmaking.checked,_reporting:form.elements.reporting.checked,_announcement:form.elements.announcement.value});
+  if(form.id==="bulletin-form"){
+   var payload=window.entreAdminBulletins.params(form);
+   if(!window.confirm(payload._kind==="poll"?"Publicar uma enquete OBRIGATÓRIA para todos por 24 horas?":"Publicar este aviso para todos por 24 horas?"))return;
+   var published=await rpc("entre_admin_publish_bulletin",payload);
+   toast("Publicado. "+Number(published?.notified||0)+" perfis notificados.");
+   await load("bulletins");
+  }else if(form.id==="settings-form"){
+   var s=await rpc("entre_admin_save_settings",{_matchmaking:form.elements.matchmaking.checked,_reporting:form.elements.reporting.checked,_announcement:state.settings?.announcement||''});
    state.settings=s;if(state.overview)state.overview.settings=s;toast("Configurações salvas no Supabase.");await load("settings");
   }else if(form.id==="ban-form"&&state.modal&&state.modal.type==="user"){
    var u=state.modal.data,ban=!u.banned;
