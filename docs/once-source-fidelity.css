@@ -593,8 +593,18 @@ html[data-theme="dark"] .info-page,html[data-theme="dark"] .info-main{
  }
 }
 @media(prefers-reduced-motion:reduce){
- html[data-theme] .once-feature-art:after,
- html[data-theme] .once-sticker{animation:none!important}
+ html[data-theme] body:not(.motion-force) .once-feature-art:after,
+ html[data-theme] body:not(.motion-force) .once-sticker,
+ html[data-theme] body.motion-off .once-sticker{animation:none!important}
+ html[data-theme] body.motion-force:not(.motion-off) .once-sticker-a{
+  animation:ef-float 5.5s ease-in-out infinite!important
+ }
+ html[data-theme] body.motion-force:not(.motion-off) .once-sticker-b{
+  animation:ef-float 6.3s ease-in-out infinite reverse!important
+ }
+ html[data-theme] body.motion-force:not(.motion-off) .once-feature-art:after{
+  animation:ef-tilt 7s ease-in-out infinite!important
+ }
 }
 @media(prefers-reduced-motion:no-preference){
  html[data-theme] .hero-art .once-sticker-a{animation:ef-float 5.5s ease-in-out infinite}
