@@ -47,7 +47,7 @@ test('Closed live connections appear only within 24 hours; conversations require
 });
 test('Temporary live chat cannot move, pin, archive or save',()=>{
  const effects=read('social-effects.js');
- const api={pref:()=>({})};
+ const api={pref:()=>({}),conversationMenu:pair=>'<div data-social-folder="'+pair.id+'">Organizar</div>'};
  new Function('window','state','ico','esc',effects)({entreSocial:api},{motionOff:true},name=>'icon:'+name,String);
  const temp=api.chatToolbar({id:'1',origin:'live',status:'active'}),perma=api.chatToolbar({id:'2',origin:'live',status:'connected'});
  assert.doesNotMatch(temp,/data-social-folder|conversationPin|conversationArchive|conversationRestore/);
@@ -69,4 +69,32 @@ test('When both match, a permanent chat opens outside Ao vivo',()=>{
  assert.match(app,/state.view=data.status==='connected'\?'chat':'connect'/);
  assert.match(app,/state.view='chat';render\(\)/);
  assert.match(app,/function connectView\(\)\{if\(state.pair\?\.status==='active'\)/);
+});
+
+test('Permanent conversations have one discreet menu and an individual delete action',()=>{
+ const source=read('social-conversations.js');
+ const actions=read('social-actions.js'),core=read('social-core.js');
+ assert.match(source,/conversation-menu/);
+ assert.match(source,/data-action="conversationDeletePrompt"/);
+ assert.match(source,/api\.isHidden\?\.\(p\.id\)/);
+ assert.doesNotMatch(source,/conversation-entry-actions/);
+ assert.match(actions,/entre_conversation_delete/);
+ assert.match(actions,/conversationDeleteConfirm/);
+ assert.match(core,/isHidden/);
+ assert.match(read('app.js'),/m==='deleteConversation'/);
+});
+test('Notifications are dismissible individually or all and describe 24-hour expiry',()=>{
+ const source=read('social-notifications.js'),actions=read('social-actions.js');
+ assert.match(source,/data-action="notificationsClear"/);
+ assert.match(source,/data-action="notificationsDismiss"/);
+ assert.match(source,/24 horas/);
+ assert.match(actions,/entre_notifications_clear/);
+ assert.match(read('social-core.js'),/toolbar-bell \.social-unread/);
+});
+test('No conversation organization actions are rendered inside temporary live chat',()=>{
+ const source=read('social-effects.js');
+ const api={pref:()=>({}),conversationMenu:()=>'<details class="conversation-menu"><summary>Opções</summary></details>'};
+ new Function('window','state','ico','esc',source)({entreSocial:api},{motionOff:true},name=>'icon:'+name,String);
+ assert.doesNotMatch(api.chatToolbar({id:'temporary',origin:'live',status:'active'}),/conversation-menu/);
+ assert.match(api.chatToolbar({id:'saved',origin:'live',status:'connected'}),/conversation-menu/);
 });
