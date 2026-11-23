@@ -37,12 +37,14 @@ const fixture='<div id="app"><div class="app-shell"><aside class="sidebar"><div 
     html:document.documentElement.outerHTML.slice(0,240),
     loadedCSS:[...document.styleSheets].map(x=>x.href||'inline').slice(-5),
     inlineBodyStyle:document.body.style.cssText,
+    inlinePostStyle:document.querySelector('.post-card').style.cssText,
+    postStylePriority:document.querySelector('.post-card').style.getPropertyPriority('background'),
     bodyBgPriority:document.body.style.getPropertyPriority('background-color'),
     bodyBgInline:document.body.style.getPropertyValue('background-color'),
     hasThemeCSS:[...document.styleSheets].some(sheet=>(sheet.href||'').includes('theme.css')),
     computedRootBg:getComputedStyle(document.documentElement).backgroundColor
    }));
-   if(dark.background!=='rgb(16, 17, 20)')console.error('DARK THEME DIAGNOSTIC '+JSON.stringify(dark));
+   if(dark.background!=='rgb(16, 17, 20)'||dark.post!=='rgb(25, 28, 33)')console.error('DARK THEME DIAGNOSTIC '+JSON.stringify(dark));
    assert.equal(dark.mode,'dark');
    assert.equal(dark.background,'rgb(16, 17, 20)','Dark background is not applied '+width);
    assert.equal(dark.post,'rgb(25, 28, 33)','Dark card is not applied '+width);
