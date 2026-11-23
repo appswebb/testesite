@@ -35,7 +35,12 @@ const fixture='<div id="app"><div class="app-shell"><aside class="sidebar"><div 
     saved:JSON.parse(localStorage.getItem('entre.appearance.v1')).mode,
     rootBackground:getComputedStyle(document.documentElement).getPropertyValue('--ui-bg').trim(),
     html:document.documentElement.outerHTML.slice(0,240),
-    loadedCSS:[...document.styleSheets].map(x=>x.href||'inline').slice(-5)
+    loadedCSS:[...document.styleSheets].map(x=>x.href||'inline').slice(-5),
+    inlineBodyStyle:document.body.style.cssText,
+    bodyBgPriority:document.body.style.getPropertyPriority('background-color'),
+    bodyBgInline:document.body.style.getPropertyValue('background-color'),
+    hasThemeCSS:[...document.styleSheets].some(sheet=>(sheet.href||'').includes('theme.css')),
+    computedRootBg:getComputedStyle(document.documentElement).backgroundColor
    }));
    if(dark.background!=='rgb(16, 17, 20)')console.error('DARK THEME DIAGNOSTIC '+JSON.stringify(dark));
    assert.equal(dark.mode,'dark');
