@@ -478,7 +478,7 @@ function connectView(){
   (!isPremium?'<p class="premium-filter-hint">Filtros de gênero específicos são Premium.</p>':'')+'</div>'+
   (window.entreGeo?.panel?.(waiting)||'')+'</div></details>'+
   '<button type="button" class="live-app-find" data-action="'+(waiting?'cancelsearch':'startsearch')+'">'+ico(waiting?'close':'bolt',19)+' '+(waiting?'Cancelar busca':'Encontrar alguém')+'</button>'+
-  '<p class="live-app-info">'+(waiting?'Procurando uma pessoa para '+(mode==='video'?'videochamada':'conversar por texto')+'. Você pode cancelar quando quiser.':'O encontro dura cinco minutos. Você pode sair a qualquer momento.')+'</p>'+
+  '<p class="sr-only">As buscas de chat e vídeo usam filas separadas.</p><p class="live-app-info">'+(waiting?'Procurando uma pessoa para '+(mode==='video'?'videochamada':'conversar por texto')+'. Você pode cancelar quando quiser.':'O encontro dura cinco minutos. Você pode sair a qualquer momento.')+'</p>'+
   (waiting?'<div class="live-app-progress" role="status"><span class="live-dot"></span> Procurando conexão compatível…</div>':'')+
   '</div></section>';
 }
