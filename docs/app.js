@@ -736,7 +736,18 @@ function getOAuthError(){
  return infoError({message});
 }
 async function loadSiteSettings(){try{const {data,error}=await db.rpc('entre_public_settings');if(!error&&data)state.siteSettings=data}catch(e){console.warn('Public settings unavailable')}}
+function consumeAdminOAuthReturn(){
+ // Only an OAuth round-trip initiated from the administration page may redirect there.
+ // A historical localStorage flag could otherwise trap an admin on /admin/ forever.
+ const started=Number(sessionStorage.getItem('entre.admin.oauth.started')||0);
+ sessionStorage.removeItem('entre.admin.oauth.started');
+ localStorage.removeItem('entre.admin.return');
+ if(new URLSearchParams(window.location.search).get('site')==='1')return false;
+ const age=Date.now()-started;
+ return started>0&&age>=0&&age<5*60*1000;
+}
 async function boot(){
+ const adminOAuthReturn=consumeAdminOAuthReturn();
  state.signup=null;sessionStorage.removeItem('entre.pendingProfile');applyMotion();
  const oauthError=getOAuthError();
  try{
@@ -748,14 +759,14 @@ async function boot(){
     render();
     // The only exception is an admin OAuth callback that must return to /admin/.
     // The site itself is never rendered as an admin-only backdoor.
-    if(localStorage.getItem('entre.admin.return')!=='1')return;
+    if(!adminOAuthReturn)return;
   }
   const {data,error}=await db.auth.getSession();if(error)throw error;
   if(data.session){
    const verified=await db.auth.getUser();if(verified.error)throw verified.error;
    if(!hasGoogleIdentity(verified.data.user)){
     await db.auth.signOut({scope:'local'});state.session=null;state.mode='login';render();showFormMessage('O entre. aceita somente login pelo Google.');
-   }else{state.session={...data.session,user:verified.data.user};const {data:admin}=await db.rpc('entre_admin_check');state.isAdmin=admin===true;if(state.isAdmin&&localStorage.getItem('entre.admin.return')==='1'){localStorage.removeItem('entre.admin.return');window.location.replace('./admin/');return;}state.mode='app';const suspended=await checkSuspension();if(maintenanceIsActive()||suspended)render();else await initializeAccount()}
+   }else{state.session={...data.session,user:verified.data.user};const {data:admin}=await db.rpc('entre_admin_check');state.isAdmin=admin===true;if(state.isAdmin&&adminOAuthReturn){window.location.replace('./admin/');return;}state.mode='app';const suspended=await checkSuspension();if(maintenanceIsActive()||suspended)render();else await initializeAccount()}
   }else{state.mode=oauthError?'login':'landing';render();if(oauthError)showFormMessage(oauthError)}
   db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'&&state.session){state.session=null;state.profile=null;state.isAdmin=false;state.mode='landing';render()}});
   if(!maintenanceIsActive()&&!state.suspension)considerPublicAnnouncement(state.siteSettings);
