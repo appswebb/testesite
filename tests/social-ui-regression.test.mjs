@@ -162,7 +162,7 @@ test('Admin creates official notices and polls, and can read responses',()=>{
 
 test('Posts feed supports publishing, likes, comments and own deletion',()=>{
  const app=read('app.js'),src=read('entre-features.js');
- assert.match(app,/\['posts','Posts','edit'\]/);
+ assert.match(app,/\['posts','Feed','edit'\]/);
  assert.match(src,/entre_posts_feed/);
  for(const action of ['entre_post_create','entre_post_comment','entre_post_like','entre_post_delete'])assert.ok(src.includes(action));
  assert.match(src,/postCreateForm/);
@@ -210,11 +210,13 @@ test('Premium checkout never claims to charge before an enabled plan and verifie
  assert.match(src,/data-action="premiumWhatsapp"/);
  assert.doesNotMatch(src,/5518988234267/);
 });
-test('Support requires evidence and never leaks the old admin mailbox',()=>{
+test('Support accepts optional evidence and never leaks the old admin mailbox',()=>{
  const src=read('entre-features.js'),admin=read('admin/extra-admin.js');
  assert.match(src,/supportTicketForm/);
  assert.match(src,/entre_support_submit/);
  assert.match(src,/entre-support-evidence/);
+ assert.match(src,/Anexos \(opcionais\)/);
+ assert.doesNotMatch(src,/multiple required/);
  assert.match(src,/entre-support-email/);
  assert.doesNotMatch(src,/connectapp\\.w@gmail\\.com/);
  assert.match(admin,/supportPage/);
@@ -223,7 +225,7 @@ test('Support requires evidence and never leaks the old admin mailbox',()=>{
 
 test('Posts, temporary video, premium checkout and account support remain wired to the app',()=>{
  const app=read('app.js'),extras=read('entre-features.js'),video=read('entre-video.js');
- assert.match(app,/\['posts','Posts','edit'\]/);
+ assert.match(app,/\['posts','Feed','edit'\]/);
  assert.match(app,/data-action="liveMode"/);
  assert.match(app,/entre_find_mode/);
  assert.match(app,/data-action="profileMenu"/);
