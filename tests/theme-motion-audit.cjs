@@ -32,8 +32,12 @@ const fixture='<div id="app"><div class="app-shell"><aside class="sidebar"><div 
     post:getComputedStyle(document.querySelector('.post-card')).backgroundColor,
     text:getComputedStyle(document.body).color,
     nav:getComputedStyle(document.querySelector('.mobile-nav')).backgroundColor,
-    saved:JSON.parse(localStorage.getItem('entre.appearance.v1')).mode
+    saved:JSON.parse(localStorage.getItem('entre.appearance.v1')).mode,
+    rootBackground:getComputedStyle(document.documentElement).getPropertyValue('--ui-bg').trim(),
+    html:document.documentElement.outerHTML.slice(0,240),
+    loadedCSS:[...document.styleSheets].map(x=>x.href||'inline').slice(-5)
    }));
+   if(dark.background!=='rgb(16, 17, 20)')console.error('DARK THEME DIAGNOSTIC '+JSON.stringify(dark));
    assert.equal(dark.mode,'dark');
    assert.equal(dark.background,'rgb(16, 17, 20)','Dark background is not applied '+width);
    assert.equal(dark.post,'rgb(25, 28, 33)','Dark card is not applied '+width);
