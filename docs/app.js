@@ -474,7 +474,29 @@ function showFormMessage(msg,success=false){const id=success?'form-success':'for
 function busy(btn,value){if(btn){btn.disabled=value;btn.dataset.oldLabel ||= btn.innerHTML;if(value)btn.textContent='Só um instante...';else btn.innerHTML=btn.dataset.oldLabel}}
 async function getProfile(){const uid=state.session?.user.id;if(!uid)return null;const {data,error}=await db.from('entre_profiles').select('*').eq('id',uid).maybeSingle();if(error)throw error;return data}
 async function loadPairs(){if(!state.session||!state.profile)return;const uid=state.session.user.id;const {data,error}=await db.from('entre_pairs').select('*').or(`a.eq.${uid},b.eq.${uid}`).in('status',['active','connected','closed']).order('created_at',{ascending:false}).limit(50);if(error)throw error;state.pairs=data||[];const ids=[...new Set(state.pairs.map(p=>p.a===uid?p.b:p.a))];state.pairsProfiles={};if(ids.length){const {data:profiles}=await db.from('entre_profiles').select('id,display_name,age,bio,gender,avatar_path,avatar_uploaded_at').in('id',ids);if(profiles?.length){await Promise.all(profiles.map(signAvatar));await window.entreExtras?.loadBadges?.(profiles);}for(const pair of state.pairs){state.pairsProfiles[pair.id]=profiles?.find(p=>p.id===(pair.a===uid?pair.b:pair.a))||{id:pair.a===uid?pair.b:pair.a,display_name:'Conta indisponível'}}}return state.pairs}
-async function initializeAccount(){state.profile=await getProfile();if(state.profile)await signAvatar(state.profile);installAvatarRealtime();state.pair=null;state.peer=null;state.searching=false;state.messages=[];if(state.profile){await window.entreExtras?.refreshPremium?.();state.preference=window.entreExtras?.isPremium?.(state.session.user.id)?state.profile.preference:'any';await loadPairs();if(window.entreSocial?.refreshBulletins)await window.entreSocial.refreshBulletins(true);if(window.entreSocial?.init)await window.entreSocial.init();const active=state.pairs.find(p=>p.status==='active'&&new Date(p.expires_at)>Date.now());if(active){state.pair=active;state.peer=state.pairsProfiles[active.id]||null;state.view='connect';await loadMessages();subscribePair(active.id);state.liveMode=active.mode||'chat';}}render();if(state.pair?.mode==='video')void window.entreVideo?.start?.(state.pair)}
+async function initializeAccount(){
+ state.profile=await getProfile();
+ if(state.profile){try{await signAvatar(state.profile);}catch(e){console.warn('Avatar load unavailable',e);}}
+ try{installAvatarRealtime();}catch(e){console.warn('Avatar updates unavailable',e);}
+ state.pair=null;state.peer=null;state.searching=false;state.messages=[];
+ if(state.profile){
+  await window.entreExtras?.refreshPremium?.();
+  state.preference=window.entreExtras?.isPremium?.(state.session.user.id)?state.profile.preference:'any';
+  // A temporary problem in the chat/notification service must not invalidate
+  // an already confirmed Google session or force the admin back to the login page.
+  try{await loadPairs();}catch(e){console.warn('Conversations unavailable',e);state.pairs=[];state.pairsProfiles={};}
+  try{await window.entreSocial?.refreshBulletins?.(true);}catch(e){console.warn('Bulletin feed unavailable',e);}
+  try{await window.entreSocial?.init?.();}catch(e){console.warn('Social services unavailable',e);}
+  const active=state.pairs.find(p=>p.status==='active'&&new Date(p.expires_at)>Date.now());
+  if(active){
+   state.pair=active;state.peer=state.pairsProfiles[active.id]||null;state.view='connect';
+   try{await loadMessages();subscribePair(active.id);}catch(e){console.warn('Temporary chat unavailable',e);state.pair=null;state.peer=null;state.view='home';}
+   state.liveMode=active.mode||'chat';
+  }
+ }
+ render();
+ if(state.pair?.mode==='video')void window.entreVideo?.start?.(state.pair);
+}
 function hasGoogleIdentity(user){const providers=user?.app_metadata?.providers;return user?.app_metadata?.provider==='google'||(Array.isArray(providers)&&providers.includes('google'))||user?.identities?.some(i=>i.provider==='google')===true}
 async function signInGoogle(btn){
  busy(btn,true);
