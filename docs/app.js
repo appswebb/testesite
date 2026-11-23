@@ -219,7 +219,7 @@ async function signInGoogle(btn){
  }catch(e){showFormMessage(infoError(e));busy(btn,false)}
 }
 function getProfileData(form){return {display_name:form.display_name.value.trim(),age:Number(form.age.value),gender:form.gender.value,preference:form.preference.value}}
-async function createProfile(data){const {error}=await db.from('entre_profiles').upsert({id:state.session.user.id,display_name:data.display_name,age:data.age,gender:data.gender,preference:data.preference},{onConflict:'id'});if(error)throw error;sessionStorage.removeItem('entre.pendingProfile')}
+async function createProfile(data){const {error}=await db.from('entre_profiles').upsert({id:state.session.user.id,display_name:data.display_name,age:data.age,gender:data.gender,preference:data.preference,...(data.avatar_path?{avatar_path:data.avatar_path}:{})},{onConflict:'id'});if(error)throw error;sessionStorage.removeItem('entre.pendingProfile')}
 async function profileSetup(form){
  const submit=form.querySelector('[type=submit]');busy(submit,true);
  let uploaded=null;
