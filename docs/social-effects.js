@@ -6,8 +6,8 @@ api.showMatchAnimation=function(peer){
  document.getElementById('entre-meeting')?.remove();
  const el=document.createElement('div');
  el.id='entre-meeting';el.className='meet-overlay';el.setAttribute('role','status');
- el.innerHTML='<div class="meet-content"><span>UMA CONEXÃO DE VERDADE</span><div class="meet-stage"><div class="meet-person meet-left">'+esc(initials(state.profile?.display_name))+'</div><b class="meet-spark">✳</b><div class="meet-person meet-right">'+esc(initials(peer?.display_name))+'</div></div><h2>Vocês se <em>encontraram.</em></h2><p>Agora é você e '+esc(peer?.display_name||'alguém')+'. Cinco minutos para se conhecer.</p></div>';
- document.body.append(el);setTimeout(()=>el.remove(),2500);
+ el.innerHTML='<div class="meet-content"><span>VOCÊS SE ENCONTRARAM</span><div class="meet-stage"><div class="meet-person meet-left">'+esc(initials(state.profile?.display_name))+'</div><span class="meet-spark">♡</span><div class="meet-person meet-right">'+esc(initials(peer?.display_name))+'</div></div><h2>Um novo <em>oi.</em></h2><p>Seu encontro temporário já começou. Vocês têm cinco minutos.</p></div>';
+ document.body.append(el);setTimeout(()=>el.remove(),1450);
 };
 api.showEndAnimation=function(){
  document.getElementById('entre-ended')?.remove();
