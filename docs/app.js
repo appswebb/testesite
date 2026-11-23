@@ -22,6 +22,12 @@ Object.assign(iconPaths,{
  refresh:'<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.7 9A7 7 0 0 1 18 6l2 1M4 17l2 1a7 7 0 0 0 12.3-3"/>'
 });
 Object.assign(iconPaths,{camera:'<rect x="2" y="5" width="14" height="14" rx="2"/><path d="m16 10 6-4v12l-6-4z"/>',mic:'<rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/>',crown:'<path d="m2 8 5 4 5-8 5 8 5-4-2 12H4z"/>',more:'<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>'});
+Object.assign(iconPaths,{
+ 'phone-off':'<path d="M10.7 5a14 14 0 0 1 8.3 6l2 3-3 2-3.2-3.3M5 5l14 14M3 13l3 3 3.2-3.2"/>',
+ compass:'<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2.3 4.7-4.7 2.3 2.3-4.7z"/>',
+ 'volume-2':iconPaths.volume,
+ 'refresh-cw':iconPaths.refresh
+});
 const ico=(name, size=20)=>`<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name]||iconPaths.spark}</svg>`;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nameOf=v=>String(v||'').trim().split(' ')[0]||'alguém';
