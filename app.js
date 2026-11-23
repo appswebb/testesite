@@ -1,424 +1,96 @@
-(() => {
-  'use strict';
-  const $ = id => document.getElementById(id);
-  const I = ['message-circle','music-2','lightbulb','moon','shuffle','coffee','gamepad-2','heart','zap'];
-  const reactionOptions = ['❤️','🔥','😂','👏','⚡'];
-  const state = {
-    me:null, rooms:[], roomId:null, messages:[], people:[], totalOnline:0,
-    hasMore:false, source:null, generation:0, isLoading:false, pending:[],
-    replyTo:null, sending:false, typing:new Map(), lastTyping:0,
-    seen:{}, seenReady:false, toastTimer:0, roomLoadError:false
-  };
-  const els = {
-    roomsList:$('roomsList'),roomCount:$('roomCount'),chatContent:$('chatContent'),
-    messageList:$('messageList'),messageInput:$('messageInput'),messageForm:$('messageForm'),
-    peopleList:$('peopleList'),peopleCount:$('peopleCount'),emptyState:$('emptyState'),
-    loadMoreBtn:$('loadMoreBtn'),jumpBottom:$('jumpBottom'),typingStatus:$('typingStatus'),
-    replyPreview:$('replyPreview'),welcome:$('welcomeOverlay'),modal:$('modalBackdrop')
-  };
-  const svgNS='http://www.w3.org/2000/svg';
-  function node(tag, className='', text) {
-    const el=document.createElement(tag);
-    if (className) el.className=className;
-    if (text!==undefined) el.textContent=text;
-    return el;
-  }
-  function icon(name, className='') {
-    const svg=document.createElementNS(svgNS,'svg');
-    if(className) svg.setAttribute('class',className);
-    const use=document.createElementNS(svgNS,'use');
-    use.setAttribute('href',`#i-${I.includes(name) || ['reply','pencil','trash','smile','x','plus','check'].includes(name) ? name : 'message-circle'}`);
-    svg.append(use);return svg;
-  }
-  function initials(name) {return [...(name || '?').trim()].slice(0,2).join('').toUpperCase();}
-  function avatar(user) {
-    const a=node('span','avatar',initials(user.name));
-    a.style.background=user.color || '#d9fc6c';
-    a.style.color='#192016';
-    a.title=user.name;
-    return a;
-  }
-  function buttonIcon(symbol,label,handler,extraClass='') {
-    const btn=node('button',extraClass);
-    btn.type='button';btn.title=label;btn.setAttribute('aria-label',label);
-    btn.append(icon(symbol));btn.addEventListener('click',handler);return btn;
-  }
-  function toast(message, isError=false) {
-    const el=$('toast');el.textContent=message;el.classList.toggle('error',isError);el.classList.add('show');
-    clearTimeout(state.toastTimer);state.toastTimer=setTimeout(()=>el.classList.remove('show'),3500);
-  }
-  async function api(path,{method='GET',body}={}) {
-    const options={method,credentials:'same-origin',headers:{}};
-    if(body!==undefined){options.headers['Content-Type']='application/json';options.body=JSON.stringify(body);}
-    let response;
-    try{response=await fetch(path,options);}catch{throw Error('Sem conexão com o servidor. Verifique a internet.');}
-    let data;
-    try{data=await response.json();}catch{throw Error('Resposta inesperada do servidor.');}
-    if(!response.ok)throw Error(data.error || `Erro ${response.status}`);
-    return data;
-  }
-  function formatTime(date){return new Intl.DateTimeFormat('pt-BR',{hour:'2-digit',minute:'2-digit'}).format(new Date(date));}
-  function dayKey(date){return new Date(date).toLocaleDateString('en-CA');}
-  function formatDay(date){
-    const d=new Date(date);const today=new Date();
-    if(d.toDateString()===today.toDateString())return 'HOJE';
-    const prev=new Date(today);prev.setDate(today.getDate()-1);
-    if(d.toDateString()===prev.toDateString())return 'ONTEM';
-    return new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'long'}).format(d).toUpperCase();
-  }
-  function updateMe() {
-    if(!state.me)return;
-    $('selfName').textContent=state.me.name;
-    const a=$('selfAvatar');a.textContent=initials(state.me.name);a.style.background=state.me.color;
-  }
-  function selectSidebar(active) {
-    $('sidebar').classList.toggle('open',active);
-    $('sidebarShade').classList.toggle('visible',active);
-  }
-  function renderRooms() {
-    els.roomsList.replaceChildren();
-    $('roomCount').textContent=state.rooms.length;
-    for(const room of state.rooms) {
-      const active=room.id===state.roomId;
-      const entry=node('button',`room-item${active?' active':''}`);entry.type='button';
-      entry.setAttribute('aria-current',active?'page':'false');
-      const pict=node('span','room-icon');pict.append(icon(room.icon));entry.append(pict);
-      const meta=node('span','room-meta');meta.append(node('strong','',room.name));
-      meta.append(node('small','',room.lastMessage ? `${room.lastMessage.name}: ${room.lastMessage.text}` : room.description));
-      entry.append(meta);
-      const count=node('span',`room-online${room.online?'':' zero'}`,String(room.online));
-      count.title=`${room.online} pessoa(s) online`;entry.append(count);
-      if(state.seenReady && !active && room.lastMessage && state.seen[room.id] && new Date(room.lastMessage.at).getTime() > state.seen[room.id]) entry.append(node('span','room-unread'));
-      entry.addEventListener('click',()=>{selectSidebar(false);switchRoom(room.id);});
-      els.roomsList.append(entry);
-    }
-  }
-  function showRoomHeader() {
-    const room=state.rooms.find(r=>r.id===state.roomId);if(!room)return;
-    $('headerRoomName').textContent=room.name;$('headerRoomDesc').textContent=room.description;
-    $('rightRoomName').textContent=room.name;$('rightRoomDesc').textContent=room.description;
-    $('headerRoomIcon').replaceChildren(icon(room.icon));
-    $('headerOnline').textContent=`${room.online} online`;
-  }
-  function renderPeople() {
-    $('peopleCount').textContent=state.people.length;
-    els.peopleList.replaceChildren();
-    if(!state.people.length) {
-      els.peopleList.append(node('p','people-empty','Ninguém conectado a esta sala no momento.'));
-      return;
-    }
-    const sorted=[...state.people].sort((a,b)=>a.id===state.me?.id?-1:b.id===state.me?.id?1:a.name.localeCompare(b.name));
-    for(const person of sorted) {
-      const el=node('div','people-item');el.append(avatar(person));
-      const label=node('div');label.append(node('strong','',person.name));
-      label.append(node('small','',person.id===state.me?.id?'Você · online':'Online agora'));
-      el.append(label,node('span','presence-dot'));els.peopleList.append(el);
-    }
-  }
-  function renderMessage(m) {
-    const mine=m.userId===state.me?.id;
-    const item=node('article',`msg${mine?' mine':''}${m.deleted?' deleted':''}`);
-    item.dataset.messageId=m.id;
-    item.append(avatar({name:m.userName,color:m.userColor}));
-    const body=node('div','msg-body');const byline=node('div','msg-byline');
-    byline.append(node('strong','',m.userName));
-    if(mine)byline.append(node('span','you-tag','VOCÊ'));
-    const time=node('time','',formatTime(m.createdAt));time.dateTime=m.createdAt;byline.append(time);
-    if(m.editedAt&&!m.deleted)byline.append(node('time','','(editada)'));
-    body.append(byline);
-    if(m.replyTo){const quote=node('div','msg-reply');quote.append(node('b','',m.replyTo.userName),document.createTextNode(m.replyTo.text));body.append(quote);}
-    body.append(node('div','msg-content',m.deleted?'Mensagem apagada':m.text));
-    if(!m.deleted){
-      const reactions=node('div','reactions');
-      for(const emoji of reactionOptions){
-        const ids=m.reactions?.[emoji]||[];
-        if(!ids.length)continue;
-        const r=node('button',`reaction${ids.includes(state.me?.id)?' mine':''}`,`${emoji} ${ids.length}`);
-        r.type='button';r.title=`Reagir com ${emoji}`;
-        r.addEventListener('click',()=>react(m,emoji));reactions.append(r);
-      }
-      if(reactions.childNodes.length)body.append(reactions);
-    }
-    item.append(body);
-    if(!m.deleted){
-      const actions=node('div','msg-actions');
-      actions.append(buttonIcon('smile','Reagir',e=>{e.stopPropagation();toggleReactions(item,m);}),buttonIcon('reply','Responder',()=>setReply(m)));
-      if(mine){actions.append(buttonIcon('pencil','Editar',()=>openEdit(m)),buttonIcon('trash','Apagar',()=>deleteMessage(m),'danger'));}
-      item.append(actions);
-    }
-    return item;
-  }
-  function closeReactions(){document.querySelectorAll('.reaction-menu').forEach(el=>el.remove());}
-  function toggleReactions(item,m){
-    const existing=item.querySelector('.reaction-menu');closeReactions();if(existing)return;
-    const menu=node('div','reaction-menu');
-    for(const emoji of reactionOptions){const b=node('button','',emoji);b.type='button';b.title=`Reagir com ${emoji}`;
-      b.addEventListener('click',e=>{e.stopPropagation();closeReactions();react(m,emoji);});menu.append(b);}
-    item.querySelector('.msg-actions').append(menu);
-  }
-  async function react(m,emoji){
-    try{const out=await api(`/api/rooms/${encodeURIComponent(state.roomId)}/reactions`,{method:'POST',body:{messageId:m.id,emoji}});applyMessageUpdate(out.message);}catch(err){toast(err.message,true);}
-  }
-  function renderAllMessages({keepPosition=false}={}) {
-    const content=els.chatContent, previousTop=content.scrollTop, previousHeight=content.scrollHeight;
-    els.messageList.replaceChildren();
-    let lastDay='';
-    for(const m of state.messages){
-      const day=dayKey(m.createdAt);
-      if(day!==lastDay){els.messageList.append(node('div','message-divider',formatDay(m.createdAt)));lastDay=day;}
-      els.messageList.append(renderMessage(m));
-    }
-    els.emptyState.classList.toggle('hidden',state.messages.length!==0);
-    els.loadMoreBtn.classList.toggle('hidden',!state.hasMore);
-    if(keepPosition)content.scrollTop=previousTop+content.scrollHeight-previousHeight;
-  }
-  function applyMessageUpdate(item){
-    if(item.roomId!==state.roomId)return;
-    if(state.isLoading){state.pending.push({type:'message_update',data:item});return;}
-    const index=state.messages.findIndex(m=>m.id===item.id);
-    if(index<0)return;
-    state.messages[index]=item;
-    const existing=[...els.messageList.querySelectorAll('[data-message-id]')].find(el=>el.dataset.messageId===item.id);
-    if(existing)existing.replaceWith(renderMessage(item));
-  }
-  function nearBottom(){const c=els.chatContent;return c.scrollHeight-c.scrollTop-c.clientHeight<160;}
-  function scrollBottom(smooth=false){const c=els.chatContent;c.scrollTo({top:c.scrollHeight,behavior:smooth?'smooth':'instant'});els.jumpBottom.classList.add('hidden');}
-  function receivedMessage(m){
-    if(m.roomId!==state.roomId)return;
-    if(state.isLoading){state.pending.push({type:'message',data:m});return;}
-    if(state.messages.some(x=>x.id===m.id))return;
-    const auto=nearBottom();state.messages.push(m);renderAllMessages();
-    if(auto)scrollBottom(true);else els.jumpBottom.classList.remove('hidden');
-    state.seen[state.roomId]=Date.now();
-  }
-  function updateTyping(){
-    const active=[...state.typing.values()].filter(x=>Date.now()-x.time<2800 && x.userId!==state.me?.id);
-    if(!active.length){els.typingStatus.replaceChildren();return;}
-    const names=active.map(x=>x.name);
-    const dots=node('span','typing-bubbles');dots.append(node('i'),node('i'),node('i'));
-    els.typingStatus.replaceChildren(dots,node('span','',`${names.slice(0,2).join(' e ')} ${names.length===1?'está':'estão'} digitando...`));
-  }
-  setInterval(()=>{
-    for(const [id,item] of state.typing)if(Date.now()-item.time>2800)state.typing.delete(id);
-    updateTyping();
-  },650);
-  function startEvents(roomId,generation){
-    if(state.source){state.source.close();state.source=null;}
-    const source=new EventSource(`/api/events?room=${encodeURIComponent(roomId)}`);
-    state.source=source;
-    source.addEventListener('ready',()=>{
-      if(generation!==state.generation)return;
-      const wasOffline=$('liveChip').classList.contains('offline');
-      $('liveChip').classList.remove('offline');$('liveLabel').textContent='LIVE';
-      if(wasOffline)reconcileLatest(roomId,generation);
-    });
-    source.addEventListener('rooms',event=>{
-      if(generation!==state.generation)return;
-      const data=JSON.parse(event.data);
-      state.rooms=data.rooms;state.totalOnline=data.totalOnline;
-      if(!state.seenReady){for(const room of data.rooms)state.seen[room.id]=room.lastMessage ? Date.parse(room.lastMessage.at):0;state.seenReady=true;}
-      renderRooms();showRoomHeader();
-    });
-    source.addEventListener('presence',event=>{
-      if(generation!==state.generation)return;
-      const data=JSON.parse(event.data);if(data.roomId!==state.roomId)return;
-      state.people=data.users;renderPeople();$('headerOnline').textContent=`${data.users.length} online`;
-    });
-    source.addEventListener('message',event=>{
-      if(generation!==state.generation)return;receivedMessage(JSON.parse(event.data));
-    });
-    source.addEventListener('message_update',event=>{
-      if(generation!==state.generation)return;applyMessageUpdate(JSON.parse(event.data));
-    });
-    source.addEventListener('typing',event=>{
-      if(generation!==state.generation)return;
-      const item=JSON.parse(event.data);state.typing.set(item.userId,{...item,time:Date.now()});updateTyping();
-    });
-    source.addEventListener('error',()=>{
-      if(generation!==state.generation)return;
-      $('liveChip').classList.add('offline');$('liveLabel').textContent='RECONECTANDO';
-    });
-  }
-  async function reconcileLatest(roomId,generation) {
-    try {
-      const data=await api(`/api/rooms/${encodeURIComponent(roomId)}/messages`);
-      if(generation!==state.generation || state.isLoading)return;
-      const stick=nearBottom(),previous=new Map(state.messages.map(m=>[m.id,m]));
-      for(const msg of data.messages)previous.set(msg.id,msg);
-      state.messages=[...previous.values()].sort((a,b)=>Date.parse(a.createdAt)-Date.parse(b.createdAt));
-      renderAllMessages();if(stick)scrollBottom();
-    }catch { /* o evento SSE tentará novamente */ }
-  }
-  async function switchRoom(roomId) {
-    if(!state.rooms.some(r=>r.id===roomId)){toast('Sala não encontrada.',true);return;}
-    const generation=++state.generation;
-    state.roomId=roomId;state.messages=[];state.people=[];state.pending=[];state.typing.clear();state.hasMore=false;state.isLoading=true;state.replyTo=null;
-    state.seen[roomId]=Date.now();
-    localStorage.setItem('freq_room',roomId);
-    const url=new URL(window.location.href);url.searchParams.set('room',roomId);history.replaceState({},'',url);
-    els.messageList.replaceChildren();els.emptyState.classList.add('hidden');els.loadMoreBtn.classList.add('hidden');els.jumpBottom.classList.add('hidden');
-    clearReply();renderRooms();renderPeople();showRoomHeader();updateTyping();
-    startEvents(roomId,generation);
-    try{
-      const result=await api(`/api/rooms/${encodeURIComponent(roomId)}/messages`);
-      if(generation!==state.generation)return;
-      const merged=new Map(result.messages.map(m=>[m.id,m]));
-      for(const evt of state.pending) {
-        if(evt.type==='message')merged.set(evt.data.id,evt.data);
-        if(evt.type==='message_update' && merged.has(evt.data.id))merged.set(evt.data.id,evt.data);
-      }
-      state.messages=[...merged.values()].sort((a,b)=>Date.parse(a.createdAt)-Date.parse(b.createdAt));
-      state.pending=[];state.hasMore=result.hasMore;state.isLoading=false;
-      renderAllMessages();requestAnimationFrame(()=>scrollBottom());
-    }catch(err){if(generation!==state.generation)return;state.isLoading=false;toast(err.message,true);}
-  }
-  async function loadOlder() {
-    if(!state.hasMore || state.isLoading || !state.messages.length)return;
-    state.isLoading=true;els.loadMoreBtn.disabled=true;
-    const generation=state.generation,roomId=state.roomId,firstId=state.messages[0].id;
-    try{
-      const data=await api(`/api/rooms/${encodeURIComponent(roomId)}/messages?before=${encodeURIComponent(firstId)}`);
-      if(generation!==state.generation)return;
-      const ids=new Set(state.messages.map(m=>m.id));
-      state.messages=[...data.messages.filter(m=>!ids.has(m.id)),...state.messages];
-      state.hasMore=data.hasMore;renderAllMessages({keepPosition:true});
-      const pending=state.pending.splice(0);state.isLoading=false;
-      for(const evt of pending){if(evt.type==='message')receivedMessage(evt.data);else applyMessageUpdate(evt.data);}
-    }catch(err){if(generation===state.generation)toast(err.message,true);}finally{if(generation===state.generation){state.isLoading=false;els.loadMoreBtn.disabled=false;}}
-  }
-  async function loadInitialRooms() {
-    const data=await api('/api/rooms');state.rooms=data.rooms;state.totalOnline=data.totalOnline;
-    if(!state.seenReady){for(const room of data.rooms)state.seen[room.id]=room.lastMessage ? Date.parse(room.lastMessage.at) : 0;state.seenReady=true;}
-    const fromURL=new URLSearchParams(location.search).get('room');
-    const selected=fromURL || localStorage.getItem('freq_room') || 'geral';
-    renderRooms();await switchRoom(data.rooms.some(r=>r.id===selected)?selected:data.rooms[0].id);
-  }
-  async function sendMessage(e){
-    e.preventDefault();if(state.sending || !state.me || !state.roomId)return;
-    const text=els.messageInput.value.trim();if(!text)return;
-    if(text.length>1200)return toast('Máximo de 1.200 caracteres.',true);
-    const room=state.roomId;state.sending=true;$('sendBtn').disabled=true;
-    try{
-      const result=await api(`/api/rooms/${encodeURIComponent(room)}/messages`,{method:'POST',body:{text,replyTo:state.replyTo?.id || null}});
-      if(room===state.roomId){receivedMessage(result.message);els.messageInput.value='';resizeComposer();clearReply();scrollBottom(true);els.messageInput.focus();}
-    }catch(err){toast(err.message,true);}finally{state.sending=false;$('sendBtn').disabled=false;}
-  }
-  function resizeComposer(){
-    const input=els.messageInput;input.style.height='auto';input.style.height=Math.min(input.scrollHeight,142)+'px';
-    $('charCount').textContent=input.value.length>950 ? `${input.value.length}/1200`:'';
-  }
-  function setReply(m){state.replyTo=m;$('replyName').textContent=m.userName;$('replyText').textContent=m.text;els.replyPreview.classList.remove('hidden');els.messageInput.focus();}
-  function clearReply(){state.replyTo=null;els.replyPreview.classList.add('hidden');}
-  function closeModal(){els.modal.classList.add('hidden');$('modalBody').replaceChildren();}
-  function modalBase(eyebrow,title,desc){
-    $('modalEyebrow').textContent=eyebrow;$('modalTitle').textContent=title;$('modalDescription').textContent=desc;
-    $('modalBody').replaceChildren();els.modal.classList.remove('hidden');
-    return $('modalBody');
-  }
-  function field(label,placeholder,maxLength,value=''){
-    const wrap=node('div','modal-field');const l=node('label','',label);const input=node('input');
-    input.placeholder=placeholder;input.maxLength=maxLength;input.value=value;input.required=true;l.append(input);
-    wrap.append(l);return {wrap,input};
-  }
-  function submit(label){const b=node('button','modal-submit',label);b.type='submit';return b;}
-  function errorPlace(){const p=node('p','modal-error');p.setAttribute('role','alert');return p;}
-  function openCreateRoom(){
-    const body=modalBase('CRIE SUA FREQUÊNCIA','Abra uma nova sala.','Escolha um assunto e convide outras pessoas para entrar na conversa.');
-    const form=node('form');const n=field('NOME DA SALA','Ex.: Conversas de café',30);const d=field('SOBRE O QUE VOCÊS VÃO FALAR?','Uma descrição curtinha',100);
-    d.input.required=false;form.append(n.wrap,d.wrap);
-    const picker=node('div','modal-field');picker.append(node('label','','ÍCONE DA SALA'));
-    const icons=node('div','icon-picker');let selectedIcon='message-circle';
-    for(const name of I){
-      const b=node('button',`icon-choice${name===selectedIcon?' selected':''}`);b.type='button';b.title=name;b.append(icon(name));
-      b.addEventListener('click',()=>{selectedIcon=name;icons.querySelectorAll('button').forEach(el=>el.classList.remove('selected'));b.classList.add('selected');});icons.append(b);
-    }
-    picker.append(icons);form.append(picker);const btn=submit('Criar sala ↗'),errorEl=errorPlace();form.append(btn,errorEl);body.append(form);
-    form.addEventListener('submit',async e=>{
-      e.preventDefault();btn.disabled=true;errorEl.textContent='';
-      try{
-        const result=await api('/api/rooms',{method:'POST',body:{name:n.input.value,description:d.input.value,icon:selectedIcon}});
-        closeModal();const rooms=await api('/api/rooms');state.rooms=rooms.rooms;
-        renderRooms();await switchRoom(result.room.id);toast('Sua sala está ao vivo!');
-      }catch(err){errorEl.textContent=err.message;}finally{btn.disabled=false;}
-    });n.input.focus();
-  }
-  function openRename(){
-    const body=modalBase('SUA IDENTIDADE','Como quer ser chamado?','Seu novo apelido aparecerá para as pessoas conectadas.');
-    const form=node('form');const f=field('APELIDO','Seu apelido',24,state.me.name);const btn=submit('Salvar apelido');const errorEl=errorPlace();form.append(f.wrap,btn,errorEl);body.append(form);
-    form.addEventListener('submit',async e=>{e.preventDefault();btn.disabled=true;try{
-      const result=await api('/api/profile',{method:'PATCH',body:{name:f.input.value}});state.me=result.me;updateMe();closeModal();toast('Apelido atualizado.');
-    }catch(err){errorEl.textContent=err.message;}finally{btn.disabled=false;}});f.input.focus();f.input.select();
-  }
-  function openEdit(m){
-    const body=modalBase('EDIÇÃO DE MENSAGEM','Ajustar mensagem.','Sua mensagem será atualizada para todos na sala.');
-    const form=node('form');const fieldWrap=node('div','modal-field');const label=node('label','','MENSAGEM');const input=node('textarea','modal-textarea');input.value=m.text;input.maxLength=1200;input.rows=5;input.required=true;label.append(input);fieldWrap.append(label);const btn=submit('Salvar mensagem');const err=errorPlace();form.append(fieldWrap,btn,err);body.append(form);
-    form.addEventListener('submit',async e=>{e.preventDefault();btn.disabled=true;try{
-      const room=m.roomId;const result=await api(`/api/rooms/${encodeURIComponent(room)}/messages/${encodeURIComponent(m.id)}`,{method:'PATCH',body:{text:input.value}});applyMessageUpdate(result.message);closeModal();toast('Mensagem editada.');
-    }catch(e){err.textContent=e.message;}finally{btn.disabled=false;}});input.focus();
-  }
-  async function deleteMessage(m){
-    if(!window.confirm('Apagar esta mensagem para todos nesta sala?'))return;
-    try{const result=await api(`/api/rooms/${encodeURIComponent(m.roomId)}/messages/${encodeURIComponent(m.id)}`,{method:'DELETE'});applyMessageUpdate(result.message);toast('Mensagem apagada.');}
-    catch(e){toast(e.message,true);}
-  }
-  async function shareRoom(){
-    if(!state.roomId)return;
-    const link=`${location.origin}${location.pathname}?room=${encodeURIComponent(state.roomId)}`;
-    try{await navigator.clipboard.writeText(link);toast('Link da sala copiado!');}
-    catch{window.prompt('Copie o link da sala:',link);}
-  }
-  async function logout(){
-    if(!window.confirm('Deseja sair? Seu histórico de mensagens continuará na sala.'))return;
-    try{await api('/api/logout',{method:'POST'});}catch(err){toast(err.message,true);return;}
-    if(state.source)state.source.close();window.location.href=location.pathname;
-  }
-  function wire() {
-    $('joinForm').addEventListener('submit',async e=>{
-      e.preventDefault();const btn=$('joinSubmit');btn.disabled=true;$('joinError').textContent='';
-      try{const result=await api('/api/session',{method:'POST',body:{name:$('joinName').value}});state.me=result.me;updateMe();
-        els.welcome.classList.add('hidden');await loadInitialRooms();els.messageInput.focus();
-      }catch(err){$('joinError').textContent=err.message;}finally{btn.disabled=false;}
-    });
-    els.messageForm.addEventListener('submit',sendMessage);
-    els.messageInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();els.messageForm.requestSubmit();}});
-    els.messageInput.addEventListener('input',()=>{
-      resizeComposer();const t=Date.now();if(!state.me||!state.roomId||!els.messageInput.value.trim()||t-state.lastTyping<1400)return;
-      state.lastTyping=t;api(`/api/rooms/${encodeURIComponent(state.roomId)}/typing`,{method:'POST',body:{}}).catch(()=>{});
-    });
-    document.querySelectorAll('.quick-emoji').forEach(b=>b.addEventListener('click',()=>{
-      const input=els.messageInput;const start=input.selectionStart,end=input.selectionEnd;
-      input.setRangeText(b.dataset.emoji,start,end,'end');input.focus();resizeComposer();
-    }));
-    $('cancelReply').addEventListener('click',clearReply);
-    $('loadMoreBtn').addEventListener('click',loadOlder);
-    $('jumpBottom').addEventListener('click',()=>scrollBottom(true));
-    els.chatContent.addEventListener('scroll',()=>{if(nearBottom())els.jumpBottom.classList.add('hidden');},{passive:true});
-    $('startTalkingBtn').addEventListener('click',()=>els.messageInput.focus());
-    $('shareBtn').addEventListener('click',shareRoom);
-    $('mobileMenuBtn').addEventListener('click',()=>selectSidebar(true));
-    $('sidebarShade').addEventListener('click',()=>selectSidebar(false));
-    $('infoToggle').addEventListener('click',()=>$('rightPane').classList.add('open'));
-    $('closeInfo').addEventListener('click',()=>$('rightPane').classList.remove('open'));
-    $('createRoomBtn').addEventListener('click',()=>{selectSidebar(false);openCreateRoom();});
-    $('profileBtn').addEventListener('click',()=>{$('profileMenu').classList.toggle('hidden');$('profileBtn').setAttribute('aria-expanded',String(!$('profileMenu').classList.contains('hidden')));});
-    $('renameBtn').addEventListener('click',()=>{$('profileMenu').classList.add('hidden');openRename();});
-    $('logoutBtn').addEventListener('click',()=>{$('profileMenu').classList.add('hidden');logout();});
-    $('modalClose').addEventListener('click',closeModal);
-    els.modal.addEventListener('click',e=>{if(e.target===els.modal)closeModal();});
-    document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeReactions();selectSidebar(false);$('rightPane').classList.remove('open');$('profileMenu').classList.add('hidden');}});
-    document.addEventListener('click',e=>{
-      if(!e.target.closest('.msg-actions'))closeReactions();
-      if(!e.target.closest('.profile-wrap'))$('profileMenu').classList.add('hidden');
-    });
-    window.addEventListener('pagehide',()=>state.source?.close());
-  }
-  async function boot() {
-    wire();
-    try{
-      const result=await api('/api/me');
-      if(!result.me){els.welcome.classList.remove('hidden');$('joinName').focus();return;}
-      state.me=result.me;updateMe();await loadInitialRooms();
-    }catch(err){toast(err.message,true);els.welcome.classList.remove('hidden');$('joinError').textContent='Verifique se o servidor está funcionando.';}
-  }
-  boot();
-})();
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.75.0/+esm';
+
+const SUPABASE_URL = 'https://trrakyybnvxpdhxwgjrz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_OJ4wBPPNVBBcrcNl12yonw_hRSlMKsZ'; // public, restricted by database RLS
+const db = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true } });
+const app = document.getElementById('app');
+const iconPaths = {
+ arrow:'<path d="M5 12h14m-7-7 7 7-7 7"/>',back:'<path d="M19 12H5m7 7-7-7 7-7"/>',home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+ bolt:'<path d="m13 2-9 11h7l-1 9 10-12h-7z"/>',heart:'<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0l-1 1-1-1a5.5 5.5 0 0 0-7.8 7.8l8.8 8.5 8.8-8.5a5.5 5.5 0 0 0 0-7.8z"/>',chat:'<path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.5a9 9 0 0 1-.9-4 8.5 8.5 0 0 1 8.5-8.5A8.5 8.5 0 0 1 21 11.5z"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',settings:'<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="m19.5 12 1.5-1.3-2-3.5-1.9.6a7 7 0 0 0-1.6-1L15 4h-4l-.5 2.8a7 7 0 0 0-1.6 1L7 7.2l-2 3.5L6.5 12 5 13.3l2 3.5 1.9-.6a7 7 0 0 0 1.6 1L11 20h4l.5-2.8a7 7 0 0 0 1.6-1l1.9.6 2-3.5z"/>',
+ exit:'<path d="M10 17l5-5-5-5m5 5H3m9-9h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/>',shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',send:'<path d="m22 2-7 20-4-9-9-4zM22 2 11 13"/>',close:'<path d="M18 6 6 18M6 6l12 12"/>',check:'<path d="m4 12 5 5L20 6"/>',chevron:'<path d="m9 18 6-6-6-6"/>',spark:'<path d="m12 2 2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z"/>',lock:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',trash:'<path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6M10 10v7m4-7v7"/>',edit:'<path d="m4 20 5-.8L20 8.2 15.8 4 4.8 15zM13 6.8l4.2 4.2"/>',volume:'<path d="M4 9h4l5-4v14l-5-4H4zM17 9a4 4 0 0 1 0 6"/>',star:'<path d="m12 2 3 6.7 7.3.7-5.5 4.8 1.7 7.2L12 17.5l-6.5 3.9 1.7-7.2-5.5-4.8L9 8.7z"/>'
+};
+const ico=(name, size=20)=>`<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name]||iconPaths.spark}</svg>`;
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nameOf=v=>String(v||'').trim().split(' ')[0]||'alguém';
+const genders={woman:'Mulher',man:'Homem',nonbinary:'Não binário',any:'Qualquer pessoa'};
+const initials=name=>String(name||'?').trim().split(/\s+/).slice(0,2).map(n=>[...n][0]).join('').toUpperCase();
+const colorFor=id=>['#eac8aa','#c9c1ef','#bed6c1','#e8c0c9','#dbdfac'][([...String(id||'')].reduce((n,c)=>n+c.charCodeAt(0),0))%5];
+const avatar=(person,size='')=>`<span class="avatar ${size}" style="background:${colorFor(person?.id)}">${esc(initials(person?.display_name))}</span>`;
+const brand=()=>`<a href="#" class="brand" data-action="logo" aria-label="entre. início"><span class="brand-glyph"><i></i><i></i></span><span>entre<span class="dot">.</span></span></a>`;
+const fmtTime=date=>new Date(date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+const fmtDate=date=>new Date(date).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+let toastTimer;
+function toast(message,error=false){const el=document.getElementById('toast');el.textContent=message;el.style.background=error?'#a64c40':'#272a25';el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),4700)}
+const state={mode:'landing',view:'home',session:null,profile:null,pairs:[],pair:null,peer:null,messages:[],searching:false,preference:'any',activeTab:'all',busy:false,roomReady:false,channel:null,searchLoop:null,timerLoop:null,closedOnce:null,modal:null,signup:null,motionOff:localStorage.getItem('entre.motionOff')==='1',notice:null};
+function applyMotion(){document.body.classList.toggle('motion-off',state.motionOff)}
+function infoError(e){const m=String(e?.message||e||'Não foi possível concluir. Tente novamente.');if(m.includes('Invalid login credentials'))return 'E-mail ou senha incorretos.';if(m.includes('Email not confirmed'))return 'Confirme seu e-mail antes de entrar.';if(m.includes('User already registered'))return 'Este e-mail já está cadastrado.';if(m.includes('Password should be at least'))return 'A senha precisa ter pelo menos 6 caracteres.';if(m.includes('rate limit'))return 'Muitas tentativas. Aguarde um pouco.';if(m.includes('Failed to fetch'))return 'Sem conexão com o servidor. Verifique sua internet.';return m}
+function landing(){const scrollWords=Array(2).fill('<span>UMA CONVERSA DE CADA VEZ</span><b>✳</b><span>05:00 MINUTOS</span><b>✳</b><span>SE OS DOIS QUISEREM, CONTINUA</span><b>✳</b>').join('');return `
+<header class="home-header"><div class="home-bar wrap">${brand()}<nav aria-label="Navegação"><a href="#como-funciona">Como funciona</a><a href="#experiencia">A experiência</a><a href="#manifesto">Nossa ideia</a></nav><div class="home-actions"><button class="ui-btn btn-quiet" data-action="login">Entrar</button><button class="ui-btn btn-dark btn-sm" data-action="signup">Criar conta ${ico('arrow',16)}</button></div></div></header>
+<main><section class="landing-hero"><div class="wrap hero-grid"><div class="hero-copy scene-enter"><span class="hero-kicker"><span class="spark">✳</span> Um jeito diferente de conhecer alguém</span><h1 class="hero-title">Pode ser<br>um simples <em>oi.</em><br>Pode ser tudo.</h1><p class="hero-text">Uma pessoa de cada vez. Cinco minutos de conversa ao vivo. Se a conexão for recíproca, vocês decidem continuar.</p><div class="hero-cta"><button class="ui-btn btn-dark" data-action="signup">Encontrar alguém ${ico('arrow',19)}</button><button class="ui-btn btn-quiet" data-action="how">Como funciona ${ico('chevron',14)}</button></div><div class="hero-foot"><span class="live-dot"></span> Sem deslizar perfis. Sem colecionar matches. Apenas conversa.</div></div><div class="hero-art" aria-label="Duas pessoas se conhecendo em cinco minutos"><div class="orbit"></div><div class="portrait portrait-a"><div class="portrait-inner"><span class="face"></span></div><div class="portrait-label">A outra pessoa <small>✷ online</small></div></div><div class="portrait portrait-b"><div class="portrait-inner"><span class="face"></span></div><div class="portrait-label">Você <small>✷ online</small></div></div><div class="hero-time"><strong>05:00</strong><span>TEMPO PRA SENTIR</span></div><div class="hero-match-note">se for dos dois...<b>continua ♡</b></div></div></div><div class="scroll-hint">Role para descobrir ${ico('arrow',14)}</div></section>
+<div class="ticker"><div class="ticker-track">${scrollWords}</div></div>
+<section class="section-pad how-section" id="como-funciona"><div class="wrap"><div class="section-intro"><div><span class="eyebrow">01 / Sem complicação</span><h2 class="section-title">Conhecer gente,<br><i>não colecionar perfis.</i></h2></div><p>Um sistema pensado para voltar à coisa mais natural do mundo: duas pessoas conversando e descobrindo se há sintonia.</p></div><div class="steps-grid"><article class="step-card"><span class="step-number">01 — VOCÊ ESCOLHE</span><span class="step-icon">${ico('user',33)}</span><h3>Seu tipo de conexão.</h3><p>Crie seu perfil, defina com quem deseja conversar e entre na busca com um toque.</p></article><article class="step-card"><span class="step-number">02 — ACONTECE AGORA</span><span class="step-icon">${ico('clock',34)}</span><h3>Cinco minutos reais.</h3><p>A gente conecta vocês em um chat privado por cinco minutos. É uma pessoa por vez.</p></article><article class="step-card"><span class="step-number">03 — DECISÃO DOS DOIS</span><span class="step-icon">${ico('heart',34)}</span><h3>Deu match? Fica.</h3><p>Vocês dois precisam escolher continuar. Só então a conversa fica salva para depois.</p></article></div></div></section>
+<section class="manifesto" id="experiencia"><div class="wrap manifesto-inner"><h2>Conexões de verdade não começam com um <em>algoritmo perfeito.</em><br>Começam com coragem.</h2><div class="caption"><strong>O que torna isso diferente</strong><p>Sem feed infinito, sem disputa por curtidas, sem grupos barulhentos. Um encontro novo, uma conversa reservada e a liberdade de escolher.</p><button class="ui-btn btn-coral" data-action="signup">Quero experimentar ${ico('arrow',18)}</button></div></div></section>
+<section class="section-pad" id="manifesto"><div class="wrap" style="text-align:center;max-width:840px"><span class="eyebrow">UM CONVITE SIMPLES</span><h2 class="section-title">E se os próximos <i>5 minutos</i><br>mudassem alguma coisa?</h2><p style="color:var(--mute);font-size:15px;line-height:1.8;margin:20px auto 30px">Uma nova pessoa, uma história inesperada, uma conversa que pode continuar — mas só se os dois quiserem.</p><button class="ui-btn btn-dark" data-action="signup">Criar minha conta ${ico('arrow',18)}</button></div></section></main>
+<footer class="home-footer"><div class="wrap footer-row">${brand()}<small>Feito para conversas que importam. © 2026 entre.</small><small>Experiência para maiores de 18 anos.</small></div></footer>`}
+function authView(){const signup=state.mode==='signup';const onboard=state.mode==='onboard';const reg=signup||onboard;const data=state.signup||{};return `<div class="auth-shell"><aside class="auth-visual">${brand()}<div><span class="eyebrow" style="color:#e9b49f">SEU PRÓXIMO OLÁ COMEÇA AQUI</span><h2>É sobre a pessoa <em>do outro lado.</em></h2></div><p class="legal-note">Uma conversa de cada vez. Uma escolha que é dos dois.</p><div class="auth-orbit"></div></aside><main class="auth-main"><div class="auth-card"><div class="hidden-mobile-brand">${brand()}</div>${onboard?'':`<button class="auth-back" data-action="landing">${ico('back',17)} Voltar ao início</button>`}<h1>${onboard?'Complete seu <em>perfil.</em>':signup?'Chegou a hora de <em>conectar.</em>':'Bom ter você <em>de volta.</em>'}</h1><p class="auth-sub">${onboard?'Só faltam alguns detalhes para começar a conhecer alguém.':signup?'Um perfil rápido. A próxima conversa pode começar hoje.':'Entre na sua conta e volte a fazer conexões.'}</p><div id="form-error" class="hidden form-error"></div><div id="form-success" class="hidden form-success"></div>
+<form id="authForm" data-form="${onboard?'profileSetup':signup?'signup':'login'}"><div class="form-grid">${reg?`<div class="field full"><label for="display_name">Como podemos chamar você?</label><input id="display_name" name="display_name" maxlength="42" minlength="2" required autocomplete="nickname" placeholder="Seu nome" value="${esc(data.display_name||'')}"></div>`:''}${!onboard?`<div class="field full"><label for="email">E-mail</label><input id="email" name="email" type="email" autocomplete="email" required placeholder="voce@exemplo.com"></div><div class="field full"><label for="password">Senha</label><input id="password" name="password" type="password" minlength="6" autocomplete="${signup?'new-password':'current-password'}" required placeholder="Mínimo de 6 caracteres"></div>`:''}${reg?`<div class="field"><label for="age">Sua idade</label><input id="age" name="age" type="number" min="18" max="100" required placeholder="18+" value="${esc(data.age||'')}"></div><div class="field"><label for="gender">Você se identifica como</label><select id="gender" name="gender" required>${options({woman:'Mulher',man:'Homem',nonbinary:'Não binário'},data.gender||'')}</select></div><div class="field full"><label for="preference">Com quem quer conversar?</label><select id="preference" name="preference" required>${options({any:'Qualquer pessoa',woman:'Mulheres',man:'Homens',nonbinary:'Pessoas não binárias'},data.preference||'any')}</select></div>`:''}</div>${reg?`<label class="checkbox-line"><input type="checkbox" name="adult" required><span>Confirmo que tenho 18 anos ou mais e concordo em participar de conversas respeitosas.</span></label>`:''}<button class="ui-btn btn-dark" type="submit" id="authSubmit">${onboard?'Finalizar meu perfil':signup?'Criar minha conta':'Entrar na minha conta'} ${ico('arrow',18)}</button></form>${!onboard?`<div class="auth-switch">${signup?'Já tem conta?':'Ainda não tem conta?'} <button class="text-link" data-action="${signup?'login':'signup'}">${signup?'Entrar':'Criar conta'}</button></div>`:''}<p class="legal-note" style="margin-top:29px">Seus dados de perfil são usados para realizar conexões. Não compartilhe dados sensíveis nos chats. A idade é autodeclarada.</p></div></main></div>`}
+function options(dict,selected){return Object.entries(dict).map(([key,value])=>`<option value="${key}" ${selected===key?'selected':''}>${esc(value)}</option>`).join('')}
+const tabs=[['home','Início','home'],['connect','Conectar','bolt'],['conversations','Conversas','chat'],['profile','Meu perfil','user'],['settings','Ajustes','settings']];
+function navButton(view,label,icon,mobile=false){return `<button data-action="nav" data-view="${view}" class="${mobile?'':'nav-item '}${state.view===view?'active':''}" title="${label}" ${state.view===view?'aria-current="page"':''}>${ico(icon)}<span>${label}</span>${!mobile&&view==='conversations'&&state.pairs.filter(p=>p.status==='connected').length?`<span class="count">${state.pairs.filter(p=>p.status==='connected').length}</span>`:''}</button>`}
+function appLayout(){const label=tabs.find(t=>t[0]===state.view)?.[1]||'Início';return `<div class="app-shell"><aside class="sidebar"><div class="sidebar-top">${brand()}</div><div class="sidebar-title">Seu espaço</div><nav class="nav-stack" aria-label="Seções">${tabs.map(t=>navButton(...t)).join('')}</nav><div class="side-bottom"><div class="side-status"><span class="live-dot"></span> Sua próxima conexão está por aqui.</div><div class="my-identity">${avatar(state.profile)}<div style="min-width:0;flex:1"><strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(state.profile.display_name)}</strong><small>Minha conta</small></div><button class="ui-btn btn-quiet" title="Sair" aria-label="Sair" data-action="logout">${ico('exit',17)}</button></div></div></aside><main class="app-main"><div class="app-toolbar"><h1>${label}<span class="dot">.</span></h1><div class="toolbar-right"><span class="toolbar-pill"><span class="live-dot"></span> CONEXÕES REAIS</span>${avatar(state.profile)}</div></div><div id="view-content" class="scene-enter">${viewContent()}</div></main><nav class="mobile-nav" aria-label="Navegação principal">${tabs.map(t=>navButton(...t,true)).join('')}</nav></div>${state.modal?modalView():''}`}
+function heading(kicker,title,detail=''){return `<div class="app-heading"><span class="eyebrow">${kicker}</span><h2>${title}</h2><p>${detail}</p></div>`}
+function viewContent(){return ({home:dashboard,connect:connectView,conversations:conversationsView,profile:profileView,settings:settingsView}[state.view]||dashboard)()}
+function dashboard(){const saved=state.pairs.filter(p=>p.status==='connected');return `${heading('O INÍCIO DE ALGO NOVO',`Olá, ${esc(nameOf(state.profile.display_name))}<em>.</em>`,'Sua próxima conversa pode acontecer agora. Sem pressa, sem filtros infinitos — só a chance de conhecer alguém novo.')}
+<div class="dash-grid"><div class="dash-hero"><span class="pill" style="color:#e6f1c3;border-color:#ffffff45"><span class="live-dot"></span> UMA CONVERSA POR VEZ</span><div><h3>O próximo <em>oi</em> pode virar uma história.</h3><p>Escolha com quem conversar. Conheça alguém durante 5 minutos. O resto é uma escolha dos dois.</p></div><button class="ui-btn btn-coral" data-action="nav" data-view="connect">Conectar agora ${ico('arrow')}</button></div><div class="insight-card"><span class="eyebrow">COMO VOCÊ SE CONECTA</span><div class="insight-dial"></div><div><h3>Uma chance real. <br>Nada de rolar sem fim.</h3><p>Match não é curtida. É quando duas pessoas querem continuar.</p></div></div></div><section class="sub-section"><div style="display:flex;justify-content:space-between;align-items:center"><h3>Suas conexões</h3><button class="ui-btn btn-quiet btn-sm" data-action="nav" data-view="conversations">Ver conversas ${ico('arrow',15)}</button></div>${saved.length?`<div class="convo-list">${saved.slice(0,3).map(renderConversationRow).join('')}</div>`:emptyConvos()}</section>`}
+function emptyConvos(){return `<div class="empty-list">${ico('heart',31)}<h4>Você ainda não tem conexões salvas.</h4><p>Quando os dois escolherem continuar, a conversa aparece aqui.</p><button class="ui-btn btn-outline btn-sm" data-action="nav" data-view="connect">Encontrar alguém ${ico('arrow',16)}</button></div>`}
+function renderConversationRow(pair){const other=state.pairsProfiles?.[pair.id]||{display_name:'Sua conexão',id:pair.a===state.session?.user.id?pair.b:pair.a};return `<button class="convo-card" data-action="openpair" data-id="${pair.id}">${avatar(other)}<div><strong>${esc(other.display_name)}</strong><p>${pair.status==='connected'?'Conexão recíproca · conversa liberada':'Conversa de 5 minutos'}</p></div><div class="right">${ico('chevron')}</div></button>`}
+function connectView(){if(state.pair&&(state.pair.status==='active'||state.pair.status==='connected'))return pairView();const waiting=state.searching;return `${heading('UMA PESSOA POR VEZ','Encontrar <em>alguém.</em>','Diga quem gostaria de conhecer e comece. Quando houver outra pessoa compatível na fila, a conversa abre automaticamente.')}
+<div class="connect-panel"><div class="filter-bar"><h3>Quero conversar com</h3><div class="filters">${Object.entries({any:'Qualquer pessoa',woman:'Mulheres',man:'Homens',nonbinary:'Não binárias'}).map(([k,v])=>`<button ${waiting?'disabled':''} data-action="filter" data-value="${k}" class="chip ${state.preference===k?'active':''}">${v}</button>`).join('')}</div></div><div class="stage"><div class="stage-art ${waiting?'searching':''}"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="center-icon">${waiting?'↝':'e'}</div></div><span class="searching-status"><span class="live-dot"></span> ${waiting?'BUSCANDO UMA CONEXÃO COMPATÍVEL':'PRONTO QUANDO VOCÊ ESTIVER'}</span><h2>${waiting?'Talvez seja agora.':'O próximo oi começa aqui.'}</h2><p>${waiting?'Procurando alguém que também queira se conectar. Mantenha esta aba aberta; nada é simulado.':'Você vai conversar com uma pessoa por cinco minutos. Se os dois quiserem continuar, o chat fica salvo.'}</p><button class="ui-btn ${waiting?'btn-outline':'btn-dark'}" data-action="${waiting?'cancelsearch':'startsearch'}">${waiting?`${ico('close',18)} Cancelar busca`:`${ico('bolt',18)} Começar a conectar`}</button></div></div>`}
+function pairView(){const pair=state.pair, peer=state.peer||{display_name:'Nova conexão',id:pair.a===state.session?.user.id?pair.b:pair.a},connected=pair.status==='connected',meIsA=pair.a===state.session.user.id,ownVote=meIsA?pair.a_wants:pair.b_wants,otherVote=meIsA?pair.b_wants:pair.a_wants;const canChat=connected||new Date(pair.expires_at).getTime()>Date.now();return `${heading(connected?'A CONEXÃO É RECÍPROCA':'AGORA É ENTRE VOCÊS DOIS',connected?'Vocês escolheram <em>continuar.</em>':'A conversa <em>começou.</em>',connected?'O chat está liberado. Esta conexão agora fica nas suas conversas.':'Cinco minutos para se conhecer. Se os dois escolherem continuar, a conversa se torna permanente.')}
+<div class="pair-card"><div class="pair-topbar"><div class="pair-partner">${avatar(peer)}<div><strong>${esc(peer.display_name)}${peer.age?`, ${peer.age}`:''}</strong><small>${connected?'♡ Conexão salva':'Conversa temporária'}</small></div></div><div style="display:flex;gap:8px;align-items:center">${connected?`<span class="pill">${ico('check',15)} Match mútuo</span>`:`<span class="pair-timer timer-text">05:00</span>`}<button class="ui-btn btn-quiet" title="Bloquear pessoa" aria-label="Bloquear pessoa" data-action="block">${ico('shield',17)}</button></div></div><div class="pair-banner">${ico('lock',15)} ${connected?'Só vocês podem acessar esta conversa.':'Conversa exclusiva entre duas pessoas · 5 minutos para decidir'}</div><div id="messageList" class="pair-messages" aria-label="Mensagens da conversa">${messagesMarkup(peer)}</div>${canChat?`<form id="messageForm" class="chat-form"><label class="sr-only" for="messageInput">Escreva sua mensagem</label><input autocomplete="off" id="messageInput" maxlength="1500" placeholder="Diga alguma coisa legal..." required><button type="submit" class="ui-btn btn-dark" title="Enviar mensagem" aria-label="Enviar mensagem">${ico('send')}</button></form>`:`<div class="pair-banner">Este encontro terminou.</div>`}${connected?'':`<div class="decision-bar"><div><strong>Quer continuar conversando?</strong><p>${ownVote===true?'Sua escolha foi registrada. Aguardando a outra pessoa.':otherVote===true?'A outra pessoa já escolheu. E você?':'Só vira conexão se os dois disserem sim.'}</p></div><div class="buttons">${ownVote===true?`<span class="decision-note">${ico('clock',15)} Aguardando resposta</span>`:`<button class="ui-btn btn-outline btn-sm" data-action="vote" data-value="no">Agora não ${ico('close',15)}</button><button class="ui-btn btn-dark btn-sm" data-action="vote" data-value="yes">Quero continuar ${ico('heart',15)}</button>`}</div></div>`}</div><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin:17px 4px"><small style="color:#a29d93">${connected?'Conversa salva até que a conexão seja encerrada.':'A contagem começa quando vocês são conectados.'}</small><button class="ui-btn btn-quiet btn-sm" data-action="${connected?'nav':'endpair'}" data-view="conversations">${connected?'Minhas conversas':'Encerrar encontro'} ${ico('chevron',14)}</button></div>`}
+function messagesMarkup(peer){if(!state.messages.length)return `<div class="chat-intro">${avatar(peer,'large')}<strong>Vocês estão conectados.</strong>Uma mensagem pode ser o começo de alguma coisa. Que tal dizer oi?</div>`;return state.messages.map(m=>{const mine=m.sender_id===state.session?.user.id;return `<div class="bubble-row ${mine?'mine':'theirs'}"><div class="bubble">${esc(m.body)}<time class="bubble-time">${fmtTime(m.created_at)}</time></div></div>`}).join('')}
+function conversationsView(){const pairs=state.pairs.filter(p=>p.status==='connected');return `${heading('SINTONIA RECÍPROCA','Suas <em>conversas.</em>','Aqui ficam as conexões em que vocês dois escolheram continuar. Nada de matches unilaterais.')}${pairs.length?`<div class="convo-list">${pairs.map(renderConversationRow).join('')}</div>`:emptyConvos()}`}
+function profileView(){const p=state.profile;return `${heading('É SOBRE QUEM VOCÊ É','Meu <em>perfil.</em>','É assim que a outra pessoa vai conhecer você depois de uma conexão.')}
+<div class="profile-layout"><div class="profile-preview">${avatar(p,'xlarge')}<h3>${esc(p.display_name)}, ${p.age}</h3><p>${esc(p.bio||'Uma conversa de cada vez. Vamos nos conhecer?')}</p><span class="pill">${ico('user',15)} ${esc(genders[p.gender])}</span></div><div class="form-panel"><h3>Editar perfil</h3><form id="profileForm"><div class="form-grid"><div class="field full"><label for="myname">Nome exibido</label><input id="myname" name="display_name" minlength="2" maxlength="42" required value="${esc(p.display_name)}"></div><div class="field"><label for="myage">Idade</label><input id="myage" name="age" type="number" min="18" max="100" required value="${p.age}"></div><div class="field"><label for="mygender">Identidade</label><select id="mygender" name="gender">${options({woman:'Mulher',man:'Homem',nonbinary:'Não binário'},p.gender)}</select></div><div class="field full"><label for="mypref">Preferência de busca</label><select id="mypref" name="preference">${options({any:'Qualquer pessoa',woman:'Mulheres',man:'Homens',nonbinary:'Não binárias'},p.preference)}</select></div><div class="field full"><label for="mybio">Sobre você</label><textarea id="mybio" name="bio" maxlength="220" placeholder="Conta algo interessante sobre você...">${esc(p.bio||'')}</textarea><small>Até 220 caracteres. Não informe dados pessoais.</small></div></div><button type="submit" class="ui-btn btn-dark">Salvar alterações ${ico('check',17)}</button></form></div></div>`}
+function settingsView(){return `${heading('VOCÊ NO CONTROLE','Configurações<em>.</em>','Seu espaço, suas preferências e o controle da sua experiência.')}
+<div class="settings-card"><h3>Preferências</h3><div class="setting-row"><div><strong>Reduzir animações</strong><p>Desativa movimentos e transições para uma experiência mais tranquila.</p></div><button type="button" class="toggle ${state.motionOff?'on':''}" data-action="motion" aria-label="Ativar ou desativar redução de animações" aria-pressed="${state.motionOff}"></button></div><div class="setting-row"><div><strong>Quem você procura</strong><p>${esc(genders[state.profile.preference])} — altere seu filtro na área de perfil.</p></div><button class="ui-btn btn-outline btn-sm" data-action="nav" data-view="profile">Editar ${ico('edit',15)}</button></div></div>
+<div class="settings-card"><h3>Sessão e privacidade</h3><div class="setting-row"><div><strong>Conta conectada</strong><p>${esc(state.session.user.email)}</p></div><span class="pill">${ico('shield',15)} Protegida</span></div><div class="setting-row"><div><strong>Sair da conta</strong><p>Encerra sua sessão neste dispositivo.</p></div><button class="ui-btn btn-outline btn-sm" data-action="logout">${ico('exit',16)} Sair</button></div><div class="danger-zone"><strong>Excluir meu perfil do entre.</strong><p>Remove definitivamente seu perfil, mensagens e conexões deste aplicativo. O cadastro de autenticação compartilhado com outros produtos no mesmo servidor não será excluído.</p><button class="ui-btn btn-danger btn-sm" data-action="delete1">${ico('trash',15)} Excluir meus dados</button></div></div>`}
+function modalView(){const m=state.modal;if(!m)return '';const del=m==='delete1'||m==='delete2';return `<div class="modal-backdrop" id="modalBackdrop"><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><h2 id="modalTitle">${m==='delete1'?'Excluir seus dados?':m==='delete2'?'Confirma a exclusão?':m==='block'?'Bloquear esta pessoa?':'Encerrar encontro?'}</h2><p>${m==='delete1'?'Seu perfil, suas conversas e suas conexões deste aplicativo serão removidos permanentemente. Isso também pode apagar mensagens compartilhadas com outras pessoas.':m==='delete2'?'Esta é a confirmação final. Digite EXCLUIR abaixo. O login do servidor compartilhado continuará existindo, mas sua conta no entre. não.':m==='block'?'Vocês não serão conectados de novo por este sistema. A conversa temporária será encerrada.':'Este encontro será encerrado, e mensagens temporárias serão descartadas.'}</p>${m==='delete2'?`<div class="field"><label for="deleteConfirm">Digite EXCLUIR para confirmar</label><input id="deleteConfirm" autocomplete="off" placeholder="EXCLUIR"></div>`:''}<div class="modal-actions"><button class="ui-btn btn-outline btn-sm" data-action="closemodal">Cancelar</button><button class="ui-btn ${del?'btn-danger':'btn-dark'} btn-sm" data-action="${m==='delete1'?'delete2':m==='delete2'?'deleteFinal':m==='block'?'blockFinal':'endpairFinal'}">${del?'Excluir':'Confirmar'} ${ico('arrow',15)}</button></div></div></div>`}
+function render(){applyMotion();if(!state.session){app.innerHTML=state.mode==='login'||state.mode==='signup'?authView():landing()}else if(!state.profile){state.mode='onboard';app.innerHTML=authView()}else{app.innerHTML=appLayout();updateTimerText()}if(state.view==='connect'&&state.pair){const el=document.getElementById('messageList');if(el)el.scrollTop=el.scrollHeight}}
+function renderView(){if(state.session&&state.profile){const el=document.getElementById('view-content');if(el){el.innerHTML=viewContent();updateTimerText();const m=document.getElementById('messageList');if(m)m.scrollTop=m.scrollHeight}}}
+function showFormMessage(msg,success=false){const id=success?'form-success':'form-error';const target=document.getElementById(id);if(target){target.classList.remove('hidden');target.textContent=msg}}
+function busy(btn,value){if(btn){btn.disabled=value;btn.dataset.oldLabel ||= btn.innerHTML;if(value)btn.textContent='Só um instante...';else btn.innerHTML=btn.dataset.oldLabel}}
+async function getProfile(){const uid=state.session?.user.id;if(!uid)return null;const {data,error}=await db.from('entre_profiles').select('*').eq('id',uid).maybeSingle();if(error)throw error;return data}
+async function loadPairs(){if(!state.session||!state.profile)return;const uid=state.session.user.id;const {data,error}=await db.from('entre_pairs').select('*').or(`a.eq.${uid},b.eq.${uid}`).in('status',['active','connected']).order('created_at',{ascending:false}).limit(50);if(error)throw error;state.pairs=data||[];const ids=[...new Set(state.pairs.map(p=>p.a===uid?p.b:p.a))];state.pairsProfiles={};if(ids.length){const {data:profiles}=await db.from('entre_profiles').select('id,display_name,age,bio,gender').in('id',ids);for(const pair of state.pairs){state.pairsProfiles[pair.id]=profiles?.find(p=>p.id===(pair.a===uid?pair.b:pair.a))||{id:pair.a===uid?pair.b:pair.a,display_name:'Conta indisponível'}}}return state.pairs}
+async function initializeAccount(){state.profile=await getProfile();state.pair=null;state.peer=null;state.searching=false;state.messages=[];if(state.profile){state.preference=state.profile.preference;await loadPairs();const active=state.pairs.find(p=>p.status==='active'&&new Date(p.expires_at)>Date.now());if(active){state.pair=active;state.peer=state.pairsProfiles[active.id]||null;state.view='connect';await loadMessages();subscribePair(active.id)}}render()}
+async function signIn(form){const submit=form.querySelector('[type=submit]');busy(submit,true);try{const email=form.email.value.trim(),password=form.password.value;const {data,error}=await db.auth.signInWithPassword({email,password});if(error)throw error;state.session=data.session;state.mode='app';state.view='home';await initializeAccount();toast('Que bom ter você de volta!')}catch(e){showFormMessage(infoError(e))}finally{busy(submit,false)}}
+function getProfileData(form){return {display_name:form.display_name.value.trim(),age:Number(form.age.value),gender:form.gender.value,preference:form.preference.value}}
+async function signup(form){const submit=form.querySelector('[type=submit]');busy(submit,true);try{const profile=getProfileData(form);if(!form.adult.checked||profile.age<18||profile.age>100)throw Error('Para participar é necessário ter pelo menos 18 anos.');state.signup=profile;sessionStorage.setItem('entre.pendingProfile',JSON.stringify(profile));const {data,error}=await db.auth.signUp({email:form.email.value.trim(),password:form.password.value});if(error)throw error;if(data.session){state.session=data.session;await createProfile(profile);await initializeAccount();toast('Conta criada! Agora você pode conectar.')}else{showFormMessage('Conta criada! Confira sua caixa de entrada e confirme o e-mail. Depois volte e entre na sua conta.',true)}}catch(e){showFormMessage(infoError(e))}finally{busy(submit,false)}}
+async function createProfile(data){const {error}=await db.from('entre_profiles').upsert({id:state.session.user.id,display_name:data.display_name,age:data.age,gender:data.gender,preference:data.preference},{onConflict:'id'});if(error)throw error;sessionStorage.removeItem('entre.pendingProfile')}
+async function profileSetup(form){const submit=form.querySelector('[type=submit]');busy(submit,true);try{const profile=getProfileData(form);if(!form.adult.checked||profile.age<18)throw Error('Você deve ter pelo menos 18 anos.');await createProfile(profile);state.view='home';await initializeAccount();toast('Perfil concluído. Bem-vindo ao entre.!')}catch(e){showFormMessage(infoError(e))}finally{busy(submit,false)}}
+async function saveProfile(form){const submit=form.querySelector('[type=submit]');busy(submit,true);try{const p=getProfileData(form);const {data,error}=await db.from('entre_profiles').update({...p,bio:form.bio.value.trim(),updated_at:new Date().toISOString()}).eq('id',state.session.user.id).select('*').single();if(error)throw error;state.profile=data;state.preference=data.preference;render();toast('Perfil atualizado!')}catch(e){toast(infoError(e),true)}finally{busy(submit,false)}}
+function clearSearchTimer(){if(state.searchLoop){clearInterval(state.searchLoop);state.searchLoop=null}}
+async function startSearch(){if(!state.session||!state.profile)return;state.searching=true;state.pair=null;state.peer=null;state.view='connect';render();await pollSearch();if(state.searching&&!state.searchLoop)state.searchLoop=setInterval(pollSearch,3500)}
+let polling=false;
+async function pollSearch(){if(polling||!state.searching)return;polling=true;try{const {data,error}=await db.rpc('entre_find',{_preference:state.preference});if(error)throw error;if(data?.status==='matched'&&data.pair_id){state.searching=false;clearSearchTimer();await openPair(data.pair_id);toast('Você encontrou uma conexão!')}}catch(e){toast(infoError(e),true);state.searching=false;clearSearchTimer();renderView()}finally{polling=false}}
+async function cancelSearch(){state.searching=false;clearSearchTimer();try{const {error}=await db.rpc('entre_leave');if(error)throw error}catch(e){toast(infoError(e),true)}renderView()}
+async function openPair(id){const {data,error}=await db.from('entre_pairs').select('*').eq('id',id).single();if(error)throw error;if(data.status==='closed'||(data.status==='active'&&new Date(data.expires_at)<=Date.now())){toast('Este encontro já terminou.');state.pair=null;state.peer=null;state.view='conversations';render();return}state.pair=data;state.searching=false;clearSearchTimer();const other=data.a===state.session.user.id?data.b:data.a;const {data:profile}=await db.from('entre_profiles').select('id,display_name,age,bio,gender').eq('id',other).maybeSingle();state.peer=profile||{id:other,display_name:'Esta pessoa'};state.view='connect';await loadMessages();subscribePair(id);render()}
+async function loadMessages(){if(!state.pair)return;const {data,error}=await db.from('entre_messages').select('id,body,sender_id,created_at').eq('pair_id',state.pair.id).order('id',{ascending:true}).limit(250);if(error){console.warn(error);return}state.messages=data||[]}
+function subscribePair(id){if(state.channel){db.removeChannel(state.channel);state.channel=null}state.channel=db.channel(`entre_pair_${id}_${Math.random().toString(36).slice(2,7)}`).on('postgres_changes',{event:'INSERT',schema:'public',table:'entre_messages',filter:`pair_id=eq.${id}`},async()=>{if(state.pair?.id===id){await loadMessages();renderView()}}).on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_pairs',filter:`id=eq.${id}`},async()=>{if(state.pair?.id===id)await refreshPair()}).subscribe()}
+async function refreshPair(){if(!state.pair)return;const id=state.pair.id;const {data,error}=await db.from('entre_pairs').select('*').eq('id',id).maybeSingle();if(error)return;if(!data||data.status==='closed'){state.pair=null;state.messages=[];state.peer=null;state.view='connect';if(state.channel){db.removeChannel(state.channel);state.channel=null}render();toast('Este encontro foi encerrado.');return}const oldStatus=state.pair.status;state.pair=data;if(data.status==='connected'&&oldStatus!=='connected'){toast('Os dois disseram sim! Conexão salva. ♡');await loadPairs()}renderView()}
+async function sendMessage(form){if(!state.pair)return;const input=form.querySelector('#messageInput');const body=input.value.trim();if(!body)return;input.value='';const {data,error}=await db.from('entre_messages').insert({pair_id:state.pair.id,sender_id:state.session.user.id,body}).select('id,body,sender_id,created_at').single();if(error){input.value=body;toast(infoError(error),true);return}if(!state.messages.some(m=>m.id===data.id)){state.messages.push(data);renderView()}setTimeout(()=>document.getElementById('messageInput')?.focus(),0)}
+async function vote(accept){if(!state.pair)return;try{const {data,error}=await db.rpc('entre_vote',{_pair:state.pair.id,_accept:accept});if(error)throw error;if(data==='closed'){state.pair=null;state.peer=null;state.messages=[];await loadPairs();render();toast('Conversa encerrada. Você pode conhecer outra pessoa.');return}await refreshPair();if(accept&&data==='active')toast('Sua escolha foi registrada. Falta a outra pessoa.')}catch(e){toast(infoError(e),true)}}
+async function endPair(){if(!state.pair)return;try{const {error}=await db.rpc('entre_close',{_pair:state.pair.id});if(error)throw error;state.pair=null;state.messages=[];state.peer=null;state.modal=null;if(state.channel){db.removeChannel(state.channel);state.channel=null}await loadPairs();state.view='connect';render();toast('Encontro encerrado.')}catch(e){toast(infoError(e),true)}}
+async function blockPartner(){if(!state.peer)return;try{const {error}=await db.rpc('entre_block',{_user:state.peer.id});if(error)throw error;state.modal=null;state.pair=null;state.peer=null;state.messages=[];await loadPairs();state.view='connect';render();toast('Pessoa bloqueada. Vocês não serão reconectados.')}catch(e){toast(infoError(e),true)}}
+async function logout(){try{if(state.searching)await db.rpc('entre_leave');clearSearchTimer();if(state.channel){await db.removeChannel(state.channel);state.channel=null}const {error}=await db.auth.signOut({scope:'local'});if(error)throw error;state.session=null;state.profile=null;state.pair=null;state.peer=null;state.pairs=[];state.searching=false;state.mode='landing';state.view='home';render();toast('Você saiu da conta.')}catch(e){toast(infoError(e),true)}}
+async function deleteData(){const val=document.getElementById('deleteConfirm')?.value||'';if(val!=='EXCLUIR'){toast('Digite EXCLUIR para confirmar.',true);return}try{const {error}=await db.rpc('entre_delete_my_profile');if(error)throw error;state.modal=null;await logout();toast('Seus dados do entre. foram excluídos.')}catch(e){toast(infoError(e),true)}}
+function updateTimerText(){if(!state.pair||state.pair.status!=='active')return;const seconds=Math.max(0,Math.ceil((new Date(state.pair.expires_at).getTime()-Date.now())/1000));const mm=String(Math.floor(seconds/60)).padStart(2,'0'),ss=String(seconds%60).padStart(2,'0');document.querySelectorAll('.timer-text').forEach(el=>{el.textContent=`${mm}:${ss}`;el.classList.toggle('urgent',seconds<=30)});if(seconds===0&&state.closedOnce!==state.pair.id){state.closedOnce=state.pair.id;db.rpc('entre_close',{_pair:state.pair.id}).then(()=>refreshPair()).catch(()=>{})}}
+function nav(view){state.view=view;if(view!=='connect'&&state.pair?.status==='active'){toast('Sua conversa de 5 minutos continua ativa na aba Conectar.')}render();window.scrollTo({top:0,behavior:state.motionOff?'instant':'smooth'})}
+function scrollHow(){document.getElementById('como-funciona')?.scrollIntoView({behavior:'smooth'})}
+async function clickAction(event){const btn=event.target.closest('[data-action]');if(!btn||btn.disabled)return;const action=btn.dataset.action;try{switch(action){case'logo':event.preventDefault();if(state.session&&state.profile)nav('home');else{state.mode='landing';render()}break;case'landing':state.mode='landing';render();break;case'how':scrollHow();break;case'login':state.mode='login';render();break;case'signup':state.mode='signup';render();break;case'nav':nav(btn.dataset.view);break;case'filter':state.preference=btn.dataset.value;renderView();break;case'startsearch':await startSearch();break;case'cancelsearch':await cancelSearch();break;case'openpair':await openPair(btn.dataset.id);break;case'vote':await vote(btn.dataset.value==='yes');break;case'endpair':state.modal='endpair';render();break;case'endpairFinal':await endPair();break;case'block':state.modal='block';render();break;case'blockFinal':await blockPartner();break;case'closemodal':state.modal=null;render();break;case'logout':await logout();break;case'motion':state.motionOff=!state.motionOff;localStorage.setItem('entre.motionOff',state.motionOff?'1':'0');render();break;case'delete1':state.modal='delete1';render();break;case'delete2':state.modal='delete2';render();break;case'deleteFinal':await deleteData();break;default:break}}catch(e){toast(infoError(e),true)}}
+document.addEventListener('click',clickAction);
+document.addEventListener('submit',async e=>{const form=e.target;if(!(form instanceof HTMLFormElement))return;e.preventDefault();const name=form.id;try{if(name==='authForm'){if(form.dataset.form==='signup')await signup(form);else if(form.dataset.form==='login')await signIn(form);else await profileSetup(form)}else if(name==='profileForm')await saveProfile(form);else if(name==='messageForm')await sendMessage(form)}catch(err){toast(infoError(err),true)}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal){state.modal=null;render()}});
+window.addEventListener('beforeunload',()=>{if(state.searching)db.rpc('entre_leave').catch(()=>{})});
+async function boot(){state.signup=(()=>{try{return JSON.parse(sessionStorage.getItem('entre.pendingProfile')||'null')}catch{return null}})();applyMotion();try{const {data,error}=await db.auth.getSession();if(error)throw error;if(data.session){state.session=data.session;state.mode='app';await initializeAccount()}else render();db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'&&state.session){state.session=null;state.profile=null;state.mode='landing';render()}});state.timerLoop=setInterval(updateTimerText,1000);setInterval(async()=>{if(state.session?.user&&state.pair&&document.visibilityState==='visible'){await refreshPair()}},12000)}catch(e){render();toast('Não foi possível conectar ao serviço. Recarregue a página para tentar novamente.',true);console.error(e)}}
+boot();
