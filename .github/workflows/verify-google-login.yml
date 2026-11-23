@@ -1,13 +1,15 @@
-name: Validate entre. Google login
+name: Validate entre. Email Login
 
 on:
   push:
     branches: [main]
     paths:
-      - 'app.js'
       - 'docs/app.js'
-      - 'styles.css'
+      - 'docs/email-auth.js'
+      - 'docs/index.html'
+      - 'docs/admin/app.js'
       - 'docs/styles.css'
+      - 'tests/email-auth-regression.test.mjs'
       - '.github/workflows/verify-google-login.yml'
   workflow_dispatch:
 
@@ -19,36 +21,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check JavaScript syntax
+      - name: Validate JavaScript syntax
         run: |
-          node --check app.js
           node --check docs/app.js
-      - name: Assert Google-only frontend authentication
+          node --check docs/email-auth.js
+          node --check docs/admin/app.js
+      - name: Confirm site has only Supabase email and password login
         run: |
           node - <<'NODE'
           const fs = require('node:fs');
-          for (const name of ['app.js','docs/app.js']) {
-            const code=fs.readFileSync(name,'utf8');
-            if (!code.includes("signInWithOAuth({provider:'google'")) throw Error(name+': Google OAuth missing');
-            for (const invalid of ['signInWithPassword','db.auth.signUp(', 'name="password"','name="email"']) {
-              if(code.includes(invalid)) throw Error(name+': deprecated credential flow detected: '+invalid);
-            }
+          const app = fs.readFileSync('docs/app.js','utf8');
+          const admin = fs.readFileSync('docs/admin/app.js','utf8');
+          const auth = fs.readFileSync('docs/email-auth.js','utf8');
+          const html = fs.readFileSync('docs/index.html','utf8');
+          if (!html.includes('./email-auth.js')) throw Error('Email auth module not loaded');
+          for (const [name,source] of [['app',app],['admin',admin]]) {
+            if (/signInWithOAuth|data-action="google"|google-login/.test(source)) throw Error(name+': old Google login still present');
           }
-          console.log('Google OAuth is the only sign-in route in the frontend');
+          for (const keyword of ['auth.signUp(', 'auth.signInWithPassword(', 'auth.resetPasswordForEmail(', 'auth.updateUser(']) {
+            if (!auth.includes(keyword)) throw Error('Missing email auth flow: '+keyword);
+          }
+          if (!admin.includes('entre_admin_check') || !admin.includes('signInWithPassword')) throw Error('Admin email auth missing');
+          console.log('Email/password frontend and admin access verified.');
           NODE
-      - name: Check live Google OAuth provider (must redirect to Google)
-        shell: bash
-        run: |
-          status=$(curl -sS --max-time 20 -o /tmp/oauth-response -D /tmp/oauth-headers -w '%{http_code}' -G \
-            'https://trrakyybnvxpdhxwgjrz.supabase.co/auth/v1/authorize' \
-            --data-urlencode 'provider=google' \
-            --data-urlencode 'redirect_to=https://appswebb.github.io/testesite/') || status="NETWORK_ERROR"
-          if grep -qiE '^location:[[:space:]]*https://accounts.google.com/' /tmp/oauth-headers 2>/dev/null; then
-            echo '✅ Google OAuth enabled: Supabase successfully redirects to accounts.google.com'
-          else
-            echo "::error::Google OAuth is NOT ready (HTTP $status). Check Authentication > Providers > Google, Google OAuth credentials and redirect URLs."
-            if grep -qi 'provider is not enabled' /tmp/oauth-response 2>/dev/null; then
-              echo "::error::Supabase returned: provider is not enabled. Enable Google provider; changing URLs alone will not fix it."
-            fi
-            exit 1
-          fi
+      - name: Run email authentication regression tests
+        run: node --test tests/email-auth-regression.test.mjs
