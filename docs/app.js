@@ -27,7 +27,16 @@ let toastTimer;
 function toast(message,error=false){const el=document.getElementById('toast');el.textContent=message;el.style.background=error?'#a64c40':'#272a25';el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),4700)}
 const state={mode:'landing',view:'home',session:null,profile:null,pairs:[],pair:null,peer:null,messages:[],searching:false,preference:'any',activeTab:'all',busy:false,roomReady:false,channel:null,searchLoop:null,timerLoop:null,closedOnce:null,modal:null,signup:null,motionOff:localStorage.getItem('entre.motionOff')==='1',notice:null};
 function applyMotion(){document.body.classList.toggle('motion-off',state.motionOff)}
-function infoError(e){const m=String(e?.message||e||'Não foi possível concluir. Tente novamente.');if(m.includes('provider is not enabled')||m.includes('Unsupported provider'))return 'O login Google precisa ser ativado no servidor Supabase.';if(m.includes('redirect_uri_mismatch'))return 'A URL de retorno do Google não está autorizada.';if(m.includes('rate limit'))return 'Muitas tentativas. Aguarde um pouco.';if(m.includes('Failed to fetch'))return 'Sem conexão com o servidor. Verifique sua internet.';return m}
+function infoError(e){
+ const m=String(e?.message||e||'Não foi possível concluir. Tente novamente.');
+ if(/provider is not enabled|unsupported provider|provider_disabled/i.test(m))return 'O Google ainda não está habilitado em Supabase → Authentication → Providers → Google. Alterar apenas as URLs não ativa o provedor.';
+ if(/redirect_uri_mismatch|redirect.*not.*allowed|redirect.*not.*permitted|redirect.*allow.list/i.test(m))return 'O endereço de retorno do entre. não está autorizado. Confira https://appswebb.github.io/testesite/ nas Redirect URLs do Supabase e a URL de callback do Supabase no Google Cloud.';
+ if(/invalid_client|unauthorized_client|oauth.*client|invalid.*client/i.test(m))return 'As credenciais OAuth do Google não foram aceitas. Confira o Client ID e Client Secret cadastrados no Supabase.';
+ if(/access_denied|consent.*denied|permission.*denied/i.test(m))return 'A autenticação com Google foi cancelada ou não foi autorizada.';
+ if(/rate limit/i.test(m))return 'Muitas tentativas. Aguarde um pouco.';
+ if(/Failed to fetch|NetworkError|network request failed/i.test(m))return 'Sem conexão com o serviço de login. Confira sua internet e tente de novo.';
+ return m;
+}
 function landing(){const scrollWords=Array(2).fill('<span>UMA CONVERSA DE CADA VEZ</span><b>✳</b><span>05:00 MINUTOS</span><b>✳</b><span>SE OS DOIS QUISEREM, CONTINUA</span><b>✳</b>').join('');return `
 <header class="home-header"><div class="home-bar wrap">${brand()}<nav aria-label="Navegação"><a href="#como-funciona">Como funciona</a><a href="#experiencia">A experiência</a><a href="#manifesto">Nossa ideia</a></nav><div class="home-actions"><button class="ui-btn btn-quiet" data-action="login">Entrar</button><button class="ui-btn btn-dark btn-sm" data-action="signup">Criar conta ${ico('arrow',16)}</button></div></div></header>
 <main><section class="landing-hero"><div class="wrap hero-grid"><div class="hero-copy scene-enter"><span class="hero-kicker"><span class="spark">✳</span> Um jeito diferente de conhecer alguém</span><h1 class="hero-title">Pode ser<br>um simples <em>oi.</em><br>Pode ser tudo.</h1><p class="hero-text">Uma pessoa de cada vez. Cinco minutos de conversa ao vivo. Se a conexão for recíproca, vocês decidem continuar.</p><div class="hero-cta"><button class="ui-btn btn-dark" data-action="signup">Encontrar alguém ${ico('arrow',19)}</button><button class="ui-btn btn-quiet" data-action="how">Como funciona ${ico('chevron',14)}</button></div><div class="hero-foot"><span class="live-dot"></span> Sem deslizar perfis. Sem colecionar matches. Apenas conversa.</div></div><div class="hero-art" aria-label="Duas pessoas se conhecendo em cinco minutos"><div class="orbit"></div><div class="portrait portrait-a"><div class="portrait-inner"><span class="face"></span></div><div class="portrait-label">A outra pessoa <small>✷ online</small></div></div><div class="portrait portrait-b"><div class="portrait-inner"><span class="face"></span></div><div class="portrait-label">Você <small>✷ online</small></div></div><div class="hero-time"><strong>05:00</strong><span>TEMPO PRA SENTIR</span></div><div class="hero-match-note">se for dos dois...<b>continua ♡</b></div></div></div><div class="scroll-hint">Role para descobrir ${ico('arrow',14)}</div></section>
@@ -69,7 +78,18 @@ async function getProfile(){const uid=state.session?.user.id;if(!uid)return null
 async function loadPairs(){if(!state.session||!state.profile)return;const uid=state.session.user.id;const {data,error}=await db.from('entre_pairs').select('*').or(`a.eq.${uid},b.eq.${uid}`).in('status',['active','connected']).order('created_at',{ascending:false}).limit(50);if(error)throw error;state.pairs=data||[];const ids=[...new Set(state.pairs.map(p=>p.a===uid?p.b:p.a))];state.pairsProfiles={};if(ids.length){const {data:profiles}=await db.from('entre_profiles').select('id,display_name,age,bio,gender').in('id',ids);for(const pair of state.pairs){state.pairsProfiles[pair.id]=profiles?.find(p=>p.id===(pair.a===uid?pair.b:pair.a))||{id:pair.a===uid?pair.b:pair.a,display_name:'Conta indisponível'}}}return state.pairs}
 async function initializeAccount(){state.profile=await getProfile();state.pair=null;state.peer=null;state.searching=false;state.messages=[];if(state.profile){state.preference=state.profile.preference;await loadPairs();const active=state.pairs.find(p=>p.status==='active'&&new Date(p.expires_at)>Date.now());if(active){state.pair=active;state.peer=state.pairsProfiles[active.id]||null;state.view='connect';await loadMessages();subscribePair(active.id)}}render()}
 function hasGoogleIdentity(user){const providers=user?.app_metadata?.providers;return user?.app_metadata?.provider==='google'||(Array.isArray(providers)&&providers.includes('google'))||user?.identities?.some(i=>i.provider==='google')===true}
-async function signInGoogle(btn){busy(btn,true);try{const redirectTo=`${window.location.origin}${window.location.pathname}`;const {error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo,queryParams:{prompt:'select_account'}}});if(error)throw error}catch(e){showFormMessage(infoError(e));busy(btn,false)}}
+async function signInGoogle(btn){
+ busy(btn,true);
+ try{
+  // Use the exact allow-listed production URL; GitHub Pages also works when opening /index.html.
+  const redirectTo=window.location.hostname==='appswebb.github.io'
+   ? 'https://appswebb.github.io/testesite/'
+   : new URL(window.location.pathname,window.location.origin).href;
+  const {data,error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo,queryParams:{prompt:'select_account'}}});
+  if(error)throw error;
+  if(!data?.url)throw new Error('O provedor não retornou um endereço para autenticação. Verifique a configuração do Google no Supabase.');
+ }catch(e){showFormMessage(infoError(e));busy(btn,false)}
+}
 function getProfileData(form){return {display_name:form.display_name.value.trim(),age:Number(form.age.value),gender:form.gender.value,preference:form.preference.value}}
 async function createProfile(data){const {error}=await db.from('entre_profiles').upsert({id:state.session.user.id,display_name:data.display_name,age:data.age,gender:data.gender,preference:data.preference},{onConflict:'id'});if(error)throw error;sessionStorage.removeItem('entre.pendingProfile')}
 async function profileSetup(form){const submit=form.querySelector('[type=submit]');busy(submit,true);try{const profile=getProfileData(form);if(!form.adult.checked||profile.age<18)throw Error('Você deve ter pelo menos 18 anos.');await createProfile(profile);state.view='home';await initializeAccount();toast('Perfil concluído. Bem-vindo ao entre.!')}catch(e){showFormMessage(infoError(e))}finally{busy(submit,false)}}
@@ -97,7 +117,14 @@ document.addEventListener('click',clickAction);
 document.addEventListener('submit',async e=>{const form=e.target;if(!(form instanceof HTMLFormElement))return;e.preventDefault();const name=form.id;try{if(name==='authForm'&&form.dataset.form==='profileSetup')await profileSetup(form);else if(name==='profileForm')await saveProfile(form);else if(name==='messageForm')await sendMessage(form)}catch(err){toast(infoError(err),true)}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal){state.modal=null;render()}});
 window.addEventListener('beforeunload',()=>{if(state.searching)db.rpc('entre_leave').catch(()=>{})});
-function getOAuthError(){const query=new URLSearchParams(window.location.search);const hash=new URLSearchParams(window.location.hash.replace(/^#/,''));const code=hash.get('error')||query.get('error');if(!code)return null;if(code==='access_denied')return 'O acesso com Google foi cancelado.';return hash.get('error_description')||query.get('error_description')||'Não foi possível entrar com Google.'}
+function getOAuthError(){
+ const query=new URLSearchParams(window.location.search);
+ const hash=new URLSearchParams(window.location.hash.replace(/^#/,''));
+ const code=hash.get('error')||query.get('error')||hash.get('error_code')||query.get('error_code');
+ if(!code)return null;
+ const message=hash.get('error_description')||query.get('error_description')||hash.get('error_code')||query.get('error_code')||code;
+ return infoError({message});
+}
 async function boot(){
  state.signup=null;sessionStorage.removeItem('entre.pendingProfile');applyMotion();
  const oauthError=getOAuthError();
@@ -112,6 +139,6 @@ async function boot(){
   db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'&&state.session){state.session=null;state.profile=null;state.mode='landing';render()}});
   state.timerLoop=setInterval(updateTimerText,1000);
   setInterval(async()=>{if(state.session?.user&&state.pair&&document.visibilityState==='visible'){await refreshPair()}},12000)
- }catch(e){state.mode='login';render();showFormMessage(infoError(e));console.error(e)}
+ }catch(e){state.mode='login';render();showFormMessage(oauthError||infoError(e));console.error(e)}
 }
 boot();

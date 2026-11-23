@@ -36,15 +36,19 @@ jobs:
           }
           console.log('Google OAuth is the only sign-in route in the frontend');
           NODE
-      - name: Check external Google OAuth provider
+      - name: Check live Google OAuth provider (must redirect to Google)
         shell: bash
         run: |
-          status=$(curl -sS --max-time 12 -o /tmp/oauth-response -D /tmp/oauth-headers -w '%{http_code}' -G \
+          status=$(curl -sS --max-time 20 -o /tmp/oauth-response -D /tmp/oauth-headers -w '%{http_code}' -G \
             'https://trrakyybnvxpdhxwgjrz.supabase.co/auth/v1/authorize' \
             --data-urlencode 'provider=google' \
-            --data-urlencode 'redirect_to=https://appswebb.github.io/testesite/')
-          if grep -qiE '^location:[[:space:]]*https://accounts.google.com/' /tmp/oauth-headers; then
-            echo 'Supabase Google OAuth: provider reachable'
+            --data-urlencode 'redirect_to=https://appswebb.github.io/testesite/') || status="NETWORK_ERROR"
+          if grep -qiE '^location:[[:space:]]*https://accounts.google.com/' /tmp/oauth-headers 2>/dev/null; then
+            echo '✅ Google OAuth enabled: Supabase successfully redirects to accounts.google.com'
           else
-            echo "::warning::Google OAuth did not redirect to Google (HTTP $status). Check Google Provider and redirect URLs in Supabase."
+            echo "::error::Google OAuth is NOT ready (HTTP $status). Check Authentication > Providers > Google, Google OAuth credentials and redirect URLs."
+            if grep -qi 'provider is not enabled' /tmp/oauth-response 2>/dev/null; then
+              echo "::error::Supabase returned: provider is not enabled. Enable Google provider; changing URLs alone will not fix it."
+            fi
+            exit 1
           fi
