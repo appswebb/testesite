@@ -41,6 +41,13 @@ function apply(){
  const metaColor=state.mode==='dark'?'#101114':state.mode==='custom'?accent:'#F6F7F7';
  document.querySelectorAll('meta[name="theme-color"]').forEach(meta=>meta.setAttribute('content',metaColor));
  root.style.colorScheme=state.mode==='dark'?'dark':'light';
+ // Explicit inline fallback is necessary because legacy pages include fixed
+ // !important surface rules which sometimes defeat the token stylesheet.
+ // Apply on every mode change and on DOMContentLoaded, even before auth.
+ if(document.body){
+  document.body.style.setProperty('background-color',state.mode==='dark'?'#101114':'#FFFFFF','important');
+  document.body.style.setProperty('color',state.mode==='dark'?'#F7F8FA':'#15191A','important');
+ }
  window.dispatchEvent(new CustomEvent('entre:themechange',{detail:{mode:state.mode,accent}}));
 }
 function persist(){
