@@ -143,6 +143,73 @@ async function selectImage(page){
   });
   await profile.waitForFunction(()=>!document.querySelector('.profile-preview .avatar img'),{timeout:5000});
   tests++;console.log('PASS remote avatar deletion updates all avatar nodes live');
+
+  // Actual DOM regression for live chat, online profiles, folders and notifications.
+  const fake=await profile.evaluate(()=>{
+   const self=state.session.user.id;
+   const id='f77a4444-4444-4444-8444-444444444444';
+   const person='b55e8888-8888-4888-8888-888888888888';
+   const pair={id,a:self,b:person,status:'active',origin:'live',a_wants:null,b_wants:null,created_at:new Date().toISOString(),expires_at:new Date(Date.now()+300000).toISOString()};
+   const peer={id:person,display_name:'Pessoa Teste Com Nome Bem Comprido Para Celular',age:25,gender:'woman',bio:'Gosto de conversar com pessoas interessantes.',avatar_path:null};
+   state.pair=pair;state.peer=peer;state.messages=[{id:10,body:'Olá, estamos testando essa conversa em tela estreita.',sender_id:self,created_at:new Date().toISOString()}];state.view='connect';
+   state.pairs=[pair];state.pairsProfiles={[id]:peer};
+   window.entreSocial.data.prefs={[id]:{pair_id:id,folder:'live',pinned:false,archived_at:null}};
+   render();return {id,person};
+  });
+  for(const width of [320,360,390,430,768]){
+   await profile.setViewportSize({width,height:850});
+   const box=await profile.evaluate(()=>{
+    const body=document.documentElement,card=document.querySelector('.pair-card'),composer=document.querySelector('.chat-form'),input=document.querySelector('#messageInput');
+    const cr=card?.getBoundingClientRect(),fr=composer?.getBoundingClientRect(),ir=input?.getBoundingClientRect();
+    return {page:body.scrollWidth,inner:innerWidth,cardLeft:cr?.left,cardRight:cr?.right,composerLeft:fr?.left,composerRight:fr?.right,inputWidth:ir?.width};
+   });
+   assert.equal(await profile.locator('.pair-card').count(),1,'Live chat missing');
+   assert.equal(await profile.locator('#messageInput').count(),1,'Chat composer missing');
+   assert(box.page<=width+1,width+'px: horizontal chat overflow '+JSON.stringify(box));
+   assert(box.cardLeft>=-1&&box.cardRight<=width+1,width+'px: chat card clipped '+JSON.stringify(box));
+   assert(box.composerLeft>=-1&&box.composerRight<=width+1&&box.inputWidth>80,width+'px: chat input unusable '+JSON.stringify(box));
+   tests++;console.log('PASS live chat width '+width+'px');
+  }
+  const chatUi=await profile.evaluate(()=>{
+   const api=window.entreSocial;
+   api.data.online=[{id:state.peer.id,display_name:state.peer.display_name,age:25,gender:'woman',bio:'Olá, gosto de música e viagens',allow_requests:false,follow_status:null,follower_status:null}];
+   api.data.loaded=true;api.data.hasMore=false;state.view='online';render();
+   return {onlineCard:document.querySelectorAll('.online-person').length,privateMessage:document.querySelector('.online-restriction')?.textContent};
+  });
+  assert.equal(chatUi.onlineCard,1,'Online directory has no profile cards');
+  assert(/desconhecid/i.test(chatUi.privateMessage),'Stranger-request restriction absent');
+  tests++;console.log('PASS online profile card and stranger request privacy');
+  await profile.evaluate(()=>{
+   state.pair.status='closed';state.view='connect';render();
+  });
+  assert.equal(await profile.locator('#messageForm').count(),0,'Ended chat still allows sending');
+  assert.equal(await profile.locator('.pair-timer').count(),0,'Ended chat shows live timer');
+  assert((await profile.locator('#messageList').innerText()).includes('Olá'),'Ended chat text lost');
+  tests++;console.log('PASS ended conversation preserves text and disables typing');
+  await profile.evaluate(()=>{
+   const api=window.entreSocial;
+   state.view='conversations';render();
+  });
+  assert.equal(await profile.locator('.conversation-entry').count(),1,'Preserved chat absent in list');
+  assert.equal(await profile.locator('[data-social-folder]').count()>0,true,'Conversation move control absent');
+  tests++;console.log('PASS pinned and categorized conversation controls');
+  await profile.evaluate(()=>{
+   window.entreSocial.data.notifications=[{id:91,kind:'message',actor_name:'Pessoa Teste',created_at:new Date().toISOString(),read_at:null,pair_id:state.pair.id}];
+   state.view='notifications';render();
+  });
+  assert.equal(await profile.locator('.notification-item').count(),1,'Notification card absent');
+  tests++;console.log('PASS in-app notification card');
+  await profile.evaluate(()=>{
+   state.view='connect';state.pair.status='active';render();
+   window.entreSocial.showMatchAnimation(state.peer);
+  });
+  assert.equal(await profile.locator('#entre-meeting .meet-stage').count(),1,'3D encounter stage absent');
+  tests++;console.log('PASS 3D two-person meeting animation');
+  await profile.evaluate(()=>document.getElementById('entre-meeting')?.remove());
+  await profile.evaluate(()=>window.entreSocial.showEndAnimation());
+  assert.equal(await profile.locator('#entre-ended').count(),1,'Ending animation absent');
+  tests++;console.log('PASS minimal ended-meeting transition');
+
   await profile.close();
   console.log('SUCCESS '+tests+' photo + maintenance regression checks');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

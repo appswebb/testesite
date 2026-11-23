@@ -16,6 +16,8 @@ on:
       - 'docs/index.html'
       - 'docs/maintenance.css'
       - 'docs/mobile.css'
+      - 'docs/social*.css'
+      - 'docs/social*.js'
       - 'tests/admin-mobile-audit.cjs'
       - 'tests/avatar-mobile-audit.cjs'
       - '.github/workflows/entre-mobile-ui.yml'
@@ -41,6 +43,7 @@ jobs:
         run: |
           node --check docs/app.js
           node --check docs/admin/app.js
+          for f in docs/social*.js; do node --check "$f"; done
           node --check tests/admin-mobile-audit.cjs
           node --check tests/avatar-mobile-audit.cjs
           node tests/admin-mobile-audit.cjs
