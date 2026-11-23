@@ -114,7 +114,9 @@ async function selectImage(page){
   await profile.locator('.app-shell').waitFor({timeout:9000});
   await profile.locator('.app-toolbar .toolbar-profile[data-action="profileMenu"]').click();
    await profile.locator('.profile-dropdown [data-view="profile"]').click();
-  await profile.locator('#profileForm').waitFor({timeout:9000}).catch(async err=>{ const diagnostic=await profile.evaluate(()=>({formError:document.querySelector('#form-error')?.textContent,toast:document.getElementById('toast')?.textContent,uploads:window.__uploads,profile:window.__profile,body:document.body.innerText.slice(-600)})); throw new Error('Onboarding failed '+JSON.stringify(diagnostic)+' / '+err.message); });
+  assert.equal(await profile.locator('.profile-edit-panel').getAttribute('open'),null,'Profile editor must start collapsed');
+   await profile.locator('.profile-edit-panel > summary').click();
+   await profile.locator('#profileForm').waitFor({timeout:9000}).catch(async err=>{ const diagnostic=await profile.evaluate(()=>({formError:document.querySelector('#form-error')?.textContent,toast:document.getElementById('toast')?.textContent,uploads:window.__uploads,profile:window.__profile,body:document.body.innerText.slice(-600)})); throw new Error('Onboarding failed '+JSON.stringify(diagnostic)+' / '+err.message); });
   const uploaded=await profile.evaluate(()=>window.__uploads);
   assert.equal(uploaded.length,1,'Onboarding upload not sent');
   assert(uploaded[0].size>0&&uploaded[0].size<=40960,'WebP not tiny enough: '+uploaded[0].size);
