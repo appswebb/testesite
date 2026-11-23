@@ -20,16 +20,19 @@ const genders={woman:'Mulher',man:'Homem',nonbinary:'Não binário',any:'Qualque
 const initials=name=>String(name||'?').trim().split(/\s+/).slice(0,2).map(n=>[...n][0]).join('').toUpperCase();
 const colorFor=id=>['#eac8aa','#c9c1ef','#bed6c1','#e8c0c9','#dbdfac'][([...String(id||'')].reduce((n,c)=>n+c.charCodeAt(0),0))%5];
 const avatar=(person,size='')=>{
+ const id=String(person?.id||'');
+ const attrs=' data-avatar-id="'+esc(id)+'"';
  const url=avatarFresh(person)?state.avatarUrls[person.avatar_path]:null;
- if(url?.url&&url.expires>Date.now())return '<span class="avatar '+esc(size)+'"><img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="'+esc(url.url)+'" alt="Foto de '+esc(person?.display_name||'perfil')+'"></span>';
- return '<span class="avatar '+esc(size)+'" style="background:'+colorFor(person?.id)+'">'+esc(initials(person?.display_name))+'</span>';
+ if(url?.url&&(url.local||url.expires>Date.now()))
+  return '<span class="avatar '+esc(size)+'"'+attrs+'><img loading="eager" decoding="async" referrerpolicy="no-referrer" src="'+esc(url.url)+'" alt="Foto de '+esc(person?.display_name||'perfil')+'"></span>';
+ return '<span class="avatar '+esc(size)+'"'+attrs+' style="background:'+colorFor(person?.id)+'">'+esc(initials(person?.display_name))+'</span>';
 };
 const brand=()=>`<a href="#" class="brand" data-action="logo" aria-label="entre. início"><span class="brand-glyph"><i></i><i></i></span><span>entre<span class="dot">.</span></span></a>`;
 const fmtTime=date=>new Date(date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 const fmtDate=date=>new Date(date).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
 let toastTimer;
 function toast(message,error=false){const el=document.getElementById('toast');el.textContent=message;el.style.background=error?'#a64c40':'#272a25';el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),4700)}
-const state={mode:'landing',view:'home',isAdmin:false,siteSettings:null,session:null,profile:null,avatarUrls:{},avatarPendingFile:null,avatarPreviewUrl:null,pairs:[],pair:null,peer:null,messages:[],searching:false,preference:'any',activeTab:'all',busy:false,roomReady:false,channel:null,searchLoop:null,timerLoop:null,closedOnce:null,modal:null,signup:null,motionOff:localStorage.getItem('entre.motionOff')==='1',notice:null};
+const state={mode:'landing',view:'home',isAdmin:false,siteSettings:null,session:null,profile:null,avatarUrls:{},avatarPendingFile:null,avatarPreviewUrl:null,pendingCompressedAvatarUrl:null,profileChannel:null,pairs:[],pair:null,peer:null,messages:[],searching:false,preference:'any',activeTab:'all',busy:false,roomReady:false,channel:null,searchLoop:null,timerLoop:null,closedOnce:null,modal:null,signup:null,motionOff:localStorage.getItem('entre.motionOff')==='1',notice:null};
 function applyMotion(){document.body.classList.toggle('motion-off',state.motionOff)}
 function infoError(e){
  const m=String(e?.message||e||'Não foi possível concluir. Tente novamente.');
@@ -56,17 +59,81 @@ const googleLogo="<svg class=\"google-mark\" viewBox=\"0 0 24 24\" aria-hidden=\
 const AVATAR_BUCKET='entre-avatars';
 const AVATAR_MAX=40960;
 const AVATAR_LIFETIME=24*60*60*1000;
-function avatarFresh(p){
- return Boolean(p?.avatar_path&&p?.avatar_uploaded_at
-  && Date.now()-new Date(p.avatar_uploaded_at).getTime() < AVATAR_LIFETIME
-  && Date.now()>=new Date(p.avatar_uploaded_at).getTime());
+
+function refreshAvatarElements(person){
+ if(!person?.id)return;
+ document.querySelectorAll('[data-avatar-id]').forEach(node=>{
+  if(node.dataset.avatarId!==person.id)return;
+  const size=[...node.classList].filter(c=>c!=='avatar').join(' ');
+  node.outerHTML=avatar(person,size);
+ });
+ if(person.id===state.session?.user?.id&&!state.avatarPendingFile){
+  const preview=document.querySelector('.avatar-photo-preview');
+  if(preview){
+   const url=avatarFresh(person)?state.avatarUrls[person.avatar_path]?.url:null;
+   preview.innerHTML=url?'<img src="'+esc(url)+'" alt="Sua foto de perfil atual">':'<span aria-hidden="true">'+esc(initials(person.display_name))+'</span>';
+  }
+ }
 }
-async function signAvatar(p){
- if(!avatarFresh(p)||!p.avatar_path||maintenanceIsActive())return;
- const existing=state.avatarUrls[p.avatar_path];
- if(existing&&existing.expires>Date.now())return;
- const {data,error}=await db.storage.from(AVATAR_BUCKET).createSignedUrl(p.avatar_path,600);
- if(!error&&data?.signedUrl)state.avatarUrls[p.avatar_path]={url:data.signedUrl,expires:Date.now()+540000};
+function installAvatarRealtime(){
+ if(!state.session?.user?.id||state.profileChannel||typeof db.channel!=='function')return;
+ const uid=state.session.user.id;
+ state.profileChannel=db.channel('entre_avatar_updates_'+uid)
+ .on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_profiles'},async message=>{
+  const p=message?.new;
+  if(!p?.id||maintenanceIsActive())return;
+  const isOwn=p.id===uid;
+  const isPeer=state.peer?.id===p.id||Object.values(state.pairsProfiles||{}).some(row=>row?.id===p.id);
+  if(!isOwn&&!isPeer)return;
+  if(isOwn){
+   if(!state.profile)return;
+   state.profile={...state.profile,avatar_path:p.avatar_path,avatar_uploaded_at:p.avatar_uploaded_at};
+  }else{
+   if(state.peer?.id===p.id)state.peer={...state.peer,avatar_path:p.avatar_path,avatar_uploaded_at:p.avatar_uploaded_at};
+   for(const pairId of Object.keys(state.pairsProfiles||{})){
+    if(state.pairsProfiles[pairId]?.id===p.id)
+     state.pairsProfiles[pairId]={...state.pairsProfiles[pairId],avatar_path:p.avatar_path,avatar_uploaded_at:p.avatar_uploaded_at};
+   }
+  }
+  if(p.avatar_path)await signAvatar(p,true);
+  refreshAvatarElements(p);
+ })
+ .subscribe();
+}
+function commitLocalAvatar(path){
+ if(!path||!state.pendingCompressedAvatarUrl)return;
+ const existing=state.avatarUrls[path];
+ if(existing?.local&&existing.url!==state.pendingCompressedAvatarUrl)URL.revokeObjectURL(existing.url);
+ state.avatarUrls[path]={url:state.pendingCompressedAvatarUrl,expires:Date.now()+AVATAR_LIFETIME,local:true};
+ state.pendingCompressedAvatarUrl=null;
+}
+
+function avatarFresh(p){
+ if(!p?.avatar_path||!p?.avatar_uploaded_at)return false;
+ const age=Date.now()-new Date(p.avatar_uploaded_at).getTime();
+ // A device's clock may be behind Supabase by an hour or more.
+ // The server-side Storage RLS policy remains authoritative for 24-hour expiry.
+ return Number.isFinite(age)&&age<AVATAR_LIFETIME;
+}
+async function signAvatar(p,force=false){
+ if(!avatarFresh(p)||!p.avatar_path||maintenanceIsActive())return false;
+ const path=p.avatar_path;
+ const existing=state.avatarUrls[path];
+ if(!force&&existing&&!existing.local&&existing.expires>Date.now())return true;
+ try{
+  // Signed links are short lived. The bucket itself remains private.
+  const {data,error}=await db.storage.from(AVATAR_BUCKET).createSignedUrl(path,300);
+  if(error)throw error;
+  if(!data?.signedUrl)throw Error('O Storage não retornou a foto.');
+  state.avatarUrls[path]={url:data.signedUrl,expires:Date.now()+260000,local:false};
+  refreshAvatarElements(p);
+  if(existing?.local)requestAnimationFrame(()=>URL.revokeObjectURL(existing.url));
+  return true;
+ }catch(e){
+  console.warn('Falha ao abrir foto privada:',e?.message||e);
+  // The freshly compressed image still appears immediately in the owner's UI.
+  return Boolean(existing?.url);
+ }
 }
 function avatarUploader(p){
  const url=state.avatarPreviewUrl||(avatarFresh(p)?state.avatarUrls[p?.avatar_path]?.url:'');
@@ -120,10 +187,13 @@ async function uploadAvatarFile(file){
  const path=state.session.user.id+'/'+crypto.randomUUID()+'.webp';
  const {error}=await db.storage.from(AVATAR_BUCKET).upload(path,blob,{contentType:'image/webp',upsert:false,cacheControl:'60'});
  if(error)throw error;
+ if(state.pendingCompressedAvatarUrl)URL.revokeObjectURL(state.pendingCompressedAvatarUrl);
+ state.pendingCompressedAvatarUrl=URL.createObjectURL(blob);
  return path;
 }
 function clearAvatarDraft(){
  if(state.avatarPreviewUrl){URL.revokeObjectURL(state.avatarPreviewUrl);state.avatarPreviewUrl=null;}
+ if(state.pendingCompressedAvatarUrl){URL.revokeObjectURL(state.pendingCompressedAvatarUrl);state.pendingCompressedAvatarUrl=null;}
  state.avatarPendingFile=null;
 }
 async function removeAvatar(){
@@ -204,7 +274,7 @@ function showFormMessage(msg,success=false){const id=success?'form-success':'for
 function busy(btn,value){if(btn){btn.disabled=value;btn.dataset.oldLabel ||= btn.innerHTML;if(value)btn.textContent='Só um instante...';else btn.innerHTML=btn.dataset.oldLabel}}
 async function getProfile(){const uid=state.session?.user.id;if(!uid)return null;const {data,error}=await db.from('entre_profiles').select('*').eq('id',uid).maybeSingle();if(error)throw error;return data}
 async function loadPairs(){if(!state.session||!state.profile)return;const uid=state.session.user.id;const {data,error}=await db.from('entre_pairs').select('*').or(`a.eq.${uid},b.eq.${uid}`).in('status',['active','connected']).order('created_at',{ascending:false}).limit(50);if(error)throw error;state.pairs=data||[];const ids=[...new Set(state.pairs.map(p=>p.a===uid?p.b:p.a))];state.pairsProfiles={};if(ids.length){const {data:profiles}=await db.from('entre_profiles').select('id,display_name,age,bio,gender,avatar_path,avatar_uploaded_at').in('id',ids);if(profiles?.length)await Promise.all(profiles.map(signAvatar));for(const pair of state.pairs){state.pairsProfiles[pair.id]=profiles?.find(p=>p.id===(pair.a===uid?pair.b:pair.a))||{id:pair.a===uid?pair.b:pair.a,display_name:'Conta indisponível'}}}return state.pairs}
-async function initializeAccount(){state.profile=await getProfile();if(state.profile)await signAvatar(state.profile);state.pair=null;state.peer=null;state.searching=false;state.messages=[];if(state.profile){state.preference=state.profile.preference;await loadPairs();const active=state.pairs.find(p=>p.status==='active'&&new Date(p.expires_at)>Date.now());if(active){state.pair=active;state.peer=state.pairsProfiles[active.id]||null;state.view='connect';await loadMessages();subscribePair(active.id)}}render()}
+async function initializeAccount(){state.profile=await getProfile();if(state.profile)await signAvatar(state.profile);installAvatarRealtime();state.pair=null;state.peer=null;state.searching=false;state.messages=[];if(state.profile){state.preference=state.profile.preference;await loadPairs();const active=state.pairs.find(p=>p.status==='active'&&new Date(p.expires_at)>Date.now());if(active){state.pair=active;state.peer=state.pairsProfiles[active.id]||null;state.view='connect';await loadMessages();subscribePair(active.id)}}render()}
 function hasGoogleIdentity(user){const providers=user?.app_metadata?.providers;return user?.app_metadata?.provider==='google'||(Array.isArray(providers)&&providers.includes('google'))||user?.identities?.some(i=>i.provider==='google')===true}
 async function signInGoogle(btn){
  busy(btn,true);
@@ -228,6 +298,7 @@ async function profileSetup(form){
   if(!form.adult.checked||profile.age<18)throw Error('Você deve ter pelo menos 18 anos.');
   if(state.avatarPendingFile){uploaded=await uploadAvatarFile(state.avatarPendingFile);profile.avatar_path=uploaded;}
   await createProfile(profile);
+  if(uploaded)commitLocalAvatar(uploaded);
   clearAvatarDraft();
   state.view='home';await initializeAccount();
   toast('Perfil concluído. Bem-vindo ao entre.!');
@@ -248,8 +319,9 @@ async function saveProfile(form){
    .eq('id',state.session.user.id).select('*').single();
   if(error)throw error;
   state.profile=data;state.preference=data.preference;
-  if(uploaded)await signAvatar(data);
+  if(uploaded)commitLocalAvatar(uploaded);
   clearAvatarDraft();render();
+  if(uploaded)void signAvatar(data,true);
   toast(uploaded?'Foto comprimida e perfil atualizados!':'Perfil atualizado!');
   if(uploaded&&previous&&previous!==uploaded){
    db.storage.from(AVATAR_BUCKET).remove([previous]).then(r=>{if(r.error)console.warn('Old image cleanup deferred:',r.error)});
