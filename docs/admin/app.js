@@ -12,6 +12,7 @@ var state={user:null,verified:false,view:"overview",loading:false,busy:false,ove
 var perPage=20, searchTimer=null, toastTimer=null, lastLoad=0;
 var sections=[
  ["overview","Visão geral","layout-dashboard"],
+ ["updates","Atualização","refresh-cw"],
  ["users","Usuários","users"],
  ["reports","Denúncias","flag"],
  ["pairs","Conexões","heart-handshake"],
@@ -66,7 +67,7 @@ function overview(){
  var x=state.overview||{},s=x.settings||{},trend=x.signup_trend||[],mx=Math.max(1,...trend.map(function(v){return Number(v.count||0);}));
  var chart=trend.map(function(v){var n=Number(v.count||0);var percent=Math.max(4,Math.round(n/mx*100));return '<div class="chart-col" title="'+n+' cadastros"><div class="chart-bar-box"><div class="chart-bar" style="height:'+percent+'%"></div></div><span class="chart-day">'+e(day(v.day))+'</span></div>';}).join("");
  return heading("VISÃO GERAL · TEMPO REAL","Tudo em <em>perspectiva.</em>","Acompanhe sua comunidade, a qualidade dos encontros e o estado da plataforma.")+
- '<div class="stat-grid">'+stat("Usuários cadastrados",x.users,"users","Contas de autenticação","accent")+stat("Novos nos últimos 7 dias",x.new_users_7d,"users","Cadastros recentes")+stat("Buscando agora",x.waiting,"zap","Fila ativa (30 segundos)","coral")+stat("Conversas em andamento",x.active_pairs,"message-circle","Pares com tempo restante")+stat("Matches recíprocos",x.connected_pairs,"heart-handshake","Escolha dos dois")+stat("Denúncias pendentes",x.reports_open,"flag","Aguardando moderação")+'</div>'+
+ '<div class="release-entry"><div><strong>Modo atualização</strong><small>Ative ou finalize uma atualização quando quiser.</small></div><button class="btn-main" data-view="updates">Gerenciar atualização</button></div><div class="stat-grid">'+stat("Usuários cadastrados",x.users,"users","Contas de autenticação","accent")+stat("Novos nos últimos 7 dias",x.new_users_7d,"users","Cadastros recentes")+stat("Buscando agora",x.waiting,"zap","Fila ativa (30 segundos)","coral")+stat("Conversas em andamento",x.active_pairs,"message-circle","Pares com tempo restante")+stat("Matches recíprocos",x.connected_pairs,"heart-handshake","Escolha dos dois")+stat("Denúncias pendentes",x.reports_open,"flag","Aguardando moderação")+'</div>'+
  '<div class="panel-grid"><section class="panel"><h3>Crescimento da comunidade</h3><p class="panel-desc">Cadastros por dia · últimos sete dias</p><div class="chart">'+chart+'</div></section><section class="panel"><h3>Saúde da plataforma</h3><p class="panel-desc">Acompanhamento das operações principais</p><div class="health-row"><strong>Novas conexões</strong><span class="health-state '+(!s.matchmaking_enabled?"state-off":"")+'"><span class="pulse"></span>'+(!s.matchmaking_enabled?"Pausadas":"Ativas")+'</span></div><div class="health-row"><strong>Recebimento de denúncias</strong><span class="health-state '+(!s.reporting_enabled?"state-off":"")+'"><span class="pulse"></span>'+(!s.reporting_enabled?"Pausado":"Ativo")+'</span></div><div class="health-row"><strong>Usuários suspensos</strong>'+badge(x.banned||0,(x.banned||0)>0?"warn":"neutral")+'</div><div class="health-row"><strong>Mensagens nas últimas 24h</strong>'+badge(x.messages_24h||0,"neutral")+'</div></section></div>'+
  '<div class="quick-links"><button class="quick" data-view="users">'+ico("users",17)+' Gerenciar usuários '+ico("arrow-right",15)+'</button><button class="quick" data-view="reports">'+ico("flag",17)+' Moderar denúncias '+ico("arrow-right",15)+'</button><button class="quick" data-view="settings">'+ico("sliders-horizontal",17)+' Configurar site '+ico("arrow-right",15)+'</button></div>';
 }
@@ -94,12 +95,39 @@ function pairs(){
 function settings(){
  var x=state.settings||{matchmaking_enabled:true,reporting_enabled:true,announcement:""};
  return heading("CONFIGURAÇÕES","Seu site, <em>suas regras.</em>","Essas alterações são salvas no Supabase e aplicadas pelo servidor.")+
- '<form id="settings-form" class="form-card"><h2 class="section-heading">Experiência e segurança</h2><p class="section-desc">Controle operacional da plataforma. Novas regras são aplicadas sem publicar outra versão do site.</p>'+
+ '<div class="release-entry"><div><strong>Atualizações do site</strong><small>Ative a tela especial ou libere uma nova versão.</small></div><button class="btn-main" data-view="updates">Abrir controle</button></div><form id="settings-form" class="form-card"><h2 class="section-heading">Experiência e segurança</h2><p class="section-desc">Controle operacional da plataforma. Novas regras são aplicadas sem publicar outra versão do site.</p>'+
  '<div class="setting-item"><div><strong>Permitir novas conexões</strong><small>Se desativado, a busca por novas pessoas será pausada no servidor.</small></div><label class="switch"><input type="checkbox" name="matchmaking" '+(x.matchmaking_enabled?"checked":"")+'><span></span></label></div>'+
  '<div class="setting-item"><div><strong>Aceitar denúncias</strong><small>Habilita o formulário de denúncia entre participantes de conversas.</small></div><label class="switch"><input type="checkbox" name="reporting" '+(x.reporting_enabled?"checked":"")+'><span></span></label></div>'+
  '<div class="setting-item" style="display:block"><label class="form-label" for="announcement">Aviso para usuários</label><textarea name="announcement" id="announcement" class="form-textarea" maxlength="240" placeholder="Ex.: Vamos fazer uma atualização rápida em breve…">'+e(x.announcement||"")+'</textarea><span class="form-hint">Até 240 caracteres. Deixe em branco para não mostrar aviso.</span></div>'+
  '<div class="setting-actions"><button type="submit" class="btn-main" '+(state.busy?"disabled":"")+'>'+ico("check-circle",17)+' Salvar configurações</button></div></form>';
 }
+
+function maintenancePage(){
+ var s=state.settings||{},active=Boolean(s.maintenance_enabled);
+ return heading("CONTROLE DE LANÇAMENTOS","Atualizações <em>sob seu controle.</em>","Você decide quando mostrar a tela de atualização e quando liberar a nova versão para os usuários.")+
+ '<section class="release-hero '+(active?"is-active":"")+'"><div class="release-hero-copy"><span class="release-status">✳ '+(active?"ATUALIZAÇÃO EM ANDAMENTO":"SITE DISPONÍVEL")+'</span><h2>'+(active?"Estamos preparando o próximo capítulo.":"O próximo capítulo começa com você.")+'</h2><p>'+(active?"Visitantes estão vendo a tela especial. Você continua com acesso ao painel.":"Ative o modo de atualização antes de publicar mudanças. Ao finalizar, o site volta automaticamente.")+'</p><div class="release-actions"><button type="button" class="btn-main coral" data-action="toggle-maintenance">'+ico(active?"check-circle":"refresh-cw",17)+" "+(active?"Finalizar atualização e liberar site":"Ativar modo atualização")+'</button><a href="../?maintenance_preview=1" class="btn-outline" target="_blank" rel="noopener">'+ico("external-link",15)+' Visualizar tela</a></div></div><div class="release-art" aria-hidden="true"><div class="release-halo"></div><div class="release-time"><small>ENTRE. / ATUALIZANDO</small><strong>05<span>:</span>00</strong><small>UM NOVO COMEÇO ESTÁ CHEGANDO</small></div></div></section>'
+ +'<div class="release-grid"><form id="release-form" class="form-card"><h2 class="section-heading">Mensagem da atualização</h2><p class="section-desc">Personalize o texto exibido aos visitantes. Salvar o texto não muda o estado do site.</p><div class="field"><label class="form-label" for="release-title">Título principal</label><input id="release-title" type="text" name="title" class="form-input" minlength="3" maxlength="90" required value="'+e(s.maintenance_title||"Tem coisa boa chegando.")+'"></div><div class="field"><label class="form-label" for="release-message">Mensagem aos visitantes</label><textarea id="release-message" name="message" class="form-textarea" minlength="6" maxlength="320" required>'+e(s.maintenance_message||"Estamos preparando uma nova versão do entre.")+'</textarea><small class="form-hint">Será atualizada na tela de manutenção durante a próxima verificação.</small></div><div class="setting-actions"><button type="submit" class="btn-main">'+ico("check-circle",17)+' Salvar mensagem</button></div></form>'
+ +'<aside class="release-guide"><h3>Seu fluxo de atualização</h3><p><strong>01 · Ativar</strong><br>Exiba a tela de atualização e pause novas interações.</p><p><strong>02 · Publicar</strong><br>Atualize o código no GitHub Pages e confira a publicação.</p><p><strong>03 · Liberar</strong><br>Desative o modo para voltar automaticamente ao site já publicado.</p><div class="release-guide-note">'+ico("shield-check",18)+' Seu painel permanece acessível durante o processo.</div></aside></div>';
+}
+async function saveRelease(enabled,onlyText){
+ if(state.busy)return;
+ var form=document.getElementById("release-form"),s=state.settings||{};
+ var title=form&&form.elements.title.value.trim()||s.maintenance_title||"Tem coisa boa chegando.";
+ var message=form&&form.elements.message.value.trim()||s.maintenance_message||"Estamos preparando uma nova versão do entre.";
+ if(title.length<3||title.length>90||message.length<6||message.length>320){toast("Confira o título e a mensagem.",true);return;}
+ if(!onlyText){
+  var msg=enabled?"Ativar a tela de atualização agora? Novas interações serão pausadas.":"A nova versão já foi publicada no GitHub? A tela sairá quando você confirmar e todos serão redirecionados para o site.";
+  if(!window.confirm(msg))return;
+ }
+ state.busy=true;
+ try{
+  var result=await rpc("entre_admin_set_maintenance",{_enabled:enabled,_title:title,_message:message});
+  state.settings=result;if(state.overview)state.overview.settings=result;
+  toast(onlyText?"Texto salvo!":enabled?"Modo atualização ativado!":"Atualização finalizada. Site liberado!");
+  await load("updates");
+ }catch(err){toast(errorText(err),true);}finally{state.busy=false;}
+}
+
 function security(){
  return heading("ACESSO E PRIVACIDADE","Segurança <em>sem atalhos.</em>","O acesso administrativo é verificado no servidor. Seu navegador nunca recebe a chave secreta do Supabase.")+
  '<section class="form-card"><h2 class="section-heading">Administrador principal</h2><p class="section-desc">Conta reconhecida pela identidade Google e pela lista de autorização do banco.</p><div class="security-card"><span class="admin-avatar">'+e((state.user.email||"A").slice(0,1).toUpperCase())+'</span><div style="flex:1"><strong>'+e(state.user.email)+'</strong><small>Google verificado · administrador autorizado</small></div>'+badge("ACESSO ATIVO")+'</div>'+
@@ -110,12 +138,12 @@ function renderView(){
  var target=document.getElementById("admin-view");if(!target)return;
  document.querySelectorAll("[data-view]").forEach(function(el){el.classList.toggle("active",el.getAttribute("data-view")===state.view);});
  var loc=document.getElementById("topbar-location");if(loc)loc.textContent=viewTitle();
- target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="users"?users():state.view==="reports"?reports():state.view==="pairs"?pairs():state.view==="settings"?settings():security());
+ target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="pairs"?pairs():state.view==="settings"?settings():security());
 }
 async function load(view){
  state.loading=true;renderView();
  try{
-  if(view==="overview"||view==="settings"||!state.overview){
+  if(view==="overview"||view==="settings"||view==="updates"||!state.overview){
    state.overview=await rpc("entre_admin_overview");state.settings=state.overview.settings||state.settings;
   }
   if(view==="users")state.users=await rpc("entre_admin_users",{_query:state.search,_limit:perPage,_offset:state.userPage*perPage});
@@ -158,6 +186,7 @@ document.addEventListener("click",async function(ev){
  if(a==="close-modal"){closeModal();return;}
  if(a==="google"){await googleLogin();return;}
  if(a==="refresh"){await load(state.view);toast("Dados atualizados.");return;}
+ if(a==="toggle-maintenance"){await saveRelease(!Boolean(state.settings?.maintenance_enabled),false);return;}
  if(a==="signout"){await db.auth.signOut({scope:"local"});state.user=null;state.verified=false;gate(false);return;}
  if(a==="edit-user"){openUser(n.dataset.id);return;}
  if(a==="review"){openReport(n.dataset.id);return;}
@@ -171,7 +200,7 @@ document.addEventListener("input",function(ev){
  }
 });
 document.addEventListener("submit",async function(ev){
- var form=ev.target;if(!(form instanceof HTMLFormElement))return;ev.preventDefault();if(state.busy)return;
+ var form=ev.target;if(!(form instanceof HTMLFormElement))return;ev.preventDefault();if(form.id==="release-form"){await saveRelease(Boolean(state.settings?.maintenance_enabled),true);return;}if(state.busy)return;
  state.busy=true;var btn=form.querySelector('[type="submit"]');if(btn)btn.disabled=true;
  try{
   if(form.id==="settings-form"){
