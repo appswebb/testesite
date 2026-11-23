@@ -8,7 +8,7 @@ if(!window.supabase || !window.supabase.createClient){
  app.innerHTML='<div class="preload"><h1>Falha de conexão</h1><p>Atualize a página quando estiver conectado à internet.</p></div>';return;
 }
 var db=window.supabase.createClient(URL,KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
-var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null};
+var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[]};
 var perPage=20, searchTimer=null, toastTimer=null, lastLoad=0;
 var sections=[
  ["overview","Visão geral","layout-dashboard"],
@@ -136,10 +136,18 @@ async function saveRelease(enabled,onlyText){
  }catch(err){toast(errorText(err),true);}finally{state.busy=false;}
 }
 
+function appealsPanel(){
+ var arr=state.appeals||[];
+ return '<section class="form-card admin-appeals"><h2 class="section-heading">Contestações de suspensão</h2><p class="section-desc">Aprovar a contestação reativa a conta.</p>'+
+ (arr.length?arr.map(function(a){
+  return '<article class="appeal-row"><div><strong>'+e(a.display_name||a.email||'Conta')+'</strong><small>'+e(a.email||'')+' · '+fmt(a.created_at)+'</small><p>'+e(a.message)+'</p>'+badge(a.status==='pending'?'PENDENTE':a.status==='reviewed'?'APROVADA':'REJEITADA',a.status==='pending'?'warn':'neutral')+'</div>'+
+  (a.status==='pending'?'<div class="appeal-buttons"><button class="btn-main" data-action="review-appeal" data-id="'+e(a.id)+'">Aprovar e reativar</button><button class="btn-outline" data-action="reject-appeal" data-id="'+e(a.id)+'">Não aprovar</button></div>':'')+'</article>';
+ }).join(''):'<p class="section-desc">Nenhuma contestação recebida.</p>')+'</section>';
+}
 function security(){
  return heading("ACESSO E PRIVACIDADE","Segurança <em>sem atalhos.</em>","O acesso administrativo é verificado no servidor. Seu navegador nunca recebe a chave secreta do Supabase.")+
  '<section class="form-card"><h2 class="section-heading">Administrador principal</h2><p class="section-desc">Conta reconhecida pela identidade Google e pela lista de autorização do banco.</p><div class="security-card"><span class="admin-avatar">'+e((state.user.email||"A").slice(0,1).toUpperCase())+'</span><div style="flex:1"><strong>'+e(state.user.email)+'</strong><small>Google verificado · administrador autorizado</small></div>'+badge("ACESSO ATIVO")+'</div>'+
- '<div class="security-note"><b>Proteção em camadas.</b> Todas as operações de usuários, denúncias, suspensões e configurações são executadas por funções SQL com verificação administrativa. O controle não depende de esconder botões ou comparar e-mails no JavaScript.</div><div class="health-row"><strong>Autenticação</strong>'+badge("Google OAuth")+'</div><div class="health-row"><strong>Banco de dados</strong>'+badge("Supabase + RLS")+'</div><div class="health-row"><strong>Conteúdo de conversas</strong>'+badge("Não acessível aqui","neutral")+'</div><div class="health-row"><strong>Endereço do painel</strong><span style="overflow-wrap:anywhere;font-size:11px">/testesite/admin/</span></div></section>';
+ '<div class="security-note"><b>Proteção em camadas.</b> Todas as operações de usuários, denúncias, suspensões e configurações são executadas por funções SQL com verificação administrativa. O controle não depende de esconder botões ou comparar e-mails no JavaScript.</div><div class="health-row"><strong>Autenticação</strong>'+badge("Google OAuth")+'</div><div class="health-row"><strong>Banco de dados</strong>'+badge("Supabase + RLS")+'</div><div class="health-row"><strong>Conteúdo de conversas</strong>'+badge("Não acessível aqui","neutral")+'</div><div class="health-row"><strong>Endereço do painel</strong><span style="overflow-wrap:anywhere;font-size:11px">/testesite/admin/</span></div></section>'+appealsPanel();
 }
 function spinner(){return '<div class="loading-panel"><div class="loading-indicator"></div>Atualizando dados…</div>';}
 function renderView(){
@@ -157,11 +165,12 @@ async function load(view){
   if(view==="users")state.users=await rpc("entre_admin_users",{_query:state.search,_limit:perPage,_offset:state.userPage*perPage});
   if(view==="reports")state.reports=await rpc("entre_admin_reports",{_status:state.reportStatus,_limit:100});
   if(view==="pairs")state.pairs=await rpc("entre_admin_pairs",{_limit:60});
+  if(view==="security")state.appeals=await rpc("entre_admin_appeals");
   state.refreshAt=new Date();lastLoad=Date.now();
  }catch(err){toast(errorText(err),true);}
  finally{state.loading=false;renderView();}
 }
-async function navigate(view){if(!sections.some(function(s){return s[0]===view;}))return;state.view=view;renderView();if(view!=="security")await load(view);}
+async function navigate(view){if(!sections.some(function(s){return s[0]===view;}))return;state.view=view;renderView();await load(view);}
 function modal(content){document.getElementById("modal-root").innerHTML='<div class="modal-back" id="modal-back"><div class="modal" role="dialog" aria-modal="true" aria-label="Ação administrativa">'+content+'</div></div>';var el=document.querySelector(".modal input,.modal textarea,.modal select");if(el)el.focus();}
 function closeModal(){state.modal=null;var el=document.getElementById("modal-root");if(el)el.innerHTML="";}
 function openUser(id){
@@ -203,6 +212,11 @@ document.addEventListener("click",async function(ev){
   try{var sent=await rpc('entre_admin_publish_announcement',{_message:notice});state.settings=Object.assign({},state.settings,sent);toast('Aviso enviado por 10 segundos!');await load('settings');}
   catch(err){toast(errorText(err),true);}finally{state.busy=false;}
   return;
+ }
+ if(a==="review-appeal"||a==="reject-appeal"){
+  if(!window.confirm(a==="review-appeal"?'Aprovar contestação e reativar?':'Rejeitar contestação?'))return;
+  try{await rpc('entre_admin_review_appeal',{_id:Number(n.dataset.id),_approve:a==="review-appeal"});toast('Revisão registrada.');await load('security');}
+  catch(err){toast(errorText(err),true);}return;
  }
  if(a==="toggle-maintenance"){await saveRelease(!Boolean(state.settings?.maintenance_enabled),false);return;}
  if(a==="signout"){await db.auth.signOut({scope:"local"});state.user=null;state.verified=false;gate(false);return;}
