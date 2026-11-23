@@ -21,7 +21,22 @@
 <div id="app"><div class="startup"><span class="brand-glyph"><i></i><i></i></span><span>entre<span class="dot">.</span></span><span class="startup-pulse"></span></div></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
-<script>\n// Cache-bust the app bundle on every visit, including after a maintenance release.\nwindow.addEventListener('DOMContentLoaded',function(){var script=document.createElement('script');script.src='./app.js?live='+Date.now();document.body.appendChild(script);});\n</script>
+<script>
+/* Load a fresh app bundle on each visit, including after an update release. */
+window.addEventListener('DOMContentLoaded', function () {
+  var script = document.createElement('script');
+  script.src = './app.js?live=' + Date.now();
+  script.onerror = function () {
+    var app = document.getElementById('app');
+    if (app) {
+      app.innerHTML = '<main class="startup" style="display:grid;place-content:center;text-align:center;padding:24px;gap:16px;min-height:100dvh">' +
+        '<h1>entre.</h1><p>Não foi possível carregar o site. Verifique sua conexão e tente novamente.</p>' +
+        '<button type="button" onclick="location.reload()" style="border:0;border-radius:14px;padding:13px;background:#ef947a;color:#18221e;font-weight:700">Tentar novamente</button></main>';
+    }
+  };
+  document.body.appendChild(script);
+});
+</script>
 <script defer src="./motion.js"></script>
 </body>
 </html>
