@@ -28,7 +28,7 @@ Deno.serve(async (req: Request) => {
       return json({ error: "ticket_not_found" }, 404);
     if (ticket.email_status === "sent") return json({ email_status: "sent" });
     const { data: evidence, error: proofError } = await service.from("entre_support_evidence").select("object_path").eq("ticket_id", ticketId);
-    if (proofError || !evidence?.length) return json({ error: "missing_evidence" }, 400);
+    if (proofError) return json({ error: "evidence_unavailable" }, 503);
     const key = Deno.env.get("RESEND_API_KEY");
     const sender = Deno.env.get("ENTRE_SUPPORT_FROM");
     if (!key || !sender) {
@@ -36,7 +36,7 @@ Deno.serve(async (req: Request) => {
       return json({ email_status: "unavailable", message: "Ticket saved. Email delivery is not configured." }, 200);
     }
     const links: string[] = [];
-    for (const item of evidence) {
+    for (const item of evidence || []) {
       const { data: signed, error: signError } = await service.storage.from("entre-support-evidence").createSignedUrl(item.object_path, 3600 * 24);
       if (!signError && signed?.signedUrl) links.push(signed.signedUrl);
     }
@@ -53,7 +53,7 @@ Deno.serve(async (req: Request) => {
     const sent = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: sender, to: ["connectapp.w@gmail.com"], subject: "entre. | Suporte #"+ ticket.id + " — "+ safe(ticket.subject), text })
+      body: JSON.stringify({ from: sender, to: [Deno.env.get("ENTRE_SUPPORT_TO") || "connectapp.w@gmail.com"], subject: "entre. | Suporte #"+ ticket.id + " — "+ safe(ticket.subject), text })
     });
     if (!sent.ok) {
       await service.from("entre_support_tickets").update({ email_status: "error" }).eq("id", ticketId);
