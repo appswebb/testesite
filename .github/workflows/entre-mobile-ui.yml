@@ -46,6 +46,7 @@ on:
       - 'docs/rooms.js'
       - 'docs/live-explore.css'
       - 'tests/live-gallery.test.mjs'
+      - 'tests/live-gallery-mobile-audit.cjs'
       - 'docs/camera-lives.js'
       - 'docs/premium-recurring.js'
       - 'tests/community-hub.test.mjs'
@@ -123,6 +124,7 @@ jobs:
           node --test tests/legacy-green-audit.test.mjs
           node --test tests/action-first.test.mjs
           node --test tests/live-gallery.test.mjs
+          node tests/live-gallery-mobile-audit.cjs
           node --test tests/room-live-filters.test.mjs
           node --test tests/source-fidelity.test.mjs
           node --test tests/geo-feed-support.test.mjs
