@@ -15,8 +15,9 @@
 <title>entre. — O próximo oi pode mudar tudo.</title>
 <link rel="stylesheet" href="./motion.css">
 <link rel="stylesheet" href="./mobile.css?v=crop-editor-20261123">
+<link rel="stylesheet" href="./features.css?v=20261123d">
 <link rel="stylesheet" href="./maintenance.css?v=photos-20261123">
-</head>
+<link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#17281e"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="apple-touch-icon" href="./icons/icon-192.png"></head>
 <body>
 <div id="app"><div class="startup"><span class="brand-glyph"><i></i><i></i></span><span>entre<span class="dot">.</span></span><span class="startup-pulse"></span></div></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -48,5 +49,5 @@ window.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 <script defer src="./motion.js"></script>
-</body>
+<script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));</script></body>
 </html>

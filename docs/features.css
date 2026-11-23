@@ -1,0 +1,42 @@
+
+/* Product UX: broadcasts, suspended accounts and legal pages */
+.announcement-screen{position:fixed;inset:0;z-index:999999;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 70% 20%,#406247,#14261b 65%);color:#faf7ef;font-family:system-ui;overflow-y:auto}
+.announcement-dialog{position:relative;width:min(100%,650px);padding:clamp(24px,6vw,65px);border:1px solid #ffffff25;border-radius:34px;background:#ffffff0a;box-shadow:0 24px 100px #0005;text-align:center}
+.announcement-backdrop{position:absolute;inset:0;background:radial-gradient(circle at 0 100%,#ec9c7833,transparent 50%);pointer-events:none}
+.announcement-identity{font:800 25px 'Space Grotesk',system-ui;letter-spacing:-.08em;margin-bottom:26px}.announcement-identity span,.announcement-dialog h2 span{color:#f29a7e}
+.announcement-icon{display:grid;place-content:center;margin:0 auto 24px;width:74px;height:74px;border-radius:23px;background:#f29a7e;color:#19321d;font-size:39px}
+.announcement-kicker{font:800 10px 'Space Grotesk',system-ui;letter-spacing:.19em;color:#d6eacb}
+.announcement-dialog h2{font:800 clamp(36px,8vw,64px)/1.08 'Space Grotesk',system-ui;letter-spacing:-.065em;margin:15px 0}
+.announcement-text{font-size:clamp(16px,3vw,22px);line-height:1.65;overflow-wrap:anywhere;white-space:pre-wrap;color:#e5f0e0;margin:0 auto 33px}
+.announcement-timer-bar{height:6px;border-radius:50px;background:#ffffff30;overflow:hidden}.announcement-timer-bar div{height:100%;width:100%;background:#f8aa8b;transition:width .1s linear}
+.announcement-timer-copy{margin-top:15px;font-size:13px;color:#c0d7c2}.announcement-timer-copy strong{font:800 24px 'Space Grotesk',system-ui;color:white;font-variant-numeric:tabular-nums}
+.suspension-screen{min-height:100dvh;padding:clamp(20px,5vw,43px);background:radial-gradient(circle at 80% 0,#37503d,#16251b 65%);color:#f7f5ed;display:flex;flex-direction:column;align-items:center;font-family:system-ui;overflow:hidden}
+.suspension-header,.suspension-footer{display:flex;align-items:center;justify-content:space-between;width:min(100%,1020px);gap:15px;z-index:1}.suspension-header span{color:#aac5af;font-size:10px;letter-spacing:.12em;text-align:right}
+.suspension-logo{font:800 30px 'Space Grotesk',system-ui;letter-spacing:-.08em;color:#fff;text-decoration:none}.suspension-logo span{color:#f39c7e}
+.suspension-card{width:min(100%,610px);margin:clamp(40px,7vh,85px) auto;padding:clamp(23px,6vw,50px);border:1px solid #ffffff28;border-radius:30px;background:#ffffff0b;box-sizing:border-box;z-index:1}
+.suspension-sign{display:grid;place-content:center;width:60px;height:60px;border-radius:20px;background:#f4a486;color:#16251b;font:800 36px system-ui;margin-bottom:24px}
+.suspension-eyebrow{letter-spacing:.15em;font:800 10px system-ui;color:#f1b79e}.suspension-card h1{font:800 clamp(36px,7vw,56px)/1.08 'Space Grotesk',system-ui;letter-spacing:-.06em;margin:14px 0 20px}.suspension-card h1 em{color:#f9ad8b;font-family:Georgia,serif;font-weight:400}
+.suspension-card>p{color:#c4d1c1;font-size:14px;line-height:1.65}
+.suspension-reason{padding:18px 20px;margin:24px 0;border-radius:18px;background:#ffffff10;border:1px solid #ffffff24}.suspension-reason strong{color:#efb79b;font-size:12px}.suspension-reason p{margin:8px 0 0;overflow-wrap:anywhere;line-height:1.55}
+.suspension-form label{display:block;font-size:13px;font-weight:750;margin:15px 0 8px}.suspension-form textarea{box-sizing:border-box;min-height:120px;width:100%;padding:14px;border:1px solid #ffffff44;border-radius:14px;background:#ffffff12;color:white;font:inherit;resize:vertical}.suspension-form textarea::placeholder{color:#b7c7b7}
+.suspension-submit{width:100%;min-height:48px;margin-top:11px;background:#efa083;color:#14281b;border:0;border-radius:13px;font-weight:800;cursor:pointer}.suspension-form small{display:block;margin-top:10px;color:#c2d0bf;font-size:11px}.suspension-footer-actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:24px}.suspension-footer-actions a,.suspension-footer-actions button{background:none;color:#edf2e6;text-decoration:underline;border:0;font-size:12px;cursor:pointer}.suspension-footer{justify-content:center;font-size:11px;color:#b8c5b4}.suspension-success{color:#e0f5d5}
+.maint-actions{gap:10px;min-width:0}.maint-actions .maint-refresh{max-width:100%;white-space:normal}.maint-container,.maint-visual{min-width:0}
+.admin-entry{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.4;text-align:center}
+@media(max-width:760px){.settings-card .setting-row:has(.admin-entry){display:flex;flex-direction:column;align-items:stretch;gap:12px}.settings-card .setting-row:has(.admin-entry)>div{min-width:0;width:100%}.settings-card .setting-row .admin-entry{box-sizing:border-box;display:flex;align-items:center;justify-content:center;min-height:46px;width:100%;max-width:100%;padding:12px 14px;white-space:normal}}
+/* Editorial support pages */
+.info-page{margin:0;min-width:280px;background:#f7f5ef;color:#1d3225;font:15px/1.7 system-ui}.info-page *{box-sizing:border-box}
+.info-wrap{width:min(calc(100% - 32px),1080px);margin:0 auto}
+.info-header{padding:17px 0;background:#f7f5efec;position:sticky;top:0;z-index:20;backdrop-filter:blur(12px);border-bottom:1px solid #dfe6d8}
+.info-header .info-wrap{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}.info-brand{font:800 29px 'Space Grotesk',system-ui;letter-spacing:-.085em;color:#1e3225;text-decoration:none}.info-brand span{color:#ed997c}
+.info-nav{display:flex;align-items:center;gap:clamp(9px,2vw,20px);flex-wrap:wrap}.info-nav a{font-size:12px;text-decoration:none;color:#506452;font-weight:800}
+.info-hero{padding:clamp(54px,10vw,110px) 0;background:radial-gradient(circle at 70% 20%,#385a41,#182d20 75%);color:white}
+.info-kicker{color:#f8b495;font:800 10px system-ui;letter-spacing:.21em}.info-hero h1{font:800 clamp(40px,8vw,77px)/1.08 'Space Grotesk',system-ui;letter-spacing:-.07em;max-width:820px;margin:17px 0}.info-hero h1 em{font:italic 1.1em Georgia,serif;color:#f8a687}.info-hero p{max-width:720px;color:#caddc8;font-size:clamp(15px,2.5vw,19px)}
+.info-main{padding:clamp(30px,6vw,72px) 0 90px}.info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}.info-card{min-width:0;padding:clamp(20px,4vw,33px);background:#fffefa;border:1px solid #e0e6da;border-radius:23px;box-shadow:0 12px 37px #11221905}
+.info-card.accent{background:#e5efdd}.info-card h2{font:800 23px/1.22 'Space Grotesk',system-ui;letter-spacing:-.03em;margin:0 0 13px}.info-card p,.info-card li{color:#657565;overflow-wrap:anywhere;font-size:14px}.info-card p{margin:8px 0}.info-card ul{padding-left:20px}
+.info-section{margin-top:40px}.info-section h2{font:800 clamp(24px,4vw,36px) 'Space Grotesk',system-ui;letter-spacing:-.04em}
+.info-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.info-step{background:#fff;border:1px solid #dee6d8;border-radius:19px;padding:22px}.info-step b{font-size:27px;color:#e79272}.info-step h3{font-size:18px;margin:10px 0}.info-step p{font-size:13px;color:#667569}
+.info-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:50px;background:#1c3424;color:white;text-decoration:none;padding:13px 23px;border-radius:13px;border:0;font:800 14px system-ui;cursor:pointer}.info-button.coral{background:#efa181;color:#203322}.info-button:disabled{opacity:.6}
+.info-actions{display:flex;flex-wrap:wrap;gap:12px;margin:25px 0}.info-alert{border:1px solid #e0cbb7;background:#f5ece2;padding:20px;border-radius:17px;margin:24px 0}.info-alert p{margin:7px 0 0;color:#685544}
+.info-form{display:grid;gap:12px}.info-form label{font-weight:800;font-size:13px}.info-form select,.info-form textarea{width:100%;min-width:0;padding:12px;border-radius:12px;border:1px solid #c9d7c7;background:white;color:#223525;font:inherit}.info-form textarea{min-height:115px;resize:vertical}
+.info-status{font-size:13px;font-weight:750;color:#407249}.info-footer{padding:30px 0;background:#182d20;color:#d2e2ce}.info-footer .info-wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}.info-footer nav{display:flex;gap:15px;flex-wrap:wrap}.info-footer a{color:#e9f2e4;font-size:12px}
+@media(max-width:720px){.info-grid,.info-steps{grid-template-columns:minmax(0,1fr)}.info-nav{gap:9px}.info-nav a{font-size:11px}}@media(max-width:350px){.announcement-dialog{padding:20px 16px}}
