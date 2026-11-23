@@ -1,4 +1,8 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.75.0/+esm';
+const createClient = window.supabase?.createClient;
+if (!createClient) {
+  document.getElementById('app').innerHTML = '<main class="startup" style="display:flex;flex-direction:column;padding:30px;text-align:center"><h1 style="font-size:40px;margin-bottom:12px">entre.</h1><p style="font:16px system-ui">Falha ao carregar a conexão. Confira a internet e atualize a página.</p><button onclick="location.reload()" style="padding:12px 25px;border-radius:20px;border:0;background:#f17e60">Tentar novamente</button></main>';
+  throw new Error('Supabase browser bundle is not available');
+}
 
 const SUPABASE_URL = 'https://trrakyybnvxpdhxwgjrz.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_OJ4wBPPNVBBcrcNl12yonw_hRSlMKsZ'; // public, restricted by database RLS
