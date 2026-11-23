@@ -34,6 +34,7 @@ function conversationsView(){
  pairs.sort((a,b)=>Number(Boolean(api.pref(b).pinned))-Number(Boolean(api.pref(a).pinned))||new Date(b.last_activity_at||b.created_at)-new Date(a.last_activity_at||a.created_at));
  const selected=pairs.filter(p=>{const x=api.pref(p);return d.filter==='archived'?Boolean(x.archived_at):!x.archived_at&&(d.filter==='all'||d.filter===(x.folder||p.origin||'live'));}).slice(0,50);
  return heading('MATCH CONFIRMADO','Suas <em>conversas.</em>','Aqui ficam os chats permanentes. Para organizar ou apagar, use o menu de três pontos ao lado de cada conversa.')+
+ (window.entreSearch?.conversationSearchMarkup?.()||'')+
  '<div class="conversation-tabs">'+filters.map(f=>'<button type="button" data-action="convoFilter" data-value="'+f[0]+'" class="'+(d.filter===f[0]?'active':'')+'">'+f[1]+'</button>').join('')+'</div>'+
  (selected.length?'<div class="convo-list conversation-list-v2">'+selected.map(row).join('')+'</div>':
  '<div class="social-empty"><h3>Nenhuma conversa nesta categoria.</h3><p>As conversas aparecem quando os dois escolhem continuar, ou quando um pedido para seguir é aceito.</p><button class="ui-btn btn-dark btn-sm" data-action="nav" data-view="connect">Conhecer alguém</button></div>')+

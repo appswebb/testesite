@@ -204,7 +204,7 @@ function premiumView(){
  '<div class="web-payment-status" id="webPaymentStatus" role="status">'+webPaymentStatusMarkup()+'</div>'+
  '<div class="web-checkout-embed" '+(data.webCheckoutOpen&&!active?'':'hidden')+'><div id="connectPaymentBrick" aria-label="Pagamento seguro com Pix ou cartão"></div></div>'+
  '<button type="button" class="ui-btn btn-outline" data-action="premiumVerify" '+(data.webChecking?'disabled':'')+'>'+ico('refresh',17)+' '+(data.webChecking?'Verificando…':'Já paguei · verificar pagamento')+'</button>'+
- '<small>Seus dados de cartão são tratados nos componentes seguros do Mercado Pago. O acesso só é liberado após confirmação na API do provedor.</small></div></section>';
+ '<small>Seus dados de cartão são tratados nos componentes seguros do Mercado Pago. O acesso só é liberado após confirmação na API do provedor.</small></div></section>'+(window.entreRecurring?.view?.()||'');
 }
 async function openPremiumWhatsapp(){
  if(!data.premium?.active)throw Error('O atendimento prioritário exige Premium ativo.');
@@ -347,7 +347,7 @@ async function submitSupport(form){
 }
 async function enter(view){
  if(view==='posts')await loadPosts();
- if(view==='premium'){await refreshPremium();renderView();if(data.webCheckoutOpen&&!data.premium?.active)void renderWebBrick().catch(e=>{data.webError=infoError(e);refreshWebStatus();});}
+ if(view==='premium'){await refreshPremium();await window.entreRecurring?.loadStatus?.();renderView();if(data.webCheckoutOpen&&!data.premium?.active)void renderWebBrick().catch(e=>{data.webError=infoError(e);refreshWebStatus();});}
  if(view==='support'){await Promise.all([loadSupport(),refreshPremium()]);renderView();}
 }
 Object.assign(mod,{data,isPremium:premium,badge,loadBadges,refreshPremium,loadPosts,postsView,postAction,postForm,premiumView,checkout,verifyPremium,copyPix,unmountPaymentBrick,openPremiumWhatsapp,supportView,submitSupport,loadSupport,enter});

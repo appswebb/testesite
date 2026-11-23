@@ -1,0 +1,27 @@
+-- Do not expose cohost applicant's user UUID to public viewers.
+create or replace function public.entre_lives_list()
+returns jsonb language plpgsql stable security definer set search_path to ''
+as $$
+declare me uuid:=auth.uid();response jsonb;
+begin
+ if me is null or public.entre_is_banned() or public.entre_maintenance_active() then raise exception 'Faça login para acessar lives' using errcode='42501';end if;
+ select coalesce(jsonb_agg(to_jsonb(x) order by x.started_at desc),'[]'::jsonb) into response
+ from (
+  select l.id,l.title,l.host_id,l.guest_id,
+   case when l.host_id=me or l.guest_requested_by=me then l.guest_requested_by else null end as guest_requested_by,
+   l.started_at,coalesce(h.display_name,'Pessoa') host_name,h.username host_username,
+   coalesce(g.display_name,'') guest_name,
+   l.host_id=me as is_host,l.guest_id=me as is_guest,l.guest_requested_by=me as requested
+  from public.entre_lives l
+  join public.entre_profiles h on h.id=l.host_id
+  left join public.entre_profiles g on g.id=l.guest_id
+  where l.status='active' and l.expires_at>now()
+  and not exists(select 1 from public.entre_moderation m where m.user_id=l.host_id and m.is_banned)
+  and not exists(select 1 from public.entre_blocks b where
+   (b.blocker=me and b.blocked=l.host_id) or (b.blocker=l.host_id and b.blocked=me))
+  order by l.started_at desc limit 30
+ ) x;
+ return response;
+end $$;
+revoke all on function public.entre_lives_list() from public,anon;
+grant execute on function public.entre_lives_list() to authenticated;

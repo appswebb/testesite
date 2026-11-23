@@ -22,10 +22,18 @@ function supportPage(rows,escape,format,icon,badge){
  '<p>'+escape(t.description)+'</p><div class="support-evidence-links">'+(t.evidence||[]).map((path,i)=>'<button type="button" class="small-btn" data-action="evidenceOpen" data-path="'+escape(path)+'">'+icon('external-link',15)+' Prova '+(i+1)+'</button>').join('')+'</div></article>').join(''):
  '<p class="section-desc" style="padding:24px">Nenhum chamado com provas por enquanto.</p>')+'</section>';
 }
+function recurringPage(config,escape){
+ const enabled=config?.recurring_enabled===true;
+ return '<section class="form-card recurring-admin-config"><h2 class="section-heading">Renovação automática do Premium</h2>'+
+ '<p class="section-desc">Modalidade separada do pagamento avulso de 30 dias. O comprador autoriza cobranças mensais no cartão. O acesso só é liberado depois que uma fatura aprovada for confirmada no servidor.</p>'+
+ '<form id="premium-recurring-settings-form"><label class="extra-admin-toggle"><input type="checkbox" name="enabled" '+(enabled?'checked':'')+'><span>Permitir assinaturas recorrentes pelo cartão</span></label>'+
+ '<div class="admin-note"><strong>Antes de ativar:</strong> configurar as credenciais Mercado Pago, o endpoint de webhook <code>entre-premium-recurring-webhook</code> para os eventos <code>subscription_authorized_payment</code> e <code>subscription_preapproval</code>, e testar com o ambiente de pagamentos do provedor. A modalidade Pix não renova automaticamente.</div>'+
+ '<button type="submit" class="btn-main">'+(enabled?'Salvar modo recorrente':'Configurar recorrência')+'</button></form></section>';
+}
 function priceParams(form){
  const price=Number(form.elements.price.value);
  if(!Number.isFinite(price)||price<1||price>10000)throw Error('Escolha um valor entre R$ 1,00 e R$ 10.000,00.');
  return {_price_cents:Math.round(price*100),_enabled:form.elements.enabled.checked};
 }
-window.entreAdminExtras={premiumPage,supportPage,priceParams};
+window.entreAdminExtras={premiumPage,recurringPage,supportPage,priceParams};
 })();
