@@ -82,10 +82,11 @@ test('password recovery sends a callback URL and hides account existence',async(
  assert.equal(options.redirectTo,'https://entre-ruby.vercel.app/?auth=recovery');
  assert.ok(events.some(e=>e.success===true&&/Se o e-mail estiver cadastrado/.test(e.msg)));
 });
-test('boot no longer rejects verified non-Google sessions',()=>{
- const src=read('app.js');
- assert.doesNotMatch(src,/O entre\. aceita somente login pelo Google/);
- assert.doesNotMatch(src,/if\(!hasGoogleIdentity\(verified\.data\.user\)\)/);
- assert.match(src,/window\.entreEmailAuth\.acceptSession\(data\.session,adminOAuthReturn\)/);
+test('boot accepts verified Supabase email sessions and rejects Google-only auth paths',()=>{
+ const src=read('app.js'),admin=read('admin/app.js');
+ assert.doesNotMatch(src,/signInWithOAuth/);
+ assert.doesNotMatch(src,/data-action="google"/);
+ assert.match(src,/window\.entreEmailAuth\.acceptSession\(data\.session\)/);
+ assert.match(admin,/db\.auth\.signInWithPassword/);
  assert.match(read('index.html'),/src="\.\/email-auth\.js/);
 });
