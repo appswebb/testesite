@@ -7,7 +7,7 @@ const styles=['styles.css','motion.css','mobile.css','features.css','social.css'
 const ico=(name,size=20)=>'<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>';
 const header='<header class="app-toolbar"><h1>entre.</h1><div class="toolbar-right"><button class="toolbar-global-search">'+ico('search')+'</button><button class="toolbar-bell">'+ico('bell')+'</button><button class="toolbar-profile"><span class="avatar">L</span></button></div></header>';
 const mobile='<nav class="mobile-nav">'+['Feed','Ao vivo','Salas','Lives','Conversas'].map(x=>'<button>'+ico(x)+'<span>'+x+'</span></button>').join('')+'</nav>';
-const html=()=>'<html lang="pt-BR"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+styles+'</style></head><body><div id="app"><div class="app-shell"><main class="app-main">'+header+'<div id="view-content" class="scene-enter"></div></main>'+mobile+'</div></div></body></html>';
+const html=()=>'<html lang="pt-BR"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+styles+'</style></head><body><div id="app"><div class="app-shell"><aside class="sidebar"><div class="brand">entre.</div></aside><main class="app-main">'+header+'<div id="view-content" class="scene-enter"></div></main>'+mobile+'</div></div></body></html>';
 (async()=>{
  const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
  try{
