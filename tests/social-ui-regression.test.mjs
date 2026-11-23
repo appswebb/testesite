@@ -220,3 +220,20 @@ test('Support requires evidence and sends a secured ticket to the dedicated mail
  assert.match(admin,/supportPage/);
  assert.match(admin,/priceParams/);
 });
+
+test('Posts, temporary video, premium checkout and account support remain wired to the app',()=>{
+ const app=read('app.js'),extras=read('entre-features.js'),video=read('entre-video.js');
+ assert.match(app,/\['posts','Posts','edit'\]/);
+ assert.match(app,/data-action="liveMode"/);
+ assert.match(app,/entre_find_mode/);
+ assert.match(app,/data-action="profileMenu"/);
+ assert.match(app,/data-view="settings"/);
+ assert.match(extras,/entre_posts_feed/);
+ assert.match(extras,/entre-premium-checkout/);
+ assert.match(extras,/entre_support_submit/);
+ assert.match(extras,/connectapp.w@gmail.com|support-contact/);
+ assert.doesNotMatch(extras,/connectapp\.w@gmail\.com/);
+ assert.match(video,/RTCPeerConnection/);
+ assert.match(video,/mediaDevices\.getUserMedia/);
+ assert.match(video,/private:true/);
+});
