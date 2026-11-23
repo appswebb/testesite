@@ -1,0 +1,54 @@
+/* Public static pages — same Yellow Pop app identity. */
+.info-page{background:#fff!important;color:#111!important;font-family:'Plus Jakarta Sans','DM Sans',system-ui,sans-serif!important}
+.info-header{background:rgba(255,255,255,.97)!important;border-bottom:1px solid #eee!important;box-shadow:none!important}
+.info-brand{color:#111!important;font:900 26px 'Plus Jakarta Sans',sans-serif!important;letter-spacing:-.09em!important}
+.info-brand span{color:#111!important}
+.info-nav{gap:8px!important}
+.info-nav a{display:inline-flex!important;align-items:center!important;padding:8px 10px!important;border-radius:999px!important;color:#777!important;font-weight:800!important;font-size:11px!important}
+.info-nav a[aria-current=page],.info-nav a:hover{background:#ffdd49!important;color:#111!important}
+.info-hero{background:#ffd936!important;color:#111!important;padding:clamp(57px,9vw,91px) 0!important;position:relative!important;overflow:hidden!important}
+.info-hero:after{content:'✳';font-size:210px;font-family:system-ui;color:#f249a8;opacity:.37;position:absolute;right:-30px;top:15%;transform:rotate(22deg);pointer-events:none}
+.info-hero .info-wrap{position:relative;z-index:1}
+.info-kicker{color:#393117!important;letter-spacing:.15em!important;font-size:10px!important;font-weight:900!important}
+.info-hero h1{font:900 clamp(37px,7vw,74px)/1.05 'Plus Jakarta Sans',sans-serif!important;letter-spacing:-.09em!important;color:#111!important;max-width:800px!important}
+.info-hero h1 em{font-family:inherit!important;color:#111!important;font-style:normal!important;position:relative!important;text-shadow:2px 2px 0 #fa4ab2}
+.info-hero p{color:#403723!important;font-size:clamp(13px,2vw,17px)!important;font-weight:600!important}
+.info-main{background:#fff!important}
+.info-grid{gap:13px!important}
+.info-card,.info-step{background:#fff!important;border:1px solid #ededed!important;border-radius:20px!important;box-shadow:none!important;padding:clamp(19px,3vw,27px)!important}
+.info-card.accent{background:#fff7db!important;border-color:#ffe9aa!important}
+.info-card h2,.info-section h2{font-family:'Plus Jakarta Sans',sans-serif!important;font-weight:900!important;letter-spacing:-.06em!important;color:#111!important}
+.info-card h2{font-size:20px!important}
+.info-card p,.info-card li,.info-step p{color:#737373!important;line-height:1.8!important;font-size:12px!important}
+.info-section h2{font-size:clamp(23px,3vw,32px)!important}
+.info-step b{color:#111!important;display:grid!important;place-items:center!important;width:40px!important;height:40px!important;border-radius:50%!important;background:#ffe16a!important;font-size:20px!important}
+.info-step h3{font-weight:850!important;color:#111!important}
+.info-alert{border:1px solid #f4e5b5!important;background:#fff8df!important;color:#514720!important;border-radius:17px!important}
+.info-alert strong{color:#111!important}
+.info-alert p{color:#6d6038!important}
+.info-form label{color:#111!important;font-size:12px!important}
+.info-form select,.info-form textarea{border:1px solid #e8e8e8!important;border-radius:13px!important;background:#fff!important;color:#111!important;font-size:14px!important}
+.info-button,.info-button.coral{border-radius:999px!important;background:#111!important;color:#fff!important;border:0!important;font-size:12px!important;font-weight:850!important;min-height:47px!important}
+.info-button.coral{background:#ffda39!important;color:#111!important}
+.info-footer{background:#111!important;color:#fff!important}
+.info-footer .info-brand,.info-footer .info-brand span{color:#fff!important}
+.info-footer a{color:#ddd!important}
+.info-status{color:#4e4223!important}
+.info-page .info-section a:not(.info-button){color:#333!important;text-decoration:underline!important;text-decoration-color:#ffcb26!important}
+@media(max-width:700px){
+ .info-nav{gap:4px!important}
+ .info-nav a{padding:7px 8px!important;font-size:10px!important}
+ .info-hero{padding:53px 0!important}
+ .info-hero h1{font-size:clamp(34px,9vw,48px)!important}
+ .info-hero:after{font-size:130px!important}
+ .info-grid{grid-template-columns:1fr!important}
+ .info-step{padding:16px!important}
+ .info-main{padding:32px 0 80px!important}
+ .info-header .info-wrap{gap:10px!important}
+}
+@media(max-width:390px){
+ .info-header .info-wrap{align-items:flex-start!important}
+ .info-brand{font-size:24px!important}
+ .info-nav{justify-content:flex-start!important;width:100%;overflow-x:auto!important;flex-wrap:nowrap!important}
+ .info-nav a{flex:none!important}
+}
