@@ -1,7 +1,7 @@
 (function entreLocation(){
  'use strict';
  const UFS=[['AC','Acre'],['AL','Alagoas'],['AP','Amapá'],['AM','Amazonas'],['BA','Bahia'],['CE','Ceará'],['DF','Distrito Federal'],['ES','Espírito Santo'],['GO','Goiás'],['MA','Maranhão'],['MT','Mato Grosso'],['MS','Mato Grosso do Sul'],['MG','Minas Gerais'],['PA','Pará'],['PB','Paraíba'],['PR','Paraná'],['PE','Pernambuco'],['PI','Piauí'],['RJ','Rio de Janeiro'],['RN','Rio Grande do Norte'],['RS','Rio Grande do Sul'],['RO','Rondônia'],['RR','Roraima'],['SC','Santa Catarina'],['SP','São Paulo'],['SE','Sergipe'],['TO','Tocantins']];
- const geo={self:null,homeState:'',homeCity:'',targetState:'',targetCity:'',targetMode:'any',cities:{},failures:{},loading:new Set(),busy:false,ready:false};
+ const geo={self:null,homeState:'',homeCity:'',targetState:'',targetCity:'',targetMode:'any',cities:{},failures:{},loading:new Set(),busy:false,ready:false,homeExpanded:false};
  const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
  const rpc=async(name,params={})=>{const response=await db.rpc(name,params);if(response.error)throw response.error;return response.data;};
  const notice=()=>geo.self?`Localização de referência: ${esc(geo.self.city)} — ${esc(geo.self.state)}.`:'Defina sua cidade e estado para buscar pessoas por região.';
@@ -33,6 +33,26 @@
     </div>
    </div>
    <p class="geo-privacy-note">${ico('shield',14)} Sua cidade não aparece publicamente no perfil. Ao detectar automaticamente, o navegador pedirá autorização e enviará as coordenadas uma única vez ao OpenStreetMap para identificar o município. Guardamos só cidade e UF no Supabase.</p>
+  </section>`;
+ }
+ function compactPanel(waiting=false){
+  const busy=waiting||geo.busy;
+  const modes=[['any','Todo o Brasil'],['my_state','Meu estado'],['my_city','Minha cidade'],['other_state','Outro estado'],['other_city','Outra cidade']];
+  const custom=geo.targetMode==='other_state'||geo.targetMode==='other_city';
+  return `<section class="geo-discovery geo-discovery-compact" aria-label="Região do encontro">
+   <label class="geo-target-label">Onde encontrar pessoas?
+   <select data-geo-field="target-mode" ${busy?'disabled':''}>${modes.map(([value,label])=>`<option value="${value}" ${geo.targetMode===value?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
+   ${custom?`<div class="geo-input-row"><label>Estado${stateSelect('target-state',geo.targetState,busy)}</label>${geo.targetMode==='other_city'?`<label>Cidade${cityControl('target-city',geo.targetState,geo.targetCity,busy)}</label>`:''}</div>`:''}
+   ${!geo.self&&geo.targetMode!=='any'?'<p class="geo-setup-hint">Configure sua cidade de referência abaixo para buscar por região.</p>':''}
+   <details class="geo-home-settings" ${geo.homeExpanded?'open':''}>
+    <summary>${ico('compass',15)} ${geo.self?`Minha localização: ${esc(geo.self.city)} · ${esc(geo.self.state)}`:'Configurar minha cidade'} ${ico('chevron',15)}</summary>
+    <div class="geo-home-content">
+     <div class="geo-input-row"><label>Meu estado${stateSelect('home-state',geo.homeState,busy)}</label><label>Minha cidade${cityControl('home-city',geo.homeState,geo.homeCity,busy)}</label></div>
+     <div class="geo-actions"><button type="button" data-action="geoSave" ${busy?'disabled':''}>${ico('check',15)} Salvar cidade</button>
+     <button type="button" data-action="geoDetect" ${busy?'disabled':''}>${ico('compass',15)} Detectar</button></div>
+     <p class="geo-privacy-note">${ico('shield',14)} Guardamos somente cidade e estado. Detecção automática pede sua autorização.</p>
+    </div>
+   </details>
   </section>`;
  }
  async function citiesFor(uf){
@@ -121,5 +141,9 @@
    case'target-city':geo.targetCity=el.value;break;
   }
  });
- window.entreGeo={init,panel,action,target,details:()=>({...geo,self:geo.self?{...geo.self}:null})};
+ document.addEventListener('toggle',event=>{
+  const section=event.target;
+  if(section?.matches?.('.geo-home-settings')&&section.isConnected)geo.homeExpanded=section.open;
+ },true);
+ window.entreGeo={init,panel,compactPanel,action,target,details:()=>({...geo,self:geo.self?{...geo.self}:null})};
 })();

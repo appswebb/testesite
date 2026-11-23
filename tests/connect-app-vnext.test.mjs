@@ -72,3 +72,34 @@ test('original entre. identity is restored without removing feature code',()=>{
  assert.match(extras,/entre_post_comment_delete/);
  assert.match(extras,/entre-premium-web/);
 });
+
+
+test('live filters are a contained sheet with the primary search action permanently in its footer',()=>{
+ const app=read('docs/app.js');
+ const live=app.slice(app.indexOf('function connectView(){'),app.indexOf('function pairView(){'));
+ const css=read('docs/functional-updates.css');
+ const geo=read('docs/entre-location.js');
+ assert.match(live,/class="live-filter-footer"/);
+ assert.match(live,/class="live-filter-find"/);
+ assert.match(live,/data-action="liveFiltersClose"/);
+ assert.match(live,/compactPanel/);
+ assert.match(css,/\.live-app-filters\[open\]\s*\{/);
+ assert.match(css,/position:fixed;z-index:1001/);
+ assert.match(css,/\.live-app-filters\[open\] \.live-filter-footer/);
+ assert.match(css,/overflow-y:auto;overflow-x:hidden/);
+ assert.match(css,/@media\(max-width:760px\)/);
+ assert.match(geo,/function compactPanel\(/);
+ assert.match(geo,/geo-home-settings/);
+ const original=live.match(/data-action="'\+\(waiting\?'cancelsearch':'startsearch'\)\+'/g)||[];
+ assert.equal(original.length,2,'Both default card and filter sheet must start the same search');
+});
+test('filter state and inner scroll survive rerenders, and search automatically closes the drawer',()=>{
+ const app=read('docs/app.js');
+ assert.match(app,/liveFiltersOpen:false/);
+ assert.match(app,/state\.liveFiltersOpen\?'open'/);
+ assert.match(app,/const liveScroll=el\.querySelector\('\.live-app-filter-body'\)\?\.scrollTop/);
+ assert.match(app,/syncLiveFilters\(liveScroll\)/);
+ assert.match(app,/state\.liveFiltersOpen=false;document\.body\.classList\.remove\('live-filters-open'\);state\.searching=true/);
+ assert.match(app,/case'liveFiltersClose'/);
+ assert.match(app,/addEventListener\('toggle'/);
+});
