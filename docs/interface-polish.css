@@ -1,0 +1,72 @@
+/* entre. · Correções de interface mantendo as cores originais */
+/* Compartilhamento: CTA realmente visível, sem borda apagada */
+#view-content .profile-share-primary,.profile-share-primary{
+ display:flex;align-items:center;justify-content:center;gap:9px;width:100%;
+ min-height:51px;margin:15px auto 18px;padding:13px 16px;
+ background:#264732!important;color:#fff!important;border:1px solid #264732!important;
+ border-radius:14px!important;font-weight:850!important;font-size:13px;
+ box-shadow:0 10px 23px #244b321a;opacity:1!important;
+ cursor:pointer;transition:transform .18s,background .18s;
+}
+.profile-share-primary svg{color:#ffdcc6}
+.profile-share-primary:hover{background:#315e3e!important}
+.profile-share-primary:active{transform:scale(.98)}
+/* Comentários em tela completa com rolagem exclusiva */
+body:has(.comments-overlay){overflow:hidden!important}
+.comments-overlay{position:fixed;inset:0;z-index:2005;display:flex;align-items:center;justify-content:center;padding:18px;background:#102319bd;backdrop-filter:blur(5px);overscroll-behavior:contain}
+.comments-dialog{display:flex;flex-direction:column;min-width:0;width:min(660px,100%);height:min(780px,calc(100dvh - 40px));max-height:100%;overflow:hidden;border:1px solid #d8e4d3;background:#fffefa;border-radius:25px;box-shadow:0 24px 75px #11261a55}
+.comments-dialog-header{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:19px 23px 16px;border-bottom:1px solid #e7ece2;flex:none;background:#fffefa}
+.comments-dialog-header>div{min-width:0}
+.comments-dialog-header span{font-size:9px;letter-spacing:.16em;color:#709078;font-weight:850}
+.comments-dialog-header h2{font:800 29px 'Space Grotesk',sans-serif;letter-spacing:-.055em;color:#24402d;margin:4px 0}
+.comments-dialog-header p{font-size:11px;color:#7c8e80;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.comments-dialog-close{width:43px;height:43px;border-radius:13px;border:1px solid #d9e4d4;background:#f1f6ec;color:#2f5639;cursor:pointer;display:grid;place-items:center;flex:none}
+.comments-dialog-close:hover{background:#e3eee0}
+.comments-dialog-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:14px 23px 24px;background:#fdfdf9;scrollbar-width:thin}
+.full-comment{position:relative;display:grid;grid-template-columns:38px minmax(0,1fr);gap:11px;padding:15px 0;border-bottom:1px solid #e8eee5}
+.full-comment>.comment-initial{width:36px;height:36px;border-radius:50%;font-size:12px}
+.full-comment-content{min-width:0;position:relative}
+.full-comment-top{display:flex;align-items:baseline;justify-content:space-between;gap:7px;flex-wrap:wrap}
+.full-comment-top strong{color:#304d38;font-size:13px}
+.full-comment-top small{color:#879487;font-size:10px}
+.full-comment-content>p{margin:8px 0;color:#405547;font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.full-comment-content>p[hidden]{display:none!important}
+.full-comment-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}
+.full-comment-buttons button{border:0;background:none;color:#66856d;padding:5px 8px 5px 0;font-size:11px;font-weight:750;cursor:pointer}
+.full-comment-buttons button:hover{color:#2d6c43}
+.comments-dialog-footer{padding:13px 20px max(16px,env(safe-area-inset-bottom));border-top:1px solid #e3eade;background:#fffefa;flex:none}
+.comments-dialog-footer .post-comment-form{display:flex;gap:10px;padding:0;border:0}
+.comments-dialog-footer .post-comment-form input{min-height:48px;flex:1;min-width:0;border:1px solid #d3e0d0;border-radius:13px;padding:12px 15px;font-size:14px;background:#f6f9f2;color:#304b39}
+.comments-dialog-footer .post-comment-form button{width:48px;height:48px;flex:none;border:0;border-radius:13px;background:#244a33;color:#fff;display:grid;place-items:center}
+.comments-dialog-footer>small{display:block;margin-top:8px;font-size:10px;color:#899688}
+.comments-dialog-empty{min-height:200px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:11px;color:#6a876d}
+.comments-dialog-empty strong{color:#375a42;font-size:16px}
+.comments-dialog-empty p{font-size:12px;margin:0;color:#7d907d}
+.comments-dialog-message{font-size:12px;margin:12px;padding:10px;background:#fff1ec;border-radius:11px;color:#a3513c}
+.comments-more{display:block;border:1px solid #cedec9;background:#edf5ea;padding:12px 17px;margin:19px auto;border-radius:13px;color:#305338;font-size:12px;font-weight:800;cursor:pointer}
+.post-comments-launch{width:100%;border:1px solid #dfe9dc;background:#f3f8f0;border-radius:13px;padding:13px 14px;margin-top:11px;display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12px;color:#365840;font-weight:800}
+.post-comments-launch>span{flex:1;text-align:left}
+.post-comments-launch svg:last-child{margin-left:auto}
+.post-comments-launch:hover{background:#e7f1e2}
+.comments-overlay .comment-inline-form{margin-top:10px}
+.comments-overlay .comment-inline-form[hidden]{display:none!important}
+/* Toolbar: botões maiores, foco e contraste do entre. original */
+.toolbar-bell,.toolbar-profile{width:46px!important;height:46px!important;min-width:46px;display:grid!important;place-items:center!important;background:#fffefa!important;border:1px solid #d9e4d5!important;color:#345741!important;border-radius:50%!important;box-shadow:0 5px 15px #1b40240e}
+.toolbar-bell:hover,.toolbar-profile:hover{background:#eaf4e4!important;border-color:#9dbc99!important}
+.toolbar-bell svg,.toolbar-profile svg{width:21px;height:21px;stroke-width:2.1}
+.toolbar-profile{font-weight:850;letter-spacing:-.025em;color:#285136!important}
+.toolbar-bell:focus-visible,.toolbar-profile:focus-visible{outline:3px solid #89aa84;outline-offset:3px}
+/* Avatares de compartilhamento e feed */
+.profile-preview .avatar.xlarge{box-shadow:0 0 0 5px #fffdfa,0 12px 30px #1c452524}
+@media(max-width:660px){
+ .comments-overlay{padding:0;backdrop-filter:none}
+ .comments-dialog{width:100vw;height:100dvh;max-height:100dvh;border-radius:0;border:0}
+ .comments-dialog-header{padding:15px 17px 12px}
+ .comments-dialog-header h2{font-size:25px}
+ .comments-dialog-list{padding:9px 17px 20px}
+ .comments-dialog-footer{padding:11px 13px max(13px,env(safe-area-inset-bottom))}
+ .full-comment{grid-template-columns:33px minmax(0,1fr);gap:9px;padding:12px 0}
+ .full-comment>.comment-initial{width:32px;height:32px}
+ .toolbar-bell,.toolbar-profile{width:43px!important;height:43px!important;min-width:43px}
+}
+@media(prefers-reduced-motion:reduce){.comments-overlay,.comments-dialog,.post-comments-launch{animation:none!important;transition:none!important}}
