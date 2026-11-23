@@ -13,13 +13,14 @@ async function action(type,btn){
  }
  if(type==='onlineMore'||type==='onlineRestart'){await api.loadOnline(type==='onlineRestart');renderView();return true;}
  if(type==='profileOpen'){
-  const person=[...Object.values(state.pairsProfiles||{}),...api.data.online].find(p=>p?.id===id);
+  const person=[...Object.values(state.pairsProfiles||{}),...api.data.online,...(api.data.peopleResults||[])].find(p=>p?.id===id);
   if(!person){toast('O perfil não está mais disponível.',true);return true;}
   api.data.socialProfile=person;state.modal='socialProfile';render();return true;
  }
  if(type==='socialFollow'){
   const r=await call('entre_follow_request',{_target:id});
-  toast(r?.status==='accepted'?'Vocês já se seguem.':'Pedido enviado. Aguarde o aceite.');
+  toast(r?.status==='accepted'?'Vocês já se seguem.':r?.status==='pending'?'Pedido já enviado. Aguarde o aceite.':'Pedido enviado. Aguarde o aceite.');
+   for(const person of(api.data.peopleResults||[])){if(person.id===id)person.follow_status=r?.status||'pending';}
   state.modal=null;await api.loadOnline(true);render();return true;
  }
  if(type==='socialChat'){
