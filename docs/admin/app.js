@@ -8,7 +8,7 @@ if(!window.supabase || !window.supabase.createClient){
  app.innerHTML='<div class="preload"><h1>Falha de conexão</h1><p>Atualize a página quando estiver conectado à internet.</p></div>';return;
 }
 var db=window.supabase.createClient(URL,KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
-var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[]};
+var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[],supportTickets:[],premiumConfig:null};
 var perPage=20, searchTimer=null, toastTimer=null, lastLoad=0;
 var sections=[
  ["overview","Visão geral","layout-dashboard"],
@@ -17,6 +17,8 @@ var sections=[
  ["reports","Denúncias","flag"],
  ["pairs","Conexões","heart-handshake"],
   ["bulletins","Avisos","message-circle"],
+  ["support","Suporte","flag"],
+  ["premium","Premium","shield-check"],
  ["settings","Configurações","sliders-horizontal"],
  ["security","Segurança","shield-check"]
 ];
@@ -161,7 +163,7 @@ function renderView(){
  var target=document.getElementById("admin-view");if(!target)return;
  document.querySelectorAll("[data-view]").forEach(function(el){el.classList.toggle("active",el.getAttribute("data-view")===state.view);});
  var loc=document.getElementById("topbar-location");if(loc)loc.textContent=viewTitle();
- target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="pairs"?pairs():state.view==="bulletins"?heading("COMUNICAÇÃO OFICIAL","Avisos <em>e enquetes.</em>","Gerencie suas publicações por 24 horas.")+window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico}):state.view==="settings"?settings():security());
+ target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="pairs"?pairs():state.view==="bulletins"?heading("COMUNICAÇÃO OFICIAL","Avisos <em>e enquetes.</em>","Gerencie suas publicações por 24 horas.")+window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico}):state.view==="support"?heading("ATENDIMENTO","Suporte <em>e provas.</em>","Protocolos recebidos dos usuários.")+window.entreAdminExtras.supportPage(state.supportTickets,e,fmt,ico,badge):state.view==="premium"?heading("ASSINATURAS","Premium <em>recorrente.</em>","Controle seguro dos planos.")+window.entreAdminExtras.premiumPage(state.premiumConfig,e,ico):state.view==="settings"?settings():security());
 }
 async function load(view){
  state.loading=true;renderView();
@@ -173,6 +175,8 @@ async function load(view){
   if(view==="reports")state.reports=await rpc("entre_admin_reports",{_status:state.reportStatus,_limit:100});
   if(view==="pairs")state.pairs=await rpc("entre_admin_pairs",{_limit:60});
    if(view==="bulletins")state.bulletins=await rpc("entre_admin_bulletins");
+  if(view==="support")state.supportTickets=await rpc("entre_admin_support_tickets");
+  if(view==="premium")state.premiumConfig=await rpc("entre_admin_premium_settings");
   if(view==="security"){state.appeals=await rpc("entre_admin_appeals");state.privacyRequests=await rpc("entre_admin_privacy_requests");}
   state.refreshAt=new Date();lastLoad=Date.now();
  }catch(err){toast(errorText(err),true);}
@@ -211,6 +215,9 @@ document.addEventListener("click",async function(ev){
  if(a==="close-modal"){closeModal();return;}
  if(a==="google"){await googleLogin();return;}
  if(a==="refresh"){await load(state.view);toast("Dados atualizados.");return;}
+ if(a==="evidenceOpen"){
+  try{var signed=await db.storage.from("entre-support-evidence").createSignedUrl(n.dataset.path,300);if(signed.error)throw signed.error;if(signed.data?.signedUrl)window.open(signed.data.signedUrl,"_blank","noopener,noreferrer");else toast("Prova indisponível.",true);}catch(err){toast(errorText(err),true);}return;
+ }
  if(a==="review-appeal"||a==="reject-appeal"){
   if(!window.confirm(a==="review-appeal"?'Aprovar contestação e reativar?':'Rejeitar contestação?'))return;
   try{await rpc('entre_admin_review_appeal',{_id:Number(n.dataset.id),_approve:a==="review-appeal"});toast('Revisão registrada.');await load('security');}
@@ -239,7 +246,9 @@ document.addEventListener("submit",async function(ev){
  var form=ev.target;if(!(form instanceof HTMLFormElement))return;ev.preventDefault();if(form.id==="release-form"){await saveRelease(Boolean(state.settings?.maintenance_enabled),true);return;}if(state.busy)return;
  state.busy=true;var btn=form.querySelector('[type="submit"]');if(btn)btn.disabled=true;
  try{
-  if(form.id==="bulletin-form"){
+  if(form.id==="premium-config-form"){
+   var config=await rpc("entre_admin_premium_config",window.entreAdminExtras.priceParams(form));state.premiumConfig=config;toast("Configuração Premium salva.");await load("premium");
+  }else if(form.id==="bulletin-form"){
    var payload=window.entreAdminBulletins.params(form);
    if(!window.confirm(payload._kind==="poll"?"Publicar uma enquete OBRIGATÓRIA para todos por 24 horas?":"Publicar este aviso para todos por 24 horas?"))return;
    var published=await rpc("entre_admin_publish_bulletin",payload);
