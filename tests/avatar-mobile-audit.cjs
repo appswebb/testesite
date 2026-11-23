@@ -219,6 +219,36 @@ async function selectImage(page){
   assert.equal(await profile.locator('#entre-ended').count(),1,'Ending animation absent');
   tests++;console.log('PASS minimal ended-meeting transition');
 
+  // Browser-level regression: required poll blocks all views and returns to the app on confirmation.
+  await profile.evaluate(()=>{
+   state.pair=null;state.peer=null;state.messages=[];state.view='home';
+   const api=window.entreSocial;
+   window.__pollOriginalRpc=api.rpc;
+   window.__pollVoteCalls=[];
+   api.rpc=async(name,args)=>{
+    if(name==='entre_bulletin_vote'){window.__pollVoteCalls.push(args);return {status:'voted',option:1};}
+    if(name==='entre_bulletins_feed')return {required_poll:null,items:[]};
+    return window.__pollOriginalRpc(name,args);
+   };
+   api.data.pendingPoll={id:8372,kind:'poll',title:'Enquete oficial de teste',body:'Escolha para continuar',options:['Sim','Não'],expires_at:new Date(Date.now()+3600000).toISOString()};
+   render();
+  });
+  assert.equal(await profile.locator('#bulletinGate').isVisible(),true,'Mandatory poll gate not visible');
+  assert.equal(await profile.locator('.mobile-nav [data-view="connections"]').count(),0,'Obsolete mobile connections tab');
+  await profile.locator('#bulletinGate input[value="1"]').check();
+  await profile.locator('#bulletinGate [data-action="bulletinVote"]').click();
+  await profile.locator('#bulletinGate').waitFor({state:'detached',timeout:8000});
+  assert.equal(await profile.locator('.app-shell').isVisible(),true,'Site did not unlock after voting');
+  const recorded=await profile.evaluate(()=>{
+   const calls=window.__pollVoteCalls;
+   window.entreSocial.rpc=window.__pollOriginalRpc;
+   return calls;
+  });
+  assert.equal(recorded.length,1,'Poll submitted multiple votes');
+  assert.equal(recorded[0]._bulletin,8372,'Poll voted wrong ID');
+  assert.equal(recorded[0]._option,1,'Poll voted wrong option');
+  tests++;console.log('PASS mandatory poll overlays app, records one vote, then unlocks without reload');
+
   await profile.close();
   console.log('SUCCESS '+tests+' photo + maintenance regression checks');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
