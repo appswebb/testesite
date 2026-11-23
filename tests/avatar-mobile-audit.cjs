@@ -105,6 +105,7 @@ async function selectImage(page){
   assert.equal(await profile.locator('#avatarFile').count(),1,'Onboarding file input absent');
   await selectImage(profile);
   await profile.locator('#display_name').fill('Usuário Teste');
+  await profile.locator('#newusername').fill('teste_avatar_ci');
   await profile.locator('#age').fill('25');
   await profile.locator('#gender').selectOption('man');
   await profile.locator('#preference').selectOption('any');
