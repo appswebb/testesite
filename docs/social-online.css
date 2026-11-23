@@ -15,3 +15,21 @@
 @media(max-width:1050px){.online-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.online-card-grid{grid-template-columns:minmax(0,1fr)}.online-person{padding:18px}}
 @media(max-width:370px){.online-controls{flex-direction:column;align-items:stretch}.online-controls .social-switch{width:100%}.online-person-actions{grid-template-columns:1fr 1fr}}
+
+/* CONNECT handle discovery — mobile first */
+.people-lookup{padding:clamp(17px,3.5vw,25px);border:1px solid #dce6d9;border-radius:22px;background:#fffefa;margin:0 0 20px;box-shadow:0 12px 30px #253f2908}
+.people-lookup>label{display:block;font-weight:850;font-size:15px;letter-spacing:-.02em;color:#2b4431;margin-bottom:12px}
+.people-search-field{display:flex;align-items:center;gap:10px;border:1px solid #c9d7c6;background:#f5f8f2;border-radius:14px;padding:6px 8px 6px 14px;min-height:52px}
+.people-search-field>svg{flex:none;color:#55775b}
+.people-search-field input{width:100%;flex:1;min-width:0;background:transparent;border:none;outline:none;font:inherit;font-size:14px;color:#213e2b;padding:7px 0}
+.people-search-field:focus-within{border-color:#6b9870;box-shadow:0 0 0 3px #78a9811e}
+.people-search-hint{margin:13px 0 0;color:#6a8170;font-size:12px;line-height:1.6}
+.people-results{margin-top:16px}
+.person-handle{display:block;color:#58795e!important;font-size:12px!important;font-weight:800!important;margin-top:5px;overflow-wrap:anywhere}
+.online-person-actions{grid-template-columns:repeat(3,minmax(0,1fr))}
+.profile-handle{font:800 15px 'Space Grotesk',system-ui,sans-serif;color:#598265;display:block;margin:6px 0 11px}
+.profile-share{margin:0 auto 14px;max-width:100%;white-space:normal}
+.handle-helper{display:block;font-size:11px;color:#718573;line-height:1.5;padding-top:5px}
+.username-feedback{display:block;font-size:11px;min-height:16px;color:#40734b}
+.username-feedback.is-error{color:#a75046}
+@media(max-width:650px){.people-lookup{padding:16px}.people-search-field{padding:6px 9px}.people-search-field .ui-btn{padding:8px;font-size:11px}.online-person-actions{gap:5px}.online-person-actions .ui-btn{font-size:10px;min-height:42px}.profile-share{margin-bottom:13px}}
