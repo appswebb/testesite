@@ -49,7 +49,7 @@ function infoError(e){
  if(/provider is not enabled|unsupported provider|provider_disabled/i.test(m))return 'O Google ainda não está habilitado em Supabase → Authentication → Providers → Google. Alterar apenas as URLs não ativa o provedor.';
  if(/redirect_uri_mismatch|redirect.*not.*allowed|redirect.*not.*permitted|redirect.*allow.list/i.test(m))return 'O endereço de retorno do entre. não está autorizado. Confira https://appswebb.github.io/testesite/ nas Redirect URLs do Supabase e a URL de callback do Supabase no Google Cloud.';
  if(/invalid_client|unauthorized_client|oauth.*client|invalid.*client/i.test(m))return 'As credenciais OAuth do Google não foram aceitas. Confira o Client ID e Client Secret cadastrados no Supabase.';
- if(/access_denied|consent.*denied|permission.*denied/i.test(m))return 'A autenticação com Google foi cancelada ou não foi autorizada.';
+ if(/access_denied|consent.*denied|permission.*denied/i.test(m))return 'O Google não concluiu a autorização (access_denied). Se você selecionou sua conta e não cancelou, abra novamente a página e tente em uma aba normal do Chrome. Se persistir, verifique a configuração de acesso do aplicativo no Google Cloud.';
  if(/rate limit/i.test(m))return 'Muitas tentativas. Aguarde um pouco.';
  if(/Failed to fetch|NetworkError|network request failed/i.test(m))return 'Sem conexão com o serviço de login. Confira sua internet e tente de novo.';
  return m;
@@ -479,6 +479,8 @@ function hasGoogleIdentity(user){const providers=user?.app_metadata?.providers;r
 async function signInGoogle(btn){
  busy(btn,true);
  try{
+  // An OAuth error is relevant only to a login started in this browser tab.
+  sessionStorage.setItem('entre.app.oauth.started',String(Date.now()));
   // Use the exact allow-listed production URL; GitHub Pages also works when opening /index.html.
   const redirectTo=window.location.hostname==='appswebb.github.io'
    ? 'https://appswebb.github.io/testesite/'
@@ -486,7 +488,7 @@ async function signInGoogle(btn){
   const {data,error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo,queryParams:{prompt:'select_account'}}});
   if(error)throw error;
   if(!data?.url)throw new Error('O provedor não retornou um endereço para autenticação. Verifique a configuração do Google no Supabase.');
- }catch(e){showFormMessage(infoError(e));busy(btn,false)}
+ }catch(e){sessionStorage.removeItem('entre.app.oauth.started');showFormMessage(infoError(e));busy(btn,false)}
 }
 function getProfileData(form){return {display_name:form.display_name.value.trim(),age:Number(form.age.value),gender:form.gender.value,preference:form.preference.value}}
 async function createProfile(data){const {error}=await db.from('entre_profiles').upsert({id:state.session.user.id,display_name:data.display_name,age:data.age,gender:data.gender,preference:data.preference,...(data.avatar_path?{avatar_path:data.avatar_path}:{})},{onConflict:'id'});if(error)throw error;sessionStorage.removeItem('entre.pendingProfile')}
@@ -732,8 +734,21 @@ function getOAuthError(){
  const hash=new URLSearchParams(window.location.hash.replace(/^#/,''));
  const code=hash.get('error')||query.get('error')||hash.get('error_code')||query.get('error_code');
  if(!code)return null;
- const message=hash.get('error_description')||query.get('error_description')||hash.get('error_code')||query.get('error_code')||code;
- return infoError({message});
+ const started=Math.max(Number(sessionStorage.getItem('entre.app.oauth.started')||0),Number(sessionStorage.getItem('entre.admin.oauth.started')||0));
+ const age=Date.now()-started;
+ const fresh=started>0&&age>=0&&age<10*60*1000;
+ const description=hash.get('error_description')||query.get('error_description')||code;
+ // Clear any failed OAuth callback from the address bar, so refreshing or
+ // reopening the site never shows the old denial as a new login failure.
+ try{
+  const clean=new URL(window.location.href);
+  for(const k of ['error','error_code','error_description'])clean.searchParams.delete(k);
+  const fragment=new URLSearchParams(clean.hash.replace(/^#/,''));
+  for(const k of ['error','error_code','error_description'])fragment.delete(k);
+  clean.hash=fragment.toString()?'#'+fragment.toString():'';
+  window.history.replaceState(window.history.state,'',clean.pathname+clean.search+clean.hash);
+ }catch(e){console.warn('Could not clear stale OAuth callback',e);}
+ return fresh?infoError({message:description}):null;
 }
 async function loadSiteSettings(){try{const {data,error}=await db.rpc('entre_public_settings');if(!error&&data)state.siteSettings=data}catch(e){console.warn('Public settings unavailable')}}
 function consumeAdminOAuthReturn(){
@@ -747,9 +762,12 @@ function consumeAdminOAuthReturn(){
  return started>0&&age>=0&&age<5*60*1000;
 }
 async function boot(){
- const adminOAuthReturn=consumeAdminOAuthReturn();
- state.signup=null;sessionStorage.removeItem('entre.pendingProfile');applyMotion();
+ // Read the callback first; consuming the admin redirect intent would hide
+ // a real OAuth failure that was just returned from the Google consent screen.
  const oauthError=getOAuthError();
+ const adminOAuthReturn=consumeAdminOAuthReturn();
+ sessionStorage.removeItem('entre.app.oauth.started');
+ state.signup=null;sessionStorage.removeItem('entre.pendingProfile');applyMotion();
  try{
   await loadSiteSettings();
   // Public maintenance is for EVERYONE, including the account that owns the admin panel.
@@ -773,6 +791,6 @@ async function boot(){
   state.timerLoop=setInterval(updateTimerText,1000);
   setInterval(async()=>{if(state.session?.user&&state.pair&&document.visibilityState==='visible'){await refreshPair()}},12000);
   setInterval(()=>{if(state.session?.user&&state.view==='avisos'&&!document.hidden)window.entreSocial?.refreshBulletins?.(true)},60000)
- }catch(e){state.mode='login';render();showFormMessage(oauthError||infoError(e));console.error(e)}
+ }catch(e){state.mode='login';render();showFormMessage(infoError(e));console.error(e)}
 }
 boot();
