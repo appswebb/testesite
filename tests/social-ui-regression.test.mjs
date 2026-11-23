@@ -14,8 +14,11 @@ test('Official bulletins live inside notifications behind the header bell',()=>{
 });
 test('Main menu excludes the old Avisos tab and Suas conexões',()=>{
  const app=read('app.js');
- assert.match(app,/tabs.filter\(t=>t\[0\]!=='home'\)/);
+ assert.match(app,/mobileTabs.includes\(t\[0\]\)/);
  assert.match(app,/\['online','Online','users'\]/);
+ assert.match(app,/\['rooms','Salas','chat'\]/);
+ assert.match(app,/\['lives','Lives','camera'\]/);
+ assert.match(app,/\['search','Pesquisar','search'\]/);
  assert.doesNotMatch(app,/\['avisos','Avisos','megaphone'\]/);
  assert.doesNotMatch(app,/\['connections','Suas conexões'/);
  assert.match(app,/class="toolbar-profile/);
