@@ -356,7 +356,8 @@ html[data-theme] .scene-enter{animation:entre-scene-fade .35s cubic-bezier(.16,1
 @keyframes entre-scene-fade{from{opacity:.55;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 html[data-theme] .appearance-panel{animation:entre-panel-pop .35s cubic-bezier(.16,1,.3,1) both}
 @keyframes entre-panel-pop{from{opacity:.65;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-html[data-theme] .entre-touch-wave{position:fixed;pointer-events:none;z-index:999998;left:var(--x);top:var(--y);
+html[data-theme] .entre-touch-layer{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:999998;contain:layout paint}
+html[data-theme] .entre-touch-wave{position:absolute;pointer-events:none;z-index:1;left:var(--x);top:var(--y);
  width:10px;height:10px;border-radius:50%;border:2px solid var(--ui-accent);background:var(--ui-accent-shadow);
  transform:translate(-50%,-50%) scale(.4);animation:entre-touch-wave-animation .45s ease-out forwards}
 @keyframes entre-touch-wave-animation{to{opacity:0;transform:translate(-50%,-50%) scale(var(--wave-scale,7))}}
