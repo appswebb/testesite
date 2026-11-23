@@ -87,10 +87,16 @@ function premiumView(){
  '<div>'+ico('chat',19)+' <span>Atendimento prioritário pelo WhatsApp</span></div></div></div>'+
  '<div class="premium-checkout-card"><span>ASSINATURA RECORRENTE</span><h3>'+ (price()||'Valor a definir')+'</h3><p>'+(price()?'Cobrança mensal, administrada pelo Mercado Pago.':'O valor será definido no painel antes da abertura das assinaturas.')+'</p>'+
  (active?'<div class="premium-confirmed">'+ico('check',19)+' Sua assinatura está ativa.</div>'+
- '<a class="ui-btn btn-dark premium-whatsapp" href="https://wa.me/5518988234267?text=Ol%C3%A1%2C%20sou%20assinante%20Premium%20do%20entre." target="_blank" rel="noopener noreferrer">'+ico('chat',18)+' WhatsApp prioritário</a>'+
+ '<button type="button" class="ui-btn btn-dark premium-whatsapp" data-action="premiumWhatsapp">'+ico('chat',18)+' WhatsApp prioritário</button>'+
  (data.premium.paid_until?'<small>Válida até '+new Date(data.premium.paid_until).toLocaleDateString('pt-BR')+'</small>':''):
  '<button type="button" class="ui-btn btn-dark premium-buy" data-action="premiumCheckout" '+(enabled?'':'disabled')+'>'+ico('shield',17)+' '+(enabled?'Continuar no Mercado Pago':'Aguardando ativação do checkout')+'</button>')+
  '<small>Pagamento processado pelo Mercado Pago. Nenhum dado do cartão é armazenado neste site. Recursos pagos só são liberados após confirmação do pagamento.</small></div></section>';
+}
+async function openPremiumWhatsapp(){
+ if(!data.premium?.active)throw Error('O atendimento prioritário exige Premium ativo.');
+ const url=await call('entre_premium_whatsapp');
+ if(typeof url!=='string'||!/^https:\/\/wa\.me\/[0-9]{10,15}(?:\?|$)/.test(url))throw Error('Link de suporte não disponível.');
+ window.location.assign(url);
 }
 async function checkout(){
  if(data.premium?.active){toast('Você já é Premium.');return;}
@@ -111,7 +117,7 @@ function supportView(){
  '<button class="ui-btn btn-dark" type="submit" '+(data.supportBusy?'disabled':'')+'>Enviar ocorrência com provas '+ico('send',17)+'</button>'+
  '<p class="support-security">'+ico('lock',14)+' As provas ficam em armazenamento privado, acessíveis à equipe autorizada.</p></form>'+
  '<aside class="support-contact"><span class="premium-label">SUPORTE ENTRE.</span><h3>Estamos aqui para ouvir.</h3><p>Seu relato é salvo com um número de protocolo. Envio por e-mail será confirmado apenas quando a integração estiver configurada.</p><strong>Destino da equipe</strong><span>connectapp.w@gmail.com</span>'+
- (data.premium?.active?'<a class="ui-btn btn-outline" href="https://wa.me/5518988234267?text=Ol%C3%A1%2C%20preciso%20de%20suporte%20Premium%20no%20entre." target="_blank" rel="noopener noreferrer">WhatsApp Premium '+ico('arrow',16)+'</a>':
+ (data.premium?.active?'<button type="button" class="ui-btn btn-outline" data-action="premiumWhatsapp">WhatsApp Premium '+ico('arrow',16)+'</button>':
  '<button type="button" class="ui-btn btn-outline btn-sm" data-action="nav" data-view="premium">Conhecer suporte Premium</button>')+'</aside></div>'+
  (data.support.length?'<section class="support-history"><h3>Meus protocolos</h3>'+data.support.map(t=>'<div><strong>#'+Number(t.id)+' · '+esc(t.subject)+'</strong><small>'+esc(t.status)+' · '+new Date(t.created_at).toLocaleDateString('pt-BR')+(t.email_status==='sent'?' · E-mail enviado':' · Recebido no sistema')+'</small></div>').join('')+'</section>':'');
 }
@@ -147,6 +153,6 @@ async function enter(view){
  if(view==='premium')await refreshPremium();
  if(view==='support'){await loadSupport();renderView();}
 }
-Object.assign(mod,{data,isPremium:premium,badge,loadBadges,refreshPremium,loadPosts,postsView,postAction,postForm,premiumView,checkout,supportView,submitSupport,loadSupport,enter});
+Object.assign(mod,{data,isPremium:premium,badge,loadBadges,refreshPremium,loadPosts,postsView,postAction,postForm,premiumView,checkout,openPremiumWhatsapp,supportView,submitSupport,loadSupport,enter});
 window.entreExtras=mod;
 })();
