@@ -75,3 +75,62 @@
  .mobile-nav{overflow-x:hidden!important;justify-content:space-around!important}
  .mobile-nav button{flex:1 1 0!important;min-width:0!important;font-size:9px}
 }
+
+
+/* Conversation actions live in a single compact menu, not a row of bulky buttons. */
+.conversation-list-v2{gap:13px;overflow:visible}
+.conversation-entry{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;overflow:visible;background:#fffefa;border:1px solid #dfe6da;border-radius:18px;box-shadow:0 3px 10px rgba(34,54,40,.025)}
+.conversation-entry:hover{border-color:#b6cfb5;box-shadow:0 8px 26px rgba(39,65,46,.07)}
+.conversation-entry.is-pinned{border-color:#bacdaf}
+.conversation-entry .convo-card{min-width:0;flex:1;margin:0;padding:15px 12px 15px 17px;background:transparent;box-shadow:none;border:0;text-align:left;border-radius:17px}
+.conversation-entry .convo-card:hover{box-shadow:none;transform:none}
+.conversation-entry .convo-details{flex:1;min-width:0}
+.conversation-entry .convo-details strong{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.conversation-entry .convo-details small{font-size:10px;color:#91a090;display:block;margin-top:5px}
+.conversation-card-arrow{display:grid;place-items:center;color:#9eada0;margin-left:auto}
+.conversation-menu{position:relative;margin:0 12px 0 2px;z-index:5;flex:none}
+.conversation-menu[open]{z-index:75}
+.conversation-menu>summary{width:42px;height:42px;display:grid;place-items:center;cursor:pointer;border-radius:13px;border:1px solid transparent;color:#566b59;list-style:none;transition:background .15s,border-color .15s}
+.conversation-menu>summary::-webkit-details-marker{display:none}
+.conversation-menu>summary:hover,.conversation-menu[open]>summary{background:#ecf3e9;border-color:#d9e6d4}
+.conversation-menu>summary:focus-visible{outline:3px solid #df9b84;outline-offset:2px}
+.conversation-menu-panel{position:absolute;right:0;top:calc(100% + 9px);z-index:90;display:flex;flex-direction:column;gap:3px;width:228px;max-width:calc(100vw - 36px);padding:9px;border:1px solid #dce6d8;border-radius:16px;background:#fffefa;box-shadow:0 18px 55px rgba(15,33,18,.17);text-align:left}
+.conversation-menu-title{font-size:10px;color:#879489;font-weight:850;letter-spacing:.08em;text-transform:uppercase;padding:6px 10px}
+.conversation-menu-panel button{border:0;border-radius:9px;background:transparent;color:#314937;text-align:left;min-height:39px;padding:10px 11px;cursor:pointer;font-size:12px;font-weight:700}
+.conversation-menu-panel button:hover,.conversation-menu-panel button:focus-visible{background:#edf4ea}
+.conversation-move-label{padding:10px 10px 2px;font-size:11px;font-weight:800;color:#6c816d}
+.conversation-menu-panel select{width:calc(100% - 8px);margin:2px 4px 5px;min-height:39px;font-size:12px;color:#314937;border:1px solid #dbe3d6;border-radius:9px;padding:8px 10px;background:#f8faf5}
+.conversation-menu-divider{border-top:1px solid #e6eae1;margin:6px 2px}
+.conversation-menu-panel button.conversation-delete{color:#a34437}
+.conversation-menu-panel button.conversation-delete:hover{background:#fff1ec}
+.chat-origin-bar .chat-origin-actions{width:auto;min-width:42px;display:flex;justify-content:flex-end;align-items:center}
+.chat-origin-bar .conversation-menu{margin:0}
+.chat-origin-bar .conversation-menu-panel{top:calc(100% + 7px)}
+.conversation-tabs{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:2px 0 8px}
+.conversation-tabs::-webkit-scrollbar{display:none}
+.conversation-tabs button{flex:none;font-size:11px;white-space:nowrap;padding:9px 15px;border-radius:999px}
+.conversation-entry-actions{display:none}
+/* Personal notification timeline with independent dismiss control. */
+.notification-list{display:grid;gap:10px}
+.notification-entry{display:grid;grid-template-columns:minmax(0,1fr) 42px;align-items:center;gap:2px;border:1px solid #dfe6dc;border-radius:17px;background:#fffefa;overflow:hidden}
+.notification-entry.is-unread{background:#fff7ee;border-color:#eaded0}
+.notification-entry .notification-item{width:100%;display:grid;grid-template-columns:38px minmax(0,1fr) 16px;gap:11px;border:0;border-radius:0;background:transparent;text-align:left;min-height:80px}
+.notification-entry .notification-item:hover{background:rgba(188,209,178,.12)}
+.notification-copy{min-width:0}
+.notification-entry .notification-copy strong{font-size:12px;color:#344738}
+.notification-entry .notification-copy small{font-size:10px}
+.notification-dismiss{border:0;background:transparent;color:#86948a;display:grid;place-items:center;width:34px;height:34px;border-radius:10px;margin-right:8px;cursor:pointer}
+.notification-dismiss:hover,.notification-dismiss:focus-visible{background:#ffebe5;color:#aa4a3a}
+.notification-clear-all{color:#a24a3c}
+.notification-controls .ui-btn:disabled{opacity:.5;cursor:default}
+@media(max-width:760px){
+ .conversation-entry .convo-card{padding:13px 6px 13px 12px;gap:10px}
+ .conversation-entry .convo-card .avatar{width:43px;height:43px}
+ .conversation-menu{margin-right:9px}
+ .conversation-menu>summary{width:39px;height:39px}
+ .conversation-menu-panel{right:-1px;width:218px}
+ .notification-entry .notification-item{padding:13px 8px 13px 12px;gap:8px}
+ .notification-dismiss{margin-right:5px}
+ .notification-controls>div{width:100%}
+ .notification-controls>div .ui-btn{flex:1}
+}
