@@ -15,7 +15,7 @@ https://appswebb.github.io/testesite/
 - Conversa privada de 5 minutos e cronômetro validado pelo servidor.
 - Cada participante vota separadamente: **sim + sim** salva a conversa permanente; caso contrário encerra a sessão temporária.
 - Mensagens persistentes e atualizações em tempo real via Supabase Realtime, com checagem periódica de sincronização.
-- Aba de conversas permanentes, bloqueio, configurações e exclusão definitiva dos dados pertencentes ao aplicativo.
+- Aba de conversas permanentes após match, aba separada com pessoas de encontros encerrados visíveis por 24 horas para seguir, notificações pessoais no sino e avisos oficiais da administração.
 - Esquema próprio com tabelas `entre_*` e políticas RLS (sem modificar as tabelas existentes).
 
 ## Login exclusivamente pelo Google
@@ -47,7 +47,7 @@ Como este projeto Supabase hospeda autenticação para outro aplicativo, **não 
 4. Google OAuth requer ativação do provedor e autorização de redirect URL no painel do Supabase. Sem isso, o botão de login não poderá concluir a autenticação.
 5. Não são criados usuários ou mensagens falsos para aparentar atividade.
 6. A busca considera preferências de ambos e evita usuários bloqueados. A presença na fila tem validade curta, renovada pelo navegador a cada 3,5s; conexão perdida pode ocasionar nova busca.
-7. As mensagens de encontros não correspondidos são descartadas quando a sessão for encerrada no backend. Conversas de match mútuo permanecem salvas até exclusão dos dados.
+7. As mensagens de encontros sem match são apagadas quando a sessão termina no servidor. O contato permanece visível por até 24 horas para solicitar seguir; o aceite libera um chat normal separado. Mensagens de conversas permanentes expiram após 10 dias de inatividade, mas o match continua.
 
 ## Executar
 
