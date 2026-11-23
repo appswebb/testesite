@@ -1,1 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title"><title>entre.</title><rect width="64" height="64" rx="19" fill="#FFDA35"/><path d="M15 33c0-11.8 7.2-19 17.5-19S50 21.4 50 33c0 1.9-.2 3.2-.5 4H23.1C24.6 43.5 29 47 36 47c4.1 0 7.4-1.3 10.2-4" fill="none" stroke="#101010" stroke-width="7.3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="49" cy="16" r="5.2" fill="#F545B0" stroke="#101010" stroke-width="1.8"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+<title id="title">entre.</title><desc id="desc">Balão de conversa formando uma letra e com um ponto.</desc>
+<rect width="64" height="64" rx="18" fill="#15191D"/>
+<path d="M14.5 32.5C14.5 21.2 22.6 14 33.4 14 44.2 14 51.2 21.6 51.2 32.5c0 1.65-.2 3.15-.65 4.8H21.7c1.55 6.4 6.2 9.65 12.45 9.65 4.85 0 8.8-1.8 11.9-5.4" stroke="#FDFEFF" stroke-width="5.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M18.2 43.2 15 53l10.7-5.7" stroke="#FDFEFF" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="51.2" cy="14" r="5.3" fill="#53D7C9"/>
+</svg>

@@ -67,7 +67,10 @@ test('entre. brand is preserved while new Yellow Pop skin covers every page',()=
  assert.doesNotMatch(admin,/connect-admin\.css/);
  assert.match(admin,/comment-report-updates\.css/);
  assert.equal(manifest.short_name,'entre.');
- assert.equal(manifest.theme_color,'#ffd633');
+ assert.equal(manifest.theme_color,'#F6F7F7');
+ assert.match(html,/theme\.js/);
+ assert.match(html,/theme\.css/);
+ assert.match(read('docs/theme.js'),/entre\.appearance\.v1/);
  assert.match(html,/once-ui\.css/);
  assert.match(html,/once-public\.css/);
  assert.match(admin,/once-admin\.css/);

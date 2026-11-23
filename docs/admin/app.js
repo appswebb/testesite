@@ -130,6 +130,7 @@ function pairs(){
 function settings(){
  var x=state.settings||{matchmaking_enabled:true,reporting_enabled:true,announcement:""};
  return heading("CONFIGURAÇÕES","Seu site, <em>suas regras.</em>","Essas alterações são salvas no Supabase e aplicadas pelo servidor.")+
+ (window.entreTheme?.renderControls?.()||'')+
  releaseShortcut(Boolean(x.maintenance_enabled),"Atualizações do site","Ative a tela de manutenção ou libere a nova versão.")+'<form id="settings-form" class="form-card"><h2 class="section-heading">Experiência e segurança</h2><p class="section-desc">Controle operacional da plataforma. Novas regras são aplicadas sem publicar outra versão do site.</p>'+
  '<div class="setting-item"><div><strong>Permitir novas conexões</strong><small>Se desativado, a busca por novas pessoas será pausada no servidor.</small></div><label class="switch"><input type="checkbox" name="matchmaking" '+(x.matchmaking_enabled?"checked":"")+'><span></span></label></div>'+
  '<div class="setting-item"><div><strong>Aceitar denúncias</strong><small>Habilita o formulário de denúncia entre participantes de conversas.</small></div><label class="switch"><input type="checkbox" name="reporting" '+(x.reporting_enabled?"checked":"")+'><span></span></label></div>'+
