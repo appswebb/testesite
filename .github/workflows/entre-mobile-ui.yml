@@ -20,6 +20,7 @@ on:
       - 'docs/social*.js'
       - 'tests/admin-mobile-audit.cjs'
       - 'tests/avatar-mobile-audit.cjs'
+      - 'tests/social-ui-regression.test.mjs'
       - '.github/workflows/entre-mobile-ui.yml'
   workflow_dispatch:
 permissions:
@@ -46,5 +47,6 @@ jobs:
           for f in docs/social*.js; do node --check "$f"; done
           node --check tests/admin-mobile-audit.cjs
           node --check tests/avatar-mobile-audit.cjs
+          node --test tests/social-ui-regression.test.mjs
           node tests/admin-mobile-audit.cjs
           node tests/avatar-mobile-audit.cjs
