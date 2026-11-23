@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 const mod={};
-const data={posts:[],postLoading:false,postBefore:null,postMore:false,premium:null,premiumIds:new Set(),support:[],supportBusy:false};
+const data={posts:[],postLoading:false,postBefore:null,postMore:false,premium:null,premiumIds:new Set(),support:[],supportBusy:false,checkoutBusy:false};
 const call=async(name,params)=>{const r=await db.rpc(name,params||{});if(r.error)throw r.error;return r.data;};
 const premium=id=>Boolean(id&&(data.premiumIds.has(id)||(id===state.session?.user?.id&&data.premium?.active===true)));
 const badge=p=>premium(p?.id)?'<span class="verified-mark" title="Assinante entre. Premium" aria-label="Perfil verificado Premium">'+ico('check',12)+'</span>':'';
@@ -79,7 +79,7 @@ async function postForm(form){
 const price=()=>Number.isInteger(data.premium?.price_cents)&&data.premium.price_cents>0
  ?(data.premium.price_cents/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):null;
 function premiumView(){
- const active=data.premium?.active,enabled=data.premium?.checkout_enabled&&price();
+ const active=data.premium?.active,enabled=data.premium?.checkout_enabled&&price()&&!data.checkoutBusy;
  return heading('ENTRE. PREMIUM','Uma experiência <em>mais sua.</em>','Conheça uma nova forma de personalizar seus encontros.')+
  '<section class="premium-checkout"><div class="premium-pitch"><span class="premium-label">✧ ENTRE. PREMIUM</span><h3>Seja notado.<br><em>Conecte-se do seu jeito.</em></h3><p>Personalize quem você encontra, destaque seu perfil e tenha um canal direto de suporte.</p>'+
  '<div class="premium-perks"><div>'+ico('check',19)+' <span>Buscar exclusivamente homens, mulheres ou pessoas não binárias no Ao vivo</span></div>'+
@@ -89,7 +89,7 @@ function premiumView(){
  (active?'<div class="premium-confirmed">'+ico('check',19)+' Sua assinatura está ativa.</div>'+
  '<button type="button" class="ui-btn btn-dark premium-whatsapp" data-action="premiumWhatsapp">'+ico('chat',18)+' WhatsApp prioritário</button>'+
  (data.premium.paid_until?'<small>Válida até '+new Date(data.premium.paid_until).toLocaleDateString('pt-BR')+'</small>':''):
- '<button type="button" class="ui-btn btn-dark premium-buy" data-action="premiumCheckout" '+(enabled?'':'disabled')+'>'+ico('shield',17)+' '+(enabled?'Continuar no Mercado Pago':'Aguardando ativação do checkout')+'</button>')+
+ '<button type="button" class="ui-btn btn-dark premium-buy" data-action="premiumCheckout" '+(enabled?'':'disabled')+'>'+ico('shield',17)+' '+(data.checkoutBusy?'Preparando checkout…':enabled?'Continuar no Mercado Pago':'Aguardando ativação do checkout')+'</button>')+
  '<small>Pagamento processado pelo Mercado Pago. Nenhum dado do cartão é armazenado neste site. Recursos pagos só são liberados após confirmação do pagamento.</small></div></section>';
 }
 async function openPremiumWhatsapp(){
@@ -99,13 +99,18 @@ async function openPremiumWhatsapp(){
  window.location.assign(url);
 }
 async function checkout(){
+ if(data.checkoutBusy)return;
  if(data.premium?.active){toast('Você já é Premium.');return;}
- if(!data.premium?.checkout_enabled||!price()){toast('O checkout ainda está sendo configurado pela administração.',true);return;}
- const {data:response,error}=await db.functions.invoke('entre-premium-checkout',{body:{}});
- if(error)throw error;
- const url=response?.init_point;
- if(typeof url!=='string'||!/^https:\/\/(?:www\.)?mercadopago\.com(?:\.br)?\//.test(url))throw Error('Checkout indisponível. Nenhuma cobrança foi iniciada.');
- window.location.assign(url);
+ if(!data.premium?.checkout_enabled||!price()){toast('O valor mensal precisa ser ativado pelo administrador antes de iniciar assinaturas.',true);return;}
+ data.checkoutBusy=true;renderView();
+ try{
+  const {data:response,error}=await db.functions.invoke('entre-premium-checkout',{body:{}});
+  if(error)throw error;
+  const url=response?.init_point;
+  if(typeof url!=='string'||!/^https:\/\/(?:www\.)?mercadopago\.com(?:\.br)?\//.test(url))
+   throw Error('Checkout indisponível. Nenhuma cobrança foi iniciada.');
+  window.location.assign(url);
+ }finally{data.checkoutBusy=false;renderView();}
 }
 function supportView(){
  return heading('CUIDAR DO ENTRE.','Central de <em>suporte.</em>','Relate problemas do site ou da sua conta. Imagens são opcionais e ajudam na análise, mas nunca são obrigatórias.')+
