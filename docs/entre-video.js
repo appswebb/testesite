@@ -5,14 +5,42 @@ let session=null;
 const activePair=p=>p?.status==='active'&&p.mode==='video'&&new Date(p.expires_at).getTime()>Date.now();
 function markup(pair){
  if(!activePair(pair))return '';
- return '<section class="live-video-panel" aria-label="Chamada temporária"><div class="live-video-top">'+
- '<span class="live-video-tag">'+ico('camera',15)+' VÍDEO TEMPORÁRIO</span><span class="live-video-note">Apenas vocês · sem gravação · termina com o encontro</span></div>'+
- '<div class="live-video-grid"><div class="video-frame video-remote"><video id="videoRemote" autoplay playsinline></video><div class="video-placeholder" id="videoPlaceholder">Aguardando a outra pessoa conectar a câmera…</div><span>Outra pessoa</span></div>'+
- '<div class="video-frame video-self"><video id="videoSelf" autoplay muted playsinline></video><span>Você</span></div></div>'+
- '<div class="live-video-bottom"><p id="videoConnectionStatus" aria-live="polite">Preparando uma conexão segura…</p>'+
- '<div class="live-video-controls"><button type="button" class="video-control" data-action="videoMute" id="videoMute" title="Silenciar microfone" aria-label="Silenciar microfone">'+ico('mic',19)+'</button>'+
- '<button type="button" class="video-control" data-action="videoCamera" id="videoCamera" title="Desligar câmera" aria-label="Desligar câmera">'+ico('camera',19)+'</button>'+
- '<button type="button" class="video-control" data-action="videoSound" id="videoSound">Ativar som</button><button type="button" class="video-control" data-action="videoRetry" id="videoRetry">Tentar câmera novamente</button></div></div></section>';
+ return `<section class="live-video-panel" aria-label="Vídeo do encontro temporário">
+ <div class="live-video-top"><span class="live-video-tag">${ico('camera',15)} VIDEOCHAMADA</span><span class="live-video-note">${ico('lock',13)} Conexão privada entre vocês</span></div>
+ <div class="live-video-grid">
+  <div class="video-frame video-remote"><video id="videoRemote" autoplay playsinline></video><div class="video-placeholder" id="videoPlaceholder"><span aria-hidden="true">✦</span><strong>Aguardando conexão de vídeo</strong><small>A câmera da outra pessoa aparece aqui.</small></div><span>Outra pessoa</span></div>
+  <div class="video-frame video-self"><video id="videoSelf" autoplay muted playsinline></video><span>Você</span></div>
+ </div>
+ <div class="live-video-bottom">
+  <p id="videoConnectionStatus" aria-live="polite">Preparando uma conexão segura…</p>
+  <div class="live-video-controls">
+   <button type="button" class="video-control" data-action="videoMute" id="videoMute" title="Silenciar microfone" aria-label="Silenciar microfone">${ico('mic',19)}<span>Microfone</span></button>
+   <button type="button" class="video-control" data-action="videoCamera" id="videoCamera" title="Desligar câmera" aria-label="Desligar câmera">${ico('camera',19)}<span>Câmera</span></button>
+   <button type="button" class="video-control video-sound" data-action="videoSound" id="videoSound">${ico('volume-2',17)}<span>Ativar som</span></button>
+   <button type="button" class="video-control video-retry" data-action="videoRetry" id="videoRetry">${ico('refresh-cw',16)}<span>Tentar novamente</span></button>
+  </div>
+ </div>
+ </section>`;
+}
+function miniMarkup(pair,peer){
+ if(!activePair(pair))return '';
+ const name=typeof peer?.display_name==='string'?peer.display_name:'Sua conexão';
+ return `<aside class="encounter-floating encounter-floating-video" role="region" aria-label="Videochamada em andamento">
+  <div class="encounter-mini-screen">
+   <video id="videoRemote" autoplay playsinline aria-label="Câmera da outra pessoa"></video>
+   <div class="video-placeholder" id="videoPlaceholder"><span>Conectando vídeo…</span></div>
+   <div class="encounter-mini-self"><video id="videoSelf" autoplay muted playsinline aria-label="Sua câmera"></video></div>
+   <span class="encounter-mini-live"><i aria-hidden="true"></i> AO VIVO</span>
+  </div>
+  <div class="encounter-mini-details"><div><strong>${esc(name)}</strong><small>Termina em <span class="timer-text">05:00</span></small></div>
+   <button type="button" class="encounter-floating-return" data-action="nav" data-view="connect">Voltar ${ico('arrow',14)}</button></div>
+  <div class="encounter-mini-controls"><p id="videoConnectionStatus" aria-live="polite">Chamada em andamento</p>
+   <div><button type="button" class="video-control" id="videoMute" data-action="videoMute" title="Silenciar microfone" aria-label="Silenciar microfone">${ico('mic',16)}</button>
+   <button type="button" class="video-control" id="videoCamera" data-action="videoCamera" title="Desligar câmera" aria-label="Desligar câmera">${ico('camera',16)}</button>
+   <button type="button" class="video-control" id="videoSound" data-action="videoSound" title="Ativar som">${ico('volume-2',16)}</button>
+   <button type="button" class="video-control video-control-end" data-action="endpair" title="Encerrar encontro" aria-label="Encerrar encontro">${ico('phone-off',16)}</button></div>
+  </div>
+ </aside>`;
 }
 function status(message){
  const node=document.getElementById('videoConnectionStatus');
@@ -21,10 +49,19 @@ function status(message){
 function attach(){
  if(!session)return;
  const local=document.getElementById('videoSelf'),remote=document.getElementById('videoRemote');
- if(local&&local.srcObject!==session.local)local.srcObject=session.local;
- if(remote&&remote.srcObject!==session.remote){remote.srcObject=session.remote;remote.muted=false;remote.play().catch(()=>status('Toque em Ativar som para ouvir a outra pessoa.'));}
+ if(local&&local.srcObject!==session.local) local.srcObject=session.local;
+ if(remote&&remote.srcObject!==session.remote){
+  remote.srcObject=session.remote;
+  remote.muted=false;
+  remote.play().catch(()=>status('Toque em Ativar som para ouvir a outra pessoa.'));
+ }
  const placeholder=document.getElementById('videoPlaceholder');
  if(placeholder)placeholder.hidden=session.remote.getTracks().length>0;
+ const micEnabled=session.local?.getAudioTracks()[0]?.enabled!==false;
+ const cameraEnabled=session.local?.getVideoTracks()[0]?.enabled!==false;
+ const mic=document.getElementById('videoMute'),camera=document.getElementById('videoCamera');
+ if(mic){mic.classList.toggle('is-off',!micEnabled);mic.setAttribute('aria-pressed',String(!micEnabled));mic.setAttribute('aria-label',micEnabled?'Silenciar microfone':'Ativar microfone');mic.title=micEnabled?'Silenciar microfone':'Ativar microfone';}
+ if(camera){camera.classList.toggle('is-off',!cameraEnabled);camera.setAttribute('aria-pressed',String(!cameraEnabled));camera.setAttribute('aria-label',cameraEnabled?'Desligar câmera':'Ativar câmera');camera.title=cameraEnabled?'Desligar câmera':'Ativar câmera';}
  status(session.status||'Conectando vídeo…');
 }
 function cleanup(){
@@ -109,10 +146,10 @@ async function start(pair){
 async function action(type){
  if(!session&&type!=='videoRetry')return false;
  if(type==='videoRetry'){const pair=state.pair;cleanup();await start(pair);return true;}
- if(type==='videoMute'){const tracks=session.local?.getAudioTracks()||[];for(const t of tracks)t.enabled=!t.enabled;const btn=document.getElementById('videoMute');if(btn)btn.classList.toggle('is-off',!tracks[0]?.enabled);return true;}
- if(type==='videoCamera'){const tracks=session.local?.getVideoTracks()||[];for(const t of tracks)t.enabled=!t.enabled;const btn=document.getElementById('videoCamera');if(btn)btn.classList.toggle('is-off',!tracks[0]?.enabled);return true;}
+ if(type==='videoMute'){const tracks=session.local?.getAudioTracks()||[];for(const t of tracks)t.enabled=!t.enabled;attach();return true;}
+ if(type==='videoCamera'){const tracks=session.local?.getVideoTracks()||[];for(const t of tracks)t.enabled=!t.enabled;attach();return true;}
  if(type==='videoSound'){const video=document.getElementById('videoRemote');if(video){video.muted=false;await video.play().catch(()=>{});}return true;}
  return false;
 }
-window.entreVideo={markup,start,attach,cleanup,action,isRunning:()=>Boolean(session)};
+window.entreVideo={markup,miniMarkup,start,attach,cleanup,action,isRunning:()=>Boolean(session)};
 })();
