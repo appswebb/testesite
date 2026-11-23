@@ -81,7 +81,7 @@ async function action(type,btn){
  if(type==='notificationsMore'){await api.refreshNotifications(api.data.notifications.at(-1)?.id||null);renderView();return true;}
  if(type==='notificationOpen'){
   await call('entre_notifications_read',{_until:Number(id)});
-  if(btn.dataset.pair){await loadPairs();await openPair(btn.dataset.pair);}else nav('online');
+  if(Number(btn.dataset.bulletin)>0){await api.refreshBulletins?.(true);nav('avisos');}else if(btn.dataset.pair){await loadPairs();await openPair(btn.dataset.pair);}else nav('online');
   await api.refreshNotifications();return true;
  }
  if(type==='notificationsPermission'){
