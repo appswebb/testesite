@@ -33,11 +33,15 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const nameOf=v=>String(v||'').trim().split(' ')[0]||'alguém';
 const handleText=p=>p?.username?'@'+esc(p.username):'@ pendente';
 const normalizeHandle=v=>String(v||'').trim().replace(/^@/,'').toLowerCase();
-const profileShareUrl=username=>new URL('./?u='+encodeURIComponent(username),window.location.href).href;
+const profileShareUrl=username=>new URL('./perfil.html?u='+encodeURIComponent(username),window.location.href).href;
 async function copyProfileLink(username){
  if(!username)return toast('Seu @ ainda não foi configurado.',true);
- try{await navigator.clipboard.writeText(profileShareUrl(username));toast('Link do perfil copiado!');}
- catch(e){toast('Não foi possível copiar automaticamente.',true);}
+ const url=profileShareUrl(username);
+ try{
+  if(typeof navigator.share==='function'){await navigator.share({title:'Meu perfil no entre.',text:'Conheça meu perfil no entre.!',url});return;}
+  if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(url);toast('Link do perfil copiado!');return;}
+  window.prompt('Copie o link do perfil:',url);
+ }catch(e){if(e?.name!=='AbortError')window.prompt('Copie o link do perfil:',url);}
 }
 const genders={woman:'Mulher',man:'Homem',nonbinary:'Não binário',any:'Qualquer pessoa'};
 const initials=name=>String(name||'?').trim().split(/\s+/).slice(0,2).map(n=>[...n][0]).join('').toUpperCase();
@@ -488,7 +492,7 @@ function pairView(){const pair=state.pair, peer=state.peer||{display_name:'Nova 
 function messagesMarkup(peer){if(!state.messages.length){const cleared=Boolean(state.pair?.messages_cleared_at),closed=state.pair?.status==='closed';return `<div class="chat-intro">${avatar(peer,'large')}<strong>${cleared?'Mensagens anteriores removidas.':closed?'Este encontro foi encerrado.':'Vocês estão conectados.'}</strong>${cleared?'O texto deste chat foi apagado após 10 dias sem atividade. O contato com esta pessoa continua salvo.':closed?'A conexão continua no seu histórico, mas este encontro não tem mensagens disponíveis.':'Uma mensagem pode ser o começo de alguma coisa. Que tal dizer oi?'}</div>`;}return state.messages.map(m=>{const mine=m.sender_id===state.session?.user.id;return `<div class="bubble-row ${mine?'mine':'theirs'}"><div class="bubble">${esc(m.body)}<time class="bubble-time">${fmtTime(m.created_at)}</time></div></div>`}).join('')}
 function conversationsView(){const pairs=state.pairs.filter(p=>p.status==='connected');return `${heading('SINTONIA RECÍPROCA','Suas <em>conversas.</em>','Mensagens de texto ficam salvas mesmo após o encerramento do encontro.')}${pairs.length?`<div class="convo-list">${pairs.map(renderConversationRow).join('')}</div>`:emptyConvos()}`}
 function profileView(){const p=state.profile;return `${heading('É SOBRE QUEM VOCÊ É','Meu <em>perfil.</em>','É assim que a outra pessoa vai conhecer você depois de uma conexão.')}
-<div class="profile-layout"><div class="profile-preview">${avatar(p,'xlarge')}<h3>${esc(p.display_name)} ${window.entreExtras?.badge?.(p)||''}, ${p.age}</h3><span class="profile-handle">${handleText(p)}</span><button type="button" class="ui-btn btn-outline btn-sm profile-share" data-action="copyUsernameLink" data-username="${esc(p.username||'')}">${ico('link',15)} Copiar link do perfil</button><p>${esc(p.bio||'Uma conversa de cada vez. Vamos nos conhecer?')}</p><span class="pill">${ico('user',15)} ${esc(genders[p.gender])}</span></div><div class="form-panel"><div class="profile-settings-link"><h3>Editar perfil</h3></div><form id="profileForm">${avatarUploader(p)}<div class="form-grid"><div class="field full"><label for="myname">Nome exibido</label><input id="myname" name="display_name" minlength="2" maxlength="42" required value="${esc(p.display_name)}"></div><div class="field full"><label for="myusername">Seu @</label><input id="myusername" name="username" minlength="3" maxlength="20" pattern="[a-zA-Z][a-zA-Z0-9_]{2,19}" autocomplete="off" spellcheck="false" autocapitalize="none" required value="${esc(p.username||'')}"><small class="handle-helper">Exclusivo: você pode alterar uma vez a cada 30 dias.</small><span class="username-feedback" role="status"></span></div><div class="field"><label for="myage">Idade</label><input id="myage" name="age" type="number" min="18" max="100" required value="${p.age}"></div><div class="field"><label for="mygender">Identidade</label><select id="mygender" name="gender">${options({woman:'Mulher',man:'Homem',nonbinary:'Não binário'},p.gender)}</select></div><div class="field full"><label for="mypref">Preferência de busca</label><select id="mypref" name="preference">${options({any:'Qualquer pessoa',woman:'Mulheres',man:'Homens',nonbinary:'Não binárias'},p.preference)}</select></div><div class="field full"><label for="mybio">Sobre você</label><textarea id="mybio" name="bio" maxlength="220" placeholder="Conta algo interessante sobre você...">${esc(p.bio||'')}</textarea><small>Até 220 caracteres. Não informe dados pessoais.</small></div></div><button type="submit" class="ui-btn btn-dark">Salvar alterações ${ico('check',17)}</button></form></div></div>`}
+<div class="profile-layout"><div class="profile-preview">${avatar(p,'xlarge')}<h3>${esc(p.display_name)} ${window.entreExtras?.badge?.(p)||''}, ${p.age}</h3><span class="profile-handle">${handleText(p)}</span><button type="button" class="ui-btn btn-dark profile-share profile-share-primary" data-action="copyUsernameLink" data-username="${esc(p.username||'')}">${ico('link',15)} Compartilhar meu perfil</button><p>${esc(p.bio||'Uma conversa de cada vez. Vamos nos conhecer?')}</p><span class="pill">${ico('user',15)} ${esc(genders[p.gender])}</span></div><div class="form-panel"><div class="profile-settings-link"><h3>Editar perfil</h3></div><form id="profileForm">${avatarUploader(p)}<div class="form-grid"><div class="field full"><label for="myname">Nome exibido</label><input id="myname" name="display_name" minlength="2" maxlength="42" required value="${esc(p.display_name)}"></div><div class="field full"><label for="myusername">Seu @</label><input id="myusername" name="username" minlength="3" maxlength="20" pattern="[a-zA-Z][a-zA-Z0-9_]{2,19}" autocomplete="off" spellcheck="false" autocapitalize="none" required value="${esc(p.username||'')}"><small class="handle-helper">Exclusivo: você pode alterar uma vez a cada 30 dias.</small><span class="username-feedback" role="status"></span></div><div class="field"><label for="myage">Idade</label><input id="myage" name="age" type="number" min="18" max="100" required value="${p.age}"></div><div class="field"><label for="mygender">Identidade</label><select id="mygender" name="gender">${options({woman:'Mulher',man:'Homem',nonbinary:'Não binário'},p.gender)}</select></div><div class="field full"><label for="mypref">Preferência de busca</label><select id="mypref" name="preference">${options({any:'Qualquer pessoa',woman:'Mulheres',man:'Homens',nonbinary:'Não binárias'},p.preference)}</select></div><div class="field full"><label for="mybio">Sobre você</label><textarea id="mybio" name="bio" maxlength="220" placeholder="Conta algo interessante sobre você...">${esc(p.bio||'')}</textarea><small>Até 220 caracteres. Não informe dados pessoais.</small></div></div><button type="submit" class="ui-btn btn-dark">Salvar alterações ${ico('check',17)}</button></form></div></div>`}
 function settingsView(){return heading('VOCÊ NO CONTROLE','Configurações<em>.</em>','Ajustes exclusivos do aplicativo, sem repetir funções do seu perfil.')+
  '<div class="settings-card"><h3>Experiência</h3>'+
  '<div class="setting-row"><div><strong>Reduzir animações</strong><p>Deixa as transições mais discretas.</p></div><button type="button" class="toggle '+(state.motionOff?'on':'')+'" data-action="motion" aria-label="Reduzir animações" aria-pressed="'+state.motionOff+'"></button></div>'+
@@ -566,7 +570,7 @@ async function initializeAccount(){
   void window.entreGeo?.init?.();
   if(state.view==='posts'||state.view==='premium')void window.entreExtras?.enter?.(state.view);
   if(premiumReturn)toast('Retorno do Mercado Pago recebido. A assinatura será liberada apenas após confirmação do pagamento.');
-  const requestedHandle=new URLSearchParams(window.location.search).get('u');
+  const requestedHandle=new URLSearchParams(window.location.search).get('profile');
   if(requestedHandle&&!activeEncounter())void window.entreSocial?.openUsernameProfile?.(requestedHandle);
  }
  if(state.pair?.mode==='video')void window.entreVideo?.start?.(state.pair);
@@ -873,7 +877,8 @@ async function boot(){
     state.session={...data.session,user:verified.data.user};state.isAdmin=false;state.mode='reset';render();
    }else await window.entreEmailAuth.acceptSession(data.session);
   }else{
-   state.mode=recovery?'forgot':'landing';
+   const authIntent=new URLSearchParams(window.location.search).get('auth');
+   state.mode=recovery?'forgot':authIntent==='signup'?'signup':authIntent==='login'?'login':'landing';
    render();
    if(recovery)showFormMessage('O link de recuperação expirou ou é inválido. Solicite outro.');
   }
