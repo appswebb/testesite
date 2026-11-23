@@ -15,4 +15,14 @@ api.showEndAnimation=function(){
  el.setAttribute('role','status');el.innerHTML='✓ <span><strong>Encontro encerrado.</strong><small>Seu histórico continua salvo.</small></span>';
  document.body.append(el);setTimeout(()=>el.remove(),1850);
 };
+
+api.chatToolbar=function(pair){
+ const p=api.pref(pair),folder=p.folder||pair.origin||'live',archived=!!p.archived_at;
+ return '<div class="chat-origin-bar"><div><strong>'+ico('spark',14)+' Começou em '+(pair.origin==='online'?'Pessoas online':'Chat ao vivo')+'</strong><small>Mova a conversa para outra aba</small></div>'+
+ '<div class="chat-origin-actions"><select aria-label="Mover conversa" data-social-folder="'+esc(pair.id)+'">'+
+ '<option value="live"'+(folder==='live'?' selected':'')+'>Ao vivo</option><option value="online"'+(folder==='online'?' selected':'')+'>Online</option><option value="other"'+(folder==='other'?' selected':'')+'>Outras</option></select>'+
+ '<button data-action="'+(p.pinned?'conversationUnpin':'conversationPin')+'" data-id="'+esc(pair.id)+'">'+(p.pinned?'★':'☆')+'</button>'+
+ '<button data-action="'+(archived?'conversationRestore':'conversationArchive')+'" data-id="'+esc(pair.id)+'">'+(archived?'Restaurar':'Arquivar')+'</button></div></div>';
+};
+
 })();
