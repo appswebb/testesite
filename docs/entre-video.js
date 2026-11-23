@@ -47,6 +47,7 @@ function status(message){
  if(node)node.textContent=message;
 }
 function attach(){
+ if(window.entreLiveKit?.isRunning?.()){window.entreLiveKit.attach();return;}
  if(!session)return;
  const local=document.getElementById('videoSelf'),remote=document.getElementById('videoRemote');
  if(local&&local.srcObject!==session.local) local.srcObject=session.local;
@@ -65,6 +66,7 @@ function attach(){
  status(session.status||'Conectando vídeo…');
 }
 function cleanup(){
+ window.entreLiveKit?.cleanup?.();
  if(!session)return;
  const old=session;session=null;
  if(old.interval)clearInterval(old.interval);
@@ -76,8 +78,10 @@ function cleanup(){
 }
 async function start(pair){
  if(!activePair(pair)){cleanup();return;}
+ if(window.entreLiveKit?.isPair?.(pair.id)){window.entreLiveKit.attach();return;}
  if(session?.pairId===pair.id){attach();return;}
  cleanup();
+ if(await window.entreLiveKit?.start?.(pair))return;
  if(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection){status('Este navegador não permite videochamadas.');return;}
  const room={pairId:pair.id,remote:new MediaStream(),local:null,pc:null,channel:null,queue:[],status:'Solicitando acesso à câmera e ao microfone…',ready:false,interval:null};
  session=room;attach();
@@ -144,6 +148,7 @@ async function start(pair){
  room.status='Conectando chamada privada…';attach();
 }
 async function action(type){
+ if(window.entreLiveKit?.isRunning?.())return await window.entreLiveKit.action(type);
  if(!session&&type!=='videoRetry')return false;
  if(type==='videoRetry'){const pair=state.pair;cleanup();await start(pair);return true;}
  if(type==='videoMute'){const tracks=session.local?.getAudioTracks()||[];for(const t of tracks)t.enabled=!t.enabled;attach();return true;}
@@ -151,5 +156,5 @@ async function action(type){
  if(type==='videoSound'){const video=document.getElementById('videoRemote');if(video){video.muted=false;await video.play().catch(()=>{});}return true;}
  return false;
 }
-window.entreVideo={markup,miniMarkup,start,attach,cleanup,action,isRunning:()=>Boolean(session)};
+window.entreVideo={markup,miniMarkup,start,attach,cleanup,action,isRunning:()=>Boolean(session)||Boolean(window.entreLiveKit?.isRunning?.())};
 })();
