@@ -1,7 +1,7 @@
 /* entre. · Yellow Pop Command Center
  * White dashboard, black type, yellow controls and compact mobile navigation.
  */
-:root{--ink:#111;--forest:#111;--deep:#101010;--sage:#fff2bb;--coral:#ffd42e;--paper:#fff;--surface:#fff;--line:#ededed;--mute:#888;--soft:#fafafa;--red:#ba4851;--ok:#226543;--font:'Plus Jakarta Sans','DM Sans',system-ui,sans-serif;--display:'Plus Jakarta Sans','Space Grotesk',system-ui,sans-serif;--serif:'Plus Jakarta Sans',sans-serif}
+:root{--ink:#111;--forest:#111;--deep:#101010;--sage:#fff2bb;--coral:#ffd42e;--paper:#fff;--surface:#fff;--line:#ededed;--mute:#888;--soft:#fafafa;--red:#ba4851;--ok:#545454;--font:'Plus Jakarta Sans','DM Sans',system-ui,sans-serif;--display:'Plus Jakarta Sans','Space Grotesk',system-ui,sans-serif;--serif:'Plus Jakarta Sans',sans-serif}
 html{color-scheme:light}
 body{background:#fff!important;color:#151515!important;font-family:var(--font)!important}
 button,input,textarea,select{font-family:var(--font)!important}

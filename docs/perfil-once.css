@@ -23,7 +23,7 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffd32b!important;outline
 .share-profile-card{background:#fff!important;border:1px solid #ebebeb!important;border-radius:26px!important;box-shadow:0 16px 50px #00000012!important;overflow:hidden!important}
 .share-cover{height:176px!important;background:#ffda39!important;isolation:isolate!important}
 .share-cover:before{content:'♡';font-size:147px;line-height:1;position:absolute;right:7%;top:5px;color:#f34aa7;opacity:.85;transform:rotate(12deg);z-index:0}
-.share-cover:after{width:130px!important;height:130px!important;background:#9fe9ed!important;right:17%!important;top:-70px!important;opacity:.85}
+.share-cover:after{width:130px!important;height:130px!important;background:#dadada!important;right:17%!important;top:-70px!important;opacity:.85}
 .cover-label{z-index:2!important;color:#161616!important;letter-spacing:.13em!important;font-size:10px!important}
 .cover-flower{color:#111!important;opacity:1!important;font-size:62px!important;bottom:5px!important;right:20px!important;z-index:2!important}
 .cover-ring{border:2px dashed #1a1a1a45!important}
