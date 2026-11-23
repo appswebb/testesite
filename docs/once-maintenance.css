@@ -1,0 +1,65 @@
+/* One coherent Yellow Pop maintenance/announcement/suspended-account identity. */
+.maintenance-screen{--m-bg:#ffda35!important;--m-cream:#111!important;--m-sage:#fff3b4!important;--m-coral:#111!important;background:#ffda35!important;color:#111!important;font-family:'Plus Jakarta Sans','DM Sans',system-ui,sans-serif!important}
+.maint-grain{opacity:.03!important;mix-blend-mode:multiply!important}
+.maint-halo{border:2px dashed #1111113d!important;box-shadow:0 0 0 100px #ffffff16!important}
+.maint-logo-icon{background:#111!important;color:#ffd52b!important;border-radius:50%!important;font-family:'Plus Jakarta Sans',sans-serif!important;font-weight:900!important}
+.maint-logo-icon span{color:#ffd52b!important}
+.maint-wordmark{color:#111!important;font-family:'Plus Jakarta Sans',sans-serif!important;font-weight:900!important;letter-spacing:-.09em!important}
+.maint-wordmark span{color:#111!important}
+.maint-top-label{color:#5a4a1b!important;font-size:9px!important}
+.maint-eyebrow{color:#222!important;font-size:10px!important;letter-spacing:.12em!important}
+.maint-beat{background:#111!important;box-shadow:0 0 0 4px #ffffffaa!important}
+.maint-copy h1{font:900 clamp(38px,5.4vw,75px)/1.05 'Plus Jakarta Sans',sans-serif!important;color:#111!important;letter-spacing:-.085em!important}
+.maint-copy h1 em{font-family:inherit!important;font-style:normal!important;color:#111!important;text-shadow:2px 2px 0 #ff4eb7,-2px -2px 0 #60e1ee}
+.maint-lead{color:#332d21!important;font-size:14px!important;line-height:1.75!important}
+.maint-promise,.maint-status{background:#fff8db!important;border:1px solid #11111124!important;color:#262626!important;border-radius:18px!important;box-shadow:none!important}
+.maint-promise strong,.maint-status strong{color:#111!important}
+.maint-promise p,.maint-status p{color:#625736!important}
+.maint-actions a,.maint-actions button,.maint-refresh{border-radius:999px!important;background:#111!important;color:#fff!important;border:1px solid #111!important;font-weight:850!important}
+.maint-refresh:hover{background:#353535!important}
+.maint-visual-card{background:#fff!important;color:#111!important;border:3px solid #111!important;border-radius:24px!important;box-shadow:10px 12px 0 #fa46b1!important}
+.maint-center{color:#111!important}
+.maint-big-five{color:#111!important;font-family:'Plus Jakarta Sans',sans-serif!important;font-weight:900!important}
+.maint-float-pill{background:#fff!important;border:2px solid #111!important;box-shadow:4px 4px 0 #111!important;color:#111!important;border-radius:999px!important}
+.maint-visual-star{color:#ff52b9!important}
+.maint-footer{color:#5a4c24!important}
+.maint-footer a{color:#111!important}
+.announcement-screen{background:#ffda35!important;color:#111!important;font-family:'Plus Jakarta Sans',sans-serif!important}
+.announcement-dialog{border:2px solid #111!important;background:#fff!important;color:#111!important;box-shadow:9px 12px 0 #111!important;border-radius:26px!important}
+.announcement-backdrop{background:transparent!important}
+.announcement-identity,.announcement-dialog h2{color:#111!important;font-family:'Plus Jakarta Sans',sans-serif!important;font-weight:900!important}
+.announcement-identity span,.announcement-dialog h2 span{color:#111!important}
+.announcement-icon{background:#ffda36!important;border-radius:50%!important;color:#111!important}
+.announcement-kicker{color:#867319!important}
+.announcement-text{color:#666!important;font-size:15px!important}
+.announcement-timer-bar{background:#f1f1f1!important}
+.announcement-timer-bar div{background:#ffd432!important}
+.announcement-timer-copy{color:#777!important}
+.announcement-timer-copy strong{color:#111!important}
+.suspension-screen{background:#fff!important;color:#111!important;font-family:'Plus Jakarta Sans',sans-serif!important}
+.suspension-header span,.suspension-footer{color:#888!important}
+.suspension-logo{color:#111!important}
+.suspension-logo span{color:#111!important}
+.suspension-card{border:1px solid #eee!important;background:#fff!important;border-radius:25px!important;box-shadow:0 10px 35px #0000000b!important}
+.suspension-sign{background:#ffda39!important;border-radius:50%!important;color:#111!important}
+.suspension-eyebrow{color:#94802b!important}
+.suspension-card h1{color:#111!important;font-family:'Plus Jakarta Sans',sans-serif!important;font-weight:900!important}
+.suspension-card h1 em{color:#111!important;font-family:inherit!important;font-style:normal!important;box-shadow:inset 0 -.25em 0 #ffe16c!important}
+.suspension-card>p,.suspension-reason p{color:#666!important}
+.suspension-reason{background:#fff9e1!important;border:1px solid #f6e6ad!important;border-radius:17px!important}
+.suspension-reason strong{color:#111!important}
+.suspension-form label{color:#222!important}
+.suspension-form textarea{background:#fff!important;color:#111!important;border:1px solid #ddd!important}
+.suspension-form textarea::placeholder{color:#999!important}
+.suspension-submit{background:#111!important;color:#fff!important;border-radius:999px!important}
+.suspension-footer-actions a,.suspension-footer-actions button{color:#111!important}
+.suspension-success{color:#514622!important}
+@media(max-width:760px){
+ .maint-container{gap:26px!important;padding-bottom:35px!important}
+ .maint-copy h1{font-size:clamp(34px,10vw,49px)!important}
+ .maint-visual-card{box-shadow:5px 7px 0 #fa46b1!important}
+ .announcement-dialog{padding:25px!important;box-shadow:5px 7px 0 #111!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .maint-float-pill,.maint-visual-star,.maint-halo{animation:none!important}
+}
