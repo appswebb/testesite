@@ -20,7 +20,7 @@ function inbox(){
 }
 function onlineView(){
  const v=Boolean(s.presence.visible),d=Boolean(s.presence.allow_requests);
- return heading('GENTE DE VERDADE','Encontre <em>pessoas.</em>','Busque pelo nome ou @ de qualquer perfil. Abaixo, veja quem está online e escolheu aparecer.')+
+ return heading('GENTE DE VERDADE','Encontre <em>pessoas.</em>','Veja quem está online e escolheu aparecer. Para encontrar alguém por @, use Pesquisar ou Conversas.')+
  '<div class="online-controls"><div><strong>Meu perfil na lista</strong><p>'+(v?'Visível enquanto você estiver no site.':'Você está invisível para a lista de pessoas online.')+'</p></div>'+
  '<button class="social-switch '+(v?'is-on':'')+'" type="button" role="switch" aria-checked="'+v+'" data-action="onlineVisibility">'+(v?'Visível':'Invisível')+'</button></div>'+
  '<div class="online-controls"><div><strong>Conversas de desconhecidos</strong><p>'+(d?'Você decide se aceita cada convite.':'Só seguidores aceitos podem conversar sem convite.')+'</p></div>'+
