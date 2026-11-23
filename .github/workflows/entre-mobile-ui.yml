@@ -17,6 +17,7 @@ on:
       - 'docs/encounter-ui.css'
       - 'docs/entre-features.css'
       - 'tests/encounter-layout.test.mjs'
+      - 'tests/encounter-mobile-audit.cjs'
       - 'docs/index.html'
       - 'docs/maintenance.css'
       - 'docs/mobile.css'
@@ -54,5 +55,6 @@ jobs:
           node --check tests/avatar-mobile-audit.cjs
           node --test tests/social-ui-regression.test.mjs
           node --test tests/encounter-layout.test.mjs
+          node tests/encounter-mobile-audit.cjs
           node tests/admin-mobile-audit.cjs
           node tests/avatar-mobile-audit.cjs
