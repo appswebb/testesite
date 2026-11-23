@@ -218,3 +218,24 @@ html[data-theme] .profile-dropdown button{color:var(--ui-text)!important}
 html[data-theme] .profile-dropdown button:hover{background:var(--ui-panel-alt)!important}
 html[data-theme] .once-feature-art{--ef-sticker-green:var(--ui-accent-soft)}
 html[data-theme] .hero-art{--ef-sticker-green:var(--ui-accent-soft)}
+
+
+/* Mode transitions must never leave white canvases/cards after switching to dark.
+   Set the root as well as body, because old global CSS targets both independently. */
+html[data-theme="dark"]{
+ background:#101114!important;background-color:#101114!important;
+ color:#f7f8fa!important;transition:none!important
+}
+html[data-theme="dark"] body{
+ background:#101114!important;background-color:#101114!important;
+ color:#f7f8fa!important;transition:none!important
+}
+html[data-theme="dark"] :is(.app-shell,.app-main,.sidebar,.main,.shell,.auth-main,
+ .share-wrap,.info-page,.info-main){
+ background-color:#101114!important;color:#f7f8fa!important
+}
+html[data-theme="dark"] :is(.post-card,.post-compose,.settings-card,.form-panel,.online-person,
+ .conversation-entry,.room-shell,.camera-live-stage,.support-card,.support-history,
+ .profile-preview,.comments-dialog,.comments-dialog-header,.comments-dialog-footer){
+ background-color:#191c21!important;border-color:#373c45!important;color:#f7f8fa!important
+}
