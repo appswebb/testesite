@@ -53,7 +53,7 @@ function wave(target,clientX,clientY){
  const el=document.createElement('span');
  el.className='entre-touch-wave';el.setAttribute('aria-hidden','true');
  el.style.setProperty('--x',clientX+'px');el.style.setProperty('--y',clientY+'px');
- el.style.setProperty('--wave-scale',String(Math.max(6,Math.min(14,Math.max(box.width,box.height)/12))));
+ el.style.setProperty('--wave-radius',Math.round(Math.max(35,Math.min(85,Math.max(box.width,box.height)/2)))+'px');
  // Clip the oversized ripple to the viewport without adding horizontal
  // scroll; fixed transformed children previously made 320px pages 366px wide.
  let layer=document.getElementById('entreTouchLayer');
