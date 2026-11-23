@@ -58,7 +58,153 @@ const googleLogo="<svg class=\"google-mark\" viewBox=\"0 0 24 24\" aria-hidden=\
 // Only a small 160px WebP is ever sent to Supabase (maximum 40 KiB).
 const AVATAR_BUCKET='entre-avatars';
 const AVATAR_MAX=40960;
-const AVATAR_LIFETIME=24*60*60*1000;
+
+// Image editor used before an avatar upload. All edits happen locally on the device.
+// The exported image is a tiny metadata-free WebP, never the camera original.
+let activeImageCrop=null;
+function closeImageCrop(){
+ const c=activeImageCrop;
+ if(!c)return;
+ activeImageCrop=null;
+ if(c.sourceUrl)URL.revokeObjectURL(c.sourceUrl);
+ c.dialog?.remove();
+ document.body.classList.remove('crop-dialog-open');
+}
+function cropMath(c){
+ const side=c.canvas.width,base=Math.max(side/c.image.naturalWidth,side/c.image.naturalHeight);
+ const w=c.image.naturalWidth*base*c.zoom,h=c.image.naturalHeight*base*c.zoom;
+ c.dx=Math.max(-(w-side)/2,Math.min((w-side)/2,c.dx));
+ c.dy=Math.max(-(h-side)/2,Math.min((h-side)/2,c.dy));
+ return {side,w,h,x:(side-w)/2+c.dx,y:(side-h)/2+c.dy};
+}
+function drawImageCrop(){
+ const c=activeImageCrop;if(!c)return;
+ const p=cropMath(c),ctx=c.canvas.getContext('2d',{alpha:false});
+ ctx.fillStyle='#111e17';ctx.fillRect(0,0,p.side,p.side);
+ ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+ ctx.drawImage(c.image,p.x,p.y,p.w,p.h);
+ const level=c.dialog.querySelector('#cropZoomNumber');
+ if(level)level.textContent=Math.round(c.zoom*100)+'%';
+}
+function updateImageCropZoom(zoom){
+ const c=activeImageCrop;if(!c)return;
+ c.zoom=Math.max(1,Math.min(3.5,zoom));
+ c.dialog.querySelector('#cropZoom').value=String(c.zoom);
+ drawImageCrop();
+}
+async function compressCroppedImage(c){
+ const source=c.canvas;
+ for(const size of [256,224,192,160]){
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=size;
+  const ctx=canvas.getContext('2d',{alpha:false});
+  if(!ctx)throw Error('Seu navegador não conseguiu preparar o recorte.');
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.drawImage(source,0,0,source.width,source.height,0,0,size,size);
+  for(const quality of [0.78,0.70,0.60]){
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',quality));
+   if(!blob||blob.type!=='image/webp')throw Error('Não foi possível converter esta imagem para WebP.');
+   if(blob.size<=AVATAR_MAX)return blob;
+  }
+ }
+ throw Error('Não foi possível compactar a imagem para o limite de 40 KB.');
+}
+async function confirmImageCrop(){
+ const c=activeImageCrop;
+ if(!c||c.saving)return;
+ c.saving=true;
+ const button=c.dialog.querySelector('#cropApply');
+ if(button){button.disabled=true;button.textContent='Preparando foto...';}
+ try{
+  const cropped=await compressCroppedImage(c);
+  if(activeImageCrop!==c)return;
+  clearAvatarDraft();
+  state.avatarPendingFile=cropped;
+  state.avatarIsCropped=true;
+  state.avatarPreviewUrl=URL.createObjectURL(cropped);
+  const preview=document.querySelector('.avatar-photo-preview');
+  if(preview)preview.innerHTML='<img src="'+esc(state.avatarPreviewUrl)+'" alt="Foto recortada, pronta para salvar">';
+  closeImageCrop();
+  toast('Recorte pronto! Salve o perfil para atualizar sua foto.');
+ }catch(error){
+  toast(infoError(error),true);
+  c.saving=false;
+  if(button){button.disabled=false;button.textContent='Aplicar recorte';}
+ }
+}
+async function openImageCrop(file,options={}){
+ if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type))
+  throw Error('Escolha uma imagem JPG, PNG ou WebP.');
+ if(file.size>12*1024*1024)throw Error('A imagem original precisa ter até 12 MB.');
+ closeImageCrop();
+ const sourceUrl=URL.createObjectURL(file);
+ const image=new Image();
+ try{image.src=sourceUrl;await image.decode();}
+ catch(e){URL.revokeObjectURL(sourceUrl);throw Error('Não foi possível abrir essa imagem. Selecione outra foto.');}
+ if(!image.naturalWidth||!image.naturalHeight||image.naturalWidth*image.naturalHeight>75000000){
+  URL.revokeObjectURL(sourceUrl);
+  throw Error('A imagem é grande demais ou está corrompida.');
+ }
+ const dialog=document.createElement('div');dialog.className='crop-dialog-overlay';
+ dialog.id='avatarCropDialog';
+ const title=esc(options.title||'Ajustar sua foto');
+ dialog.innerHTML='<section class="crop-dialog" role="dialog" aria-modal="true" aria-labelledby="cropTitle">'
+  +'<div class="crop-head"><span class="crop-kicker">FOTO DE PERFIL</span><h2 id="cropTitle">'+title+'</h2>'
+  +'<p>Arraste para reposicionar. Use dois dedos ou a barra para aproximar e afastar.</p></div>'
+  +'<div class="crop-stage"><canvas class="crop-canvas" id="cropCanvas" width="512" height="512" tabindex="0" aria-label="Área para arrastar e posicionar o recorte"></canvas><div class="crop-mask" aria-hidden="true"></div></div>'
+  +'<div class="crop-zoom-control"><label for="cropZoom"><span>Zoom</span><output id="cropZoomNumber">100%</output></label>'
+  +'<div class="crop-zoom-row"><span aria-hidden="true">−</span><input id="cropZoom" type="range" min="1" max="3.5" step="0.01" value="1" aria-label="Aproximar ou afastar foto"><span aria-hidden="true">+</span></div></div>'
+  +'<p class="crop-caption">A foto final fica quadrada e aparece circular no perfil. Otimizada para até 40 KB, sem salvar a imagem original.</p>'
+  +'<div class="crop-footer"><button type="button" class="crop-cancel" id="cropCancel">Cancelar</button><button type="button" class="crop-apply" id="cropApply">Aplicar recorte</button></div></section>';
+ document.body.append(dialog);
+ document.body.classList.add('crop-dialog-open');
+ const canvas=dialog.querySelector('#cropCanvas');
+ const c={dialog,canvas,image,sourceUrl,zoom:1,dx:0,dy:0,pointers:new Map(),lastPinch:null,saving:false};
+ activeImageCrop=c;
+ const position=e=>{const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*512/r.width,y:(e.clientY-r.top)*512/r.height};};
+ const distance=()=>{
+  const pts=[...c.pointers.values()];
+  return pts.length<2?null:Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+ };
+ canvas.addEventListener('pointerdown',e=>{
+  e.preventDefault();canvas.setPointerCapture(e.pointerId);
+  c.pointers.set(e.pointerId,position(e));
+  c.lastPinch=distance();
+ });
+ canvas.addEventListener('pointermove',e=>{
+  if(!c.pointers.has(e.pointerId))return;
+  e.preventDefault();
+  const before=c.pointers.get(e.pointerId),after=position(e);
+  c.pointers.set(e.pointerId,after);
+  if(c.pointers.size===1){c.dx+=after.x-before.x;c.dy+=after.y-before.y;drawImageCrop();}
+  else if(c.pointers.size>=2){
+   const next=distance();
+   if(next&&c.lastPinch)updateImageCropZoom(c.zoom*next/c.lastPinch);
+   c.lastPinch=next;
+  }
+ });
+ const pointerEnd=e=>{c.pointers.delete(e.pointerId);c.lastPinch=distance();};
+ canvas.addEventListener('pointerup',pointerEnd);
+ canvas.addEventListener('pointercancel',pointerEnd);
+ canvas.addEventListener('lostpointercapture',pointerEnd);
+ canvas.addEventListener('wheel',e=>{e.preventDefault();updateImageCropZoom(c.zoom*(e.deltaY<0?1.08:0.92));},{passive:false});
+ canvas.addEventListener('keydown',e=>{
+  const step=e.shiftKey?24:8;
+  if(e.key==='ArrowLeft')c.dx-=step;
+  else if(e.key==='ArrowRight')c.dx+=step;
+  else if(e.key==='ArrowUp')c.dy-=step;
+  else if(e.key==='ArrowDown')c.dy+=step;
+  else return;
+  e.preventDefault();drawImageCrop();
+ });
+ dialog.querySelector('#cropZoom').addEventListener('input',e=>updateImageCropZoom(Number(e.target.value)));
+ dialog.querySelector('#cropCancel').addEventListener('click',closeImageCrop);
+ dialog.querySelector('#cropApply').addEventListener('click',confirmImageCrop);
+ dialog.addEventListener('click',e=>{if(e.target===dialog)closeImageCrop();});
+ drawImageCrop();
+ dialog.querySelector('#cropApply').focus();
+}
+
+const AVATAR_LIFETIME=365*24*60*60*1000; // Local preview only; uploaded profile photos do not expire.
 
 function refreshAvatarElements(person){
  if(!person?.id)return;
@@ -125,13 +271,7 @@ function commitLocalAvatar(path){
  state.pendingCompressedAvatarUrl=null;
 }
 
-function avatarFresh(p){
- if(!p?.avatar_path||!p?.avatar_uploaded_at)return false;
- const age=Date.now()-new Date(p.avatar_uploaded_at).getTime();
- // A device's clock may be behind Supabase by an hour or more.
- // The server-side Storage RLS policy remains authoritative for 24-hour expiry.
- return Number.isFinite(age)&&age<AVATAR_LIFETIME;
-}
+function avatarFresh(p){return Boolean(p?.avatar_path); /* Permanent until replaced or removed */}
 async function signAvatar(p,force=false){
  if(!avatarFresh(p)||!p.avatar_path||maintenanceIsActive())return false;
  const path=p.avatar_path;
@@ -157,7 +297,7 @@ function avatarUploader(p){
  const label=p?.avatar_path?'Trocar foto':'Adicionar foto';
  return '<div class="avatar-uploader"><div class="avatar-photo-preview">'
  +(url?'<img src="'+esc(url)+'" alt="Prévia da foto de perfil">':'<span aria-hidden="true">'+esc(initials(p?.display_name||'Eu'))+'</span>')
- +'</div><div class="avatar-uploader-info"><strong>'+label+'</strong><p>Foto opcional. Enviamos apenas um WebP de até 40 KB, com duração de 24 horas.</p>'
+ +'</div><div class="avatar-uploader-info"><strong>'+label+'</strong><p>Sua foto fica salva até você trocar ou remover. Recorte com zoom e WebP de até 40 KB, sem metadados.</p>'
  +'<label class="avatar-select" for="avatarFile">'+ico('edit',16)+' Escolher foto <input id="avatarFile" type="file" name="avatar_file" accept="image/jpeg,image/png,image/webp" aria-label="Escolher foto de perfil"></label>'
  +(p?.avatar_path?'<button type="button" class="avatar-remove" data-action="removeAvatar">'+ico('trash',15)+' Remover foto atual</button>':'')
  +'</div></div>';
@@ -200,7 +340,7 @@ async function compressAvatar(file){
 }
 async function uploadAvatarFile(file){
  if(!state.session?.user?.id)throw Error('Faça login antes de adicionar a foto.');
- const blob=await compressAvatar(file);
+ const blob=state.avatarIsCropped&&file.type==='image/webp'&&file.size<=AVATAR_MAX?file:await compressAvatar(file);
  const path=state.session.user.id+'/'+crypto.randomUUID()+'.webp';
  const {error}=await db.storage.from(AVATAR_BUCKET).upload(path,blob,{contentType:'image/webp',upsert:false,cacheControl:'60'});
  if(error)throw error;
@@ -212,6 +352,7 @@ function clearAvatarDraft(){
  if(state.avatarPreviewUrl){URL.revokeObjectURL(state.avatarPreviewUrl);state.avatarPreviewUrl=null;}
  if(state.pendingCompressedAvatarUrl){URL.revokeObjectURL(state.pendingCompressedAvatarUrl);state.pendingCompressedAvatarUrl=null;}
  state.avatarPendingFile=null;
+ state.avatarIsCropped=false;
 }
 async function removeAvatar(){
  if(!state.profile?.avatar_path)return;
@@ -368,22 +509,15 @@ function nav(view){state.view=view;if(view!=='connect'&&state.pair?.status==='ac
 function scrollHow(){document.getElementById('como-funciona')?.scrollIntoView({behavior:'smooth'})}
 async function clickAction(event){const btn=event.target.closest('[data-action]');if(!btn||btn.disabled)return;const action=btn.dataset.action;try{switch(action){case'logo':event.preventDefault();if(state.session&&state.profile)nav('home');else{state.mode='landing';render()}break;case'landing':state.mode='landing';render();break;case'how':scrollHow();break;case'login':state.mode='login';render();break;case'signup':state.mode='signup';render();break;case'google':await signInGoogle(btn);break;case'maintenanceRefresh':await maintenanceCheck(true);break;case'nav':nav(btn.dataset.view);break;case'filter':state.preference=btn.dataset.value;renderView();break;case'startsearch':await startSearch();break;case'cancelsearch':await cancelSearch();break;case'openpair':await openPair(btn.dataset.id);break;case'vote':await vote(btn.dataset.value==='yes');break;case'endpair':state.modal='endpair';render();break;case'endpairFinal':await endPair();break;case'report':state.modal='report';render();break;case'removeAvatar':await removeAvatar();break;case'block':state.modal='block';render();break;case'blockFinal':await blockPartner();break;case'closemodal':state.modal=null;render();break;case'logout':await logout();break;case'motion':state.motionOff=!state.motionOff;localStorage.setItem('entre.motionOff',state.motionOff?'1':'0');render();break;case'delete1':state.modal='delete1';render();break;case'delete2':state.modal='delete2';render();break;case'deleteFinal':await deleteData();break;default:break}}catch(e){toast(infoError(e),true)}}
 document.addEventListener('click',clickAction);
-document.addEventListener('change',e=>{
+document.addEventListener('change',async e=>{
  if(e.target?.id!=='avatarFile')return;
  const file=e.target.files?.[0];
+ e.target.value='';
  if(!file)return;
- if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>12*1024*1024){
-   toast('Use JPG, PNG ou WebP de até 12 MB. O envio final será comprimido para 40 KB.',true);
-   e.target.value='';return;
- }
- clearAvatarDraft();
- state.avatarPendingFile=file;
- state.avatarPreviewUrl=URL.createObjectURL(file);
- const img=document.querySelector('.avatar-photo-preview');
- if(img)img.innerHTML='<img src="'+esc(state.avatarPreviewUrl)+'" alt="Prévia da foto selecionada">';
+ try{await openImageCrop(file,{title:'Ajustar sua foto'});}catch(error){toast(infoError(error),true)}
 });
 document.addEventListener('submit',async e=>{const form=e.target;if(!(form instanceof HTMLFormElement))return;e.preventDefault();const name=form.id;try{if(name==='authForm'&&form.dataset.form==='profileSetup')await profileSetup(form);else if(name==='profileForm')await saveProfile(form);else if(name==='messageForm')await sendMessage(form);else if(name==='reportForm')await sendReport(form)}catch(err){toast(infoError(err),true)}});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal){state.modal=null;render()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&activeImageCrop){closeImageCrop();return;}if(e.key==='Escape'&&state.modal){state.modal=null;render()}});
 window.addEventListener('beforeunload',()=>{if(state.searching)db.rpc('entre_leave').catch(()=>{})});
 
 function maintenanceIsPreview(){return new URLSearchParams(location.search).has('maintenance_preview')}
