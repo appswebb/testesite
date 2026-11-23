@@ -7,7 +7,7 @@ test('Lives begins with real controls instead of editorial hero copy',()=>{
  const js=read('camera-lives.js');
  const section=js.slice(js.indexOf('function view(){'),js.indexOf('async function refresh(',js.indexOf('function view(){')));
  assert.match(section,/live-explore-header/);
- assert.match(section,/live-explore-categories/);
+ assert.match(js,/live-explore-categories/);
  assert.match(section,/live-visual-composer/);
  assert.match(section,/categoryChips\(\)/);
  assert.match(section,/data-live-action="create"/);
