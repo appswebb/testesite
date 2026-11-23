@@ -206,7 +206,9 @@ test('Premium checkout never claims to charge before an enabled plan and verifie
  assert.match(src,/checkout_enabled/);
  assert.match(src,/mercadopago/);
  assert.match(src,/paid_until/);
- assert.match(src,/wa.me\/5518988234267/);
+ assert.match(src,/entre_premium_whatsapp/);
+ assert.match(src,/data-action="premiumWhatsapp"/);
+ assert.doesNotMatch(src,/5518988234267/);
 });
 test('Support requires evidence and sends a secured ticket to the dedicated mailbox',()=>{
  const src=read('entre-features.js'),admin=read('admin/extra-admin.js');
