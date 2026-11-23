@@ -1,0 +1,36 @@
+name: Mobile UI Regression (entre.)
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/admin/**'
+      - 'docs/app.js'
+      - 'docs/index.html'
+      - 'docs/maintenance.css'
+      - 'docs/mobile.css'
+      - 'tests/admin-mobile-audit.cjs'
+      - '.github/workflows/entre-mobile-ui.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright (pinned)
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Validate scripts and UI
+        run: |
+          node --check docs/app.js
+          node --check docs/admin/app.js
+          node --check tests/admin-mobile-audit.cjs
+          node tests/admin-mobile-audit.cjs
