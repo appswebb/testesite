@@ -4,6 +4,7 @@ window.entreSocial=(function(){
 const data={presence:{visible:false,allow_requests:false},online:[],offset:0,hasMore:false,loaded:false,busy:false,follows:[],chats:[],prefs:{},notifications:[],unread:0,notiMore:false,notiBusy:false,filter:'all',started:false,hasEarlier:false};
 async function rpc(name,params){const r=await db.rpc(name,params||{});if(r.error)throw r.error;return r.data;}
 const pref=p=>data.prefs[p.id]||{folder:p.origin==='online'?'online':'live',pinned:false,archived_at:null};
+const isHidden=id=>Boolean(data.prefs[id]?.hidden_at);
 async function loadPrefs(){try{const rows=await rpc('entre_conversation_list');data.prefs={};for(const p of(Array.isArray(rows)?rows:[])){if(p?.pair_id)data.prefs[p.pair_id]=p;}}catch(e){console.warn('Prefs',e);}}
 async function loadOnline(reset=false){
  if(data.busy)return;data.busy=true;
@@ -28,7 +29,7 @@ async function refreshNotifications(before=null){
   const previous=data.notifications[0]?.id||0;if(before)data.notifications=data.notifications.concat(rows).slice(-45);else data.notifications=rows;
   if(!before&&previous>0&&rows[0]?.id>previous&&document.hidden&&'Notification' in window&&Notification.permission==='granted'){try{new Notification('entre. • Nova atividade',{body:'Você tem uma nova mensagem ou solicitação.',tag:'entre-social'});}catch(e){}}
   data.unread=Math.max(0,Math.min(99,Number(r?.unread)||0));data.notiMore=Boolean(r?.has_more);
-  document.querySelectorAll('[data-view="notifications"]').forEach(el=>{el.classList.toggle('has-unread',data.unread>0);const badge=el.querySelector('.social-unread');if(badge)badge.textContent=data.unread?String(data.unread):'';});
+  document.querySelectorAll('.toolbar-bell .social-unread').forEach(badge=>{badge.textContent=data.unread?String(data.unread):'';});
   if(state.view==='notifications')renderView();
  }catch(e){console.warn('Notifications',e);}finally{data.notiBusy=false;}
 }
@@ -47,5 +48,5 @@ async function init(){
  document.addEventListener('change',async e=>{const select=e.target.closest('[data-social-folder]');if(!select)return;try{await updateConversation(select.dataset.socialFolder,{_folder:select.value});toast('Conversa movida.');renderView();}catch(error){toast(infoError(error),true);}});
 }
 async function enter(view){if(!state.session?.user||!state.profile)return;if(view==='online')await Promise.allSettled([loadOnline(true),refreshInbox()]);if(view==='notifications')await refreshNotifications();if(view==='conversations')await loadPrefs();if(view==='connections')await loadPairs();renderView();}
-return{data,rpc,pref,init,enter,loadOnline,loadPrefs,refreshInbox,refreshNotifications,updateConversation,isArchived:id=>Boolean(data.prefs[id]?.archived_at)};
+return{data,rpc,pref,isHidden,init,enter,loadOnline,loadPrefs,refreshInbox,refreshNotifications,updateConversation,isArchived:id=>Boolean(data.prefs[id]?.archived_at)};
 })();
