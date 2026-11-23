@@ -5,9 +5,9 @@ const api=window.entreSocial,s=api.data;
 function personCard(p){
  const follow=p.follow_status,allowed=p.allow_requests||follow==='accepted'||p.follower_status==='accepted';
  return '<article class="online-person '+(window.entreExtras?.isPremium?.(p.id)?'premium-surface':'')+'"><div class="online-person-head"><span class="person-online-indicator"></span> ONLINE AGORA</div>'+
- '<div class="online-person-content">'+avatar(p,'large')+'<div><h3>'+esc(p.display_name)+(window.entreExtras?.badge?.(p)||'')+', '+Number(p.age)+'</h3><small>'+esc(genders[p.gender]||'Pessoa')+'</small></div></div>'+
+ '<div class="online-person-content">'+avatar(p,'large')+'<div><h3>'+esc(p.display_name)+(window.entreExtras?.badge?.(p)||'')+', '+Number(p.age)+'</h3><small>'+esc(genders[p.gender]||'Pessoa')+'</small><small class="person-handle">@'+esc(p.username||'')+'</small></div></div>'+
  '<p class="online-person-bio">'+esc(p.bio||'Que tal começar com um oi?')+'</p>'+
- '<div class="online-person-actions"><button type="button" class="ui-btn btn-outline btn-sm" data-action="socialFollow" data-id="'+esc(p.id)+'"'+(follow==='pending'||follow==='accepted'?' disabled':'')+'>'+
+ '<div class="online-person-actions"><button type="button" class="ui-btn btn-outline btn-sm" data-action="profileOpen" data-id="'+esc(p.id)+'">Ver perfil</button><button type="button" class="ui-btn btn-outline btn-sm" data-action="socialFollow" data-id="'+esc(p.id)+'"'+(follow==='pending'||follow==='accepted'?' disabled':'')+'>'+
  (follow==='accepted'?'✓ Seguindo':follow==='pending'?'Pedido enviado':'+ Seguir')+'</button>'+
  '<button type="button" class="ui-btn btn-dark btn-sm" data-action="socialChat" data-id="'+esc(p.id)+'">'+ico('chat',15)+' Conversar</button></div>'+
  (!allowed?'<small class="online-restriction">Não aceita conversas de desconhecidos. Siga e aguarde o aceite.</small>':'')+'</article>';
@@ -20,7 +20,7 @@ function inbox(){
 }
 function onlineView(){
  const v=Boolean(s.presence.visible),d=Boolean(s.presence.allow_requests);
- return heading('GENTE DE VERDADE','Pessoas <em>online.</em>','Somente perfis que escolheram aparecer. Carregamos grupos de 12 para economizar dados.')+
+ return heading('GENTE DE VERDADE','Encontre <em>pessoas.</em>','Busque pelo nome ou @ de qualquer perfil. Abaixo, veja quem está online e escolheu aparecer.')+
  '<div class="online-controls"><div><strong>Meu perfil na lista</strong><p>'+(v?'Visível enquanto você estiver no site.':'Você está invisível para a lista de pessoas online.')+'</p></div>'+
  '<button class="social-switch '+(v?'is-on':'')+'" type="button" role="switch" aria-checked="'+v+'" data-action="onlineVisibility">'+(v?'Visível':'Invisível')+'</button></div>'+
  '<div class="online-controls"><div><strong>Conversas de desconhecidos</strong><p>'+(d?'Você decide se aceita cada convite.':'Só seguidores aceitos podem conversar sem convite.')+'</p></div>'+
