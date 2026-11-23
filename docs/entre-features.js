@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 const mod={};
-const data={posts:[],postLoading:false,postBefore:null,postMore:false,premium:null,premiumIds:new Set(),support:[],supportBusy:false,checkoutBusy:false,premiumChecking:false};
+const data={posts:[],postLoading:false,postBefore:null,postMore:false,premium:null,premiumIds:new Set(),support:[],supportBusy:false,checkoutBusy:false,premiumChecking:false,expandedPostComments:new Set()};
 const call=async(name,params)=>{const r=await db.rpc(name,params||{});if(r.error)throw r.error;return r.data;};
 const premium=id=>Boolean(id&&(data.premiumIds.has(id)||(id===state.session?.user?.id&&data.premium?.active===true)));
 const badge=p=>premium(p?.id)?'<span class="verified-mark" title="Assinante entre. Premium" aria-label="Perfil verificado Premium">'+ico('check',12)+'</span>':'';
@@ -47,8 +47,19 @@ function postsView(){
   '<div class="post-author"><strong>'+esc(p.author_name||'Pessoa')+badge(person)+'</strong><small>'+new Date(p.created_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+'</small></div>'+
   (own?'<button type="button" class="post-remove" data-action="postDelete" data-id="'+Number(p.id)+'" aria-label="Apagar meu post">'+ico('trash',16)+'</button>':'')+'</div>'+
   '<p class="post-body">'+esc(p.body)+'</p><div class="post-interactions"><button type="button" class="'+(p.liked?'liked':'')+'" data-action="postLike" data-id="'+Number(p.id)+'">'+ico('heart',17)+' '+Number(p.likes||0)+' curtidas</button><span>'+ico('chat',15)+' '+(p.comments?.length||0)+' comentários recentes</span></div>'+
-  '<div class="post-comments">'+(Array.isArray(p.comments)?p.comments:[]).map(c=>'<div class="post-comment"><strong>'+esc(c.name)+ (c.premium?'<span class="verified-mark">'+ico('check',11)+'</span>':'')+'</strong><p>'+esc(c.body)+'</p></div>').join('')+
-  '<form class="post-comment-form" data-post="'+Number(p.id)+'"><input name="body" required minlength="2" maxlength="420" placeholder="Escreva um comentário…"><button type="submit" aria-label="Comentar">'+ico('send',18)+'</button></form></div></article>';
+  '<details class="post-comments-sheet" data-post-comment-sheet="'+Number(p.id)+'" '+(data.expandedPostComments.has(Number(p.id))?'open':'')+'><summary class="post-comment-summary">'+ico('chat',17)+' '+((p.comments||[]).length?'Ver '+p.comments.length+' comentários recentes':'Comentar')+ico('chevron',15)+'</summary>'+
+ '<div class="post-comments"><div class="post-comment-list">'+(Array.isArray(p.comments)?p.comments:[]).map(c=>{
+  const ownComment=c.author_id===state.session?.user?.id;
+  return '<div class="post-comment" data-comment-id="'+Number(c.id)+'"><span class="comment-initial">'+esc(initials(c.name))+'</span><div class="post-comment-content"><div class="post-comment-head"><strong>'+esc(c.name)+(c.premium?'<span class="verified-mark">'+ico('check',11)+'</span>':'')+'</strong><small>'+new Date(c.created_at).toLocaleDateString('pt-BR')+'</small></div><p>'+esc(c.body)+'</p>'+
+   '<details class="comment-actions"><summary aria-label="Opções do comentário" title="Opções">•••</summary><div class="comment-actions-menu">'+
+   (ownComment?'<button type="button" data-action="postCommentEdit" data-id="'+Number(c.id)+'">Editar</button><button type="button" data-action="postCommentDelete" data-id="'+Number(c.id)+'">Apagar</button>':
+    '<button type="button" data-action="postCommentReport" data-id="'+Number(c.id)+'">Denunciar</button>')+
+   '</div></details>'+
+   (ownComment?'<form class="post-comment-edit-form comment-inline-form" data-comment="'+Number(c.id)+'" hidden><input name="body" minlength="2" maxlength="420" required value="'+esc(c.body)+'"><button type="submit">Salvar</button><button type="button" data-action="postCommentCancel" data-id="'+Number(c.id)+'">Cancelar</button></form>':
+    '<form class="post-comment-report-form comment-inline-form" data-comment="'+Number(c.id)+'" hidden><label>Motivo <select name="reason"><option value="abuse">Assédio</option><option value="spam">Spam</option><option value="hate">Discurso de ódio</option><option value="other">Outro</option></select></label><textarea name="details" maxlength="600" placeholder="Detalhes (opcional)"></textarea><button type="submit">Enviar denúncia</button><button type="button" data-action="postCommentCancel" data-id="'+Number(c.id)+'">Cancelar</button></form>')+
+   '</div></div>';
+ }).join('')+'</div>'+
+ '<form class="post-comment-form" data-post="'+Number(p.id)+'"><input name="body" required minlength="2" maxlength="420" placeholder="Escreva um comentário…"><button type="submit" aria-label="Comentar">'+ico('send',18)+'</button></form></div></details></article>';
  }).join(''):'<div class="social-empty"><h3>A comunidade está começando.</h3><p>Seu post pode ser o primeiro. Faça uma pergunta ou compartilhe uma ideia.</p></div>')+
  (data.postMore?'<button class="ui-btn btn-outline" data-action="postsMore">Carregar mais posts</button>':'')+'</div>'+
  '<aside class="posts-aside"><strong>Um espaço para conversas reais</strong><p>Não compartilhe telefone, dados pessoais, endereços nem informações íntimas. Respeito e privacidade são essenciais.</p><button type="button" data-action="nav" data-view="support" class="ui-btn btn-outline btn-sm">Reportar um problema</button></aside></section>';
@@ -60,6 +71,21 @@ async function postAction(a,btn){
   if(!confirm('Apagar esta publicação e seus comentários?'))return true;
   await call('entre_post_delete',{_post:id});await loadPosts();toast('Post apagado.');return true;
  }
+ if(a==='postCommentEdit'||a==='postCommentReport'||a==='postCommentCancel'){
+  const card=btn.closest('[data-comment-id]');if(!card)return true;
+  const edit=card.querySelector('.post-comment-edit-form'),report=card.querySelector('.post-comment-report-form');
+  if(edit)edit.hidden=a!=='postCommentEdit';
+  if(report)report.hidden=a!=='postCommentReport';
+  const text=card.querySelector('.post-comment-content>p');
+  if(text)text.hidden=a==='postCommentEdit';
+  btn.closest('details')?.removeAttribute('open');
+  if(a==='postCommentEdit')edit?.querySelector('input')?.focus();
+  return true;
+ }
+ if(a==='postCommentDelete'){
+  if(!confirm('Apagar este comentário definitivamente?'))return true;
+  await call('entre_post_comment_delete',{_comment:id});await loadPosts();toast('Comentário apagado.');return true;
+ }
  if(a==='postLike'){await call('entre_post_like',{_post:id});await loadPosts();return true;}
  return false;
 }
@@ -69,13 +95,28 @@ async function postForm(form){
   if(!body||body.length<3||body.length>900)throw Error('Post precisa ter de 3 a 900 caracteres.');
   await call('entre_post_create',{_body:body});await loadPosts();toast('Seu post foi publicado.');return true;
  }
+ if(form.classList.contains('post-comment-edit-form')){
+  if(!body||body.length<2||body.length>420)throw Error('Comentário precisa ter de 2 a 420 caracteres.');
+  await call('entre_post_comment_edit',{_comment:Number(form.dataset.comment),_body:body});
+  await loadPosts();toast('Comentário atualizado.');return true;
+ }
+ if(form.classList.contains('post-comment-report-form')){
+  await call('entre_post_comment_report',{_comment:Number(form.dataset.comment),_reason:form.elements.reason.value,_details:form.elements.details.value.trim()});
+  await loadPosts();toast('Denúncia enviada para moderação.');return true;
+ }
  if(form.classList.contains('post-comment-form')){
   if(!body||body.length<2||body.length>420)throw Error('Comentário precisa ter de 2 a 420 caracteres.');
   await call('entre_post_comment',{_post:Number(form.dataset.post),_body:body});
-  await loadPosts();toast('Comentário publicado.');return true;
+  data.expandedPostComments.add(Number(form.dataset.post));await loadPosts();toast('Comentário publicado.');return true;
  }
  return false;
 }
+document.addEventListener('toggle',event=>{
+ const sheet=event.target;
+ if(!(sheet instanceof HTMLDetailsElement)||!sheet.matches('[data-post-comment-sheet]'))return;
+ const id=Number(sheet.dataset.postCommentSheet);
+ if(sheet.open)data.expandedPostComments.add(id);else data.expandedPostComments.delete(id);
+},true);
 const price=()=>Number.isInteger(data.premium?.price_cents)&&data.premium.price_cents>0
  ?(data.premium.price_cents/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):null;
 function premiumView(){
