@@ -125,7 +125,7 @@ async function postAction(a,btn){
   const edit=card.querySelector('.post-comment-edit-form'),report=card.querySelector('.post-comment-report-form');
   if(edit)edit.hidden=a!=='postCommentEdit';
   if(report)report.hidden=a!=='postCommentReport';
-  const text=card.querySelector('.post-comment-content>p');
+  const text=card.querySelector('.full-comment-content>p, .post-comment-content>p');
   if(text)text.hidden=a==='postCommentEdit';
   btn.closest('.comment-actions')?.removeAttribute('open');
   if(a==='postCommentEdit')edit?.querySelector('input')?.focus();
