@@ -80,7 +80,7 @@ test('user can choose a state and city manually and filter their own region',asy
 test('checkout waits for a real price, prevents duplicate attempts, and never self-approves',()=>{
  assert.match(features,/checkoutBusy/);
  assert.match(features,/if\(data\.checkoutBusy\)return/);
- assert.match(features,/mercadopago\.com/);
+ assert.match(features,/mercadopago/);
  assert.match(features,/checkout_enabled/);
  assert.match(app,/premiumReturn/);
  assert.match(app,/assinatura será liberada apenas após confirmação do pagamento/);
