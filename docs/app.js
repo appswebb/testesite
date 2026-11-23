@@ -503,10 +503,11 @@ async function signInGoogle(btn){
  try{
   // An OAuth error is relevant only to a login started in this browser tab.
   sessionStorage.setItem('entre.app.oauth.started',String(Date.now()));
-  // Use the exact allow-listed production URL; GitHub Pages also works when opening /index.html.
+  // Return to the originating site's root: /testesite/ on GitHub Pages
+  // and / on Vercel. Both production URLs must be on Supabase's redirect allow list.
   const redirectTo=window.location.hostname==='appswebb.github.io'
    ? 'https://appswebb.github.io/testesite/'
-   : new URL(window.location.pathname,window.location.origin).href;
+   : window.location.origin+'/';
   const {data,error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo,scopes:'openid email profile',queryParams:{prompt:'select_account'}}});
   if(error)throw error;
   if(!data?.url)throw new Error('O provedor não retornou um endereço para autenticação. Verifique a configuração do Google no Supabase.');
