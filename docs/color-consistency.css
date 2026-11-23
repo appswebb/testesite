@@ -255,3 +255,19 @@ html[data-theme="dark"] :is(.post-card,.post-compose,.settings-card,.form-panel,
   transition:none!important
  }
 }
+
+
+/* Theme switches must apply new accent immediately. Background transitions have
+   higher CSS cascade priority than important declarations and showed stale colors. */
+html[data-theme] :is(.ui-btn.btn-dark,.ui-btn.btn-coral,.btn-main,.btn-coral,
+ .live-app-find,.live-filter-find,.mobile-nav,.mobile-nav button,
+ .profile-share-primary,.camera-live-info>button,.camera-live-head-actions button){
+ transition-property:transform,box-shadow,border-color,filter,opacity!important;
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-theme] :is(.ui-btn.btn-dark,.ui-btn.btn-coral,.btn-main,.btn-coral,
+ .live-app-find,.live-filter-find,.mobile-nav,.mobile-nav button,
+ .profile-share-primary,.camera-live-info>button,.camera-live-head-actions button){
+  transition:none!important
+ }
+}
