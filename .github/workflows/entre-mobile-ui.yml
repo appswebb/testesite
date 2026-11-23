@@ -23,6 +23,13 @@ on:
       - 'docs/live-experience.css'
       - 'docs/experience-hub.css'
       - 'docs/once-ui.css'
+      - 'docs/theme.js'
+      - 'docs/theme.css'
+      - 'docs/brand-mark.svg'
+      - 'docs/favicon.svg'
+      - 'docs/perfil.html'
+      - 'docs/admin/index.html'
+      - 'tests/theme-motion-audit.cjs'
       - 'docs/once-public.css'
       - 'docs/once-maintenance.css'
       - 'docs/once-info.css'
@@ -82,6 +89,8 @@ jobs:
       - name: Validate scripts and UI
         run: |
           node --check docs/app.js
+          node --check docs/theme.js
+          node --check docs/motion.js
           node --check docs/connect-usernames.js
           node --check docs/entre-location.js
           node --check docs/entre-features.js
@@ -109,5 +118,6 @@ jobs:
           node tests/live-sheet-viewport-audit.cjs
           node tests/community-mobile-audit.cjs
           node tests/once-redesign-mobile-audit.cjs
+          node tests/theme-motion-audit.cjs
           node tests/admin-mobile-audit.cjs
           node tests/avatar-mobile-audit.cjs
