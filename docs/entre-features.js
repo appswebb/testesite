@@ -346,7 +346,7 @@ async function submitSupport(form){
  }finally{data.supportBusy=false;if(button?.isConnected)button.disabled=false;}
 }
 async function enter(view){
- if(view==='posts')await Promise.allSettled([loadPosts(),window.entreStories?.refresh?.(false)]);
+ if(view==='posts')await Promise.allSettled([loadPosts(),window.entreStories?.refresh?.()]);
  if(view==='premium'){await refreshPremium();await window.entreRecurring?.loadStatus?.();renderView();if(data.webCheckoutOpen&&!data.premium?.active)void renderWebBrick().catch(e=>{data.webError=infoError(e);refreshWebStatus();});}
  if(view==='support'){await Promise.all([loadSupport(),refreshPremium()]);renderView();}
 }
