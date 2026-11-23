@@ -40,6 +40,24 @@ async function action(type,btn){
   if(r?.pair_id){await loadPairs();await openPair(r.pair_id);}else{renderView();toast('Solicitação recusada.');}
   return true;
  }
+ if(type==='conversationDeletePrompt'){
+  if(!state.pairs.some(p=>p.id===id&&p.status==='connected')){toast('Conversa indisponível.',true);return true;}
+  api.data.deleteConversationId=id;state.modal='deleteConversation';render();return true;
+ }
+ if(type==='conversationDeleteConfirm'){
+  const pairId=api.data.deleteConversationId;
+  if(!pairId)return true;
+  await call('entre_conversation_delete',{_pair:pairId});
+  api.data.deleteConversationId=null;state.modal=null;
+  await api.loadPrefs();
+  if(state.pair?.id===pairId){
+   state.pair=null;state.peer=null;state.messages=[];
+   if(state.channel){db.removeChannel(state.channel);state.channel=null;}
+  }
+  nav('conversations');
+  toast('Conversa apagada apenas da sua conta.');
+  return true;
+ }
  if(type==='conversationPin'||type==='conversationUnpin'||type==='conversationArchive'||type==='conversationRestore'){
   if(!state.pairs.some(p=>p.id===id&&p.status==='connected')){toast('Só conversas após um match podem ser organizadas.',true);return true;}
   const p=type.includes('Pin')||type.includes('Unpin')?{_pinned:type==='conversationPin'}:{_archived:type==='conversationArchive'};
@@ -48,6 +66,16 @@ async function action(type,btn){
   renderView();return true;
  }
  if(type==='convoFilter'){api.data.filter=btn.dataset.value||'all';renderView();return true;}
+ if(type==='notificationsDismiss'){
+  await call('entre_notifications_clear',{_id:Number(id)});
+  await api.refreshNotifications();
+  toast('Notificação removida.');return true;
+ }
+ if(type==='notificationsClear'){
+  if(!confirm('Limpar todas as notificações? Elas não poderão ser recuperadas.'))return true;
+  await call('entre_notifications_clear');
+  await api.refreshNotifications();toast('Notificações limpas.');return true;
+ }
  if(type==='notificationsRead'){await call('entre_notifications_read');await api.refreshNotifications();renderView();return true;}
  if(type==='notificationsMore'){await api.refreshNotifications(api.data.notifications.at(-1)?.id||null);renderView();return true;}
  if(type==='notificationOpen'){
