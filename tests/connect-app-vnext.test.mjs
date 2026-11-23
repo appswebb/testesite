@@ -57,7 +57,7 @@ test('browser payment integration never trusts client pricing or status',()=>{
  assert.match(read('docs/entre-features.js'),/sdk\.mercadopago\.com\/js\/v2/);
 });
 
-test('original entre. identity is restored without removing feature code',()=>{
+test('entre. brand is preserved while new Yellow Pop skin covers every page',()=>{
  const html=read('docs/index.html'),admin=read('docs/admin/index.html');
  const manifest=JSON.parse(read('docs/manifest.webmanifest'));
  const app=read('docs/app.js'),extras=read('docs/entre-features.js');
@@ -67,7 +67,11 @@ test('original entre. identity is restored without removing feature code',()=>{
  assert.doesNotMatch(admin,/connect-admin\.css/);
  assert.match(admin,/comment-report-updates\.css/);
  assert.equal(manifest.short_name,'entre.');
- assert.equal(manifest.theme_color,'#17271e');
+ assert.equal(manifest.theme_color,'#ffd633');
+ assert.match(html,/once-ui\.css/);
+ assert.match(html,/once-public\.css/);
+ assert.match(admin,/once-admin\.css/);
+ assert.match(read('docs/perfil.html'),/perfil-once\.css/);
  assert.match(app,/aria-label="entre\. início"/);
  assert.doesNotMatch(app,/aria-label="CONNECT início"/);
  assert.match(extras,/ENTRE\. PREMIUM/);
