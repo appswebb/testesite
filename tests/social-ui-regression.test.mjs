@@ -210,13 +210,13 @@ test('Premium checkout never claims to charge before an enabled plan and verifie
  assert.match(src,/data-action="premiumWhatsapp"/);
  assert.doesNotMatch(src,/5518988234267/);
 });
-test('Support requires evidence and sends a secured ticket to the dedicated mailbox',()=>{
+test('Support requires evidence and never leaks the old admin mailbox',()=>{
  const src=read('entre-features.js'),admin=read('admin/extra-admin.js');
  assert.match(src,/supportTicketForm/);
  assert.match(src,/entre_support_submit/);
  assert.match(src,/entre-support-evidence/);
  assert.match(src,/entre-support-email/);
- assert.match(src,/connectapp.w@gmail.com/);
+ assert.doesNotMatch(src,/connectapp\\.w@gmail\\.com/);
  assert.match(admin,/supportPage/);
  assert.match(admin,/priceParams/);
 });
@@ -236,4 +236,18 @@ test('Posts, temporary video, premium checkout and account support remain wired 
  assert.match(video,/RTCPeerConnection/);
  assert.match(video,/mediaDevices\.getUserMedia/);
  assert.match(video,/private:true/);
+});
+
+test('An admin can access the normal app without a persistent forced return to the panel',()=>{
+ const app=read('app.js'),admin=read('admin/app.js');
+ assert.match(app,/function consumeAdminOAuthReturn\(\)/);
+ assert.match(app,/sessionStorage\.getItem\('entre\.admin\.oauth\.started'\)/);
+ assert.match(app,/sessionStorage\.removeItem\('entre\.admin\.oauth\.started'\)/);
+ assert.match(app,/localStorage\.removeItem\('entre\.admin\.return'\)/);
+ assert.match(app,/new URLSearchParams\(window\.location\.search\)\.get\('site'\)==='1'/);
+ assert.match(app,/if\(state\.isAdmin&&adminOAuthReturn\)/);
+ assert.doesNotMatch(app,/if\(state\.isAdmin&&localStorage\.getItem\('entre\.admin\.return'\)/);
+ assert.match(admin,/sessionStorage\.setItem\("entre\.admin\.oauth\.started",String\(Date\.now\(\)\)\)/);
+ assert.match(admin,/href="\.\.\/\?site=1"/);
+ assert.doesNotMatch(admin,/localStorage\.setItem\("entre\.admin\.return","1"\)/);
 });
