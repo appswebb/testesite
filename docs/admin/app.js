@@ -51,12 +51,20 @@ function fmt(date){if(!date)return "—";var d=new Date(date);return isNaN(d)?"�
 function day(date){var d=new Date(String(date).slice(0,10)+"T12:00:00");return isNaN(d)?"—":new Intl.DateTimeFormat("pt-BR",{weekday:"short"}).format(d).replace(".","");}
 function badge(text,kind){return '<span class="badge '+(kind||"")+'">'+e(text)+'</span>';}
 function person(name,secondary,accent){var n=String(name||"Pessoa");return '<span class="person-avatar '+(accent?"coral":"")+'">'+e(n.slice(0,1).toUpperCase())+'</span><span class="person-details"><strong title="'+e(n)+'">'+e(n)+'</strong><small>'+e(secondary||"")+'</small></span>';}
-function errorText(err){var s=String(err&&err.message||err||"Erro desconhecido");if(s.indexOf("42501")>=0||s.toLowerCase().indexOf("administrativo negado")>=0)return "Acesso negado pelo servidor. Esta conta não possui permissão administrativa.";return s;}
+function errorText(err){var s=String(err&&err.message||err||"Erro desconhecido");if(/invalid login credentials|invalid_credentials/i.test(s))return "E-mail ou senha incorretos.";if(/email not confirmed|email_not_confirmed/i.test(s))return "Confirme seu e-mail antes de entrar.";if(s.indexOf("42501")>=0||s.toLowerCase().indexOf("administrativo negado")>=0)return "Acesso negado pelo servidor. Esta conta não possui permissão administrativa.";return s;}
 function toast(msg,bad){clearTimeout(toastTimer);toastEl.textContent=msg;toastEl.className=(bad?"error ":"")+"show";toastTimer=setTimeout(function(){toastEl.className="";},4200);}
 async function rpc(name,params){var r=await db.rpc(name,params||{});if(r.error)throw r.error;return r.data;}
 function gate(locked){
- var message=locked?"Esta conta não possui permissão administrativa. Entre com a conta Google autorizada no Supabase.":"Administre o entre. com controle, clareza e segurança — em um único espaço.";
- app.innerHTML='<div class="gate"><div class="gate-copy"><div><a class="brand" style="padding:0" href="../?site=1"><span class="brand-mark">e</span><span><span class="brand-text">entre<i>.</i></span><br><span class="brand-sub">COMMAND CENTER</span></span></a></div><div class="gate-inner"><span class="gate-kicker">ACESSO RESTRITO · GOOGLE IDENTITY</span><h1>Seu site,<br><em>sob controle.</em></h1><p>'+e(message)+'</p><div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:27px"><button class="btn-main coral" data-action="google">'+ico("shield-check",19)+' '+(locked?"Trocar conta Google":"Entrar com Google")+' '+ico("arrow-right",19)+'</button><a class="btn-outline" href="../?site=1">Ir para o site</a></div>'+(locked&&state.user?'<p style="font-size:11px;margin-top:18px">Conectado como '+e(state.user.email)+'</p>':'')+'</div><div class="gate-small">entre. · Painel privado · Acesso protegido no Supabase</div></div><div class="gate-art"><div class="gate-orbit"><strong>e.</strong><span>CONTROL</span></div><h2>O controle que uma comunidade real merece.</h2><p>Um painel feito para cuidar de conexões, não invadir conversas.</p></div></div>';
+ var message=locked?"Esta conta não tem acesso ao painel. Entre com o e-mail autorizado e confirmado.":"Entre com o e-mail e a senha do seu cadastro no entre.";
+ app.innerHTML='<div class="gate"><div class="gate-copy"><div><a class="brand" style="padding:0" href="../?site=1"><span class="brand-mark">e</span><span><span class="brand-text">entre<i>.</i></span><br><span class="brand-sub">COMMAND CENTER</span></span></a></div>'
+ +'<div class="gate-inner"><span class="gate-kicker">ACESSO RESTRITO · SUPABASE AUTH</span><h1>Seu site,<br><em>sob controle.</em></h1><p>'+e(message)+'</p>'
+ +'<form id="admin-login-form" class="admin-login-form"><label for="admin-email">E-mail</label><input id="admin-email" type="email" name="email" autocomplete="username" inputmode="email" maxlength="254" required placeholder="E-mail da conta cadastrada">'
+ +'<label for="admin-password">Senha</label><input id="admin-password" type="password" name="password" autocomplete="current-password" required placeholder="Sua senha">'
+ +'<button class="btn-main coral" type="submit">'+ico("shield-check",19)+' Entrar no painel '+ico("arrow-right",19)+'</button></form>'
+ +'<div class="admin-gate-actions"><a class="btn-outline" href="../?site=1">Ir para o site</a><a href="../?site=1" class="admin-gate-help">Precisa cadastrar ou recuperar a senha? Acesse o site.</a></div>'
+ +(locked&&state.user?'<p style="font-size:11px;margin-top:18px">Sessão atual: '+e(state.user.email)+'</p>':'')
+ +'</div><div class="gate-small">entre. · Painel privado · E-mail confirmado e autorizado no Supabase</div></div>'
+ +'<div class="gate-art"><div class="gate-orbit"><strong>e.</strong><span>CONTROL</span></div><h2>O controle que uma comunidade real merece.</h2><p>Um painel feito para cuidar de conexões, não invadir conversas.</p></div></div>';
 }
 function navItem(s,compact){return '<button type="button" class="'+(compact?"":"rail-item ")+(state.view===s[0]?"active":"")+'" data-view="'+s[0]+'" aria-label="'+e(s[1])+'">'+ico(s[2],compact?19:19)+'<span>'+e(s[1])+'</span></button>';}
 function shell(){
@@ -84,7 +92,7 @@ function overview(){
 }
 function users(){
  var arr=state.users.rows||[],total=state.users.total||0;
- return heading("GERENCIAMENTO","As pessoas <em>do entre.</em>","Pesquise contas Google, acompanhe cadastros e suspenda acessos abusivos.")+
+ return heading("GERENCIAMENTO","As pessoas <em>do entre.</em>","Pesquise usuários cadastrados, acompanhe cadastros e suspenda acessos abusivos.")+
  '<section class="data-panel"><div class="data-tools"><div><h3>Contas cadastradas</h3><small>'+e(total)+' registro(s)</small></div><label class="search-box">'+ico("search",17)+'<input id="user-search" placeholder="Nome ou e-mail…" aria-label="Pesquisar usuários" autocomplete="off" maxlength="120" value="'+e(state.search)+'"></label></div>'+
  (arr.length?arr.map(function(u){return '<div class="list-row"><div class="list-main">'+person(u.display_name||u.email,u.email,u.admin)+'</div><div class="row-meta">'+fmt(u.created_at)+'</div>'+badge(u.admin?"ADMIN":u.banned?"SUSPENSO":u.google?"GOOGLE":"ATIVO",u.banned?"warn":u.admin?"":"neutral")+'<button class="small-btn '+(u.banned?"":"danger")+'" data-action="edit-user" data-id="'+e(u.id)+'">'+(u.admin?"Detalhes":u.banned?"Reativar":"Suspender")+'</button></div>';}).join(""):empty("Nenhuma conta encontrada","Ajuste os termos de busca ou aguarde novos cadastros."))+
  '<div class="table-footer"><span>Página '+(state.userPage+1)+' · '+e(total)+' usuário(s)</span><div style="display:flex;gap:8px"><button class="small-btn" data-action="prev-users" '+(state.userPage<=0?"disabled":"")+'>'+ico("chevron-left",13)+' Anterior</button><button class="small-btn" data-action="next-users" '+((state.userPage+1)*perPage>=total?"disabled":"")+'>Próxima '+ico("chevron-right",13)+'</button></div></div></section>';
@@ -155,8 +163,8 @@ function privacyRequestsPanel(){
 }
 function security(){
  return heading("ACESSO E PRIVACIDADE","Segurança <em>sem atalhos.</em>","O acesso administrativo é verificado no servidor. Seu navegador nunca recebe a chave secreta do Supabase.")+
- '<section class="form-card"><h2 class="section-heading">Administrador principal</h2><p class="section-desc">Conta reconhecida pela identidade Google e pela lista de autorização do banco.</p><div class="security-card"><span class="admin-avatar">'+e((state.user.email||"A").slice(0,1).toUpperCase())+'</span><div style="flex:1"><strong>'+e(state.user.email)+'</strong><small>Google verificado · administrador autorizado</small></div>'+badge("ACESSO ATIVO")+'</div>'+
- '<div class="security-note"><b>Proteção em camadas.</b> Todas as operações de usuários, denúncias, suspensões e configurações são executadas por funções SQL com verificação administrativa. O controle não depende de esconder botões ou comparar e-mails no JavaScript.</div><div class="health-row"><strong>Autenticação</strong>'+badge("Google OAuth")+'</div><div class="health-row"><strong>Banco de dados</strong>'+badge("Supabase + RLS")+'</div><div class="health-row"><strong>Conteúdo de conversas</strong>'+badge("Não acessível aqui","neutral")+'</div><div class="health-row"><strong>Endereço do painel</strong><span style="overflow-wrap:anywhere;font-size:11px">/testesite/admin/</span></div></section>'+appealsPanel()+privacyRequestsPanel();
+ '<section class="form-card"><h2 class="section-heading">Administrador principal</h2><p class="section-desc">Conta reconhecida pela identidade E-mail e pela lista de autorização do banco.</p><div class="security-card"><span class="admin-avatar">'+e((state.user.email||"A").slice(0,1).toUpperCase())+'</span><div style="flex:1"><strong>'+e(state.user.email)+'</strong><small>E-mail confirmado · administrador autorizado</small></div>'+badge("ACESSO ATIVO")+'</div>'+
+ '<div class="security-note"><b>Proteção em camadas.</b> Todas as operações de usuários, denúncias, suspensões e configurações são executadas por funções SQL com verificação administrativa. O controle não depende de esconder botões ou comparar e-mails no JavaScript.</div><div class="health-row"><strong>Autenticação</strong>'+badge("Supabase Auth")+'</div><div class="health-row"><strong>Banco de dados</strong>'+badge("Supabase + RLS")+'</div><div class="health-row"><strong>Conteúdo de conversas</strong>'+badge("Não acessível aqui","neutral")+'</div><div class="health-row"><strong>Endereço do painel</strong><span style="overflow-wrap:anywhere;font-size:11px">/testesite/admin/</span></div></section>'+appealsPanel()+privacyRequestsPanel();
 }
 function spinner(){return '<div class="loading-panel"><div class="loading-indicator"></div>Atualizando dados…</div>';}
 function renderView(){
@@ -188,7 +196,7 @@ function closeModal(){state.modal=null;var el=document.getElementById("modal-roo
 function openUser(id){
  var u=(state.users.rows||[]).find(function(x){return x.id===id;});if(!u)return;
  state.modal={type:"user",data:u};
- var body='<h2>'+e(u.display_name||"Conta Google")+'</h2><p>'+e(u.email)+'</p><div class="health-row"><strong>Cadastro</strong><span>'+fmt(u.created_at)+'</span></div><div class="health-row"><strong>Último login</strong><span>'+fmt(u.last_sign_in_at)+'</span></div><div class="health-row"><strong>Autenticado com Google</strong>'+badge(u.google?"SIM":"NÃO",u.google?"":"warn")+'</div><div class="health-row"><strong>Situação</strong>'+badge(u.banned?"SUSPENSO":u.admin?"ADMIN":"ATIVO",u.banned?"warn":"")+'</div>';
+ var body='<h2>'+e(u.display_name||"Conta")+'</h2><p>'+e(u.email)+'</p><div class="health-row"><strong>Cadastro</strong><span>'+fmt(u.created_at)+'</span></div><div class="health-row"><strong>Último login</strong><span>'+fmt(u.last_sign_in_at)+'</span></div><div class="health-row"><strong>Forma de acesso</strong>'+badge(u.google?"SIM":"NÃO",u.google?"":"warn")+'</div><div class="health-row"><strong>Situação</strong>'+badge(u.banned?"SUSPENSO":u.admin?"ADMIN":"ATIVO",u.banned?"warn":"")+'</div>';
  if(!u.admin){body+='<form id="ban-form"><div class="field"><label for="ban-reason">Motivo da '+(u.banned?"reativação":"suspensão")+'</label><textarea class="form-textarea" id="ban-reason" name="reason" maxlength="300" placeholder="Informe um motivo para a equipe.">'+e(u.ban_reason||"")+'</textarea></div><p>'+(u.banned?"Reativar libera a conta para novas conversas.":"Suspender bloqueia novas conexões e o envio de mensagens. Conversas ativas serão encerradas.")+'</p><div class="modal-actions"><button type="button" class="btn-outline" data-action="close-modal">Cancelar</button><button type="submit" class="btn-main '+(u.banned?"":"danger")+'">'+(u.banned?"Reativar conta":"Confirmar suspensão")+'</button></div></form>';}
  else body+='<div class="modal-actions"><button class="btn-outline" data-action="close-modal">Fechar</button></div>';
  modal(body);
@@ -199,23 +207,12 @@ function openReport(id){
  var body='<h2>Denúncia #'+e(r.id)+'</h2><p>Enviada por '+e(r.reporter_name)+' contra '+e(r.reported_name)+'.</p><div class="health-row"><strong>Motivo</strong><span>'+e(reasonNames[r.reason]||r.reason)+'</span></div><div class="health-row"><strong>Data</strong><span>'+fmt(r.created_at)+'</span></div><div class="field"><label>Descrição informada</label><div style="white-space:pre-wrap;border:1px solid var(--line);border-radius:13px;padding:13px;line-height:1.6;overflow-wrap:anywhere;font-size:12px">'+e(r.details||"Sem descrição adicional.")+'</div></div><form id="review-form"><div class="field"><label for="review-status">Resultado da análise</label><select class="form-select" name="status" id="review-status"><option value="reviewed" '+(r.status==="reviewed"?"selected":"")+'>Analisada</option><option value="dismissed" '+(r.status==="dismissed"?"selected":"")+'>Descartada</option><option value="open" '+(r.status==="open"?"selected":"")+'>Manter pendente</option></select></div><div class="field"><label for="review-note">Observação administrativa</label><textarea id="review-note" name="note" class="form-textarea" maxlength="800" placeholder="Resumo da decisão…">'+e(r.admin_note||"")+'</textarea></div><div class="modal-actions"><button type="button" class="btn-outline" data-action="close-modal">Cancelar</button><button type="submit" class="btn-main">Salvar análise</button></div></form>';
  modal(body);
 }
-async function googleLogin(){
- try{
-  sessionStorage.setItem("entre.admin.oauth.started",String(Date.now()));
-  localStorage.removeItem("entre.admin.return");
-  var redirectTo=window.location.hostname==="appswebb.github.io" ? "https://appswebb.github.io/testesite/" : window.location.origin+"/";
-  var r=await db.auth.signInWithOAuth({provider:"google",options:{redirectTo,scopes:"openid email profile",queryParams:{prompt:"select_account"}}});
-  if(r.error)throw r.error;
-  if(!r.data||!r.data.url)throw Error("O provedor de login não retornou uma URL.");
- }catch(err){sessionStorage.removeItem("entre.admin.oauth.started");toast(errorText(err),true);}
-}
 document.addEventListener("click",async function(ev){
  var n=ev.target.closest("[data-view],[data-action],[data-report-status]");if(!n)return;
  if(n.dataset.view){await navigate(n.dataset.view);return;}
  if(n.dataset.reportStatus){state.reportStatus=n.dataset.reportStatus;await load("reports");return;}
  var a=n.dataset.action;
  if(a==="close-modal"){closeModal();return;}
- if(a==="google"){await googleLogin();return;}
  if(a==="refresh"){await load(state.view);toast("Dados atualizados.");return;}
  if(a==="evidenceOpen"){
   try{var signed=await db.storage.from("entre-support-evidence").createSignedUrl(n.dataset.path,300);if(signed.error)throw signed.error;if(signed.data?.signedUrl)window.open(signed.data.signedUrl,"_blank","noopener,noreferrer");else toast("Prova indisponível.",true);}catch(err){toast(errorText(err),true);}return;
@@ -245,7 +242,23 @@ document.addEventListener("change",function(ev){if(ev.target?.id==="bulletin-kin
  }
 });
 document.addEventListener("submit",async function(ev){
- var form=ev.target;if(!(form instanceof HTMLFormElement))return;ev.preventDefault();if(form.id==="release-form"){await saveRelease(Boolean(state.settings?.maintenance_enabled),true);return;}if(state.busy)return;
+ var form=ev.target;if(!(form instanceof HTMLFormElement))return;ev.preventDefault();
+ if(form.id==="admin-login-form"){
+  if(state.busy)return;
+  state.busy=true;
+  var submit=form.querySelector('[type="submit"]');if(submit)submit.disabled=true;
+  try{
+   var email=String(form.elements.email.value||"").trim().toLowerCase();
+   var password=String(form.elements.password.value||"");
+   var logged=await db.auth.signInWithPassword({email:email,password:password});
+   if(logged.error)throw logged.error;
+   await boot();
+   if(!state.verified)toast("Este e-mail não tem acesso ao painel. Verifique a confirmação e a autorização.",true);
+  }catch(err){toast(errorText(err),true);}
+  finally{state.busy=false;if(submit&&submit.isConnected)submit.disabled=false;}
+  return;
+ }
+ if(form.id==="release-form"){await saveRelease(Boolean(state.settings?.maintenance_enabled),true);return;}if(state.busy)return;
  state.busy=true;var btn=form.querySelector('[type="submit"]');if(btn)btn.disabled=true;
  try{
   if(form.id==="premium-config-form"){
