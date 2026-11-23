@@ -1,0 +1,59 @@
+/* entre. · Motion System / 2026 — inspired by motion studies, built uniquely for our product */
+:root { --ease-out-expo:cubic-bezier(.16,1,.3,1); --ease-soft:cubic-bezier(.2,.8,.2,1) }
+html {scroll-behavior:smooth;scroll-padding-top:90px}
+.ui-btn,.google-login,.nav-item,.mobile-nav button,.chip,.convo-card,.step-card,.setting-row button {
+  touch-action:manipulation; transform:translateZ(0);
+}
+.ui-btn,.google-login,.convo-card,.chip,.nav-item,.mobile-nav button { position:relative; isolation:isolate }
+.ui-btn .press-ripple,.google-login .press-ripple,.chip .press-ripple,.nav-item .press-ripple,.mobile-nav button .press-ripple {
+  position:absolute; left:0;top:0;width:20px;height:20px;border-radius:50%;
+  background:currentColor;opacity:.18;pointer-events:none;z-index:0;
+  transform:translate(-50%,-50%) scale(0);
+  animation:entre-press .58s var(--ease-out-expo) forwards;
+}
+@keyframes entre-press { to {opacity:0;transform:translate(-50%,-50%) scale(var(--press-scale,17))} }
+.ui-btn > :not(.press-ripple),.google-login > :not(.press-ripple) {position:relative;z-index:1}
+[data-motion-reveal] {transition:opacity .8s var(--ease-out-expo),transform .8s var(--ease-out-expo)}
+[data-motion-reveal]:not(.is-revealed) { opacity:0;transform:translateY(28px) }
+[data-motion-reveal].is-revealed {opacity:1;transform:translateY(0)}
+.hero-kicker,.toolbar-pill {animation:entre-soft-in 1.2s var(--ease-out-expo) both}
+@keyframes entre-soft-in {from {opacity:0;filter:blur(5px);transform:translateY(10px)}to {opacity:1;filter:blur(0);transform:translateY(0)}}
+.landing-hero .hero-art {filter:drop-shadow(0 30px 38px rgba(46,28,23,.09));}
+.landing-hero .portrait-a {animation:entre-float-a 6s ease-in-out infinite}
+.landing-hero .portrait-b {animation:entre-float-b 6.8s ease-in-out infinite}
+@keyframes entre-float-a{0%,100%{translate:0 0}50%{translate:0 -13px}}
+@keyframes entre-float-b{0%,100%{translate:0 0}50%{translate:0 13px}}
+.hero-time {font-variant-numeric:tabular-nums;animation:entre-soft-glow 5s ease-in-out infinite}
+@keyframes entre-soft-glow {50% {box-shadow:0 16px 60px rgba(241,126,96,.20)}}
+.step-card,.insight-card,.profile-preview,.settings-card,.dash-hero {transition:box-shadow .45s var(--ease-out-expo),transform .45s var(--ease-out-expo)}
+@media(hover:hover) and (pointer:fine) {
+.step-card:hover,.insight-card:hover,.profile-preview:hover {transform:translateY(-5px);box-shadow:0 26px 55px rgba(40,27,15,.10)}
+}
+.chip.active {box-shadow:0 5px 0 rgba(24,26,22,.08)}
+.chip:focus-visible,.ui-btn:focus-visible,.google-login:focus-visible,.nav-item:focus-visible {outline:3px solid #ED9A81;outline-offset:4px}
+.stage-art.searching .ring {will-change:transform,opacity}
+.stage-art.searching .ring:first-child {border-color:#E78F77;box-shadow:0 0 0 1px rgba(241,126,96,.12)}
+.stage-art.searching .center-icon {box-shadow:0 12px 50px rgba(241,126,96,.18)}
+.pair-card.is-continued .pair-banner {background:linear-gradient(110deg,#E9F2DD,#F9EFE0);color:#416648}
+.pair-card.is-continued .pair-messages {background:radial-gradient(ellipse at 50% 0%,rgba(219,239,202,.22),transparent 62%)}
+.bubble-row {transform-origin:bottom left}
+.bubble-row.mine {transform-origin:bottom right}
+.bubble-row:last-child .bubble {animation:entre-bubble .4s var(--ease-out-expo)}
+@keyframes entre-bubble {from{opacity:.1;scale:.94}to{opacity:1;scale:1}}
+.entre-celebration {position:fixed;inset:0;z-index:950;pointer-events:none;overflow:hidden}
+.entre-confetti {position:absolute;left:50%;top:50%;width:var(--sz);height:var(--sz);background:var(--c);border-radius:var(--r);
+ animation:entre-confetti 950ms var(--ease-soft) both;transform:translate(-50%,-50%) rotate(0);}
+@keyframes entre-confetti {0%{opacity:0;translate:0 0;scale:.4}10%{opacity:1}100%{opacity:0;translate:var(--dx) var(--dy);rotate:var(--rot);scale:.7}}
+@media(max-width:760px){
+ .landing-hero .hero-art {filter:none}
+ .step-card:hover,.insight-card:hover {transform:none}
+ .pair-card.is-continued .pair-banner {font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){
+ html{scroll-behavior:auto}
+ [data-motion-reveal],.hero-kicker,.toolbar-pill,.landing-hero .portrait-a,.landing-hero .portrait-b,.hero-time,.bubble-row:last-child .bubble {
+  animation:none!important; transition:none!important; transform:none!important;translate:none!important;filter:none!important
+ }
+ [data-motion-reveal]:not(.is-revealed){opacity:1!important}
+ .press-ripple,.entre-celebration {display:none!important}
+}
