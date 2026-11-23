@@ -100,6 +100,23 @@ function installAvatarRealtime(){
  })
  .subscribe();
 }
+
+async function refreshActiveAvatars(){
+ if(!state.session||maintenanceIsActive()||document.hidden)return;
+ const all=[state.profile,state.peer,...Object.values(state.pairsProfiles||{})];
+ const seen=new Set();
+ await Promise.all(all.filter(p=>{
+  if(!avatarFresh(p)||seen.has(p.avatar_path))return false;
+  seen.add(p.avatar_path);
+  return true;
+ }).map(p=>signAvatar(p)));
+}
+window.addEventListener('visibilitychange',()=>{
+ if(!document.hidden)void refreshActiveAvatars();
+});
+// Renew private signed links before expiry, without continuously polling while hidden.
+setInterval(()=>{void refreshActiveAvatars()},90000);
+
 function commitLocalAvatar(path){
  if(!path||!state.pendingCompressedAvatarUrl)return;
  const existing=state.avatarUrls[path];
@@ -119,7 +136,7 @@ async function signAvatar(p,force=false){
  if(!avatarFresh(p)||!p.avatar_path||maintenanceIsActive())return false;
  const path=p.avatar_path;
  const existing=state.avatarUrls[path];
- if(!force&&existing&&!existing.local&&existing.expires>Date.now())return true;
+ if(!force&&existing&&!existing.local&&existing.expires>Date.now()+100000)return true;
  try{
   // Signed links are short lived. The bucket itself remains private.
   const {data,error}=await db.storage.from(AVATAR_BUCKET).createSignedUrl(path,300);
