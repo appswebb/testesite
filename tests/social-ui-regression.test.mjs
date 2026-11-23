@@ -2,20 +2,21 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 const read=name=>readFileSync(new URL('../docs/'+name,import.meta.url),'utf8');
-test('Avisos are separate from user notifications in a header bell',()=>{
+test('Official bulletins live inside notifications behind the header bell',()=>{
  const app=read('app.js');
- assert.match(app,/\['avisos','Avisos','megaphone'\]/);
+ assert.doesNotMatch(app,/\['avisos','Avisos','megaphone'\]/);
+ assert.match(read('social-notifications.js'),/notifications-official/);
  assert.match(app,/class="toolbar-bell/);
  assert.match(app,/data-view="notifications"/);
  assert.match(app,/function avisosView\(\)/);
  assert.match(app,/announcement_version/);
  assert.doesNotMatch(app,/\['notifications','Avisos'/);
 });
-test('Main menu has four sections and excludes Suas conexões',()=>{
+test('Main menu excludes the old Avisos tab and Suas conexões',()=>{
  const app=read('app.js');
  assert.match(app,/tabs.filter\(t=>t\[0\]!=='home'\)/);
  assert.match(app,/\['online','Online','users'\]/);
- assert.match(app,/\['avisos','Avisos','megaphone'\]/);
+ assert.doesNotMatch(app,/\['avisos','Avisos','megaphone'\]/);
  assert.doesNotMatch(app,/\['connections','Suas conexões'/);
  assert.match(app,/class="toolbar-profile/);
 });
