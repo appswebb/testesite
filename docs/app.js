@@ -462,12 +462,12 @@ function connectView(){
  '<div class="connect-panel live-select-panel"><div class="live-choice-title"><h3>Como quer conversar?</h3><small>As buscas de chat e vídeo usam filas separadas.</small></div>'+
  '<div class="live-modes"><button type="button" data-action="liveMode" data-value="chat" class="live-mode '+(mode==='chat'?'selected':'')+'" '+(waiting?'disabled':'')+'>'+ico('chat',24)+'<strong>Chat ao vivo</strong><small>Conversem por texto, sem câmera.</small></button>'+
  '<button type="button" data-action="liveMode" data-value="video" class="live-mode '+(mode==='video'?'selected':'')+'" '+(waiting?'disabled':'')+'>'+ico('camera',25)+'<strong>Chamada de vídeo</strong><small>Encontro privado, sem gravação.</small></button></div>'+
+ '<div class="live-quick-action"><span>'+ico('bolt',16)+' '+(waiting?'Busca em andamento':'Tudo pronto para começar')+'</span><button class="ui-btn '+(waiting?'btn-outline':'btn-dark')+'" type="button" data-action="'+(waiting?'cancelsearch':'startsearch')+'">'+(waiting?'Cancelar busca':'Buscar agora')+'</button></div>'+ 
  '<div class="filter-bar"><h3>Quem você quer encontrar? '+(isPremium?'<span class="premium-filter-chip">✧ PREMIUM</span>':'')+'</h3>'+
  '<div class="filters">'+Object.entries({any:'Qualquer pessoa',woman:'Mulheres',man:'Homens',nonbinary:'Não binárias'}).map(([k,v])=>
  '<button type="button" '+(waiting?'disabled':'')+' data-action="'+(!isPremium&&k!=='any'?'upgradeFilter':'filter')+'" data-value="'+k+'" class="chip '+(state.preference===k?'active':'')+(!isPremium&&k!=='any'?' chip-locked':'')+'">'+(k!=='any'&&!isPremium?ico('lock',12):'')+v+'</button>').join('')+'</div>'+
  (!isPremium?'<p class="premium-filter-hint">Selecionar um gênero específico é exclusivo do Premium. <button type="button" data-action="nav" data-view="premium">Conhecer Premium '+ico('arrow',13)+'</button></p>':
  '<p class="premium-filter-hint">A seleção é exata: Homens encontra apenas homens, Mulheres apenas mulheres e Não binárias apenas pessoas não binárias.</p>')+'</div>'+
- '<div class="live-quick-action"><span>'+ico('bolt',16)+' '+(waiting?'Busca em andamento':'Tudo pronto para começar')+'</span><button class="ui-btn '+(waiting?'btn-outline':'btn-dark')+'" type="button" data-action="'+(waiting?'cancelsearch':'startsearch')+'">'+(waiting?'Cancelar busca':'Buscar agora')+'</button></div>'+ 
  (window.entreGeo?.panel?.(waiting)||'')+
   '<div class="stage"><div class="stage-art '+(waiting?'searching':'')+'"><div class="ring"></div><div class="ring"></div><div class="center-icon">'+(waiting?'↝':mode==='video'?ico('camera',36):'e')+'</div></div>'+
  '<span class="searching-status"><span class="live-dot"></span> '+(waiting?'PROCURANDO ALGUÉM COMPATÍVEL':'PRONTO PARA CONECTAR')+'</span>'+
