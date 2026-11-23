@@ -4,8 +4,8 @@
 const api=window.entreSocial,s=api.data;
 function personCard(p){
  const follow=p.follow_status,allowed=p.allow_requests||follow==='accepted'||p.follower_status==='accepted';
- return '<article class="online-person"><div class="online-person-head"><span class="person-online-indicator"></span> ONLINE AGORA</div>'+
- '<div class="online-person-content">'+avatar(p,'large')+'<div><h3>'+esc(p.display_name)+', '+Number(p.age)+'</h3><small>'+esc(genders[p.gender]||'Pessoa')+'</small></div></div>'+
+ return '<article class="online-person '+(window.entreExtras?.isPremium?.(p.id)?'premium-surface':'')+'"><div class="online-person-head"><span class="person-online-indicator"></span> ONLINE AGORA</div>'+
+ '<div class="online-person-content">'+avatar(p,'large')+'<div><h3>'+esc(p.display_name)+(window.entreExtras?.badge?.(p)||'')+', '+Number(p.age)+'</h3><small>'+esc(genders[p.gender]||'Pessoa')+'</small></div></div>'+
  '<p class="online-person-bio">'+esc(p.bio||'Que tal começar com um oi?')+'</p>'+
  '<div class="online-person-actions"><button type="button" class="ui-btn btn-outline btn-sm" data-action="socialFollow" data-id="'+esc(p.id)+'"'+(follow==='pending'||follow==='accepted'?' disabled':'')+'>'+
  (follow==='accepted'?'✓ Seguindo':follow==='pending'?'Pedido enviado':'+ Seguir')+'</button>'+
