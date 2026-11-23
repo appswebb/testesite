@@ -59,7 +59,7 @@ function gate(locked){
  app.innerHTML='<div class="gate"><div class="gate-copy"><div><a class="brand" style="padding:0" href="../?site=1"><span class="brand-mark">e</span><span><span class="brand-text">entre<i>.</i></span><br><span class="brand-sub">COMMAND CENTER</span></span></a></div>'
  +'<div class="gate-inner"><span class="gate-kicker">ACESSO RESTRITO · SUPABASE AUTH</span><h1>Seu site,<br><em>sob controle.</em></h1><p>'+e(message)+'</p>'
  +'<form id="admin-login-form" class="admin-login-form"><label for="admin-email">E-mail</label><input id="admin-email" type="email" name="email" autocomplete="username" inputmode="email" maxlength="254" required placeholder="E-mail da conta cadastrada">'
- +'<label for="admin-password">Senha</label><input id="admin-password" type="password" name="password" autocomplete="current-password" required placeholder="Sua senha">'
+ +'<label for="admin-password">Senha</label><div class="admin-password-wrap"><input id="admin-password" type="password" name="password" autocomplete="current-password" required placeholder="Sua senha"><button type="button" class="admin-password-toggle" data-admin-password-toggle aria-controls="admin-password" aria-label="Mostrar senha" aria-pressed="false">Mostrar</button></div>'
  +'<button class="btn-main coral" type="submit">'+ico("shield-check",19)+' Entrar no painel '+ico("arrow-right",19)+'</button></form>'
  +'<div class="admin-gate-actions"><a class="btn-outline" href="../?site=1">Ir para o site</a><a href="../?site=1" class="admin-gate-help">Precisa cadastrar ou recuperar a senha? Acesse o site.</a></div>'
  +(locked&&state.user?'<p style="font-size:11px;margin-top:18px">Sessão atual: '+e(state.user.email)+'</p>':'')
@@ -207,6 +207,18 @@ function openReport(id){
  var body='<h2>Denúncia #'+e(r.id)+'</h2><p>Enviada por '+e(r.reporter_name)+' contra '+e(r.reported_name)+'.</p><div class="health-row"><strong>Motivo</strong><span>'+e(reasonNames[r.reason]||r.reason)+'</span></div><div class="health-row"><strong>Data</strong><span>'+fmt(r.created_at)+'</span></div><div class="field"><label>Descrição informada</label><div style="white-space:pre-wrap;border:1px solid var(--line);border-radius:13px;padding:13px;line-height:1.6;overflow-wrap:anywhere;font-size:12px">'+e(r.details||"Sem descrição adicional.")+'</div></div><form id="review-form"><div class="field"><label for="review-status">Resultado da análise</label><select class="form-select" name="status" id="review-status"><option value="reviewed" '+(r.status==="reviewed"?"selected":"")+'>Analisada</option><option value="dismissed" '+(r.status==="dismissed"?"selected":"")+'>Descartada</option><option value="open" '+(r.status==="open"?"selected":"")+'>Manter pendente</option></select></div><div class="field"><label for="review-note">Observação administrativa</label><textarea id="review-note" name="note" class="form-textarea" maxlength="800" placeholder="Resumo da decisão…">'+e(r.admin_note||"")+'</textarea></div><div class="modal-actions"><button type="button" class="btn-outline" data-action="close-modal">Cancelar</button><button type="submit" class="btn-main">Salvar análise</button></div></form>';
  modal(body);
 }
+document.addEventListener("click",function(ev){
+ var toggle=ev.target.closest("[data-admin-password-toggle]");
+ if(!toggle)return;
+ var field=document.getElementById("admin-password");
+ if(!field||!toggle.closest("form")?.contains(field))return;
+ var reveal=field.type==="password";
+ if(!reveal&&field.type!=="text")return;
+ field.type=reveal?"text":"password";
+ toggle.textContent=reveal?"Ocultar":"Mostrar";
+ toggle.setAttribute("aria-label",reveal?"Ocultar senha":"Mostrar senha");
+ toggle.setAttribute("aria-pressed",String(reveal));
+});
 document.addEventListener("click",async function(ev){
  var n=ev.target.closest("[data-view],[data-action],[data-report-status]");if(!n)return;
  if(n.dataset.view){await navigate(n.dataset.view);return;}
