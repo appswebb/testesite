@@ -27,7 +27,7 @@ function onlineView(){
  '<button class="social-switch '+(d?'is-on':'')+'" type="button" role="switch" aria-checked="'+d+'" data-action="onlineDirect">'+(d?'Liberadas':'Bloqueadas')+'</button></div>'+
  inbox()+'<div class="online-section-title"><h3>Explorar perfis <span class="live-dot"></span></h3><small>Ativos nos últimos 90 segundos</small></div>'+
  (s.online.length?'<div class="online-card-grid">'+s.online.map(personCard).join('')+'</div>':
- '<div class="social-empty">'+ico('user',30)+'<h3>'+(s.loaded?'Nenhuma pessoa visível agora.':'Carregando perfis…')+'</h3><p>A lista respeita a escolha de privacidade de cada pessoa.</p></div>')+
+ '<div class="social-empty">'+ico('users',30)+'<h3>'+(s.loaded?'Ainda não há perfis visíveis.':'Carregando pessoas…')+'</h3><p>Somente quem autorizou aparecer e esteve ativo recentemente fica nesta lista. Você pode ativar sua visibilidade acima ou conhecer alguém no chat ao vivo.</p><button type="button" class="ui-btn btn-dark btn-sm" data-action="nav" data-view="connect">Encontrar alguém ao vivo</button></div>')+
  (s.hasMore?'<div class="social-more"><button class="ui-btn btn-outline" data-action="onlineMore">Carregar mais 12 pessoas</button></div>':'')+
  (s.offset>0?'<div class="social-more"><button class="ui-btn btn-quiet" data-action="onlineRestart">Voltar ao início</button></div>':'')+
  '<div id="onlineScrollAnchor" aria-hidden="true"></div>';
