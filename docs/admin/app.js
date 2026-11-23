@@ -203,7 +203,8 @@ async function googleLogin(){
  try{
   sessionStorage.setItem("entre.admin.oauth.started",String(Date.now()));
   localStorage.removeItem("entre.admin.return");
-  var r=await db.auth.signInWithOAuth({provider:"google",options:{redirectTo:"https://appswebb.github.io/testesite/",scopes:"openid email profile",queryParams:{prompt:"select_account"}}});
+  var redirectTo=window.location.hostname==="appswebb.github.io" ? "https://appswebb.github.io/testesite/" : window.location.origin+"/";
+  var r=await db.auth.signInWithOAuth({provider:"google",options:{redirectTo,scopes:"openid email profile",queryParams:{prompt:"select_account"}}});
   if(r.error)throw r.error;
   if(!r.data||!r.data.url)throw Error("O provedor de login não retornou uma URL.");
  }catch(err){sessionStorage.removeItem("entre.admin.oauth.started");toast(errorText(err),true);}
