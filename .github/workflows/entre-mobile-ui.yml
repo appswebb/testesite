@@ -13,6 +13,8 @@ on:
       - 'docs/sw.js'
       - 'docs/icons/**'
       - 'docs/app.js'
+      - 'docs/connect-usernames.js'
+      - 'tests/usernames-regression.test.mjs'
       - 'docs/entre-location.js'
       - 'docs/entre-location.css'
       - 'docs/entre-features.js'
@@ -53,6 +55,7 @@ jobs:
       - name: Validate scripts and UI
         run: |
           node --check docs/app.js
+          node --check docs/connect-usernames.js
           node --check docs/entre-location.js
           node --check docs/entre-features.js
           node --check docs/entre-video.js
@@ -61,6 +64,7 @@ jobs:
           node --check tests/admin-mobile-audit.cjs
           node --check tests/avatar-mobile-audit.cjs
           node --test tests/social-ui-regression.test.mjs
+          node --test tests/usernames-regression.test.mjs
           node --test tests/geo-feed-support.test.mjs
           node --test tests/encounter-layout.test.mjs
           node tests/encounter-mobile-audit.cjs
