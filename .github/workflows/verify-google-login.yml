@@ -1,0 +1,50 @@
+name: Validate entre. Google login
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app.js'
+      - 'docs/app.js'
+      - 'styles.css'
+      - 'docs/styles.css'
+      - '.github/workflows/verify-google-login.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+          node --check docs/app.js
+      - name: Assert Google-only frontend authentication
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          for (const name of ['app.js','docs/app.js']) {
+            const code=fs.readFileSync(name,'utf8');
+            if (!code.includes("signInWithOAuth({provider:'google'")) throw Error(name+': Google OAuth missing');
+            for (const invalid of ['signInWithPassword','db.auth.signUp(', 'name="password"','name="email"']) {
+              if(code.includes(invalid)) throw Error(name+': deprecated credential flow detected: '+invalid);
+            }
+          }
+          console.log('Google OAuth is the only sign-in route in the frontend');
+          NODE
+      - name: Check external Google OAuth provider
+        shell: bash
+        run: |
+          status=$(curl -sS --max-time 12 -o /tmp/oauth-response -D /tmp/oauth-headers -w '%{http_code}' -G \
+            'https://trrakyybnvxpdhxwgjrz.supabase.co/auth/v1/authorize' \
+            --data-urlencode 'provider=google' \
+            --data-urlencode 'redirect_to=https://appswebb.github.io/testesite/')
+          if grep -qiE '^location:[[:space:]]*https://accounts.google.com/' /tmp/oauth-headers; then
+            echo 'Supabase Google OAuth: provider reachable'
+          else
+            echo "::warning::Google OAuth did not redirect to Google (HTTP $status). Check Google Provider and redirect URLs in Supabase."
+          fi
