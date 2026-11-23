@@ -220,3 +220,16 @@ body:has(.auth-shell) .auth-card input,body:has(.auth-shell) .auth-card select{b
  body:not(.motion-force) ::view-transition-old(root),
  body:not(.motion-force) ::view-transition-new(root){animation-duration:.01ms!important}
 }
+
+/* Explicit user opt-in overrides Android's reduced-motion CSS selectively. */
+@media(prefers-reduced-motion:reduce){
+ body.motion-force:not(.motion-off) .landing-hero .portrait-a{animation:entre-float-a 6s ease-in-out infinite!important}
+ body.motion-force:not(.motion-off) .landing-hero .portrait-b{animation:entre-float-b 6.8s ease-in-out infinite!important}
+ body.motion-force:not(.motion-off) .hero-kicker{animation:entre-soft-in .8s ease both!important}
+ body.motion-force:not(.motion-off) .bubble-row:last-child .bubble{animation:entre-bubble .4s ease both!important}
+ body.motion-force:not(.motion-off) .press-ripple{display:block!important;animation:entre-press .58s ease forwards!important}
+ body.motion-force:not(.motion-off) [data-motion-reveal]{transition:opacity .45s ease,transform .45s ease!important}
+ body.motion-force:not(.motion-off) [data-motion-reveal]:not(.is-revealed){opacity:0!important;transform:translateY(18px)!important}
+ body.motion-force:not(.motion-off) [data-motion-reveal].is-revealed{opacity:1!important;transform:none!important}
+ body.motion-force:not(.motion-off) .entre-celebration{display:block!important}
+}
