@@ -5,7 +5,7 @@
 'use strict';
 const KEY='entre.appearance.v1';
 const MODES=['light','dark','custom'];
-const DEFAULT={mode:'light',color:'#1A9D91'};
+const DEFAULT={mode:'light',color:'#2977D5'};
 const PRESETS=[
  ['#1A9D91','Verde-petróleo'],['#2977D5','Azul'],['#F07C55','Coral'],
  ['#AE63CF','Lavanda'],['#DAA520','Dourado'],['#EA5386','Rosa']
@@ -29,7 +29,7 @@ function readable(h){
 function apply(){
  const root=document.documentElement;
  root.dataset.theme=state.mode;
- const accent=state.mode==='custom'?state.color:state.mode==='dark'?'#53D7C9':'#1A9D91';
+ const accent=state.mode==='custom'?state.color:state.mode==='dark'?'#F5F6F8':'#111111';
  const accentOn=readable(accent);
  root.style.setProperty('--ui-accent',accent);
  root.style.setProperty('--ui-accent-on',accentOn);
