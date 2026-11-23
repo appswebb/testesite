@@ -15,8 +15,8 @@ body.motion-off *,body.motion-off *::before,body.motion-off *::after{animation:n
 .google-login>svg:last-child{margin-left:auto;color:#757670}
 .google-login:hover:not(:disabled){transform:translateY(-3px);border-color:#a5a59e;box-shadow:0 15px 36px #171a191c}.google-login:active:not(:disabled){transform:translateY(1px) scale(.98)}
 .google-auth-caption{text-align:center;font-size:12px;line-height:1.65;color:#8b8b85;margin:0;max-width:360px;align-self:center}
-.google-verified{display:flex;align-items:center;gap:10px;background:white;border:1px solid #e1ddd5;border-radius:16px;padding:14px;margin:22px 0;color:#5d665a;font-size:13px;font-weight:700}
-.google-verified .google-mark{width:25px;height:25px}
+.auth-verified{display:flex;align-items:center;gap:10px;background:white;border:1px solid #e1ddd5;border-radius:16px;padding:14px;margin:22px 0;color:#5d665a;font-size:13px;font-weight:700}
+.auth-verified .google-mark{width:25px;height:25px}
 @media(prefers-reduced-motion:reduce){.google-login{transition:none}}
 
 /* Supabase email authentication — responsive and accessible. */
