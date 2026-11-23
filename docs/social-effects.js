@@ -18,12 +18,7 @@ api.showEndAnimation=function(){
 
 api.chatToolbar=function(pair){
  if(pair.status!=='connected')return '<div class="chat-origin-bar"><div><strong>'+ico('clock',14)+' Chat ao vivo · temporário</strong><small>Sem salvar, mover ou arquivar. Apenas um match dos dois libera uma conversa permanente.</small></div></div>';
- const p=api.pref(pair),folder=p.folder||pair.origin||'live',archived=!!p.archived_at;
- return '<div class="chat-origin-bar"><div><strong>'+ico('spark',14)+' Começou em '+(pair.origin==='online'?'Pessoas online':'Chat ao vivo')+'</strong><small>Textos expiram após 10 dias sem atividade; o contato fica salvo.</small></div>'+
- '<div class="chat-origin-actions"><select aria-label="Mover conversa" data-social-folder="'+esc(pair.id)+'">'+
- '<option value="live"'+(folder==='live'?' selected':'')+'>Ao vivo</option><option value="online"'+(folder==='online'?' selected':'')+'>Online</option><option value="other"'+(folder==='other'?' selected':'')+'>Outras</option></select>'+
- '<button data-action="'+(p.pinned?'conversationUnpin':'conversationPin')+'" data-id="'+esc(pair.id)+'">'+(p.pinned?'★':'☆')+'</button>'+
- '<button data-action="'+(archived?'conversationRestore':'conversationArchive')+'" data-id="'+esc(pair.id)+'">'+(archived?'Restaurar':'Arquivar')+'</button></div></div>';
+ return '<div class="chat-origin-bar"><div><strong>Conversa permanente</strong><small>Começou em '+(pair.origin==='online'?'Pessoas online':'Chat ao vivo')+' · só vocês podem ler.</small></div><div class="chat-origin-actions">'+api.conversationMenu(pair)+'</div></div>';
 };
 
 api.historyButton=function(){return api.data.hasEarlier?'<button type="button" class="older-messages" data-action="messagesOlder">Carregar 30 mensagens anteriores</button>':'';};
