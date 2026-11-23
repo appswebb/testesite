@@ -1,0 +1,28 @@
+# Cadastro e login por e-mail — entre.
+
+O site usa Supabase Auth (SDK 2.117.1) para Google e e-mail/senha, sem processar ou armazenar senhas no backend do site. Os formulários estão em `docs/email-auth.js`.
+
+## Configuração obrigatória antes de abrir cadastros ao público
+
+1. No Supabase → Authentication → Providers → Email, habilitar cadastro por e-mail e **Confirm email**. Sem confirmação, o servidor pode aceitar cadastro usando e-mails não verificados; validação só no JavaScript não substitui esta configuração.
+2. Em Authentication → URL Configuration, manter um Site URL definido (sugestão: `https://entre-ruby.vercel.app/`) e adicionar à allow list, individualmente:
+   - `https://entre-ruby.vercel.app/`
+   - `https://entre-ruby.vercel.app/?auth=recovery`
+   - `https://entre-orbytstudios.vercel.app/`
+   - `https://entre-orbytstudios.vercel.app/?auth=recovery`
+   - `https://appswebb.github.io/testesite/`
+   - `https://appswebb.github.io/testesite/?auth=recovery`
+3. Em Authentication → SMTP Settings, configurar e validar um provedor de e-mail confiável para mensagens de confirmação e redefinição. O serviço de e-mails padrão do Supabase não é adequado para escala de produção (limites e destinatários permitidos).
+4. Em Authentication → Security and Protection, usar política mínima de senha de 12 caracteres, se disponível, proteção contra senhas vazadas, limitação de requisições e CAPTCHA (por exemplo Turnstile). Um CAPTCHA exige configurar a integração no dashboard e passar o token do widget nas chamadas de Auth; não ativar a exigência sem conectar um widget, pois isso bloquearia login/cadastro.
+5. Exigir HTTPS (GitHub Pages/Vercel já o oferecem). Não disponibilizar chaves `service_role` ou segredos no frontend; só chaves publicáveis. Manter RLS em tabelas expostas e validar privilégios administrativos no banco.
+
+## Fluxos
+
+- Cadastro: `auth.signUp({email,password,options:{emailRedirectTo}})`, mostra confirmação sem revelar existência da conta se uma sessão não for criada.
+- Login: `auth.signInWithPassword`, seguido de `auth.getUser` para validar a sessão atual e verificar status de suspensão.
+- Recuperação: `auth.resetPasswordForEmail`, `?auth=recovery`, sessão autenticada recebida pelo cliente, `auth.updateUser({password})`, encerramento da sessão local e novo login.
+- Google: permanece opcional; a administração exige permissão em `entre_admin_allowlist` e uma identidade Google vinculada, verificadas por `entre_admin_check()` no servidor.
+
+A aplicação aplica um mínimo de senha e confirmação de termos na interface, mas restrições antifraude e confirmação do e-mail são controladas pelo Supabase, não pelo navegador. Para testes, não enviar senhas reais, tokens de sessão ou segredos para terceiros.
+
+Referências: https://supabase.com/docs/guides/auth/passwords e https://supabase.com/docs/guides/security/production-checklist
