@@ -174,3 +174,6 @@
 .admin-password-toggle{position:absolute;right:9px;top:50%;transform:translateY(-50%);border:1px solid #dce5d9;border-radius:10px;background:#fff;color:#365942;padding:8px 10px;min-height:38px;min-width:76px;font:700 12px system-ui,sans-serif;cursor:pointer}
 .admin-password-toggle:focus-visible{outline:3px solid #497c59;outline-offset:2px}
 .admin-password-toggle:hover{background:#f1f8ee}
+
+/* Override generic administrator form button spacing for the inline eye control. */
+.admin-login-form .admin-password-toggle{margin:0;min-height:38px;display:flex;align-items:center;justify-content:center;gap:0;box-shadow:none}
