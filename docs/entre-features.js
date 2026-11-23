@@ -29,6 +29,7 @@ async function loadPosts(more=false){
   data.posts=more?data.posts.concat(arr):arr;
   data.postMore=arr.length===15;
   data.postBefore=data.posts[data.posts.length-1]?.id||null;
+  await Promise.allSettled(data.posts.filter(p=>p.author_avatar).map(p=>signAvatar({id:p.author_id,display_name:p.author_name,avatar_path:p.author_avatar,avatar_uploaded_at:p.author_avatar_uploaded_at})));
   const ids=data.posts.filter(p=>p.premium).map(p=>p.author_id);
   for(const id of ids)data.premiumIds.add(id);
   renderView();
