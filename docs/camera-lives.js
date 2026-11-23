@@ -1,20 +1,74 @@
 /* entre. Lives · LiveKit host + one approved guest + spectators. */
 (function(){
 'use strict';
-const s={rows:[],loading:false,active:null,room:null,localRole:null,joining:false,camera:true,mic:true,timer:null,remoteTracks:new Map(),title:'',error:'',region:'global',state:'',city:'',showCreate:false,search:''};
+const s={rows:[],loading:false,active:null,room:null,localRole:null,joining:false,camera:true,mic:true,timer:null,remoteTracks:new Map(),title:'',error:'',region:'global',state:'',city:'',showCreate:false,showRegion:false,search:'',category:'all',images:new Map(),avatars:new Map(),preview:null};
 const UFS='AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ');
 const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+const CATEGORIES=[['all','Todas'],['conversa','Conversa'],['musica','Música'],['games','Games'],['criatividade','Criatividade'],['outros','Outros']];
+const categoryLabel=value=>CATEGORIES.find(item=>item[0]===value)?.[1]||'Conversa';
+const categoryChips=()=>'<div class="live-explore-categories" role="group" aria-label="Filtrar lives por assunto">'+
+ CATEGORIES.map(([key,label])=>'<button type="button" data-live-action="category" data-category="'+key+'" class="'+(s.category===key?'active':'')+'" aria-pressed="'+String(s.category===key)+'">'+esc(label)+'</button>').join('')+'</div>';
 const filtered=()=>s.rows.filter(l=>{
  const locationOk=s.region==='global'||(s.state&&l.state_code===s.state&&(s.region==='state'||(s.city&&normalize(l.city_name)===normalize(s.city))));
- const query=normalize(s.search);
- return locationOk&&(!query||normalize(l.title+' '+l.host_name+' '+(l.guest_name||'')).includes(query));
+ const query=normalize(s.search),categoryOk=s.category==='all'||(l.category||'conversa')===s.category;
+ return locationOk&&categoryOk&&(!query||normalize(l.title+' '+l.host_name+' '+(l.guest_name||'')).includes(query));
 });
-
-const filterMarkup=()=>'<div class="camera-live-filters">'+
- '<label class="live-search-field">Pesquisar live<input data-live-filter="search" type="search" maxlength="90" placeholder="Título ou apresentador" value="'+esc(s.search)+'" autocomplete="off"></label>'+
- '<label>Explorar<select data-live-filter="region"><option value="global" '+(s.region==='global'?'selected':'')+'>Global · todas as lives</option><option value="state" '+(s.region==='state'?'selected':'')+'>Por estado</option><option value="city" '+(s.region==='city'?'selected':'')+'>Por cidade</option></select></label>'+
- (s.region!=='global'?'<label>Estado<select data-live-filter="state"><option value="">Selecione o estado</option>'+UFS.map(uf=>'<option value="'+uf+'" '+(s.state===uf?'selected':'')+'>'+uf+'</option>').join('')+'</select></label>':'')+
- (s.region==='city'?'<label>Cidade<input data-live-filter="city" maxlength="100" placeholder="Digite sua cidade" value="'+esc(s.city)+'" autocomplete="off"></label>':'')+'</div>';
+const filterMarkup=()=>'<div class="camera-live-filters live-region-panel" id="liveRegionFilters" '+(s.showRegion?'':'hidden')+'>'+
+ '<label>Localização<select data-live-filter="region"><option value="global" '+(s.region==='global'?'selected':'')+'>Brasil inteiro</option><option value="state" '+(s.region==='state'?'selected':'')+'>Estado</option><option value="city" '+(s.region==='city'?'selected':'')+'>Cidade</option></select></label>'+
+ (s.region!=='global'?'<label>Estado<select data-live-filter="state"><option value="">Selecionar estado</option>'+UFS.map(uf=>'<option value="'+uf+'" '+(s.state===uf?'selected':'')+'>'+uf+'</option>').join('')+'</select></label>':'')+
+ (s.region==='city'?'<label>Cidade<input data-live-filter="city" maxlength="100" placeholder="Nome da cidade" value="'+esc(s.city)+'" autocomplete="off"></label>':'')+
+ '<button type="button" class="live-region-reset" data-live-action="resetFilters">Limpar</button></div>';
+function fresh(map,path){const item=map.get(path);return item&&item.until>Date.now()?item.url:'';}
+async function hydrateImages(rows){
+ const batches=[['entre-live-covers','cover_path',s.images],['entre-avatars','host_avatar_path',s.avatars]];
+ await Promise.all(batches.map(async([bucket,field,cache])=>{
+  const paths=[...new Set(rows.map(row=>row[field]).filter(Boolean))].filter(path=>!fresh(cache,path));
+  if(!paths.length)return;
+  try{
+   const {data,error}=await db.storage.from(bucket).createSignedUrls(paths,300);
+   if(error)throw error;
+   (data||[]).forEach((item,index)=>{
+    if(item?.signedUrl)cache.set(paths[index],{url:item.signedUrl,until:Date.now()+260000});
+   });
+  }catch(error){console.warn('Miniaturas privadas indisponíveis:',error);}
+ }));
+}
+function locationLabel(l){
+ return [l.city_name,l.state_code].filter(Boolean).join(' · ');
+}
+function clearPreview(){
+ if(s.preview){URL.revokeObjectURL(s.preview);s.preview=null;}
+}
+function coverPreview(file){
+ clearPreview();
+ const target=document.getElementById('liveCoverPreview');
+ if(!target)return;
+ if(!file){target.hidden=true;target.replaceChildren();return;}
+ if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>12*1024*1024)throw Error('Capa: JPG, PNG ou WebP de até 12 MB.');
+ s.preview=URL.createObjectURL(file);
+ const image=document.createElement('img');
+ image.src=s.preview;image.alt='Prévia da capa';
+ target.replaceChildren(image);target.hidden=false;
+}
+async function prepareCover(file){
+ if(!file)return null;
+ if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>12*1024*1024)throw Error('Escolha uma capa JPG, PNG ou WebP de até 12 MB.');
+ const url=URL.createObjectURL(file);
+ try{
+  const image=new Image();
+  await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(Error('Não foi possível ler a imagem.'));image.src=url;});
+  if(!image.naturalWidth||!image.naturalHeight||image.naturalWidth*image.naturalHeight>36000000)throw Error('A imagem é grande demais.');
+  const scale=Math.min(1,1400/Math.max(image.naturalWidth,image.naturalHeight));
+  const canvas=document.createElement('canvas');
+  canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
+  canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+  const ctx=canvas.getContext('2d');if(!ctx)throw Error('Não foi possível preparar a capa.');
+  ctx.drawImage(image,0,0,canvas.width,canvas.height);
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',.84));
+  if(!blob||blob.size>3145728)throw Error('A capa ultrapassou 3 MB. Escolha outra imagem.');
+  return blob;
+ }finally{URL.revokeObjectURL(url);}
+}
 
 let sdkPromise=null;
 async function sdk(){
@@ -28,7 +82,25 @@ async function sdk(){
 }
 function card(l){
  const host=l.is_host,guest=l.is_guest;
- return '<article class="camera-live-card"><div class="camera-live-cover"><span class="camera-live-label">● AO VIVO</span><span class="camera-live-camera">'+ico('camera',32)+'</span></div><div class="camera-live-info"><strong>'+esc(l.title)+'</strong><small>com '+esc(l.host_name)+(l.guest_name?' e '+esc(l.guest_name):'')+'</small><button type="button" data-live-action="join" data-id="'+esc(l.id)+'">'+(host?'Voltar para minha live':guest?'Entrar como convidado':'Assistir à live')+' '+ico('arrow',15)+'</button></div></article>';
+ const cover=fresh(s.images,l.cover_path),avatar=fresh(s.avatars,l.host_avatar_path);
+ const hostInitial=esc(String(l.host_name||'P').slice(0,1).toUpperCase());
+ const image=cover||avatar;
+ const region=locationLabel(l);
+ return '<article class="camera-live-card live-visual-card">'+
+ '<button type="button" class="live-visual-open" data-live-action="join" data-id="'+esc(l.id)+'" aria-label="'+esc((host?'Voltar para':'Assistir à')+' live: '+l.title)+'">'+
+ '<div class="camera-live-cover live-visual-cover">'+
+ (image?'<img class="live-visual-picture" src="'+esc(image)+'" alt="" loading="lazy" decoding="async">':
+ '<div class="live-visual-placeholder" aria-hidden="true"><span>'+hostInitial+'</span>'+ico('camera',32)+'</div>')+
+ '<span class="live-visual-badge"><i aria-hidden="true"></i> AO VIVO</span>'+
+ '<span class="live-visual-category">'+esc(categoryLabel(l.category))+'</span>'+
+ '<div class="live-visual-gradient" aria-hidden="true"></div>'+
+ '</div><div class="live-visual-details"><strong>'+esc(l.title)+'</strong>'+
+ '<span class="live-visual-byline">'+
+ (avatar?'<img src="'+esc(avatar)+'" alt="" loading="lazy">':'<b aria-hidden="true">'+hostInitial+'</b>')+
+ '<span>'+esc(l.host_name||'Pessoa')+(l.guest_name?' + '+esc(l.guest_name):'')+'</span></span>'+
+ (region?'<small>'+ico('compass',13)+' '+esc(region)+'</small>':'')+
+ '<span class="live-visual-watch">'+(host?'Minha live':guest?'Entrar como convidado':'Assistir')+' '+ico('arrow',15)+'</span>'+
+ '</div></button></article>';
 }
 function viewer(){
  if(!s.active)return '';
@@ -44,10 +116,11 @@ function viewer(){
 }
 function discoveryResults(){
  const rows=filtered();
- if(rows.length)return '<div class="camera-live-list">'+rows.map(card).join('')+'</div>';
- return '<div class="camera-live-empty" role="status">'+ico('camera',27)+
- '<strong>'+(s.loading?'Carregando lives…':s.error?'Erro ao carregar lives':s.rows.length?'Nenhuma live neste filtro':'Nenhuma live no momento')+'</strong>'+
- (s.error?'<button type="button" data-live-action="refresh">Tentar novamente</button>':s.region!=='global'||s.search?'<button type="button" data-live-action="resetFilters">Limpar filtros</button>':'<button type="button" data-live-action="create">Iniciar a primeira live</button>')+
+ if(rows.length)return '<div class="camera-live-list live-visual-grid">'+rows.map(card).join('')+'</div>';
+ return '<div class="camera-live-empty live-visual-empty" role="status">'+ico('camera',28)+
+ '<strong>'+(s.loading?'Buscando transmissões…':s.error?'Não foi possível carregar as lives':s.rows.length?'Nenhuma live nesse filtro':'Ninguém transmitindo agora')+'</strong>'+
+ '<p>'+(s.error?'Confira a conexão e tente novamente.':s.rows.length?'Experimente outra categoria ou região.':'Seja a primeira pessoa a transmitir.')+'</p>'+
+ (s.error?'<button type="button" data-live-action="refresh">Tentar novamente</button>':(s.region!=='global'||s.search||s.category!=='all')?'<button type="button" data-live-action="resetFilters">Ver todas</button>':'<button type="button" data-live-action="create">Iniciar live</button>')+
  '</div>';
 }
 function updateDiscovery(){
@@ -56,24 +129,37 @@ function updateDiscovery(){
  const count=document.getElementById('liveDiscoverCount');
  if(count)count.textContent=String(filtered().length);
  const total=document.getElementById('liveTotalCount');
- if(total)total.textContent=String(s.rows.length)+' no ar';
+ if(total)total.textContent=String(s.rows.length);
 }
 function view(){
  if(s.active)return '<section class="camera-live-shell live-discovery-screen live-active-screen">'+viewer()+'</section>';
- return '<section class="camera-live-shell live-discovery-screen live-action-first" aria-label="Lives da comunidade">'+
- '<header class="live-compact-header"><div class="live-compact-heading"><h2>Lives</h2><span id="liveTotalCount" aria-live="polite">'+s.rows.length+' no ar</span></div>'+
- '<div class="camera-live-head-actions"><button type="button" data-live-action="refresh" aria-label="Atualizar transmissões" title="Atualizar">'+ico('refresh',18)+'</button><button type="button" data-live-action="create" aria-expanded="'+String(s.showCreate)+'" aria-controls="cameraLiveComposer">'+ico('camera',18)+' '+(s.showCreate?'Fechar':'Iniciar live')+'</button></div></header>'+
- '<div class="live-create-composer camera-live-hero" id="cameraLiveComposer" '+(s.showCreate?'':'hidden')+'><form id="cameraLiveStartForm"><label for="cameraLiveTitle">Título da live</label><input id="cameraLiveTitle" name="title" minlength="3" maxlength="90" required placeholder="Ex.: Vamos conversar?" value="'+esc(s.title)+'"><button type="submit">'+ico('camera',18)+' Transmitir</button></form></div>'+
- '<div class="live-discovery-board">'+filterMarkup()+
- '<div class="live-results-header"><strong>Transmitindo agora</strong><span id="liveDiscoverCount">'+filtered().length+'</span></div>'+
- '<div id="liveDiscoverResults">'+discoveryResults()+'</div></div></section>';
+ return '<section class="camera-live-shell live-explore-screen" aria-label="Explorar transmissões ao vivo">'+
+ '<header class="live-explore-header"><div class="live-explore-heading"><h2>Explorar lives</h2>'+
+ '<span class="live-explore-count"><i aria-hidden="true"></i><span id="liveTotalCount">'+s.rows.length+'</span> ao vivo</span></div>'+
+ '<button type="button" class="live-explore-start" data-live-action="create" aria-expanded="'+String(s.showCreate)+'" aria-controls="cameraLiveComposer">'+ico('camera',17)+' '+(s.showCreate?'Fechar':'Iniciar live')+'</button></header>'+
+ '<div class="live-explore-toolbar"><label class="live-explore-search">'+ico('search',19)+
+ '<span class="sr-only">Buscar transmissões</span><input data-live-filter="search" type="search" maxlength="90" placeholder="Pesquisar lives ou pessoas" value="'+esc(s.search)+'" autocomplete="off"></label>'+
+ '<button type="button" class="live-region-trigger" data-live-action="region" aria-controls="liveRegionFilters" aria-expanded="'+String(s.showRegion)+'">'+ico('compass',18)+' <span>Região</span></button></div>'+
+ categoryChips()+filterMarkup()+
+ '<div class="live-create-composer camera-live-hero live-visual-composer" id="cameraLiveComposer" '+(s.showCreate?'':'hidden')+'>'+
+ '<form id="cameraLiveStartForm" enctype="multipart/form-data">'+
+ '<div class="live-compose-head"><strong>Nova transmissão</strong><small>Capa opcional · câmera ativada ao começar</small></div>'+
+ '<label for="cameraLiveTitle">Título</label><input id="cameraLiveTitle" name="title" minlength="3" maxlength="90" required placeholder="O que vai rolar na sua live?" value="'+esc(s.title)+'">'+
+ '<div class="live-compose-fields"><label>Categoria<select name="category">'+CATEGORIES.filter(c=>c[0]!=='all').map(([key,label])=>'<option value="'+key+'">'+esc(label)+'</option>').join('')+'</select></label>'+
+ '<label>Capa (opcional)<input name="cover" id="cameraLiveCover" type="file" accept="image/jpeg,image/png,image/webp"></label></div>'+
+ '<div id="liveCoverPreview" class="live-cover-preview" hidden></div>'+
+ '<button type="submit">'+ico('camera',18)+' Começar live</button></form></div>'+
+ '<div class="live-explore-results-heading"><strong>Transmitindo agora</strong><span id="liveDiscoverCount">'+filtered().length+'</span></div>'+
+ '<div id="liveDiscoverResults">'+discoveryResults()+'</div></section>';
 }
+
 async function refresh(paint=true){
  if(s.loading||!state.session)return;
  s.loading=true;
  try{
   const {data,error}=await db.rpc('entre_lives_list');if(error)throw error;
   s.rows=Array.isArray(data)?data:[];s.error='';
+  await hydrateImages(s.rows);
   if(s.active){
    const found=s.rows.find(x=>x.id===s.active.id);
    if(!found){await leave(false);toast('A transmissão foi encerrada.');}
@@ -87,7 +173,7 @@ async function refresh(paint=true){
   }
   if(paint&&state.view==='lives'){
    // Preserve the user's typing and keyboard while the live directory polls.
-   if(!s.active&&(document.activeElement?.closest?.('.camera-live-filters')||document.activeElement?.closest?.('.live-create-composer'))){
+   if(!s.active&&(document.activeElement?.closest?.('.live-explore-toolbar')||document.activeElement?.closest?.('.camera-live-filters')||document.activeElement?.closest?.('.live-create-composer'))){
     updateDiscovery();
     const total=document.getElementById('liveTotalCount');if(total)total.textContent=String(s.rows.length)+' no ar';
    }else{renderView();if(s.active)attachAll();}
@@ -170,20 +256,38 @@ async function leave(remote=true){
  if(state.view==='lives')renderView();
 }
 async function start(form){
- const title=String(form.elements.title.value||'').trim();
+ const title=String(form.elements.namedItem('title')?.value||'').trim();
+ const category=String(form.elements.namedItem('category')?.value||'conversa');
  if(s.joining)return;
  const btn=form.querySelector('[type=submit]');if(btn)btn.disabled=true;
+ const uid=state.session?.user?.id;
+ let path=null,startedId=null;
  try{
-  const {data,error}=await db.rpc('entre_live_start',{_title:title});if(error)throw error;
-  s.title=title;
-  await refresh(false);
-  try{await join(data);}catch(e){await db.rpc('entre_live_exit',{_live:data});throw e;}
- }catch(e){toast(infoError(e),true)}finally{if(btn?.isConnected)btn.disabled=false;}
+  if(!uid)throw Error('Entre na sua conta para transmitir.');
+  const file=form.elements.namedItem('cover')?.files?.[0],blob=await prepareCover(file);
+  if(blob){
+   path=uid+'/'+crypto.randomUUID()+'.webp';
+   const {error:uploadError}=await db.storage.from('entre-live-covers').upload(path,blob,{contentType:'image/webp',upsert:false,cacheControl:'300'});
+   if(uploadError)throw uploadError;
+  }
+  const {data,error}=await db.rpc('entre_live_start_visual',{_title:title,_category:category,_cover_path:path});
+  if(error)throw error;startedId=data;
+  s.title=title;clearPreview();await refresh(false);
+  try{await join(data);}catch(error){
+   await db.rpc('entre_live_exit',{_live:data}).catch(()=>{});
+   throw error;
+  }
+ }catch(error){
+  if(path&&(startedId===null||!s.active))await db.storage.from('entre-live-covers').remove([path]).catch(()=>{});
+  toast(infoError(error),true);
+ }finally{if(btn?.isConnected)btn.disabled=false;}
 }
 async function action(type,button){
  if(type==='refresh'){await refresh();return;}
- if(type==='create'){s.showCreate=!s.showCreate;if(state.view==='lives'){renderView();if(s.showCreate)document.getElementById('cameraLiveTitle')?.focus();}return;}
- if(type==='resetFilters'){s.region='global';s.state='';s.city='';s.search='';if(state.view==='lives')renderView();return;}
+ if(type==='create'){s.showCreate=!s.showCreate;if(!s.showCreate)clearPreview();if(state.view==='lives'){renderView();if(s.showCreate)document.getElementById('cameraLiveTitle')?.focus();}return;}
+ if(type==='region'){s.showRegion=!s.showRegion;if(state.view==='lives')renderView();return;}
+ if(type==='category'){s.category=CATEGORIES.some(x=>x[0]===button.dataset.category)?button.dataset.category:'all';if(state.view==='lives')renderView();return;}
+ if(type==='resetFilters'){s.region='global';s.state='';s.city='';s.search='';s.category='all';s.showRegion=false;if(state.view==='lives')renderView();return;}
  if(type==='join'){try{await join(button.dataset.id);}catch(e){}return;}
  if(type==='leave'){if(s.localRole==='host'&&!confirm('Sair agora encerrará sua transmissão. Encerrar a live?'))return;await leave();await refresh();return;}
  if(type==='end'){if(confirm('Encerrar sua live agora?')){await leave();await refresh();}return;}
@@ -217,6 +321,7 @@ document.addEventListener('input',event=>{
  else return;
  updateDiscovery(); 
 });
+document.addEventListener('change',event=>{if(event.target?.id!=='cameraLiveCover')return;try{coverPreview(event.target.files?.[0]);}catch(error){clearPreview();event.target.value='';toast(infoError(error),true);}});
 document.addEventListener('submit',event=>{if(event.target?.id!=='cameraLiveStartForm')return;event.preventDefault();void start(event.target);});
 document.addEventListener('click',event=>{
  const button=event.target.closest('[data-live-action]');if(!button)return;
