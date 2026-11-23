@@ -32,7 +32,7 @@ if(name==='entre_is_banned')return {data:false,error:null};
 return {data:null,error:null};
 },
 from(){return {select(){return {eq(){return {maybeSingle:async()=>({data:null,error:null})}}}}};}
-}}}};
+}}};
 };
 (async()=>{
 const server=http.createServer((req,res)=>{
