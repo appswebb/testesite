@@ -62,3 +62,11 @@ test('Avatars recover after failed signed links and icon names are defined',()=>
  assert.match(app,/signAvatar\(person,true\)/);
  for(const icon of ['bell','megaphone','users','link','flag','refresh'])assert.match(app,new RegExp(icon+":'<path"));
 });
+
+test('When both match, a permanent chat opens outside Ao vivo',()=>{
+ const app=read('app.js');
+ assert.match(app,/chat:pairView/);
+ assert.match(app,/state.view=data.status==='connected'\?'chat':'connect'/);
+ assert.match(app,/state.view='chat';render\(\)/);
+ assert.match(app,/function connectView\(\)\{if\(state.pair\?\.status==='active'\)/);
+});
