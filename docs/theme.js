@@ -23,7 +23,8 @@ function rgb(h){return [1,3,5].map(n=>parseInt(h.slice(n,n+2),16));}
 function readable(h){
  const c=rgb(h).map(v=>{v/=255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);});
  const luminance=c[0]*.2126+c[1]*.7152+c[2]*.0722;
- return luminance>.36?'#111111':'#FFFFFF';
+ // WCAG relative-luminance threshold where black/white have equal contrast.
+ return luminance>.179?'#111111':'#FFFFFF';
 }
 function apply(){
  const root=document.documentElement;
