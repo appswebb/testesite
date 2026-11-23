@@ -54,9 +54,18 @@ function wave(target,clientX,clientY){
  el.className='entre-touch-wave';el.setAttribute('aria-hidden','true');
  el.style.setProperty('--x',clientX+'px');el.style.setProperty('--y',clientY+'px');
  el.style.setProperty('--wave-scale',String(Math.max(6,Math.min(14,Math.max(box.width,box.height)/12))));
- document.body.appendChild(el);
- el.addEventListener('animationend',()=>el.remove(),{once:true});
- setTimeout(()=>el.remove(),650);
+ // Clip the oversized ripple to the viewport without adding horizontal
+ // scroll; fixed transformed children previously made 320px pages 366px wide.
+ let layer=document.getElementById('entreTouchLayer');
+ if(!layer){
+  layer=document.createElement('div');layer.id='entreTouchLayer';
+  layer.className='entre-touch-layer';layer.setAttribute('aria-hidden','true');
+  document.body.appendChild(layer);
+ }
+ layer.appendChild(el);
+ const cleanup=()=>{el.remove();if(layer.isConnected&&!layer.childElementCount)layer.remove();};
+ el.addEventListener('animationend',cleanup,{once:true});
+ setTimeout(cleanup,650);
 }
 document.addEventListener('pointerdown',event=>{
  if(!event.isPrimary||event.button!==0)return;
