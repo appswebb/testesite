@@ -707,7 +707,7 @@ async function maintenanceCheck(manual=false){
    if(title)title.textContent=response.data.maintenance_title||'Tem coisa boa chegando.';
    if(msg)msg.textContent=response.data.maintenance_message||'Uma nova versão está chegando.';
    if(manual){const status=document.getElementById('maintenance-status-text');if(status)status.textContent='A atualização continua ativa. Esta página será liberada automaticamente.';}
-  }else if(before?.maintenance_enabled!==response.data.maintenance_enabled){render();}
+  }else if(before?.maintenance_enabled!==response.data.maintenance_enabled){render();}else if(state.view==='avisos'&&before?.announcement_version!==response.data.announcement_version){renderView();}
  }catch(err){
   if(manual){const target=document.getElementById('maintenance-status-text');if(target)target.textContent='Não foi possível verificar agora. Continuaremos tentando.';}
   console.warn('Maintenance status check failed',err);
