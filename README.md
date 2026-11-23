@@ -17,7 +17,8 @@ https://appswebb.github.io/testesite/
 - Mensagens persistentes e atualizações em tempo real via Supabase Realtime, com checagem periódica de sincronização.
 - Conversas permanentes com menu compacto para fixar, arquivar, organizar ou apagar apenas da própria conta. Mensagens apagadas não ficam legíveis para quem apagou, mas continuam disponíveis ao outro participante.
 - Matchmaking não repete pares que já têm um follow aceito ou conversa permanente, mesmo que o chat esteja oculto.
-- Aba separada com pessoas de encontros encerrados visíveis por 24 horas para seguir; notificações pessoais no sino, removíveis individualmente ou de uma vez e expiradas em até 24 horas; avisos oficiais em área própria.
+- Encontros temporários sem match não viram contatos nem ficam em uma seção de conexões; conversas permanentes só surgem após match ou aceite de seguir.
+- Avisos oficiais com respostas privadas à administração e enquetes com voto único obrigatório, ambos por 24 horas e com notificações para todos os perfis cadastrados. Notificações pessoais continuam no sino e expiram em 24 horas.
 - Esquema próprio com tabelas `entre_*` e políticas RLS (sem modificar as tabelas existentes).
 
 ## Login exclusivamente pelo Google
@@ -49,7 +50,7 @@ Como este projeto Supabase hospeda autenticação para outro aplicativo, **não 
 4. Google OAuth requer ativação do provedor e autorização de redirect URL no painel do Supabase. Sem isso, o botão de login não poderá concluir a autenticação.
 5. Não são criados usuários ou mensagens falsos para aparentar atividade.
 6. A busca considera preferências de ambos e evita usuários bloqueados. A presença na fila tem validade curta, renovada pelo navegador a cada 3,5s; conexão perdida pode ocasionar nova busca.
-7. As mensagens de encontros sem match são apagadas quando a sessão termina no servidor. O contato permanece visível por até 24 horas para solicitar seguir; o aceite libera um chat normal separado. Mensagens de conversas permanentes expiram após 10 dias de inatividade, mas o match continua.
+7. As mensagens de encontros sem match são apagadas quando a sessão termina no servidor. Sem match, a pessoa não é mantida em uma lista de contatos. Seguir pode ser solicitado pela área Online, e só o aceite libera um chat normal separado. Mensagens de conversas permanentes expiram após 10 dias de inatividade, mas o match continua.
 
 ## Executar
 
@@ -71,7 +72,7 @@ Acesse http://localhost:8000/. Para publicar, GitHub Actions envia a pasta `docs
 
 ## Painel administrativo entre.
 
-O painel está disponível em https://appswebb.github.io/testesite/admin/. O administrador autorizado no Supabase é l.demelo2004@gmail.com, verificado com Google OAuth e funções SQL protegidas por RLS. O painel permite gerenciar usuários, banimentos, denúncias, sessões de matches, avisos e o status do matchmaking. Conteúdos de conversas privadas não aparecem no painel. Todas as operações administrativas exigem validação no servidor. Funciona no desktop e no mobile.
+O painel está disponível em https://appswebb.github.io/testesite/admin/. O administrador autorizado no Supabase é l.demelo2004@gmail.com, verificado com Google OAuth e funções SQL protegidas por RLS. O painel permite gerenciar usuários, banimentos, denúncias, sessões de matches, avisos com respostas, enquetes obrigatórias com totalização dos votos e o status do matchmaking. Conteúdos de conversas privadas não aparecem no painel. Todas as operações administrativas exigem validação no servidor. Funciona no desktop e no mobile.
 
 ## Modo atualização (controle manual)
 
