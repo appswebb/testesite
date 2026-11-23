@@ -71,6 +71,7 @@ on:
       - 'docs/social*.js'
       - 'tests/admin-mobile-audit.cjs'
       - 'tests/avatar-mobile-audit.cjs'
+      - 'tests/action-first.test.mjs'
       - 'tests/social-ui-regression.test.mjs'
       - '.github/workflows/entre-mobile-ui.yml'
   workflow_dispatch:
