@@ -287,3 +287,14 @@ test('OAuth errors preserve the actual Google rejection reason rather than claim
  assert.match(result,/Google Cloud/);
  assert.doesNotMatch(result,/foi cancelada ou não foi autorizada/);
 });
+
+test('Google OAuth returns to the correct site on GitHub Pages and Vercel',()=>{
+ const app=read('app.js'),admin=read('admin/app.js');
+ assert.match(app,/window\.location\.hostname==='appswebb\.github\.io'/);
+ assert.match(app,/window\.location\.origin\+'\/'/);
+ assert.match(admin,/window\.location\.hostname==="appswebb\.github\.io"/);
+ assert.match(admin,/window\.location\.origin\+"\/"\s*;/);
+ assert.doesNotMatch(admin,/redirectTo:"https:\/\/appswebb\.github\.io\/testesite\/"/);
+ assert.match(app,/scopes:'openid email profile'/);
+ assert.match(admin,/scopes:"openid email profile"/);
+});
