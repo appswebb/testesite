@@ -64,7 +64,7 @@ for(const width of [320,360,390,430,768,1024,1440]){
   const one=s=>document.querySelector(s),rect=s=>one(s)?.getBoundingClientRect();
   const entry=rect('.release-entry--compact'),icon=rect('.release-entry-icon'),copy=rect('.release-entry-copy'),chevron=rect('.release-entry-chevron');
   const topIcon=rect('.stat:first-child .stat-icon'),topLabel=rect('.stat:first-child .stat-label'),stat=rect('.stat:first-child');
-  return {scroll:document.documentElement.scrollWidth,viewport:innerWidth,entryHeight:entry.height,iconWithin:icon.left>=entry.left&&icon.right<=entry.right,iconBeforeText:icon.right<=copy.left+1,chevronInside:chevron.right<=entry.right+1,statIconBeforeLabel:topIcon.right<=topLabel.left+1,statWithin:stat.right<=innerWidth+1,navVisible:innerWidth>820||getComputedStyle(one('.bottom-nav button[data-view="updates"]')).display!=='none'};
+  return {scroll:document.documentElement.scrollWidth,viewport:innerWidth,entryHeight:entry.height,iconWithin:icon.left>=entry.left&&icon.right<=entry.right,iconBeforeText:icon.right<=copy.left+1,chevronInside:chevron.right<=entry.right+1,statIconBeforeLabel:topIcon.right<=topLabel.left+1,statWithin:stat.right<=innerWidth+1,navVisible:innerWidth>820||getComputedStyle(one('.bottom-nav .admin-more-button')).display!=='none'};
  });
  assert(result.scroll<=width+1,width+'px: horizontal overflow '+JSON.stringify(result));
  assert(result.entryHeight<150,width+'px: oversized update shortcut '+JSON.stringify(result));
