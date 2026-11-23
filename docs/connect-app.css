@@ -142,3 +142,81 @@ button,summary{ -webkit-tap-highlight-color:transparent }
  body.motion-force:not(.motion-off) .entre-celebration{display:block!important}
 }
 body.motion-off *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+
+
+/* Complete CONNECT presentation: landing, auth, dashboards, membership */
+body:has(.landing-hero),body:has(.auth-shell){background:#121019;color:#f6f0ff}
+body:has(.landing-hero) .home-header{background:linear-gradient(90deg,#191421,#241b2c);border-bottom:1px solid #493951}
+body:has(.landing-hero) .landing-hero{background:radial-gradient(ellipse 75% 80% at 75% 15%,#5f387435,transparent),#16131d;color:#f6efff}
+body:has(.landing-hero) .hero-title{color:#f6edff}
+body:has(.landing-hero) .hero-title em{color:#dabdff}
+body:has(.landing-hero) .hero-text,body:has(.landing-hero) .hero-foot{color:#c3b6ca}
+body:has(.landing-hero) .step-card,body:has(.landing-hero) .how-section,
+body:has(.landing-hero) #manifesto{border-color:#53435e;color:#262035}
+body:has(.landing-hero) .ui-btn.btn-dark,body:has(.landing-hero) .ui-btn.btn-coral{background:#d2b1ff!important;color:#21142e;border:0;box-shadow:0 10px 28px #9871be33}
+body:has(.landing-hero) .home-footer{background:#1a1622;color:#d3c6db}
+body:has(.auth-shell) .auth-visual{background:radial-gradient(circle at 70% 20%,#5c3277,#261d36 68%,#16131f);color:#fff}
+body:has(.auth-shell) .auth-visual h2{color:#fff}
+body:has(.auth-shell) .auth-main{background:#f6f3f9}
+body:has(.auth-shell) .auth-card{border-radius:24px}
+body:has(.auth-shell) .auth-card .ui-btn.btn-dark{background:#342443;color:#fff}
+body:has(.auth-shell) .auth-card input,body:has(.auth-shell) .auth-card select{border-radius:13px}
+#view-content .dash-hero{background:linear-gradient(132deg,#503366,#30213e)!important;color:#fff;border:1px solid #76578b;border-radius:25px}
+#view-content .dash-hero h3,#view-content .dash-hero p{color:#f7eeff}
+#view-content .dash-hero .ui-btn{background:#d3b4ff;color:#281630}
+#view-content .insight-card h3,#view-content .insight-card p{color:#eee7f5}
+#view-content .insight-card .insight-dial{opacity:.8}
+#view-content .profile-preview p,#view-content .form-panel label,#view-content .form-panel small{color:#d4c6df!important}
+#view-content .profile-handle,#view-content .person-handle{color:#cdaaff!important}
+#view-content .profile-preview .pill{background:#3b3044;color:#e4d6f1}
+#view-content .settings-card .setting-row{border-bottom-color:#45394d}
+#view-content .settings-card .setting-row strong{color:#f6f0fc}
+#view-content .settings-card .toggle{border-color:#6f5978}
+#view-content .danger-zone{background:#3d2832;border-color:#704655}
+#view-content .danger-zone strong{color:#ffe5e3!important}
+#view-content .support-access-card{background:#262131;border:1px solid #5d4b6e;color:#f5edff}
+#view-content .support-access-card.premium{background:linear-gradient(130deg,#523562,#302344);border-color:#8c61ae}
+#view-content .support-access-card h3,#view-content .support-access-card p{color:#f4eefa}
+#view-content .support-contact{background:linear-gradient(135deg,#493051,#32213e);border-color:#655076}
+#view-content .support-contact h3,#view-content .support-contact p{color:#faf0ff}
+#view-content .notification-controls,#view-content .notification-list{color:#ede2f5}
+#view-content .notification-item{color:#e7d6f1}
+#view-content .notification-copy strong{color:#f8f0ff}
+#view-content .notification-copy small{color:#a99cba}
+#view-content .people-search-field{background:#292434;border-color:#67547a;color:#efe8ff}
+#view-content .people-search-field input{color:#f7edff}
+#view-content .online-restriction{color:#e4bcca}
+#view-content .convo-card,#view-content .conversation-menu{color:#f1e9ff}
+#view-content .premium-pitch{background:radial-gradient(circle at 80% 20%,#b58ad63b,transparent 55%),linear-gradient(135deg,#30213f,#4b3059)}
+#view-content .premium-checkout-card{background:#25202f!important;border-color:#6c527f!important;color:#f9f0ff}
+#view-content .premium-checkout-card h3{color:#f8edff}
+#view-content .premium-checkout-card p,#view-content .premium-checkout-card small{color:#c7b6d1}
+#view-content .premium-confirmed{background:#284a3b;color:#d4f3d5}
+.web-checkout-embed[hidden]{display:none!important}
+.web-checkout-embed{width:100%;max-width:100%;margin:13px 0;border:1px solid #695276;border-radius:16px;background:white;padding:15px 10px;overflow:hidden;color:#222}
+.web-checkout-embed iframe{max-width:100%}
+.web-payment-status{max-width:100%;font-size:12px;line-height:1.6}
+.web-payment-status:empty{display:none}
+.web-pay-pending{display:grid;gap:11px;padding:14px;border:1px solid #745e83;background:#372b41;border-radius:15px;color:#f8f3ff}
+.web-pay-pending strong{display:flex;align-items:center;gap:7px}
+.web-pay-pending label{font-weight:800}
+.web-pay-pending p{color:#ded1e7!important;margin:0}
+.web-pix-qr{width:215px;max-width:100%;height:auto;image-rendering:pixelated;background:white;border-radius:14px;padding:8px;margin:0 auto}
+.web-pay-pending textarea{width:100%;max-width:100%;min-height:70px;resize:none;background:#211c2b!important;color:#f4ecff!important;border:1px solid #6b5879;padding:10px;border-radius:10px;font-size:11px;overflow-wrap:anywhere}
+.web-pay-success{display:flex;align-items:center;gap:8px;color:#bce7c5}
+.web-pay-error{padding:11px 13px;color:#ffd2d2;background:#5b2d39;border-radius:12px}
+.connect-brand{font-weight:900;letter-spacing:-.06em}
+::view-transition-old(root){animation:connectOut .17s ease both}
+::view-transition-new(root){animation:connectIn .27s cubic-bezier(.18,.8,.18,1) both}
+@keyframes connectOut{to{opacity:.35;transform:translateX(-9px)}}
+@keyframes connectIn{from{opacity:.18;transform:translateX(12px)}to{opacity:1;transform:none}}
+@media(max-width:650px){
+ body:has(.auth-shell) .auth-card{border-radius:17px}
+ #view-content .premium-checkout{max-width:100%}
+ .app-main:has(.premium-checkout){padding-left:12px;padding-right:12px}
+ .web-checkout-embed{padding:8px 3px}
+}
+@media(prefers-reduced-motion:reduce){
+ body:not(.motion-force) ::view-transition-old(root),
+ body:not(.motion-force) ::view-transition-new(root){animation-duration:.01ms!important}
+}
