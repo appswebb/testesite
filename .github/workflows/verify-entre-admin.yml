@@ -1,0 +1,35 @@
+name: Validate entre. Admin Console
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/admin/**'
+      - 'docs/app.js'
+      - 'docs/mobile.css'
+      - '.github/workflows/verify-entre-admin.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: |
+          node --check docs/app.js
+          node --check docs/admin/app.js
+      - name: Check admin RPC integration
+        run: |
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const a=fs.readFileSync('docs/admin/app.js','utf8'), b=fs.readFileSync('docs/app.js','utf8');
+          const html=fs.readFileSync('docs/admin/index.html','utf8');
+          for(const name of ['entre_admin_check','entre_admin_overview','entre_admin_users','entre_admin_reports','entre_admin_pairs','entre_admin_set_ban','entre_admin_save_settings'])
+            if(!a.includes(name))throw Error('Missing admin RPC: '+name);
+          for(const key of ['data-action="report"','entre_report_user','entre.admin.return','isAdmin'])
+            if(!b.includes(key))throw Error('Missing site integration: '+key);
+          if(!html.includes('./app.js'))throw Error('Admin bundle not loaded');
+          if(a.includes('service_role')||a.includes('sb_secret_'))throw Error('Backend secret exposed');
+          console.log('Admin routes and RPCs verified.');
+          NODE

@@ -66,3 +66,7 @@ Acesse http://localhost:8000/. Para publicar, GitHub Actions envia a pasta `docs
 ## Marca
 
 **entre.** — fundo quente `#f8f5ef`, tinta `#191b19`, coral `#f17e60`, acentos lima e lavanda, Space Grotesk + Instrument Serif, formas semicirculares em encontro, animações de espera com ondas concêntricas, respeitando `prefers-reduced-motion`.
+
+## Painel administrativo entre.
+
+O painel está disponível em https://appswebb.github.io/testesite/admin/. O administrador autorizado no Supabase é l.demelo2004@gmail.com, verificado com Google OAuth e funções SQL protegidas por RLS. O painel permite gerenciar usuários, banimentos, denúncias, sessões de matches, avisos e o status do matchmaking. Conteúdos de conversas privadas não aparecem no painel. Todas as operações administrativas exigem validação no servidor. Funciona no desktop e no mobile.
