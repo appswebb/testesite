@@ -87,7 +87,7 @@ begin
  join public.entre_profiles a on a.id=p.author_id
  where not exists(select 1 from public.entre_moderation m where m.user_id=p.author_id and m.is_banned)
  and not exists(select 1 from public.entre_blocks b where
- (b.blocker=uid and b.blocked=p.author_id) or (b.blocker=p.author_id and b.blocker=uid));
+ (b.blocker=uid and b.blocked=p.author_id) or (b.blocker=p.author_id and b.blocked=uid));
  return items;
 end $$;
 revoke all on function public.entre_posts_feed(bigint) from public,anon;
