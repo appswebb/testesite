@@ -243,6 +243,33 @@ html[data-theme] .recurring-premium-box{grid-template-columns:repeat(2,minmax(0,
 html[data-theme] .recurring-card-brick{max-width:100%!important;overflow:hidden!important}
 html[data-theme] .recurring-card-brick iframe{max-width:100%!important}
 
+/* Official regional chat messages follow the same compact conversation grammar. */
+html[data-theme] .room-message{
+ display:flex!important;align-items:flex-start!important;gap:9px!important;
+ border-radius:13px!important;border:1px solid var(--ui-line)!important;
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;
+ padding:11px!important;overflow-wrap:anywhere
+}
+html[data-theme] .room-message.is-mine{
+ background:var(--ui-accent-faint)!important;border-color:var(--ui-accent-shadow)!important
+}
+html[data-theme] .room-message-avatar{
+ display:grid!important;place-items:center!important;flex:none!important;
+ width:32px!important;height:32px!important;border-radius:50%!important;
+ background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;
+ font-size:11px!important;font-weight:850!important
+}
+html[data-theme] .room-message-content{min-width:0!important;flex:1 1 auto!important}
+html[data-theme] .room-message-content header{display:flex!important;align-items:center!important;gap:5px!important;flex-wrap:wrap!important}
+html[data-theme] .room-message-content header strong{font-size:11px!important;color:var(--ui-text)!important}
+html[data-theme] .room-message-content header span,
+html[data-theme] .room-message-content header time{color:var(--ui-muted)!important;font-size:10px!important}
+html[data-theme] .room-message-content>p{color:var(--ui-text)!important;font-size:12px!important;line-height:1.6!important}
+html[data-theme] .room-message-content>button{
+ padding:5px 0!important;border:0!important;background:transparent!important;
+ color:var(--ui-muted)!important;font-size:10px!important
+}
+
 /* Filter bottom sheet must remain a sheet. Never restore the old inline
  * city form or move its CTA behind the keyboard. */
 html[data-theme] body > .live-app-filters[open]{
