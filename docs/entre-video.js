@@ -12,7 +12,7 @@ function markup(pair){
  '<div class="live-video-bottom"><p id="videoConnectionStatus" aria-live="polite">Preparando uma conexão segura…</p>'+
  '<div class="live-video-controls"><button type="button" class="video-control" data-action="videoMute" id="videoMute" title="Silenciar microfone" aria-label="Silenciar microfone">'+ico('mic',19)+'</button>'+
  '<button type="button" class="video-control" data-action="videoCamera" id="videoCamera" title="Desligar câmera" aria-label="Desligar câmera">'+ico('camera',19)+'</button>'+
- '<button type="button" class="video-control" data-action="videoSound" id="videoSound">Ativar som</button></div></div></section>';
+ '<button type="button" class="video-control" data-action="videoSound" id="videoSound">Ativar som</button><button type="button" class="video-control" data-action="videoRetry" id="videoRetry">Tentar câmera novamente</button></div></div></section>';
 }
 function status(message){
  const node=document.getElementById('videoConnectionStatus');
@@ -45,7 +45,7 @@ async function start(pair){
  const room={pairId:pair.id,remote:new MediaStream(),local:null,pc:null,channel:null,queue:[],status:'Solicitando acesso à câmera e ao microfone…',ready:false,interval:null};
  session=room;attach();
  try{room.local=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true},video:{facingMode:'user',width:{ideal:640},height:{ideal:480}}});}
- catch(error){room.status='A câmera ou o microfone não foram autorizados. Você pode encerrar o encontro.';status(room.status);return;}
+ catch(error){room.status='Câmera ou microfone bloqueados. Verifique as permissões do navegador e toque em Tentar câmera novamente.';status(room.status);return;}
  if(session!==room||!activePair(state.pair)){room.local.getTracks().forEach(t=>t.stop());return;}
  const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});
  room.pc=pc;room.local.getTracks().forEach(t=>pc.addTrack(t,room.local));
@@ -63,8 +63,10 @@ async function start(pair){
   try{await room.channel.send({type:'broadcast',event:'signal',payload});}catch(e){console.warn('Signal send',e);}
  }
  async function offer(){
-  if(session!==room||!room.ready||!activePair(state.pair)||pc.remoteDescription||pc.signalingState!=='stable')return;
+  if(session!==room||!room.ready||!activePair(state.pair)||pc.remoteDescription)return;
   try{
+   if(pc.signalingState==='have-local-offer'&&pc.localDescription){await send({type:'offer',sdp:pc.localDescription.toJSON()});return;}
+   if(pc.signalingState!=='stable')return;
    const desc=await pc.createOffer();await pc.setLocalDescription(desc);
    await send({type:'offer',sdp:pc.localDescription.toJSON()});
   }catch(e){console.warn('Offer error',e);}
@@ -101,11 +103,12 @@ async function start(pair){
    room.status='Não foi possível conectar o vídeo. Verifique sua rede.';attach();
   }
  });
- room.interval=setInterval(()=>{if(session!==room||!activePair(state.pair)){cleanup();return;}if(state.session.user.id===pair.a&&pc.signalingState==='stable'&&!pc.remoteDescription)void offer();},3500);
+ room.interval=setInterval(()=>{if(session!==room||!activePair(state.pair)){cleanup();return;}if(state.session.user.id===pair.a&&!pc.remoteDescription)void offer();},3500);
  room.status='Conectando chamada privada…';attach();
 }
 async function action(type){
- if(!session)return false;
+ if(!session&&type!=='videoRetry')return false;
+ if(type==='videoRetry'){const pair=state.pair;cleanup();await start(pair);return true;}
  if(type==='videoMute'){const tracks=session.local?.getAudioTracks()||[];for(const t of tracks)t.enabled=!t.enabled;const btn=document.getElementById('videoMute');if(btn)btn.classList.toggle('is-off',!tracks[0]?.enabled);return true;}
  if(type==='videoCamera'){const tracks=session.local?.getVideoTracks()||[];for(const t of tracks)t.enabled=!t.enabled;const btn=document.getElementById('videoCamera');if(btn)btn.classList.toggle('is-off',!tracks[0]?.enabled);return true;}
  if(type==='videoSound'){const video=document.getElementById('videoRemote');if(video){video.muted=false;await video.play().catch(()=>{});}return true;}
