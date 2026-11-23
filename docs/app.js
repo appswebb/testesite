@@ -540,7 +540,7 @@ function connectView(){
   '<h3 class="connect-mode-label">Escolha como conversar</h3>'+
   '<div class="live-modes"><button type="button" data-action="liveMode" data-value="chat" aria-pressed="'+(mode==='chat')+'" class="live-mode '+(mode==='chat'?'selected':'')+'" '+(waiting?'disabled':'')+'>'+ico('chat',24)+'<span><strong>Texto</strong><small>Sem câmera</small></span>'+(mode==='chat'?ico('check',20):'')+'</button>'+
   '<button type="button" data-action="liveMode" data-value="video" aria-pressed="'+(mode==='video')+'" class="live-mode '+(mode==='video'?'selected':'')+'" '+(waiting?'disabled':'')+'>'+ico('camera',24)+'<span><strong>Vídeo</strong><small>Com câmera</small></span>'+(mode==='video'?ico('check',20):'')+'</button></div>'+
-  '<details class="live-app-filters" '+(state.liveFiltersOpen?'open':'')+'><summary>'+ico('sliders-horizontal',18)+' <span><strong>Filtros</strong> <small>'+esc(preference)+' · '+esc(area)+'</small></span>'+ico('chevron',18)+'</summary>'+
+  '<details class="live-app-filters" '+(state.liveFiltersOpen?'open':'')+'><summary>'+ico('settings',18)+' <span><strong>Filtros</strong> <small>'+esc(preference)+' · '+esc(area)+'</small></span>'+ico('chevron',18)+'</summary>'+
   '<div class="live-app-filter-body"><div class="filter-bar"><h3>Encontrar</h3><div class="filters">'+filters+'</div>'+
   (!isPremium?'<p class="premium-filter-hint">Filtro de gênero: Premium.</p>':'')+'</div>'+
   (window.entreGeo?.compactPanel?.(waiting)||window.entreGeo?.panel?.(waiting)||'')+'</div>'+

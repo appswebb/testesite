@@ -118,6 +118,7 @@ jobs:
           node --test tests/shared-media-reviews.test.mjs
           node --test tests/community-hub.test.mjs
           node --test tests/legacy-green-audit.test.mjs
+          node --test tests/action-first.test.mjs
           node --test tests/source-fidelity.test.mjs
           node --test tests/geo-feed-support.test.mjs
           node --test tests/encounter-layout.test.mjs

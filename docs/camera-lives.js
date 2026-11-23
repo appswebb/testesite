@@ -87,7 +87,7 @@ async function refresh(paint=true){
   }
   if(paint&&state.view==='lives'){
    // Preserve the user's typing and keyboard while the live directory polls.
-   if(!s.active&&document.activeElement?.closest?.('.camera-live-filters')){
+   if(!s.active&&(document.activeElement?.closest?.('.camera-live-filters')||document.activeElement?.closest?.('.live-create-composer'))){
     updateDiscovery();
     const total=document.getElementById('liveTotalCount');if(total)total.textContent=String(s.rows.length)+' no ar';
    }else{renderView();if(s.active)attachAll();}
