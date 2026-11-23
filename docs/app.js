@@ -19,13 +19,17 @@ const nameOf=v=>String(v||'').trim().split(' ')[0]||'alguém';
 const genders={woman:'Mulher',man:'Homem',nonbinary:'Não binário',any:'Qualquer pessoa'};
 const initials=name=>String(name||'?').trim().split(/\s+/).slice(0,2).map(n=>[...n][0]).join('').toUpperCase();
 const colorFor=id=>['#eac8aa','#c9c1ef','#bed6c1','#e8c0c9','#dbdfac'][([...String(id||'')].reduce((n,c)=>n+c.charCodeAt(0),0))%5];
-const avatar=(person,size='')=>`<span class="avatar ${size}" style="background:${colorFor(person?.id)}">${esc(initials(person?.display_name))}</span>`;
+const avatar=(person,size='')=>{
+ const url=avatarFresh(person)?state.avatarUrls[person.avatar_path]:null;
+ if(url?.url&&url.expires>Date.now())return '<span class="avatar '+esc(size)+'"><img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="'+esc(url.url)+'" alt="Foto de '+esc(person?.display_name||'perfil')+'"></span>';
+ return '<span class="avatar '+esc(size)+'" style="background:'+colorFor(person?.id)+'">'+esc(initials(person?.display_name))+'</span>';
+};
 const brand=()=>`<a href="#" class="brand" data-action="logo" aria-label="entre. início"><span class="brand-glyph"><i></i><i></i></span><span>entre<span class="dot">.</span></span></a>`;
 const fmtTime=date=>new Date(date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 const fmtDate=date=>new Date(date).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
 let toastTimer;
 function toast(message,error=false){const el=document.getElementById('toast');el.textContent=message;el.style.background=error?'#a64c40':'#272a25';el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),4700)}
-const state={mode:'landing',view:'home',isAdmin:false,siteSettings:null,session:null,profile:null,pairs:[],pair:null,peer:null,messages:[],searching:false,preference:'any',activeTab:'all',busy:false,roomReady:false,channel:null,searchLoop:null,timerLoop:null,closedOnce:null,modal:null,signup:null,motionOff:localStorage.getItem('entre.motionOff')==='1',notice:null};
+const state={mode:'landing',view:'home',isAdmin:false,siteSettings:null,session:null,profile:null,avatarUrls:{},avatarPendingFile:null,avatarPreviewUrl:null,pairs:[],pair:null,peer:null,messages:[],searching:false,preference:'any',activeTab:'all',busy:false,roomReady:false,channel:null,searchLoop:null,timerLoop:null,closedOnce:null,modal:null,signup:null,motionOff:localStorage.getItem('entre.motionOff')==='1',notice:null};
 function applyMotion(){document.body.classList.toggle('motion-off',state.motionOff)}
 function infoError(e){
  const m=String(e?.message||e||'Não foi possível concluir. Tente novamente.');
@@ -46,8 +50,101 @@ function landing(){const scrollWords=Array(2).fill('<span>UMA CONVERSA DE CADA V
 <section class="section-pad" id="manifesto"><div class="wrap" style="text-align:center;max-width:840px"><span class="eyebrow">UM CONVITE SIMPLES</span><h2 class="section-title">E se os próximos <i>5 minutos</i><br>mudassem alguma coisa?</h2><p style="color:var(--mute);font-size:15px;line-height:1.8;margin:20px auto 30px">Uma nova pessoa, uma história inesperada, uma conversa que pode continuar — mas só se os dois quiserem.</p><button class="ui-btn btn-dark" data-action="signup">Criar minha conta ${ico('arrow',18)}</button></div></section></main>
 <footer class="home-footer"><div class="wrap footer-row">${brand()}<small>Feito para conversas que importam. © 2026 entre.</small><small>Experiência para maiores de 18 anos.</small></div></footer>`}
 const googleLogo="<svg class=\"google-mark\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path fill=\"#4285F4\" d=\"M21.35 12.2c0-.64-.06-1.25-.17-1.85H12v3.5h5.25a4.49 4.49 0 0 1-1.95 2.95v2.45h3.16c1.85-1.71 2.89-4.22 2.89-7.05Z\"/><path fill=\"#34A853\" d=\"M12 21.72c2.64 0 4.86-.87 6.48-2.47l-3.16-2.45c-.87.58-1.98.93-3.32.93-2.56 0-4.72-1.73-5.49-4.06H3.25v2.55A9.78 9.78 0 0 0 12 21.72Z\"/><path fill=\"#FBBC05\" d=\"M6.51 13.67a5.91 5.91 0 0 1 0-3.34V7.78H3.25a9.8 9.8 0 0 0 0 8.44l3.26-2.55Z\"/><path fill=\"#EA4335\" d=\"M12 6.27c1.44 0 2.73.5 3.75 1.47l2.81-2.82A9.58 9.58 0 0 0 12 2.28a9.78 9.78 0 0 0-8.75 5.5l3.26 2.55C7.28 8 9.44 6.27 12 6.27Z\"/></svg>";
+
+// All original uploads are downscaled and stripped of metadata in the browser.
+// Only a small 160px WebP is ever sent to Supabase (maximum 40 KiB).
+const AVATAR_BUCKET='entre-avatars';
+const AVATAR_MAX=40960;
+const AVATAR_LIFETIME=24*60*60*1000;
+function avatarFresh(p){
+ return Boolean(p?.avatar_path&&p?.avatar_uploaded_at
+  && Date.now()-new Date(p.avatar_uploaded_at).getTime() < AVATAR_LIFETIME
+  && Date.now()>=new Date(p.avatar_uploaded_at).getTime());
+}
+async function signAvatar(p){
+ if(!avatarFresh(p)||!p.avatar_path||maintenanceIsActive())return;
+ const existing=state.avatarUrls[p.avatar_path];
+ if(existing&&existing.expires>Date.now())return;
+ const {data,error}=await db.storage.from(AVATAR_BUCKET).createSignedUrl(p.avatar_path,600);
+ if(!error&&data?.signedUrl)state.avatarUrls[p.avatar_path]={url:data.signedUrl,expires:Date.now()+540000};
+}
+function avatarUploader(p){
+ const url=state.avatarPreviewUrl||(avatarFresh(p)?state.avatarUrls[p?.avatar_path]?.url:'');
+ const label=p?.avatar_path?'Trocar foto':'Adicionar foto';
+ return '<div class="avatar-uploader"><div class="avatar-photo-preview">'
+ +(url?'<img src="'+esc(url)+'" alt="Prévia da foto de perfil">':'<span aria-hidden="true">'+esc(initials(p?.display_name||'Eu'))+'</span>')
+ +'</div><div class="avatar-uploader-info"><strong>'+label+'</strong><p>Foto opcional. Enviamos apenas um WebP de até 40 KB, com duração de 24 horas.</p>'
+ +'<label class="avatar-select" for="avatarFile">'+ico('edit',16)+' Escolher foto <input id="avatarFile" type="file" name="avatar_file" accept="image/jpeg,image/png,image/webp" aria-label="Escolher foto de perfil"></label>'
+ +(p?.avatar_path?'<button type="button" class="avatar-remove" data-action="removeAvatar">'+ico('trash',15)+' Remover foto atual</button>':'')
+ +'</div></div>';
+}
+async function compressAvatar(file){
+ if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type))
+  throw Error('Escolha uma foto JPG, PNG ou WebP.');
+ if(file.size>12*1024*1024)throw Error('A foto original precisa ter até 12 MB.');
+ let bitmap=null,img=null,tmp=null;
+ try{
+  if('createImageBitmap' in window){
+   bitmap=await createImageBitmap(file);
+  }else{
+   tmp=URL.createObjectURL(file);
+   img=new Image();
+   img.src=tmp;
+   await img.decode();
+  }
+  const width=bitmap?.width||img?.naturalWidth,height=bitmap?.height||img?.naturalHeight;
+  if(!width||!height||width*height>75000000)throw Error('Essa foto é grande demais ou está corrompida.');
+  const canvas=document.createElement('canvas');
+  let last;
+  for(const target of [160,144,128,112]){
+   canvas.width=canvas.height=target;
+   const ctx=canvas.getContext('2d',{alpha:false});
+   if(!ctx)throw Error('Não foi possível preparar a foto neste aparelho.');
+   const side=Math.min(width,height),x=(width-side)/2,y=(height-side)/2;
+   ctx.drawImage(bitmap||img,x,y,side,side,0,0,target,target);
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',target>=144?.36:.25));
+   if(!blob||blob.type!=='image/webp')throw Error('Seu navegador não conseguiu comprimir a foto em WebP.');
+   last=blob;
+   if(blob.size<=AVATAR_MAX)break;
+  }
+  if(!last||last.size>AVATAR_MAX)throw Error('Não conseguimos reduzir esta imagem para 40 KB.');
+  return last;
+ }finally{
+  if(bitmap)bitmap.close();
+  if(tmp)URL.revokeObjectURL(tmp);
+ }
+}
+async function uploadAvatarFile(file){
+ if(!state.session?.user?.id)throw Error('Faça login antes de adicionar a foto.');
+ const blob=await compressAvatar(file);
+ const path=state.session.user.id+'/'+crypto.randomUUID()+'.webp';
+ const {error}=await db.storage.from(AVATAR_BUCKET).upload(path,blob,{contentType:'image/webp',upsert:false,cacheControl:'60'});
+ if(error)throw error;
+ return path;
+}
+function clearAvatarDraft(){
+ if(state.avatarPreviewUrl){URL.revokeObjectURL(state.avatarPreviewUrl);state.avatarPreviewUrl=null;}
+ state.avatarPendingFile=null;
+}
+async function removeAvatar(){
+ if(!state.profile?.avatar_path)return;
+ if(!confirm('Remover a foto do seu perfil?'))return;
+ const path=state.profile.avatar_path;
+ const {data,error}=await db.from('entre_profiles').update({avatar_path:null,updated_at:new Date().toISOString()})
+ .eq('id',state.session.user.id).select('*').single();
+ if(error){toast(infoError(error),true);return;}
+ state.profile=data;
+ delete state.avatarUrls[path];
+ clearAvatarDraft();
+ render();
+ // Best-effort physical delete; scheduled cleanup remains the safety net.
+ const removed=await db.storage.from(AVATAR_BUCKET).remove([path]);
+ if(removed.error)console.warn('Avatar will be purged by retention job:',removed.error.message);
+ toast('Foto removida do perfil.');
+}
+
 function authView(){const signup=state.mode==='signup';const onboard=state.mode==='onboard';const reg=onboard;const data=state.signup||{};return `<div class="auth-shell"><aside class="auth-visual">${brand()}<div><span class="eyebrow" style="color:#e9b49f">SEU PRÓXIMO OLÁ COMEÇA AQUI</span><h2>É sobre a pessoa <em>do outro lado.</em></h2></div><p class="legal-note">Uma conversa de cada vez. Uma escolha que é dos dois.</p><div class="auth-orbit"></div></aside><main class="auth-main"><div class="auth-card"><div class="hidden-mobile-brand">${brand()}</div>${onboard?'':`<button class="auth-back" data-action="landing">${ico('back',17)} Voltar ao início</button>`}<h1>${onboard?'Complete seu <em>perfil.</em>':signup?'Seu próximo <em>olá.</em>':'Bom ter você <em>de volta.</em>'}</h1><p class="auth-sub">${onboard?'Só faltam alguns detalhes para começar a conhecer alguém.':signup?'Entre com sua conta Google para criar seu espaço, sem senha nova.':'Use sua conta Google para continuar de onde parou.'}</p><div id="form-error" class="hidden form-error"></div><div id="form-success" class="hidden form-success"></div>
-${onboard?`<div class="google-verified">${googleLogo}<span>Conta Google conectada</span></div>`:``}${onboard&&state.isAdmin?`<a class="admin-entry" href="./admin/">${ico("shield",16)} Acessar o painel administrativo ${ico("arrow",16)}</a>`:""}<form id="authForm" data-form="${onboard?'profileSetup':signup?'signup':'login'}"><div class="form-grid">${reg?`<div class="field full"><label for="display_name">Como podemos chamar você?</label><input id="display_name" name="display_name" maxlength="42" minlength="2" required autocomplete="nickname" placeholder="Seu nome" value="${esc(data.display_name||'')}"></div>`:''}${reg?`<div class="field"><label for="age">Sua idade</label><input id="age" name="age" type="number" min="18" max="100" required placeholder="18+" value="${esc(data.age||'')}"></div><div class="field"><label for="gender">Você se identifica como</label><select id="gender" name="gender" required>${options({woman:'Mulher',man:'Homem',nonbinary:'Não binário'},data.gender||'')}</select></div><div class="field full"><label for="preference">Com quem quer conversar?</label><select id="preference" name="preference" required>${options({any:'Qualquer pessoa',woman:'Mulheres',man:'Homens',nonbinary:'Pessoas não binárias'},data.preference||'any')}</select></div>`:''}</div>${reg?`<label class="checkbox-line"><input type="checkbox" name="adult" required><span>Confirmo que tenho 18 anos ou mais e concordo em participar de conversas respeitosas.</span></label>`:''}${onboard?`<button class="ui-btn btn-dark" type="submit" id="authSubmit">Finalizar meu perfil ${ico('arrow',18)}</button>`:`<div class="google-auth-section"><div class="google-auth-label"><span></span>ACESSO EXCLUSIVO VIA GOOGLE<span></span></div><button type="button" class="google-login" id="googleLogin" data-action="google" aria-label="Continuar com Google">${googleLogo}<b>Continuar com Google</b>${ico('arrow',18)}</button><p class="google-auth-caption">Você será direcionado ao Google para selecionar sua conta. Nós não solicitamos sua senha.</p></div>`}</form>${!onboard?`<div class="auth-switch">${signup?'Já tem conta?':'Ainda não tem conta?'} <button class="text-link" data-action="${signup?'login':'signup'}">${signup?'Entrar':'Criar conta'}</button></div>`:''}<p class="legal-note" style="margin-top:29px">Seus dados de perfil são usados para realizar conexões. Não compartilhe dados sensíveis nos chats. A idade é autodeclarada.</p></div></main></div>`}
+${onboard?`<div class="google-verified">${googleLogo}<span>Conta Google conectada</span></div>`:``}${onboard&&state.isAdmin?`<a class="admin-entry" href="./admin/">${ico("shield",16)} Acessar o painel administrativo ${ico("arrow",16)}</a>`:""}<form id="authForm" data-form="${onboard?'profileSetup':signup?'signup':'login'}">${onboard?avatarUploader(state.profile):''}<div class="form-grid">${reg?`<div class="field full"><label for="display_name">Como podemos chamar você?</label><input id="display_name" name="display_name" maxlength="42" minlength="2" required autocomplete="nickname" placeholder="Seu nome" value="${esc(data.display_name||'')}"></div>`:''}${reg?`<div class="field"><label for="age">Sua idade</label><input id="age" name="age" type="number" min="18" max="100" required placeholder="18+" value="${esc(data.age||'')}"></div><div class="field"><label for="gender">Você se identifica como</label><select id="gender" name="gender" required>${options({woman:'Mulher',man:'Homem',nonbinary:'Não binário'},data.gender||'')}</select></div><div class="field full"><label for="preference">Com quem quer conversar?</label><select id="preference" name="preference" required>${options({any:'Qualquer pessoa',woman:'Mulheres',man:'Homens',nonbinary:'Pessoas não binárias'},data.preference||'any')}</select></div>`:''}</div>${reg?`<label class="checkbox-line"><input type="checkbox" name="adult" required><span>Confirmo que tenho 18 anos ou mais e concordo em participar de conversas respeitosas.</span></label>`:''}${onboard?`<button class="ui-btn btn-dark" type="submit" id="authSubmit">Finalizar meu perfil ${ico('arrow',18)}</button>`:`<div class="google-auth-section"><div class="google-auth-label"><span></span>ACESSO EXCLUSIVO VIA GOOGLE<span></span></div><button type="button" class="google-login" id="googleLogin" data-action="google" aria-label="Continuar com Google">${googleLogo}<b>Continuar com Google</b>${ico('arrow',18)}</button><p class="google-auth-caption">Você será direcionado ao Google para selecionar sua conta. Nós não solicitamos sua senha.</p></div>`}</form>${!onboard?`<div class="auth-switch">${signup?'Já tem conta?':'Ainda não tem conta?'} <button class="text-link" data-action="${signup?'login':'signup'}">${signup?'Entrar':'Criar conta'}</button></div>`:''}<p class="legal-note" style="margin-top:29px">Seus dados de perfil são usados para realizar conexões. Não compartilhe dados sensíveis nos chats. A idade é autodeclarada.</p></div></main></div>`}
 function options(dict,selected){return Object.entries(dict).map(([key,value])=>`<option value="${key}" ${selected===key?'selected':''}>${esc(value)}</option>`).join('')}
 const tabs=[['home','Início','home'],['connect','Conectar','bolt'],['conversations','Conversas','chat'],['profile','Meu perfil','user'],['settings','Ajustes','settings']];
 function navButton(view,label,icon,mobile=false){return `<button data-action="nav" data-view="${view}" class="${mobile?'':'nav-item '}${state.view===view?'active':''}" title="${label}" ${state.view===view?'aria-current="page"':''}>${ico(icon)}<span>${label}</span>${!mobile&&view==='conversations'&&state.pairs.filter(p=>p.status==='connected').length?`<span class="count">${state.pairs.filter(p=>p.status==='connected').length}</span>`:''}</button>`}
@@ -65,7 +162,7 @@ function pairView(){const pair=state.pair, peer=state.peer||{display_name:'Nova 
 function messagesMarkup(peer){if(!state.messages.length)return `<div class="chat-intro">${avatar(peer,'large')}<strong>Vocês estão conectados.</strong>Uma mensagem pode ser o começo de alguma coisa. Que tal dizer oi?</div>`;return state.messages.map(m=>{const mine=m.sender_id===state.session?.user.id;return `<div class="bubble-row ${mine?'mine':'theirs'}"><div class="bubble">${esc(m.body)}<time class="bubble-time">${fmtTime(m.created_at)}</time></div></div>`}).join('')}
 function conversationsView(){const pairs=state.pairs.filter(p=>p.status==='connected');return `${heading('SINTONIA RECÍPROCA','Suas <em>conversas.</em>','Aqui ficam as conexões em que vocês dois escolheram continuar. Nada de matches unilaterais.')}${pairs.length?`<div class="convo-list">${pairs.map(renderConversationRow).join('')}</div>`:emptyConvos()}`}
 function profileView(){const p=state.profile;return `${heading('É SOBRE QUEM VOCÊ É','Meu <em>perfil.</em>','É assim que a outra pessoa vai conhecer você depois de uma conexão.')}
-<div class="profile-layout"><div class="profile-preview">${avatar(p,'xlarge')}<h3>${esc(p.display_name)}, ${p.age}</h3><p>${esc(p.bio||'Uma conversa de cada vez. Vamos nos conhecer?')}</p><span class="pill">${ico('user',15)} ${esc(genders[p.gender])}</span></div><div class="form-panel"><h3>Editar perfil</h3><form id="profileForm"><div class="form-grid"><div class="field full"><label for="myname">Nome exibido</label><input id="myname" name="display_name" minlength="2" maxlength="42" required value="${esc(p.display_name)}"></div><div class="field"><label for="myage">Idade</label><input id="myage" name="age" type="number" min="18" max="100" required value="${p.age}"></div><div class="field"><label for="mygender">Identidade</label><select id="mygender" name="gender">${options({woman:'Mulher',man:'Homem',nonbinary:'Não binário'},p.gender)}</select></div><div class="field full"><label for="mypref">Preferência de busca</label><select id="mypref" name="preference">${options({any:'Qualquer pessoa',woman:'Mulheres',man:'Homens',nonbinary:'Não binárias'},p.preference)}</select></div><div class="field full"><label for="mybio">Sobre você</label><textarea id="mybio" name="bio" maxlength="220" placeholder="Conta algo interessante sobre você...">${esc(p.bio||'')}</textarea><small>Até 220 caracteres. Não informe dados pessoais.</small></div></div><button type="submit" class="ui-btn btn-dark">Salvar alterações ${ico('check',17)}</button></form></div></div>`}
+<div class="profile-layout"><div class="profile-preview">${avatar(p,'xlarge')}<h3>${esc(p.display_name)}, ${p.age}</h3><p>${esc(p.bio||'Uma conversa de cada vez. Vamos nos conhecer?')}</p><span class="pill">${ico('user',15)} ${esc(genders[p.gender])}</span></div><div class="form-panel"><h3>Editar perfil</h3><form id="profileForm">${avatarUploader(p)}<div class="form-grid"><div class="field full"><label for="myname">Nome exibido</label><input id="myname" name="display_name" minlength="2" maxlength="42" required value="${esc(p.display_name)}"></div><div class="field"><label for="myage">Idade</label><input id="myage" name="age" type="number" min="18" max="100" required value="${p.age}"></div><div class="field"><label for="mygender">Identidade</label><select id="mygender" name="gender">${options({woman:'Mulher',man:'Homem',nonbinary:'Não binário'},p.gender)}</select></div><div class="field full"><label for="mypref">Preferência de busca</label><select id="mypref" name="preference">${options({any:'Qualquer pessoa',woman:'Mulheres',man:'Homens',nonbinary:'Não binárias'},p.preference)}</select></div><div class="field full"><label for="mybio">Sobre você</label><textarea id="mybio" name="bio" maxlength="220" placeholder="Conta algo interessante sobre você...">${esc(p.bio||'')}</textarea><small>Até 220 caracteres. Não informe dados pessoais.</small></div></div><button type="submit" class="ui-btn btn-dark">Salvar alterações ${ico('check',17)}</button></form></div></div>`}
 function settingsView(){return `${heading('VOCÊ NO CONTROLE','Configurações<em>.</em>','Seu espaço, suas preferências e o controle da sua experiência.')}
 <div class="settings-card"><h3>Preferências</h3><div class="setting-row"><div><strong>Reduzir animações</strong><p>Desativa movimentos e transições para uma experiência mais tranquila.</p></div><button type="button" class="toggle ${state.motionOff?'on':''}" data-action="motion" aria-label="Ativar ou desativar redução de animações" aria-pressed="${state.motionOff}"></button></div><div class="setting-row"><div><strong>Quem você procura</strong><p>${esc(genders[state.profile.preference])} — altere seu filtro na área de perfil.</p></div><button class="ui-btn btn-outline btn-sm" data-action="nav" data-view="profile">Editar ${ico('edit',15)}</button></div></div>
 <div class="settings-card"><h3>Sessão e privacidade</h3><div class="setting-row"><div><strong>Conta conectada</strong><p>${esc(state.session.user.email)}</p></div><span class="pill">${ico('shield',15)} Google</span></div><div class="setting-row"><div><strong>Sair da conta</strong><p>Encerra sua sessão neste dispositivo.</p></div><button class="ui-btn btn-outline btn-sm" data-action="logout">${ico('exit',16)} Sair</button></div><div class="danger-zone"><strong>Excluir meu perfil do entre.</strong><p>Remove definitivamente seu perfil, mensagens e conexões deste aplicativo. O cadastro de autenticação compartilhado com outros produtos no mesmo servidor não será excluído.</p><button class="ui-btn btn-danger btn-sm" data-action="delete1">${ico('trash',15)} Excluir meus dados</button></div></div>${state.isAdmin?`<div class="settings-card"><h3>Painel administrativo</h3><div class="setting-row"><div><strong>Gerenciar o entre.</strong><p>Usuários, denúncias, estatísticas e configurações da plataforma.</p></div><a class="admin-entry" href="./admin/">Abrir painel ${ico("arrow",15)}</a></div></div>`:""}`}
@@ -106,8 +203,8 @@ function renderView(){if(maintenanceIsActive())return;if(state.session&&state.pr
 function showFormMessage(msg,success=false){const id=success?'form-success':'form-error';const target=document.getElementById(id);if(target){target.classList.remove('hidden');target.textContent=msg}}
 function busy(btn,value){if(btn){btn.disabled=value;btn.dataset.oldLabel ||= btn.innerHTML;if(value)btn.textContent='Só um instante...';else btn.innerHTML=btn.dataset.oldLabel}}
 async function getProfile(){const uid=state.session?.user.id;if(!uid)return null;const {data,error}=await db.from('entre_profiles').select('*').eq('id',uid).maybeSingle();if(error)throw error;return data}
-async function loadPairs(){if(!state.session||!state.profile)return;const uid=state.session.user.id;const {data,error}=await db.from('entre_pairs').select('*').or(`a.eq.${uid},b.eq.${uid}`).in('status',['active','connected']).order('created_at',{ascending:false}).limit(50);if(error)throw error;state.pairs=data||[];const ids=[...new Set(state.pairs.map(p=>p.a===uid?p.b:p.a))];state.pairsProfiles={};if(ids.length){const {data:profiles}=await db.from('entre_profiles').select('id,display_name,age,bio,gender').in('id',ids);for(const pair of state.pairs){state.pairsProfiles[pair.id]=profiles?.find(p=>p.id===(pair.a===uid?pair.b:pair.a))||{id:pair.a===uid?pair.b:pair.a,display_name:'Conta indisponível'}}}return state.pairs}
-async function initializeAccount(){state.profile=await getProfile();state.pair=null;state.peer=null;state.searching=false;state.messages=[];if(state.profile){state.preference=state.profile.preference;await loadPairs();const active=state.pairs.find(p=>p.status==='active'&&new Date(p.expires_at)>Date.now());if(active){state.pair=active;state.peer=state.pairsProfiles[active.id]||null;state.view='connect';await loadMessages();subscribePair(active.id)}}render()}
+async function loadPairs(){if(!state.session||!state.profile)return;const uid=state.session.user.id;const {data,error}=await db.from('entre_pairs').select('*').or(`a.eq.${uid},b.eq.${uid}`).in('status',['active','connected']).order('created_at',{ascending:false}).limit(50);if(error)throw error;state.pairs=data||[];const ids=[...new Set(state.pairs.map(p=>p.a===uid?p.b:p.a))];state.pairsProfiles={};if(ids.length){const {data:profiles}=await db.from('entre_profiles').select('id,display_name,age,bio,gender,avatar_path,avatar_uploaded_at').in('id',ids);if(profiles?.length)await Promise.all(profiles.map(signAvatar));for(const pair of state.pairs){state.pairsProfiles[pair.id]=profiles?.find(p=>p.id===(pair.a===uid?pair.b:pair.a))||{id:pair.a===uid?pair.b:pair.a,display_name:'Conta indisponível'}}}return state.pairs}
+async function initializeAccount(){state.profile=await getProfile();if(state.profile)await signAvatar(state.profile);state.pair=null;state.peer=null;state.searching=false;state.messages=[];if(state.profile){state.preference=state.profile.preference;await loadPairs();const active=state.pairs.find(p=>p.status==='active'&&new Date(p.expires_at)>Date.now());if(active){state.pair=active;state.peer=state.pairsProfiles[active.id]||null;state.view='connect';await loadMessages();subscribePair(active.id)}}render()}
 function hasGoogleIdentity(user){const providers=user?.app_metadata?.providers;return user?.app_metadata?.provider==='google'||(Array.isArray(providers)&&providers.includes('google'))||user?.identities?.some(i=>i.provider==='google')===true}
 async function signInGoogle(btn){
  busy(btn,true);
@@ -123,14 +220,51 @@ async function signInGoogle(btn){
 }
 function getProfileData(form){return {display_name:form.display_name.value.trim(),age:Number(form.age.value),gender:form.gender.value,preference:form.preference.value}}
 async function createProfile(data){const {error}=await db.from('entre_profiles').upsert({id:state.session.user.id,display_name:data.display_name,age:data.age,gender:data.gender,preference:data.preference},{onConflict:'id'});if(error)throw error;sessionStorage.removeItem('entre.pendingProfile')}
-async function profileSetup(form){const submit=form.querySelector('[type=submit]');busy(submit,true);try{const profile=getProfileData(form);if(!form.adult.checked||profile.age<18)throw Error('Você deve ter pelo menos 18 anos.');await createProfile(profile);state.view='home';await initializeAccount();toast('Perfil concluído. Bem-vindo ao entre.!')}catch(e){showFormMessage(infoError(e))}finally{busy(submit,false)}}
-async function saveProfile(form){const submit=form.querySelector('[type=submit]');busy(submit,true);try{const p=getProfileData(form);const {data,error}=await db.from('entre_profiles').update({...p,bio:form.bio.value.trim(),updated_at:new Date().toISOString()}).eq('id',state.session.user.id).select('*').single();if(error)throw error;state.profile=data;state.preference=data.preference;render();toast('Perfil atualizado!')}catch(e){toast(infoError(e),true)}finally{busy(submit,false)}}
+async function profileSetup(form){
+ const submit=form.querySelector('[type=submit]');busy(submit,true);
+ let uploaded=null;
+ try{
+  const profile=getProfileData(form);
+  if(!form.adult.checked||profile.age<18)throw Error('Você deve ter pelo menos 18 anos.');
+  if(state.avatarPendingFile){uploaded=await uploadAvatarFile(state.avatarPendingFile);profile.avatar_path=uploaded;}
+  await createProfile(profile);
+  clearAvatarDraft();
+  state.view='home';await initializeAccount();
+  toast('Perfil concluído. Bem-vindo ao entre.!');
+ }catch(e){
+  if(uploaded)await db.storage.from(AVATAR_BUCKET).remove([uploaded]);
+  showFormMessage(infoError(e));
+ }finally{busy(submit,false)}
+}
+async function saveProfile(form){
+ const submit=form.querySelector('[type=submit]');busy(submit,true);
+ let uploaded=null;
+ try{
+  const p=getProfileData(form);
+  const previous=state.profile?.avatar_path;
+  if(state.avatarPendingFile){uploaded=await uploadAvatarFile(state.avatarPendingFile);p.avatar_path=uploaded;}
+  const {data,error}=await db.from('entre_profiles')
+   .update({...p,bio:form.bio.value.trim(),updated_at:new Date().toISOString()})
+   .eq('id',state.session.user.id).select('*').single();
+  if(error)throw error;
+  state.profile=data;state.preference=data.preference;
+  if(uploaded)await signAvatar(data);
+  clearAvatarDraft();render();
+  toast(uploaded?'Foto comprimida e perfil atualizados!':'Perfil atualizado!');
+  if(uploaded&&previous&&previous!==uploaded){
+   db.storage.from(AVATAR_BUCKET).remove([previous]).then(r=>{if(r.error)console.warn('Old image cleanup deferred:',r.error)});
+  }
+ }catch(e){
+  if(uploaded)await db.storage.from(AVATAR_BUCKET).remove([uploaded]);
+  toast(infoError(e),true);
+ }finally{busy(submit,false)}
+}
 function clearSearchTimer(){if(state.searchLoop){clearInterval(state.searchLoop);state.searchLoop=null}}
 async function startSearch(){if(maintenanceIsActive())return;if(!state.session||!state.profile)return;state.searching=true;state.pair=null;state.peer=null;state.view='connect';render();await pollSearch();if(state.searching&&!state.searchLoop)state.searchLoop=setInterval(pollSearch,3500)}
 let polling=false;
 async function pollSearch(){if(polling||!state.searching)return;polling=true;try{const {data,error}=await db.rpc('entre_find',{_preference:state.preference});if(error)throw error;if(data?.status==='matched'&&data.pair_id){state.searching=false;clearSearchTimer();await openPair(data.pair_id);toast('Você encontrou uma conexão!')}}catch(e){toast(infoError(e),true);state.searching=false;clearSearchTimer();renderView()}finally{polling=false}}
 async function cancelSearch(){state.searching=false;clearSearchTimer();try{const {error}=await db.rpc('entre_leave');if(error)throw error}catch(e){toast(infoError(e),true)}renderView()}
-async function openPair(id){const {data,error}=await db.from('entre_pairs').select('*').eq('id',id).single();if(error)throw error;if(data.status==='closed'||(data.status==='active'&&new Date(data.expires_at)<=Date.now())){toast('Este encontro já terminou.');state.pair=null;state.peer=null;state.view='conversations';render();return}state.pair=data;state.searching=false;clearSearchTimer();const other=data.a===state.session.user.id?data.b:data.a;const {data:profile}=await db.from('entre_profiles').select('id,display_name,age,bio,gender').eq('id',other).maybeSingle();state.peer=profile||{id:other,display_name:'Esta pessoa'};state.view='connect';await loadMessages();subscribePair(id);render()}
+async function openPair(id){const {data,error}=await db.from('entre_pairs').select('*').eq('id',id).single();if(error)throw error;if(data.status==='closed'||(data.status==='active'&&new Date(data.expires_at)<=Date.now())){toast('Este encontro já terminou.');state.pair=null;state.peer=null;state.view='conversations';render();return}state.pair=data;state.searching=false;clearSearchTimer();const other=data.a===state.session.user.id?data.b:data.a;const {data:profile}=await db.from('entre_profiles').select('id,display_name,age,bio,gender,avatar_path,avatar_uploaded_at').eq('id',other).maybeSingle();if(profile)await signAvatar(profile);state.peer=profile||{id:other,display_name:'Esta pessoa'};state.view='connect';await loadMessages();subscribePair(id);render()}
 async function loadMessages(){if(!state.pair)return;const {data,error}=await db.from('entre_messages').select('id,body,sender_id,created_at').eq('pair_id',state.pair.id).order('id',{ascending:true}).limit(250);if(error){console.warn(error);return}state.messages=data||[]}
 function subscribePair(id){if(state.channel){db.removeChannel(state.channel);state.channel=null}state.channel=db.channel(`entre_pair_${id}_${Math.random().toString(36).slice(2,7)}`).on('postgres_changes',{event:'INSERT',schema:'public',table:'entre_messages',filter:`pair_id=eq.${id}`},async()=>{if(state.pair?.id===id){await loadMessages();renderView()}}).on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_pairs',filter:`id=eq.${id}`},async()=>{if(state.pair?.id===id)await refreshPair()}).subscribe()}
 async function refreshPair(){if(!state.pair)return;const id=state.pair.id;const {data,error}=await db.from('entre_pairs').select('*').eq('id',id).maybeSingle();if(error)return;if(!data||data.status==='closed'){state.pair=null;state.messages=[];state.peer=null;state.view='connect';if(state.channel){db.removeChannel(state.channel);state.channel=null}render();toast('Este encontro foi encerrado.');return}const oldStatus=state.pair.status;state.pair=data;if(data.status==='connected'&&oldStatus!=='connected'){toast('Os dois disseram sim! Conexão salva. ♡');await loadPairs()}renderView()}
@@ -143,8 +277,22 @@ async function deleteData(){const val=document.getElementById('deleteConfirm')?.
 function updateTimerText(){if(!state.pair||state.pair.status!=='active')return;const seconds=Math.max(0,Math.ceil((new Date(state.pair.expires_at).getTime()-Date.now())/1000));const mm=String(Math.floor(seconds/60)).padStart(2,'0'),ss=String(seconds%60).padStart(2,'0');document.querySelectorAll('.timer-text').forEach(el=>{el.textContent=`${mm}:${ss}`;el.classList.toggle('urgent',seconds<=30)});if(seconds===0&&state.closedOnce!==state.pair.id){state.closedOnce=state.pair.id;db.rpc('entre_close',{_pair:state.pair.id}).then(()=>refreshPair()).catch(()=>{})}}
 function nav(view){state.view=view;if(view!=='connect'&&state.pair?.status==='active'){toast('Sua conversa de 5 minutos continua ativa na aba Conectar.')}render();window.scrollTo({top:0,behavior:state.motionOff?'instant':'smooth'})}
 function scrollHow(){document.getElementById('como-funciona')?.scrollIntoView({behavior:'smooth'})}
-async function clickAction(event){const btn=event.target.closest('[data-action]');if(!btn||btn.disabled)return;const action=btn.dataset.action;try{switch(action){case'logo':event.preventDefault();if(state.session&&state.profile)nav('home');else{state.mode='landing';render()}break;case'landing':state.mode='landing';render();break;case'how':scrollHow();break;case'login':state.mode='login';render();break;case'signup':state.mode='signup';render();break;case'google':await signInGoogle(btn);break;case'maintenanceRefresh':await maintenanceCheck(true);break;case'nav':nav(btn.dataset.view);break;case'filter':state.preference=btn.dataset.value;renderView();break;case'startsearch':await startSearch();break;case'cancelsearch':await cancelSearch();break;case'openpair':await openPair(btn.dataset.id);break;case'vote':await vote(btn.dataset.value==='yes');break;case'endpair':state.modal='endpair';render();break;case'endpairFinal':await endPair();break;case'report':state.modal='report';render();break;case'block':state.modal='block';render();break;case'blockFinal':await blockPartner();break;case'closemodal':state.modal=null;render();break;case'logout':await logout();break;case'motion':state.motionOff=!state.motionOff;localStorage.setItem('entre.motionOff',state.motionOff?'1':'0');render();break;case'delete1':state.modal='delete1';render();break;case'delete2':state.modal='delete2';render();break;case'deleteFinal':await deleteData();break;default:break}}catch(e){toast(infoError(e),true)}}
+async function clickAction(event){const btn=event.target.closest('[data-action]');if(!btn||btn.disabled)return;const action=btn.dataset.action;try{switch(action){case'logo':event.preventDefault();if(state.session&&state.profile)nav('home');else{state.mode='landing';render()}break;case'landing':state.mode='landing';render();break;case'how':scrollHow();break;case'login':state.mode='login';render();break;case'signup':state.mode='signup';render();break;case'google':await signInGoogle(btn);break;case'maintenanceRefresh':await maintenanceCheck(true);break;case'nav':nav(btn.dataset.view);break;case'filter':state.preference=btn.dataset.value;renderView();break;case'startsearch':await startSearch();break;case'cancelsearch':await cancelSearch();break;case'openpair':await openPair(btn.dataset.id);break;case'vote':await vote(btn.dataset.value==='yes');break;case'endpair':state.modal='endpair';render();break;case'endpairFinal':await endPair();break;case'report':state.modal='report';render();break;case'removeAvatar':await removeAvatar();break;case'block':state.modal='block';render();break;case'blockFinal':await blockPartner();break;case'closemodal':state.modal=null;render();break;case'logout':await logout();break;case'motion':state.motionOff=!state.motionOff;localStorage.setItem('entre.motionOff',state.motionOff?'1':'0');render();break;case'delete1':state.modal='delete1';render();break;case'delete2':state.modal='delete2';render();break;case'deleteFinal':await deleteData();break;default:break}}catch(e){toast(infoError(e),true)}}
 document.addEventListener('click',clickAction);
+document.addEventListener('change',e=>{
+ if(e.target?.id!=='avatarFile')return;
+ const file=e.target.files?.[0];
+ if(!file)return;
+ if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>12*1024*1024){
+   toast('Use JPG, PNG ou WebP de até 12 MB. O envio final será comprimido para 40 KB.',true);
+   e.target.value='';return;
+ }
+ clearAvatarDraft();
+ state.avatarPendingFile=file;
+ state.avatarPreviewUrl=URL.createObjectURL(file);
+ const img=document.querySelector('.avatar-photo-preview');
+ if(img)img.innerHTML='<img src="'+esc(state.avatarPreviewUrl)+'" alt="Prévia da foto selecionada">';
+});
 document.addEventListener('submit',async e=>{const form=e.target;if(!(form instanceof HTMLFormElement))return;e.preventDefault();const name=form.id;try{if(name==='authForm'&&form.dataset.form==='profileSetup')await profileSetup(form);else if(name==='profileForm')await saveProfile(form);else if(name==='messageForm')await sendMessage(form);else if(name==='reportForm')await sendReport(form)}catch(err){toast(infoError(err),true)}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal){state.modal=null;render()}});
 window.addEventListener('beforeunload',()=>{if(state.searching)db.rpc('entre_leave').catch(()=>{})});
