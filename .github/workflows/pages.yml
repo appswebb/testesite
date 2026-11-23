@@ -33,6 +33,10 @@ jobs:
         uses: actions/upload-pages-artifact@v4
         with:
           path: ./docs
+      # GitHub's artifact index can lag behind successful uploads.
+      # Avoid sporadic "No artifacts named github-pages were found".
+      - name: Allow Pages artifact metadata to propagate
+        run: sleep 20
       - name: Deploy website
         id: deployment
         uses: actions/deploy-pages@v4
