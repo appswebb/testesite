@@ -20,7 +20,7 @@ Deno.serve(async(req:Request)=>{
   if(moderation?.is_banned===true)return json({error:"not_found"},404);
   let avatar_url:string|null=null;
   // The avatar bucket remains private. Sign only this exact profile's stored asset.
-  if(p.avatar_path&&new RegExp("^"+p.id.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"/[0-9a-f-]{36}\\.webp$","i").test(p.avatar_path)){
+  if(p.avatar_path&&p.avatar_path.startsWith(p.id+"/")&&/^[0-9a-f-]{36}\\.webp$/i.test(p.avatar_path.split("/")[1])&&p.avatar_path.split("/").length===2){
    const signed=await sb.storage.from("entre-avatars").createSignedUrl(p.avatar_path,180);
    if(!signed.error&&signed.data?.signedUrl)avatar_url=signed.data.signedUrl;
   }
