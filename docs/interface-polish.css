@@ -1,15 +1,15 @@
-/* entre. · Correções de interface mantendo as cores originais */
+/* Correções de interface integradas às cores atuais do aplicativo */
 /* Compartilhamento: CTA realmente visível, sem borda apagada */
 #view-content .profile-share-primary,.profile-share-primary{
  display:flex;align-items:center;justify-content:center;gap:9px;width:100%;
  min-height:51px;margin:15px auto 18px;padding:13px 16px;
- background:#3e3e3e!important;color:#fff!important;border:1px solid #3e3e3e!important;
+ background:var(--ui-accent,#171717)!important;color:var(--ui-accent-on,#fff)!important;border:1px solid var(--ui-accent,#171717)!important;
  border-radius:14px!important;font-weight:850!important;font-size:13px;
- box-shadow:0 10px 23px #4141411a;opacity:1!important;
+ box-shadow:0 10px 23px var(--ui-accent-faint,rgba(0,0,0,.08));opacity:1!important;
  cursor:pointer;transition:transform .18s,background .18s;
 }
-.profile-share-primary svg{color:#ffdcc6}
-.profile-share-primary:hover{background:#525252!important}
+.profile-share-primary svg{color:var(--ui-accent-on,#fff)}
+.profile-share-primary:hover{filter:brightness(.92)}
 .profile-share-primary:active{transform:scale(.98)}
 /* Comentários em tela completa com rolagem exclusiva */
 body:has(.comments-overlay){overflow:hidden!important}

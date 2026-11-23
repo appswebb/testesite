@@ -35,7 +35,8 @@ test('share link keeps legacy ?u= and new high contrast CTA',()=>{
  assert.match(app,/profile-share-primary/);
  assert.match(app,/navigator\.share/);
  assert.match(css,/\.profile-share-primary/);
- assert.match(css,/background:#264732!important/);
+ assert.match(css,/background:var\(--ui-accent,#171717\)!important/);
+ assert.match(css,/color:var\(--ui-accent-on,#fff\)!important/);
 });
 test('comments display as fullscreen mobile dialog and paginate securely',()=>{
  const app=read('docs/app.js'),feature=read('docs/entre-features.js'),css=read('docs/interface-polish.css');
