@@ -28,8 +28,8 @@ function enhance(){
 function celebrate(){
  if(shouldReduce())return;
  const container=document.createElement('div');container.className='entre-celebration';container.setAttribute('aria-hidden','true');
- const accent=getComputedStyle(document.documentElement).getPropertyValue('--ui-accent').trim()||'#1A9D91';
- const colors=[accent,'#FFFFFF','#55D8D4','#FBC5D2',accent];
+ const accent=getComputedStyle(document.documentElement).getPropertyValue('--ui-accent').trim()||'#111111';
+ const colors=[accent,'#FFFFFF','#D9DDE5','#FBC5D2',accent];
  for(let i=0;i<34;i++){
   const piece=document.createElement('i');piece.className='entre-confetti';
   const a=i*2.3999632297,dist=80+(i*41%260);
