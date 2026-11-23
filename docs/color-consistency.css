@@ -177,3 +177,44 @@ html[data-theme] :is(a,button,input,select,textarea):focus-visible{
  html[data-theme] .comments-dialog-header{padding:15px 17px!important}
  html[data-theme] .comments-dialog-footer{padding-bottom:max(13px,env(safe-area-inset-bottom))!important}
 }
+
+
+/* Legacy messaging, inbox and feed form colors (previously olive/sage). */
+html[data-theme] :is(.chat-origin-bar,.conversation-entry,.conversation-menu-panel,
+ .connections-info,.recent-connection,.notice-feature,.notice-help,.support-access-card,
+ .live-quick-action,.support-contact,.support-history,.support-card,
+ .premium-pitch,.post-comment-form,.notification-item){
+ background:var(--ui-panel)!important;border-color:var(--ui-line)!important;color:var(--ui-text)!important}
+html[data-theme] :is(.chat-origin-bar strong,.connections-info strong,
+ .conversation-menu-panel button,.notice-feature h3,.notice-help h3,
+ .support-access-card h3,.post-compose-top strong,
+ .live-quick-action>span,.live-mode strong,.profile-menu-identity strong){
+ color:var(--ui-text)!important}
+html[data-theme] :is(.chat-origin-bar small,.connections-info p,
+ .recent-connection-body p,.recent-connection-body small,
+ .social-profile-person small,.retention-small,.notice-label,
+ .notice-feature p,.notice-help p,.notice-feature small,
+ .conversation-menu-title,.conversation-entry .convo-details small,
+ .live-choice-title small,.live-mode small,.premium-filter-hint,
+ .post-compose-top small,.post-author small,.support-access-card>span){
+ color:var(--ui-muted)!important}
+html[data-theme] :is(.chat-origin-actions button,.chat-origin-actions select,
+ .conversation-tabs button,.conversation-entry-actions button,
+ .conversation-entry-actions select,.conversation-menu>summary,
+ .conversation-menu-panel button:hover,.conversation-menu-panel button:focus-visible,
+ .live-mode,.live-quick-action,.premium-filter-chip){
+ background:var(--ui-panel-alt)!important;border-color:var(--ui-line)!important;color:var(--ui-text)!important}
+html[data-theme] .conversation-tabs button.active{
+ background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;border-color:var(--ui-accent)!important}
+html[data-theme] :is(.conversation-menu>summary,.conversation-card-arrow,
+ .live-mode>svg,.live-app-card .live-mode>svg){color:var(--ui-muted)!important}
+html[data-theme] :is(.post-compose textarea,.post-comment-form input,
+ .support-contact input,.support-card input,.support-card textarea){
+ background:var(--ui-panel-alt)!important;border-color:var(--ui-line)!important;color:var(--ui-text)!important}
+html[data-theme] :is(.notice-feature,.notice-help){background:var(--ui-panel-alt)!important}
+html[data-theme] .live-mode.selected{background:var(--ui-accent-soft)!important;border-color:var(--ui-accent-shadow)!important;color:var(--ui-text)!important}
+html[data-theme] .live-mode.selected>svg{color:var(--ui-accent)!important}
+html[data-theme] .profile-dropdown button{color:var(--ui-text)!important}
+html[data-theme] .profile-dropdown button:hover{background:var(--ui-panel-alt)!important}
+html[data-theme] .once-feature-art{--ef-sticker-green:var(--ui-accent-soft)}
+html[data-theme] .hero-art{--ef-sticker-green:var(--ui-accent-soft)}
