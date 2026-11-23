@@ -337,3 +337,40 @@ input:focus,select:focus,textarea:focus{outline-color:#f3c628}
  .mobile-nav button svg{width:20px!important;height:20px!important}
 }
 @media(prefers-reduced-motion:reduce){.mobile-nav button,.app-toolbar button{animation:none!important;transition:none!important}}
+
+/* Discover people as portrait-first cards, like the photo-led mobile reference.
+   Preserve all three actions: view profile, follow, and chat. */
+.online-card-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important}
+.online-person{position:relative!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;padding:0!important;border-radius:19px!important;background:#fff!important}
+.online-person-head{position:absolute!important;z-index:3!important;top:11px!important;left:11px!important;max-width:calc(100% - 22px)!important;background:#fff!important;color:#141414!important;border-radius:999px!important;padding:7px 9px!important;font-size:9px!important;letter-spacing:.02em!important;box-shadow:0 3px 10px #00000015!important}
+.online-person .person-online-indicator{background:#ffca22!important;box-shadow:0 0 0 3px #ffe7826c!important;width:7px!important;height:7px!important}
+.online-person-content{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:0!important;margin:0!important;min-width:0!important}
+.online-person-content>.avatar.large{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:clamp(175px,21vw,264px)!important;min-height:170px!important;max-height:275px!important;border:0!important;box-shadow:none!important;border-radius:0!important;overflow:hidden!important;font-size:clamp(30px,6vw,58px)!important}
+.online-person-content>.avatar.large>img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 27%!important;display:block!important;border-radius:0!important}
+.online-person-content>div{display:flex!important;flex-direction:column!important;justify-content:center!important;gap:3px!important;min-width:0!important;padding:12px 12px 0!important}
+.online-person-content h3{font:900 clamp(12px,1.3vw,16px) 'Plus Jakarta Sans',sans-serif!important;letter-spacing:-.04em!important;white-space:normal!important;overflow-wrap:anywhere!important;color:#111!important}
+.online-person-content small{font-size:10px!important;color:#999!important;margin-top:1px!important}
+.online-person-content .person-handle{color:#777!important;font-size:10px!important;font-weight:750!important}
+.online-person-bio{padding:7px 12px 0!important;margin:0!important;min-height:0!important;font-size:11px!important;line-height:1.45!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;color:#777!important}
+.online-person-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;padding:12px!important;margin-top:auto!important}
+.online-person-actions .ui-btn{min-height:37px!important;padding:8px 5px!important;font-size:10px!important;font-weight:800!important;line-height:1.2!important;border-radius:999px!important}
+.online-person-actions .ui-btn:last-child{grid-column:1/-1!important;background:#111!important;color:#fff!important}
+.online-restriction{padding:0 12px 12px!important;font-size:10px!important;color:#989898!important;line-height:1.45!important}
+@media(max-width:1080px){.online-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:650px){
+ .online-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ .online-person-content>.avatar.large{height:clamp(148px,55vw,230px)!important;min-height:140px!important}
+ .online-person-content>div{padding:9px 9px 0!important}
+ .online-person-content h3{font-size:12px!important}
+ .online-person-content small{font-size:9px!important}
+ .online-person-bio{font-size:10px!important;padding:7px 9px 0!important}
+ .online-person-actions{padding:9px!important;gap:5px!important}
+ .online-person-actions .ui-btn{font-size:9px!important;padding:6px 4px!important;min-height:35px!important}
+ .online-restriction{padding:0 9px 8px!important;font-size:9px!important}
+}
+@media(max-width:350px){
+ .online-card-grid{gap:7px!important}
+ .online-person-content>.avatar.large{height:143px!important;min-height:143px!important}
+ .online-person-actions{padding:7px!important;gap:4px!important}
+ .online-person-actions .ui-btn{font-size:8px!important;min-height:33px!important}
+}
