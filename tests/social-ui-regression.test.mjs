@@ -98,3 +98,27 @@ test('No conversation organization actions are rendered inside temporary live ch
  assert.doesNotMatch(api.chatToolbar({id:'temporary',origin:'live',status:'active'}),/conversation-menu/);
  assert.match(api.chatToolbar({id:'saved',origin:'live',status:'connected'}),/conversation-menu/);
 });
+
+test('Conversation deletion and notification clearing execute the correct owner-scoped RPCs',async()=>{
+ const calls=[],state={pairs:[{id:'abc',status:'connected'}],pair:null,channel:null,modal:null};
+ let prefRefresh=0,notificationRefresh=0;
+ const api={data:{deleteConversationId:null},rpc:async(name,args)=>{calls.push([name,args]);return {ok:true}},
+  loadPrefs:async()=>{prefRefresh++},refreshNotifications:async()=>{notificationRefresh++}};
+ let navTarget=null;
+ new Function('window','state','render','renderView','toast','nav','confirm','db','loadPairs','openPair','infoError',read('social-actions.js'))(
+  {entreSocial:api},state,()=>{},()=>{},()=>{},target=>{navTarget=target},()=>true,
+  {removeChannel:()=>{}},()=>{},()=>{},error=>String(error)
+ );
+ await api.action('conversationDeletePrompt',{dataset:{id:'abc'}});
+ assert.equal(state.modal,'deleteConversation');
+ await api.action('conversationDeleteConfirm',{dataset:{}});
+ assert.equal(navTarget,'conversations');
+ assert.equal(state.modal,null);
+ assert.equal(prefRefresh,1);
+ assert.deepEqual(calls[0],['entre_conversation_delete',{_pair:'abc'}]);
+ await api.action('notificationsDismiss',{dataset:{id:'12'}});
+ await api.action('notificationsClear',{dataset:{}});
+ assert.deepEqual(calls[1],['entre_notifications_clear',{_id:12}]);
+ assert.deepEqual(calls[2],['entre_notifications_clear',undefined]);
+ assert.equal(notificationRefresh,2);
+});
