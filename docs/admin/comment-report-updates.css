@@ -1,0 +1,15 @@
+/* Complemento de moderação; mantém integralmente o tema clássico do entre. */
+.comment-reports-admin{margin-top:18px}
+.admin-comment-report{display:flex;justify-content:space-between;align-items:flex-start;gap:17px;padding:18px 23px;border-bottom:1px solid #e9ece4;background:#fffefb}
+.admin-comment-report:last-child{border-bottom:0}
+.admin-comment-report>div:first-child{flex:1;min-width:0}
+.admin-comment-report strong{display:block;color:#304b35;font-size:13px;font-weight:800;line-height:1.4}
+.admin-comment-report small{display:block;margin:4px 0;color:#7e8b7f;font-size:11px;line-height:1.5}
+.admin-comment-report p{white-space:pre-wrap;overflow-wrap:anywhere;color:#4e614f;line-height:1.6;font-size:12px;margin:8px 0 0}
+.admin-report-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px}
+.admin-report-actions .small-btn{border-color:#dce7d7;background:#f6f9f3;color:#355b3f}
+.admin-report-actions .small-btn:hover{background:#e8f1e2}
+@media(max-width:700px){
+ .admin-comment-report{flex-direction:column;padding:15px 17px}
+ .admin-report-actions{justify-content:flex-start;width:100%}
+}
