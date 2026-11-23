@@ -97,7 +97,7 @@ test('Premium checkout has a bounded card and disabled checkout remains unchange
  assert.match(css,/\.premium-checkout-card \.ui-btn\{max-width:100%/);
  const premium=read('entre-features.js');
  assert.match(premium,/enabled\?'':'disabled'/);
- assert.match(premium,/Checkout indisponível/);
+ assert.match(premium,/Pagamento Pix\\/cartão no navegador ainda não está configurado/);
  assert.match(premium,/mercadopago/);
 });
 test('new encounter stylesheet and WebRTC cache version are loaded',()=>{
