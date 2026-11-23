@@ -12,7 +12,7 @@ let settings={...defaultSettings};
 const user={id:'0d6a946d-e827-4b87-b1be-b719ac6e2776',email:'l.demelo2004@gmail.com',app_metadata:{provider:'google',providers:['google']}};
 const fixture=()=>{
 window.__mockedSettings={
- matchmaking_enabled:true,reporting_enabled:true,announcement:'',maintenance_enabled:false,
+ matchmaking_enabled:true,reporting_enabled:true,announcement:'',maintenance_enabled:new URLSearchParams(location.search).has('maintenance_test'),
  maintenance_title:'Tem coisa boa chegando.',maintenance_message:'Estamos preparando uma nova versão do entre.',
  release_at:new Date().toISOString()
 };
@@ -22,7 +22,7 @@ auth:{getSession:async()=>({data:{session:{user}}}),getUser:async()=>({data:{use
 rpc:async(name,params)=>{
 const s=window.__mockedSettings;
 if(name==='entre_admin_check')return {data:true,error:null};
-if(name==='entre_public_settings')return {data:s,error:null};
+if(name==='entre_public_settings')return {data:{...s},error:null};
 if(name==='entre_admin_overview')return {data:{users:13,new_users_7d:7,waiting:3,active_pairs:2,connected_pairs:4,reports_open:1,messages_24h:12,banned:0,settings:s,signup_trend:Array.from({length:7},(_,i)=>({day:new Date(Date.now()-(6-i)*86400000).toISOString().slice(0,10),count:i+1}))},error:null};
 if(name==='entre_admin_set_maintenance'){Object.assign(s,{maintenance_enabled:params._enabled,maintenance_title:params._title,maintenance_message:params._message,release_at:new Date().toISOString()});return {data:{...s},error:null};}
 if(name==='entre_admin_users')return {data:{total:0,rows:[]},error:null};
@@ -98,6 +98,17 @@ assert((await preview.evaluate(()=>document.documentElement.scrollWidth))<=361,'
 total++;
 await preview.close();
 console.log('PASS maintenance mobile preview');
+const maintenancePage=await browser.newPage({viewport:{width:390,height:850}});
+await maintenancePage.addInitScript(fixture);
+await maintenancePage.route(/^https?:\/\/(cdn\.jsdelivr\.net|fonts\.googleapis\.com|fonts\.gstatic\.com)\//,route=>route.fulfill({status:200,contentType:'application/javascript',body:''}));
+await maintenancePage.goto(host+'/?maintenance_test=1',{waitUntil:'domcontentloaded'});
+await maintenancePage.locator('#maintenance-screen').waitFor({timeout:15000});
+assert.equal(await maintenancePage.locator('.landing-hero').count(),0,'Authenticated admin bypassed maintenance');
+await maintenancePage.evaluate(()=>{window.__mockedSettings.maintenance_enabled=false});
+await maintenancePage.click('[data-action="maintenanceRefresh"]');
+await maintenancePage.waitForURL(/released=/,{timeout:15000});
+await maintenancePage.close();
+total+=2;console.log('PASS logged-in admin blocked during maintenance and release reload');
 console.log('SUCCESS '+total+' visual and functional checks');
 }finally{await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error('FAILED',e);process.exitCode=1;});
