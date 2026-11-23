@@ -3,7 +3,7 @@ const {readFileSync}=require('node:fs');
 const {resolve}=require('node:path');
 const assert=require('node:assert/strict');
 const docs=file=>readFileSync(resolve(__dirname,'../docs',file),'utf8');
-const appCss=['styles.css','motion.css','mobile.css','features.css','social.css','social-online.css','entre-features.css','encounter-ui.css','entre-location.css','functional-updates.css','interface-polish.css','live-experience.css','experience-hub.css','once-ui.css','once-public.css','once-maintenance.css','theme.css','once-source-fidelity.css','once-source-components.css','color-consistency.css'].map(docs).join('\n');
+const appCss=['styles.css','motion.css','mobile.css','features.css','social.css','social-online.css','entre-features.css','encounter-ui.css','entre-location.css','functional-updates.css','interface-polish.css','live-experience.css','experience-hub.css','once-ui.css','once-public.css','once-maintenance.css','theme.css','once-source-fidelity.css','once-source-components.css','color-consistency.css','connect-fixes.css','stories.css','connect-experience.css'].map(docs).join('\n');
 const adminCss=['admin/styles.css','admin/comment-report-updates.css','admin/once-admin.css','theme.css','once-source-fidelity.css','once-source-components.css','color-consistency.css'].map(docs).join('\n');
 const publicCss=['perfil.css','perfil-once.css','theme.css','once-source-fidelity.css','once-source-components.css','color-consistency.css'].map(docs).join('\n');
 const infoCss=['features.css','once-info.css','theme.css','once-source-fidelity.css','once-source-components.css','color-consistency.css'].map(docs).join('\n');
@@ -55,6 +55,22 @@ async function checkOverflow(page,width,label){
    assert.equal(palette.helper,'rgb(114, 122, 128)','Legacy green empty-state copy '+width);
    assert.equal(palette.button,'rgb(17, 17, 17)','Comments submit must use selected theme accent '+width);
    await checkOverflow(page,width,'comments');
+
+   // Profile defaults to a compact viewer; editor may expand only on request.
+   const profile='<div class="profile-page"><div class="profile-layout"><div class="profile-preview profile-view-card"><span class="profile-view-tag">VISÃO DO PERFIL</span><div class="avatar xlarge">P</div><h3>Pessoa, 25</h3><span class="profile-handle">@pessoa</span><button class="ui-btn btn-dark profile-share-primary">Compartilhar</button><p>Uma biografia curta, legível e com espaçamento.</p></div><details class="profile-edit-panel"><summary class="profile-edit-trigger"><span class="profile-edit-trigger-icon">✎</span><span class="profile-edit-trigger-label"><strong>Editar meus dados</strong><small>Foto, nome e biografia</small></span></summary><div class="form-panel profile-edit-content"><form id="profileForm"><div class="form-grid"><div class="field full"><label for="profileName">Nome</label><input id="profileName" value="Pessoa"></div><div class="field full"><label for="profileBio">Biografia</label><textarea id="profileBio">Teste</textarea></div></div><button type="submit">Salvar</button></form></div></details></div></div>';
+   await page.setContent(frame(appCss,profile));
+   await checkOverflow(page,width,'profile collapsed');
+   assert.equal(await page.locator('.profile-edit-panel').getAttribute('open'),null,'Editor should be collapsed by default '+width);
+   assert.equal(await page.locator('#profileForm').isVisible(),false,'Form expanded without a tap '+width);
+   await page.locator('.profile-edit-trigger').click();
+   assert.equal(await page.locator('#profileForm').isVisible(),true,'Editor did not expand when requested '+width);
+   await checkOverflow(page,width,'profile expanded');
+   await page.locator('.profile-edit-trigger').click();
+   assert.equal(await page.locator('#profileForm').isVisible(),false,'Editor did not collapse again '+width);
+   // Story rail and composer must not overflow small screens.
+   const stories='<section class="stories-shell"><div class="stories-head"><div><span class="stories-kicker">COMUNIDADE</span><h3>Stories</h3></div><button type="button">Novo story</button></div><div class="stories-strip"><button class="story-tile story-add"><span class="story-ring">+</span><strong>Seu story</strong></button></div></section><div class="stories-overlay"><div class="stories-modal"><div class="stories-compose"><h3>Novo story</h3><form><label>Foto ou vídeo<input type="file"></label><div id="storyComposePreview" class="story-compose-preview" hidden></div><label>Legenda<input></label><button type="submit">Publicar story</button></form></div></div></div>';
+   await page.setContent(frame(appCss,stories));
+   await checkOverflow(page,width,'stories modal');
 
    const share='<div class="share-wrap"><header class="share-topbar"><a class="share-brand"><span class="brand-mark">e.</span>entre.</a><a class="share-home-top">Ir para o site</a></header><main class="share-main"><section class="share-intro"><span class="share-kicker">PERFIL COMPARTILHADO</span><h1>Um novo papo.<br><em>Uma conexão.</em></h1><p>Conheça uma pessoa.</p></section><section class="share-profile-card"><div class="share-cover"><span class="cover-label">CONEXÕES REAIS</span></div><div class="share-profile-content"><div class="share-avatar-wrap"><div class="share-avatar">L</div></div><div class="share-identity"><h2>Uma pessoa</h2><p>@usuario</p></div><div class="share-cta"><a class="share-primary">Ir para o site</a><a class="share-secondary">Criar minha conta</a></div></div></section></main></div>';
    await page.setContent(frame(publicCss,share));
