@@ -31,10 +31,7 @@
    '<button class="ui-btn btn-quiet btn-sm" type="button" data-action="peopleClearSearch">Limpar</button></div>'+
    '<div id="peopleSearchResults" aria-live="polite">'+resultsMarkup()+'</div></section>';
  }
- api.onlineView=function(){
-  const html=originalOnline();
-  return html.replace('<div class="online-controls">',lookupMarkup()+'<div class="online-controls">');
- };
+ // Profile lookup now lives in Global Search and Conversations, not Online.
  async function queryPeople(raw){
   const term=clean(raw),myRevision=++revision;
   if(term.length<2){data.peopleResults=[];data.peopleSearching=false;resultsPaint();return [];}
@@ -111,7 +108,6 @@ document.addEventListener('focusout',async e=>{
   }
   data.peopleQuery='@'+username;
   data.socialProfile=found;
-  state.view='online';
   state.modal='socialProfile';
   render();
  };
