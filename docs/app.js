@@ -593,10 +593,19 @@ async function pollSearch(){if(polling||!state.searching)return;polling=true;try
 async function cancelSearch(){state.searching=false;clearSearchTimer();try{const {error}=await db.rpc('entre_leave');if(error)throw error}catch(e){toast(infoError(e),true)}renderView()}
 async function openPair(id){const {data,error}=await db.from('entre_pairs').select('*').eq('id',id).single();if(error)throw error;if(data.status==='closed'){toast('Este encontro temporário já terminou.',true);nav('connect');return;}state.pair=data;state.searching=false;clearSearchTimer();const other=data.a===state.session.user.id?data.b:data.a;const {data:profile}=await db.from('entre_profiles').select('id,display_name,age,bio,gender,avatar_path,avatar_uploaded_at').eq('id',other).maybeSingle();if(profile)await signAvatar(profile);state.peer=profile||{id:other,display_name:'Esta pessoa'};state.view=data.status==='connected'?'chat':'connect';await loadMessages();if(data.status!=='closed')subscribePair(id);render();if(data.status==='active'&&data.mode==='video')void window.entreVideo?.start?.(data)}
 async function loadMessages(){if(!state.pair)return;const {data,error}=await db.from('entre_messages').select('id,body,sender_id,created_at').eq('pair_id',state.pair.id).order('id',{ascending:false}).limit(40);if(error){console.warn(error);return}state.messages=(data||[]).reverse();if(window.entreSocial)window.entreSocial.data.hasEarlier=(data||[]).length===40}
-function subscribePair(id){if(state.channel){db.removeChannel(state.channel);state.channel=null}state.channel=db.channel(`entre_pair_${id}_${Math.random().toString(36).slice(2,7)}`).on('postgres_changes',{event:'INSERT',schema:'public',table:'entre_messages',filter:`pair_id=eq.${id}`},async()=>{if(state.pair?.id===id){await loadMessages();renderView()}}).on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_pairs',filter:`id=eq.${id}`},async()=>{if(state.pair?.id===id)await refreshPair()}).subscribe()}
+function refreshEncounterMessages(){
+ if(!activeEncounter()||state.pair.mode!=='video'||state.view!=='connect')return false;
+ const list=document.getElementById('messageList');
+ if(!list)return false;
+ const wasNearBottom=list.scrollHeight-list.scrollTop-list.clientHeight<130;
+ list.innerHTML=(window.entreSocial?.historyButton?.()||'')+messagesMarkup(state.peer);
+ if(wasNearBottom)list.scrollTop=list.scrollHeight;
+ return true;
+}
+function subscribePair(id){if(state.channel){db.removeChannel(state.channel);state.channel=null}state.channel=db.channel(`entre_pair_${id}_${Math.random().toString(36).slice(2,7)}`).on('postgres_changes',{event:'INSERT',schema:'public',table:'entre_messages',filter:`pair_id=eq.${id}`},async()=>{if(state.pair?.id===id){await loadMessages();if(!refreshEncounterMessages()&&['connect','chat'].includes(state.view))renderView()}}).on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_pairs',filter:`id=eq.${id}`},async()=>{if(state.pair?.id===id)await refreshPair()}).subscribe()}
 async function refreshPair(){
  if(!state.pair)return;
- const id=state.pair.id,prior=state.pair.status;
+ const id=state.pair.id,prior=state.pair.status,previous=state.pair;
  const {data,error}=await db.from('entre_pairs').select('*').eq('id',id).maybeSingle();
  if(error)return;
  if(!data){window.entreVideo?.cleanup?.();state.pair=null;state.messages=[];state.peer=null;state.view='connect';render();return;}
@@ -613,9 +622,10 @@ async function refreshPair(){
   if(['connect','chat'].includes(state.view))state.view='chat';render();toast('Match confirmado! Esta é uma conversa permanente.');
   return;
  }
+ if(data.status==='active'&&data.mode==='video'&&state.view==='connect'&&['status','a_wants','b_wants','expires_at'].every(key=>previous[key]===data[key])){updateTimerText();return;}
  renderView();
 }
-async function sendMessage(form){if(maintenanceIsActive())return;if(!state.pair||!(state.pair.status==='connected'||(state.pair.status==='active'&&new Date(state.pair.expires_at)>Date.now()))){toast('O chat temporário foi encerrado.',true);return;}const input=form.querySelector('#messageInput');const body=input.value.trim();if(!body)return;input.value='';const {data,error}=await db.from('entre_messages').insert({pair_id:state.pair.id,sender_id:state.session.user.id,body}).select('id,body,sender_id,created_at').single();if(error){input.value=body;toast(infoError(error),true);return}if(!state.messages.some(m=>m.id===data.id)){state.messages.push(data);renderView()}setTimeout(()=>document.getElementById('messageInput')?.focus(),0)}
+async function sendMessage(form){if(maintenanceIsActive())return;if(!state.pair||!(state.pair.status==='connected'||(state.pair.status==='active'&&new Date(state.pair.expires_at)>Date.now()))){toast('O chat temporário foi encerrado.',true);return;}const input=form.querySelector('#messageInput');const body=input.value.trim();if(!body)return;input.value='';const {data,error}=await db.from('entre_messages').insert({pair_id:state.pair.id,sender_id:state.session.user.id,body}).select('id,body,sender_id,created_at').single();if(error){input.value=body;toast(infoError(error),true);return}if(!state.messages.some(m=>m.id===data.id)){state.messages.push(data);if(!refreshEncounterMessages()&&['connect','chat'].includes(state.view))renderView()}setTimeout(()=>document.getElementById('messageInput')?.focus(),0)}
 async function vote(accept){if(maintenanceIsActive())return;if(!state.pair)return;try{const {data,error}=await db.rpc('entre_vote',{_pair:state.pair.id,_accept:accept});if(error)throw error;if(data==='closed'){await refreshPair();await loadPairs();toast('Encontro encerrado. O chat temporário foi apagado.');return}await refreshPair();if(accept&&data==='active')toast('Sua escolha foi registrada. Falta a outra pessoa.')}catch(e){toast(infoError(e),true)}}
 async function endPair(){if(!state.pair)return;window.entreVideo?.cleanup?.();try{const {error}=await db.rpc('entre_close',{_pair:state.pair.id});if(error)throw error;state.pair=null;state.messages=[];state.peer=null;state.modal=null;if(state.channel){db.removeChannel(state.channel);state.channel=null}await loadPairs();state.view='connect';render();window.entreSocial?.showEndAnimation?.();toast('Encontro encerrado.')}catch(e){toast(infoError(e),true)}}
 async function blockPartner(){if(!state.peer)return;window.entreVideo?.cleanup?.();try{const {error}=await db.rpc('entre_block',{_user:state.peer.id});if(error)throw error;state.modal=null;state.pair=null;state.peer=null;state.messages=[];await loadPairs();state.view='connect';render();toast('Pessoa bloqueada. Vocês não serão reconectados.')}catch(e){toast(infoError(e),true)}}
