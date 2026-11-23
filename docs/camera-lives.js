@@ -83,7 +83,13 @@ async function refresh(paint=true){
     else if(updated&&state.view==='lives'){renderView();attachAll();}
    }
   }
-  if(paint&&state.view==='lives'){renderView();if(s.active)attachAll();}
+  if(paint&&state.view==='lives'){
+   // Preserve the user's typing and keyboard while the live directory polls.
+   if(!s.active&&document.activeElement?.closest?.('.camera-live-filters')){
+    updateDiscovery();
+    const total=document.querySelector('.live-discovery-stat strong');if(total)total.textContent=String(s.rows.length);
+   }else{renderView();if(s.active)attachAll();}
+  }
  }catch(e){console.warn('Lives indisponíveis',e);s.error=infoError(e);if(paint&&state.view==='lives'&&!s.active)renderView();}
  finally{s.loading=false;}
 }
