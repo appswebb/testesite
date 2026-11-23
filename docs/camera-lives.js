@@ -136,7 +136,8 @@ function view(){
  return '<section class="camera-live-shell live-explore-screen" aria-label="Explorar transmissões ao vivo">'+
  '<header class="live-explore-header"><div class="live-explore-heading"><h2>Explorar lives</h2>'+
  '<span class="live-explore-count"><i aria-hidden="true"></i><span id="liveTotalCount">'+s.rows.length+'</span> ao vivo</span></div>'+
- '<button type="button" class="live-explore-start" data-live-action="create" aria-expanded="'+String(s.showCreate)+'" aria-controls="cameraLiveComposer">'+ico('camera',17)+' '+(s.showCreate?'Fechar':'Iniciar live')+'</button></header>'+
+ '<div class="live-explore-actions"><button type="button" class="live-explore-refresh" data-live-action="refresh" aria-label="Atualizar lives" title="Atualizar">'+ico('refresh',17)+'</button>'+ 
+ '<button type="button" class="live-explore-start" data-live-action="create" aria-expanded="'+String(s.showCreate)+'" aria-controls="cameraLiveComposer">'+ico('camera',17)+' '+(s.showCreate?'Fechar':'Iniciar live')+'</button></div></header>'+
  '<div class="live-explore-toolbar"><label class="live-explore-search">'+ico('search',19)+
  '<span class="sr-only">Buscar transmissões</span><input data-live-filter="search" type="search" maxlength="90" placeholder="Pesquisar lives ou pessoas" value="'+esc(s.search)+'" autocomplete="off"></label>'+
  '<button type="button" class="live-region-trigger" data-live-action="region" aria-controls="liveRegionFilters" aria-expanded="'+String(s.showRegion)+'">'+ico('compass',18)+' <span>Região</span></button></div>'+

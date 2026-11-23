@@ -6,11 +6,16 @@ const read=(p)=>readFileSync(new URL('../docs/'+p,import.meta.url),'utf8');
 test('Lives begins with real controls instead of editorial hero copy',()=>{
  const js=read('camera-lives.js');
  const section=js.slice(js.indexOf('function view(){'),js.indexOf('async function refresh(',js.indexOf('function view(){')));
- assert.match(section,/live-compact-header/);
+ assert.match(section,/live-explore-header/);
+ assert.match(section,/live-explore-categories/);
+ assert.match(section,/live-visual-composer/);
+ assert.match(section,/categoryChips\(\)/);
  assert.match(section,/data-live-action="create"/);
  assert.match(section,/data-live-action="refresh"/);
  assert.match(section,/filterMarkup\(\)/);
  assert.match(section,/liveDiscoverResults/);
+ assert.match(js,/createSignedUrls/);
+ assert.match(js,/entre_live_start_visual/);
  assert.match(section,/liveTotalCount/);
  assert.doesNotMatch(section,/Todo mundo tem uma história/);
  assert.doesNotMatch(section,/Assista a transmissões reais/);
