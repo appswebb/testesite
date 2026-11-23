@@ -13,6 +13,10 @@ on:
       - 'docs/sw.js'
       - 'docs/icons/**'
       - 'docs/app.js'
+      - 'docs/entre-video.js'
+      - 'docs/encounter-ui.css'
+      - 'docs/entre-features.css'
+      - 'tests/encounter-layout.test.mjs'
       - 'docs/index.html'
       - 'docs/maintenance.css'
       - 'docs/mobile.css'
@@ -43,10 +47,12 @@ jobs:
       - name: Validate scripts and UI
         run: |
           node --check docs/app.js
+          node --check docs/entre-video.js
           node --check docs/admin/app.js
           for f in docs/social*.js; do node --check "$f"; done
           node --check tests/admin-mobile-audit.cjs
           node --check tests/avatar-mobile-audit.cjs
           node --test tests/social-ui-regression.test.mjs
+          node --test tests/encounter-layout.test.mjs
           node tests/admin-mobile-audit.cjs
           node tests/avatar-mobile-audit.cjs
