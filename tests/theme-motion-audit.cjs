@@ -51,6 +51,7 @@ const fixture='<div id="app"><div class="app-shell"><aside class="sidebar"><div 
    assert.equal(dark.mode,'dark');
    assert.equal(dark.background,'rgb(16, 17, 20)','Dark background is not applied '+width);
    assert.equal(dark.post,'rgb(25, 28, 33)','Dark card is not applied '+width);
+   assert.equal(dark.nav,'rgba(25, 28, 33, 0.98)','Mobile navigation must respect dark mode '+width);
    assert.equal(dark.saved,'dark');
    await page.reload({waitUntil:'load'});
    assert.equal(await page.evaluate(()=>document.documentElement.dataset.theme),'dark','Dark mode must persist after reload '+width);
