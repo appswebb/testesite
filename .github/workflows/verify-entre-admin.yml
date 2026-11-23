@@ -5,6 +5,7 @@ on:
     paths:
       - 'docs/admin/**'
       - 'docs/maintenance.css'
+      - 'docs/index.html'
       - 'docs/app.js'
       - 'docs/mobile.css'
       - '.github/workflows/verify-entre-admin.yml'
@@ -21,6 +22,18 @@ jobs:
           node --check docs/app.js
           node --check docs/admin/app.js
           test -s docs/maintenance.css
+      - name: Validate HTML bootstrap and recovery fallback
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('docs/index.html', 'utf8');
+          const inline = html.match(/<script>([\s\S]*?)<\/script>/);
+          if (!inline) throw new Error('Missing app bootstrap');
+          new Function(inline[1]);
+          if (html.includes('<script>\\n')) throw new Error('Escaped newlines broke bootstrap');
+          if (!html.includes('13000') || !html.includes('script.onerror')) throw new Error('Loading recovery absent');
+          console.log('Bootstrap syntax and recovery verified.');
+          NODE
       - name: Check admin RPC integration
         run: |
           node - <<'NODE'

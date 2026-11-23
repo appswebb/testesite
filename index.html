@@ -22,6 +22,16 @@
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <script>
+/* If a CDN or session request stalls, do not leave users on a permanent loading screen. */
+window.setTimeout(function () {
+  var root = document.getElementById('app');
+  if (root && root.firstElementChild && root.firstElementChild.classList.contains('startup') && !root.querySelector('button')) {
+    root.innerHTML = '<main style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:17px;text-align:center;padding:25px;font-family:system-ui">' +
+      '<h1 style="font-size:42px;letter-spacing:-.06em;margin:0">entre<span style="color:#ec8b73">.</span></h1>' +
+      '<p style="max-width:350px;line-height:1.6;color:#646861">A conexão está demorando. Verifique sua internet e tente novamente.</p>' +
+      '<button type="button" onclick="location.reload()" style="padding:13px 22px;border:0;border-radius:13px;background:#ed8e73;color:#16221b;font-weight:800">Tentar novamente</button></main>';
+  }
+}, 13000);
 /* Load a fresh app bundle on each visit, including after an update release. */
 window.addEventListener('DOMContentLoaded', function () {
   var script = document.createElement('script');
