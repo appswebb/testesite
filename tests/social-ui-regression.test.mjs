@@ -232,7 +232,7 @@ test('Posts, temporary video, premium checkout and account support remain wired 
  assert.match(app,/data-action="profileMenu"/);
  assert.match(app,/data-view="settings"/);
  assert.match(extras,/entre_posts_feed/);
- assert.match(extras,/entre-premium-checkout/);
+ assert.match(extras,/entre-premium-web/);
  assert.match(extras,/entre_support_submit/);
  assert.match(extras,/connectapp.w@gmail.com|support-contact/);
  assert.doesNotMatch(extras,/connectapp\.w@gmail\.com/);
