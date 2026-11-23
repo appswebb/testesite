@@ -80,13 +80,14 @@ const fixture='<div id="app"><div class="app-shell"><aside class="sidebar"><div 
     localStorage.setItem('entre.motionForce','1');
     document.body.classList.add('motion-force');
    });
+   const preWave=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,w:innerWidth}));
    await page.addScriptTag({content:docs('motion.js')});
    await page.locator('.ui-btn.btn-dark').click();
    const count=await page.locator('.entre-touch-wave').count();
    assert(count>=1,'Touch feedback did not render despite force-animations setting '+width);
    assert.equal(await page.locator('#entreTouchLayer').count(),1,'Ripple must be clipped to a fixed viewport overlay '+width);
-   const dims=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,w:innerWidth,overflow:[...document.querySelectorAll('*')].map(el=>({tag:el.tagName,cls:String(el.className||'').slice(0,65),r:el.getBoundingClientRect().right})).filter(x=>x.r>innerWidth+2).slice(0,8)}));
-   assert(dims.scroll<=width+2,'Theme picker caused mobile horizontal scrolling '+width+'px: '+JSON.stringify(dims));
+   const dims=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,w:innerWidth,overflow:[...document.querySelectorAll('*')].map(el=>({tag:el.tagName,cls:String(el.className||'').slice(0,65),r:el.getBoundingClientRect().right,sw:el.scrollWidth,cw:el.clientWidth})).filter(x=>x.r>innerWidth+2||(x.sw>x.cw+12&&x.cw>0)).slice(0,15)}));
+   assert(dims.scroll<=width+2,'Theme picker caused mobile horizontal scrolling '+width+'px: '+JSON.stringify({preWave,dims}));
    const brand=await page.evaluate(()=>getComputedStyle(document.querySelector('.brand-glyph')).backgroundImage);
    assert(brand.includes('brand-mark.svg'),'Incorrect app logo styling '+width);
    console.log('PASS theme/light/dark/custom/persistence/logo/motion at '+width+'px');
