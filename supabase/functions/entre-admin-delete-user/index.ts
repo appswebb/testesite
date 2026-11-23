@@ -25,17 +25,30 @@ Deno.serve(async(req:Request)=>{
   const {data:adminAllow,error:allowError}=await service.from("entre_admin_allowlist").select("email").eq("email",email).eq("enabled",true).maybeSingle();
   if(allowError)return json({error:"role_check_failed"},503);
   if(adminAllow)return json({error:"cannot_delete_admin"},403);
-  const {data:subscription,error:subError}=await service.from("entre_premium_subscriptions")
-    .select("provider,provider_id,status").eq("user_id",id).maybeSingle();
-  if(subError)return json({error:"payment_check_failed"},503);
-  if(subscription?.provider==="mercadopago_recurring"&&subscription?.provider_id&&subscription?.status==="authorized"){
+  // Cancel every pending/authorized renewal before deleting the Auth user,
+  // including subscriptions whose first invoice has NOT yet been approved.
+  const [{data:subscription,error:subError},{data:recurring,error:recurringError}]=await Promise.all([
+   service.from("entre_premium_subscriptions").select("provider,provider_id,status").eq("user_id",id).maybeSingle(),
+   service.from("entre_premium_recurring").select("preapproval_id,status").eq("user_id",id)
+    .in("status",["creating","pending","authorized","paused"]).limit(5)
+  ]);
+  if(subError||recurringError)return json({error:"payment_check_failed"},503);
+  if(recurring?.some((r:any)=>r.status==="creating"&&!r.preapproval_id))
+   return json({error:"recurring_creation_pending_try_later"},409);
+  const ids=[...new Set([
+   ...(recurring||[]).map((r:any)=>r.preapproval_id).filter(Boolean),
+   ...(subscription?.provider==="mercadopago_recurring"&&subscription?.provider_id?[subscription.provider_id]:[])
+  ])];
+  if(ids.length){
    const key=Deno.env.get("MERCADOPAGO_ACCESS_TOKEN");
    if(!key)return json({error:"cancel_recurring_first"},409);
-   const cancel=await fetch("https://api.mercadopago.com/preapproval/"+encodeURIComponent(subscription.provider_id),{
-    method:"PUT",headers:{"Authorization":"Bearer "+key,"Content-Type":"application/json"},
-    body:JSON.stringify({status:"cancelled"})
-   });
-   if(!cancel.ok)return json({error:"recurring_cancel_failed"},409);
+   for(const preapprovalId of ids){
+    const cancel=await fetch("https://api.mercadopago.com/preapproval/"+encodeURIComponent(preapprovalId),{
+     method:"PUT",headers:{"Authorization":"Bearer "+key,"Content-Type":"application/json"},
+     body:JSON.stringify({status:"cancelled"})
+    });
+    if(!cancel.ok)return json({error:"recurring_cancel_failed"},409);
+   }
   }
   const assets:Record<string,string[]>={};
   for(const bucket of ["entre-avatars","entre-post-media","entre-support-evidence"]){
