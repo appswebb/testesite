@@ -25,6 +25,11 @@ on:
       - 'docs/once-ui.css'
       - 'docs/theme.js'
       - 'docs/theme.css'
+      - 'docs/once-source-fidelity.css'
+      - 'docs/once-source-components.css'
+      - 'docs/DESIGN_REFERENCE_AUDIT.md'
+      - 'tests/source-fidelity.test.mjs'
+      - 'tests/source-fidelity-mobile-audit.cjs'
       - 'docs/brand-mark.svg'
       - 'docs/favicon.svg'
       - 'docs/perfil.html'
@@ -112,6 +117,7 @@ jobs:
           node --test tests/connect-app-vnext.test.mjs
           node --test tests/shared-media-reviews.test.mjs
           node --test tests/community-hub.test.mjs
+          node --test tests/source-fidelity.test.mjs
           node --test tests/geo-feed-support.test.mjs
           node --test tests/encounter-layout.test.mjs
           node tests/encounter-mobile-audit.cjs
@@ -119,5 +125,6 @@ jobs:
           node tests/community-mobile-audit.cjs
           node tests/once-redesign-mobile-audit.cjs
           node tests/theme-motion-audit.cjs
+          node tests/source-fidelity-mobile-audit.cjs
           node tests/admin-mobile-audit.cjs
           node tests/avatar-mobile-audit.cjs
