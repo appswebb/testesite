@@ -1,6 +1,21 @@
 (function entreEmailAuth(){
  'use strict';
- const field=(name,id,label,type,autocomplete,placeholder,minlength='')=>`<div class="field full"><label for="${id}">${label}</label><input id="${id}" name="${name}" type="${type}" autocomplete="${autocomplete}" ${type==='email'?'inputmode="email" maxlength="254"':'maxlength="128"'} ${minlength?`minlength="${minlength}"`:''} required placeholder="${placeholder}"></div>`;
+ const field=(name,id,label,type,autocomplete,placeholder,minlength='')=>{
+  const input=`<input id="${id}" name="${name}" type="${type}" autocomplete="${autocomplete}" ${type==='email'?'inputmode="email" maxlength="254"':'maxlength="128"'} ${minlength?`minlength="${minlength}"`:''} required placeholder="${placeholder}">`;
+  return `<div class="field full"><label for="${id}">${label}</label>${type==='password'?`<div class="password-field-wrap">${input}<button type="button" class="password-visibility-toggle" data-password-toggle="${id}" aria-controls="${id}" aria-pressed="false" aria-label="Mostrar senha">Mostrar</button></div>`:input}</div>`;
+ };
+ document.addEventListener('click',event=>{
+  const button=event.target.closest('[data-password-toggle]');
+  if(!button)return;
+  const input=document.getElementById(button.dataset.passwordToggle);
+  if(!input||input.tagName!=='INPUT'||!button.closest('form')?.contains(input))return;
+  const reveal=input.type==='password';
+  if(!reveal&&input.type!=='text')return;
+  input.type=reveal?'text':'password';
+  button.textContent=reveal?'Ocultar':'Mostrar';
+  button.setAttribute('aria-pressed',String(reveal));
+  button.setAttribute('aria-label',reveal?'Ocultar senha':'Mostrar senha');
+ });
  function fields(signup,forgot){
   const email=field('email','auth-email','E-mail','email','email','voce@exemplo.com');
   if(forgot)return `<div class="email-auth-fields"><div class="form-grid">${email}</div><button class="ui-btn btn-dark auth-email-submit" type="submit" id="authSubmit">Enviar link de recuperação</button><p class="auth-email-hint">Se este e-mail estiver cadastrado, você receberá instruções para recuperar o acesso.</p></div>`;
