@@ -104,10 +104,16 @@ function attach(participant,track,unique){
   root.appendChild(frame);
  }
  frame.querySelector('.camera-live-video-name').textContent=participant.name||'Pessoa';
+ const tag=track.kind==='video'?'video':'audio';
+ const existing=frame.querySelector(tag);
+ // Polling or re-rendering must not attach a second audio element to the same
+ // track; duplicated audio causes echo and steadily increases resource use.
+ if(existing&&existing.srcObject?.getTracks?.().some(t=>t.id===track.mediaStreamTrack?.id))return;
+ if(existing){try{track.detach(existing);}catch(e){}existing.remove();}
  const el=track.attach();
  el.autoplay=true;el.playsInline=true;
- if(track.kind==='video'){el.muted=participant===s.room?.localParticipant;frame.querySelector('video')?.remove();frame.appendChild(el);}
- else {el.muted=participant===s.room?.localParticipant;frame.appendChild(el);}
+ el.muted=participant===s.room?.localParticipant;
+ frame.appendChild(el);
 }
 function attachAll(){
  if(!s.room)return;
