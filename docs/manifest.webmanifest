@@ -2,14 +2,14 @@
   "id": "/testesite/",
   "name": "entre. — Conversas que importam",
   "short_name": "entre.",
-  "description": "Uma conversa por vez. Cinco minutos para conhecer alguém de verdade.",
+  "description": "Encontros, chats pelo Brasil, Feed e lives. Conheça pessoas reais no entre.",
   "lang": "pt-BR",
   "dir": "ltr",
   "start_url": "./?installed=1",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#17271e",
-  "theme_color": "#17271e",
+  "background_color": "#ffffff",
+  "theme_color": "#ffd633",
   "orientation": "any",
   "icons": [
     {
