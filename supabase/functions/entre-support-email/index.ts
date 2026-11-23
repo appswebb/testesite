@@ -10,7 +10,7 @@ Deno.serve(async (req: Request) => {
   });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
   try {
-    const token = req.headers.get("authorization")?.replace(/^Bearer\\s+/i, "");
+    const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
     if (!token) return json({ error: "missing_session" }, 401);
     const endpoint = Deno.env.get("SUPABASE_URL") || "";
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -46,10 +46,10 @@ Deno.serve(async (req: Request) => {
       "Conta: "+ session.user.email,
       "Categoria: "+ ticket.category,
       "Assunto: "+ safe(ticket.subject),
-      "Descrição:\\n"+ safe(ticket.description),
+      "Descrição:\n"+ safe(ticket.description),
       "Provas privadas (links válidos por 24h):",
       ...links.map((url, i) => String(i+1) + ". " + url)
-    ].join("\\n\\n");
+    ].join("\n\n");
     const sent = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
