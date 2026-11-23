@@ -1,0 +1,125 @@
+/* entre. · Responsive stability patch
+   Layout-specific fixes, not a global 'hide overflow' workaround.
+   Loaded after styles.css and motion.css on the live GitHub Pages site. */
+:root { --mobile-nav-clearance: calc(94px + env(safe-area-inset-bottom, 0px)); }
+html, body, #app { width: 100%; max-width: 100%; }
+#app, .app-shell, .app-main, .home-header, .landing-hero { min-width: 0; }
+/* Contain decorative overdraw such as the rotating ticker; content remains accessible. */
+body { overflow-x: clip; }
+.hero-grid, .hero-copy, .hero-cta, .hero-text, .hero-foot,
+.app-heading, .app-toolbar, .app-shell, .app-main, #view-content,
+.profile-layout, .form-panel, .settings-card, .pair-card,
+.convo-list, .convo-card, .auth-main, .auth-card { min-width: 0; }
+/* A long name must never dictate the width of its whole chat layout. */
+.pair-partner { min-width: 0; max-width: 100%; flex: 1 1 0; }
+.pair-partner > div { min-width: 0; max-width: 100%; }
+.pair-partner strong { display: block; overflow-wrap: anywhere; word-break: normal; }
+.pair-partner small { overflow-wrap: anywhere; }
+.pair-topbar { min-width: 0; }
+.pair-topbar > div:last-child { min-width: 0; }
+.convo-card > div { min-width: 0; }
+.convo-card > div:not(.right) { flex: 1 1 0; }
+.convo-card strong, .convo-card p, .setting-row p,
+.profile-preview h3, .profile-preview p, .google-verified small,
+.app-heading h2 { overflow-wrap: anywhere; }
+.convo-card .right { flex: 0 0 auto; }
+.form-grid > *, .field, .field input, .field select, .field textarea { min-width: 0; max-width: 100%; }
+/* Comfortable tablet layout, without squeezed sidebar + two-column forms. */
+@media (min-width: 761px) and (max-width: 900px) {
+  .home-bar nav { display: none; }
+  .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .hero-title { font-size: clamp(62px, 9vw, 80px); }
+  .hero-art { height: 475px; max-width: 100%; transform: scale(.79); transform-origin: center; margin: -25px auto -35px; }
+  .home-header .wrap, .landing-hero .wrap { width: calc(100% - 64px); }
+  .auth-shell { grid-template-columns: 1fr; }
+  .auth-visual { display: none; }
+  .auth-main { padding: 34px 24px 75px; align-items: flex-start; }
+  .hidden-mobile-brand { display: block; margin-bottom: 24px; }
+  .app-shell { display: block; padding-bottom: var(--mobile-nav-clearance); }
+  .sidebar { display: none; }
+  .app-main { padding: 30px 26px 55px; }
+  .mobile-nav { z-index: 90; position: fixed; bottom: 0; left: 0; right: 0;
+    padding: 9px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+    display: flex; align-items: center; justify-content: space-around; gap: 5px;
+    background: rgba(255, 254, 250, .97); backdrop-filter: blur(16px);
+    border-top: 1px solid #eae6de; box-shadow: 0 -8px 30px #00000008; }
+  .mobile-nav button { background: none; border: 0; display: flex; flex-direction: column;
+    align-items: center; gap: 5px; padding: 7px 8px; color: #9b9b95;
+    font-size: 10px; font-weight: 800; border-radius: 12px; flex: 1 1 0; min-width: 0; }
+  .mobile-nav button.active { color: var(--coral-hi); background: #faede7; }
+  .mobile-nav button svg { width: 21px; height: 21px; }
+  .profile-layout { grid-template-columns: minmax(0, 1fr); }
+  .profile-preview { min-height: 270px; }
+}
+@media (max-width: 760px) {
+  /* Fix intrinsic grid minimum of ~402px on narrow phone screens. */
+  .hero-grid { grid-template-columns: minmax(0, 1fr); }
+  .hero-copy { width: 100%; max-width: 100%; }
+  .hero-title { font-size: clamp(49px, 12.7vw, 75px); max-width: 100%; overflow-wrap: normal; }
+  .hero-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 13px; width: 100%; }
+  .hero-cta .ui-btn { min-width: 0; max-width: 100%; white-space: normal; text-align: center; }
+  .hero-text, .hero-foot { max-width: 100%; overflow-wrap: break-word; }
+  .hero-art { max-width: 100%; }
+  .home-bar { gap: 5px; }
+  .home-actions { gap: 5px; flex: 0 0 auto; }
+  .home-actions .ui-btn { white-space: nowrap; }
+  .landing-hero .wrap, .home-header .wrap { min-width: 0; }
+  .app-shell { padding-bottom: var(--mobile-nav-clearance); }
+  .app-main { min-width: 0; }
+  .mobile-nav { width: 100%; max-width: 100%; gap: 2px;
+    padding-left: max(6px, env(safe-area-inset-left, 0px));
+    padding-right: max(6px, env(safe-area-inset-right, 0px)); }
+  .mobile-nav button { min-width: 0; flex: 1 1 0; padding: 7px 2px; }
+  .mobile-nav button svg { flex: none; }
+  .pair-topbar { display: grid; grid-template-columns: minmax(0, 1fr); gap: 11px; }
+  .pair-partner { width: 100%; }
+  .pair-topbar > div:last-child { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; justify-content: space-between; }
+  .pair-topbar .pill { max-width: 100%; white-space: normal; }
+  .pair-banner { line-height: 1.45; }
+  .decision-bar { align-items: stretch; gap: 11px; }
+  .decision-bar .buttons { min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .decision-bar .ui-btn { min-width: 0; width: 100%; white-space: normal; padding: 10px 7px; font-size: 11px; gap: 5px; }
+  .decision-bar .ui-btn svg { flex: 0 0 16px; width: 16px; height: 16px; }
+  .chat-form input { min-width: 0; }
+  .app-heading h2 { max-width: 100%; }
+  .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .profile-layout { grid-template-columns: minmax(0, 1fr); }
+  .setting-row > div { min-width: 0; flex: 1 1 auto; }
+  .setting-row > button, .setting-row > .pill { flex: 0 0 auto; }
+  .settings-card { min-width: 0; }
+  .google-login { min-width: 0; max-width: 100%; }
+  .auth-card { max-width: 100%; }
+}
+@media (max-width: 360px) {
+  .hero-title { font-size: clamp(47px, 14.2vw, 54px); }
+  .hero-cta { gap: 2px 10px; }
+  .hero-cta .btn-quiet { padding: 12px 9px; font-size: 12px; }
+  .home-actions .ui-btn { padding: 10px 9px; font-size: 11px; }
+  .home-bar .brand { font-size: 24px; }
+  .home-bar .brand-glyph { width: 28px; }
+  .app-main { padding-left: 14px; padding-right: 14px; }
+  .pair-card .pair-topbar { padding: 13px 12px; }
+  .pair-messages { padding: 17px 12px; }
+  .chat-form { padding: 9px; }
+  .decision-bar { padding: 12px 9px; }
+  .mobile-nav button { font-size: 9px; }
+  .mobile-nav button svg { width: 20px; height: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-art, .hero-copy, .hero-title { transition: none !important; }
+}
+/* Keep the 1:1 conversation composer visible above the fixed phone navigation.
+   The chat list scrolls inside the conversation instead of stretching the page. */
+@media (max-width: 760px) {
+  .app-main:has(.pair-card) { padding-top: 12px; }
+  .app-main:has(.pair-card) .app-toolbar { margin-bottom: 14px; }
+  .app-main:has(.pair-card) .app-heading { margin-bottom: 15px; }
+  .app-main:has(.pair-card) .app-heading .eyebrow,
+  .app-main:has(.pair-card) .app-heading > p { display: none; }
+  .app-main:has(.pair-card) .app-heading h2 { font-size: clamp(30px, 8.5vw, 39px); line-height: 1.05; margin: 0; }
+  .app-main:has(.pair-card) .pair-card { min-height: 0; height: clamp(430px, calc(100dvh - 290px), 700px); }
+  .app-main:has(.pair-card) .pair-messages { min-height: 0; max-height: none; flex: 1 1 auto; overscroll-behavior: contain; }
+}
+@media (max-width: 360px) {
+  .app-main:has(.pair-card) .pair-card { height: clamp(425px, calc(100dvh - 265px), 620px); }
+}
