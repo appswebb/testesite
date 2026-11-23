@@ -50,24 +50,43 @@ Deno.serve(async(req:Request)=>{
     if(!cancel.ok)return json({error:"recurring_cancel_failed"},409);
    }
   }
+  // Storage ownership may prevent deleting the Auth user. Clean recursively
+  // first; never ignore failures or report a successful deletion prematurely.
   const assets:Record<string,string[]>={};
-  for(const bucket of ["entre-avatars","entre-post-media","entre-support-evidence"]){
-   try{
-    const {data:items,error:listError}=await service.storage.from(bucket).list(id,{limit:1000});
-    if(!listError&&items?.length)assets[bucket]=items.filter(x=>x.name&&!x.name.endsWith("/")).map(x=>id+"/"+x.name);
-   }catch(e){console.warn("Cannot list old private user files",bucket);}
+  async function collect(bucket:string,folder:string,depth=0):Promise<string[]>{
+   if(depth>5)throw Error("storage_folder_depth_exceeded");
+   const paths:string[]=[];
+   for(let offset=0;offset<10000;offset+=1000){
+    const {data:items,error}=await service.storage.from(bucket).list(folder,{limit:1000,offset});
+    if(error)throw error;
+    if(!items?.length)break;
+    for(const item of items){
+     if(!item?.name||item.name==="."||item.name==="..")continue;
+     const child=folder+"/"+item.name;
+     if(item.id&&item.metadata)paths.push(child);
+     else paths.push(...await collect(bucket,child,depth+1));
+    }
+    if(items.length<1000)break;
+   }
+   return paths;
   }
+  for(const bucket of ["entre-avatars","entre-post-media","entre-support-evidence"]){
+   try{assets[bucket]=await collect(bucket,id);}
+   catch(e){console.error("Storage inventory failure",bucket,String(e));return json({error:"storage_inventory_failed"},503);}
+  }
+  for(const [bucket,paths] of Object.entries(assets)){
+   for(let n=0;n<paths.length;n+=100){
+    const {error}=await service.storage.from(bucket).remove(paths.slice(n,n+100));
+    if(error){console.error("Storage cleanup failure",bucket,error.message);return json({error:"storage_cleanup_failed"},503);}
+   }
+  }
+  // The admin has explicitly confirmed permanent deletion, including files.
   const {error:deleteError}=await service.auth.admin.deleteUser(id);
-  if(deleteError){console.error("Account deletion rejected",deleteError.message);return json({error:"delete_failed"},409);}
+  if(deleteError){console.error("Account deletion rejected",deleteError.message);return json({error:"delete_failed_storage_cleaned"},409);}
   // Audit is separate from deleted auth user; target is intentionally not a foreign key.
   const audit=await service.from("entre_admin_deletion_audit").insert({actor_id:user.id,target_id:id,target_email:email,reason});
   if(audit.error)console.error("Admin deletion audit failed",audit.error.message);
-  let cleanupPending=0;
-  for(const [bucket,paths] of Object.entries(assets)){
-   if(!paths.length)continue;
-   const {error}=await service.storage.from(bucket).remove(paths);
-   if(error)cleanupPending+=paths.length;
-  }
+  const cleanupPending=0;
   return json({deleted:true,cleanup_pending:cleanupPending});
  }catch(e){console.error("admin-delete-user",String(e));return json({error:"unexpected_error"},503)}
 });
