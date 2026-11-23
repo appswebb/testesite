@@ -46,6 +46,6 @@ async function init(){
  document.addEventListener('visibilitychange',async()=>{if(document.hidden||!state.session?.user||state.suspension)return;if(data.presence.visible){try{await rpc('entre_online_ping');}catch(e){}}await refreshNotifications();});
  document.addEventListener('change',async e=>{const select=e.target.closest('[data-social-folder]');if(!select)return;try{await updateConversation(select.dataset.socialFolder,{_folder:select.value});toast('Conversa movida.');renderView();}catch(error){toast(infoError(error),true);}});
 }
-async function enter(view){if(!state.session?.user||!state.profile)return;if(view==='online')await Promise.allSettled([loadOnline(true),refreshInbox()]);if(view==='notifications')await refreshNotifications();if(view==='conversations')await loadPrefs();renderView();}
+async function enter(view){if(!state.session?.user||!state.profile)return;if(view==='online')await Promise.allSettled([loadOnline(true),refreshInbox()]);if(view==='notifications')await refreshNotifications();if(view==='conversations')await loadPrefs();if(view==='connections')await loadPairs();renderView();}
 return{data,rpc,pref,init,enter,loadOnline,loadPrefs,refreshInbox,refreshNotifications,updateConversation,isArchived:id=>Boolean(data.prefs[id]?.archived_at)};
 })();
