@@ -13,10 +13,10 @@ vm.runInNewContext(geo,context,{filename:'entre-location.js'});
 const compact=context.window.entreGeo.compactPanel(false);
 const start=app.indexOf('function connectView(){'),end=app.indexOf('function pairView(){');
 const live=new Function('state','window','esc','ico',app.slice(start,end)+'return connectView;');
-const uiState={pair:null,searching:false,session:{user:{id:'self'}},liveMode:'chat',preference:'any',liveFiltersOpen:false};
+const uiState={pair:null,searching:false,session:{user:{id:'self'}},liveMode:'chat',preference:'any',liveFiltersOpen:true};
 const liveMarkup=live(uiState,{entreExtras:{isPremium:()=>false},entreGeo:{compactPanel:()=>compact}},x=>String(x),icon)();
 const syncBlock=app.slice(app.indexOf('function syncLiveFilters('),app.indexOf('function render(){'));
-const css=['styles.css','motion.css','mobile.css','features.css','social.css','entre-location.css','functional-updates.css','interface-polish.css','live-experience.css'].map(read).join('\n');
+const css=['styles.css','motion.css','mobile.css','features.css','social.css','entre-location.css','functional-updates.css','interface-polish.css','live-experience.css','theme.css','connect-experience.css','interaction-filters.css'].map(read).join('\n');
 const html='<!doctype html><html lang="pt-BR"><head><meta name="viewport" content="width=device-width,initial-scale=1"/><style>'+css+'</style></head><body><div id="app"><div class="app-shell"><main class="app-main"><header class="app-toolbar"><h1>Ao vivo.</h1><div class="toolbar-right"><button class="toolbar-bell">'+icon('bell')+'</button><button class="toolbar-profile"><span class="avatar">L</span></button></div></header><div id="view-content" class="scene-enter">'+liveMarkup+'</div></main></div></div></body></html>';
 (async()=>{
  const browser=await chromium.launch({headless:true,args:['--no-sandbox']});

@@ -112,5 +112,7 @@ test('filter state and inner scroll survive rerenders, and search automatically 
  assert.match(app,/syncLiveFilters\(liveScroll\)/);
  assert.match(app,/state\.liveFiltersOpen=false;document\.body\.classList\.remove\('live-filters-open'\);state\.searching=true/);
  assert.match(app,/case'liveFiltersClose'/);
- assert.match(app,/addEventListener\('toggle'/);
+ assert.doesNotMatch(app,/addEventListener\('toggle'/);
+ assert.match(app,/case'liveFiltersOpen'/);
+ assert.match(app,/live-filter-dismiss-overlay/);
 });

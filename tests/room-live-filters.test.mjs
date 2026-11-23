@@ -1,0 +1,33 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+const read=name=>readFileSync(new URL('../docs/'+name,import.meta.url),'utf8');
+test('Salas keeps messages and composer visible; region controls live in one dialog',()=>{
+ const source=read('rooms.js');assert.doesNotThrow(()=>new vm.Script(source));
+ const view=source.slice(source.indexOf('function view(){'),source.indexOf('function filterCities(){'));
+ assert.match(view,/rooms-static-shell/);
+ assert.match(view,/data-room-action="filter"/);
+ assert.match(view,/roomMessages/);
+ assert.match(view,/roomChatForm/);
+ assert.doesNotMatch(view,/rooms-state-choice|room-city-row|room-picks/);
+ const filter=source.slice(source.indexOf('function openRoomFilter(){'),source.indexOf('async function cities('));
+ assert.match(filter,/roomsFilterOverlay/);
+ assert.match(filter,/roomsStateSelect/);
+ assert.match(filter,/roomsCitySelect/);
+ assert.match(filter,/data-room-action="choose"/);
+ assert.match(filter,/data-room-action="state"/);
+ assert.match(filter,/data-room-action="city"/);
+});
+test('Ao vivo uses an explicit filter button with safe portal and deterministic close',()=>{
+ const source=read('app.js');
+ assert.doesNotThrow(()=>new vm.Script(source));
+ const view=source.slice(source.indexOf('function connectView(){'),source.indexOf('function pairView(){'));
+ assert.match(view,/data-action="liveFiltersOpen"/);
+ assert.match(view,/aria-expanded/);
+ assert.match(view,/liveFilterSheet/);
+ assert.match(view,/data-action="liveFiltersClose"/);
+ assert.match(source,/live-filter-dismiss-overlay/);
+ assert.doesNotMatch(source,/addEventListener\('toggle'/);
+ assert.match(read('interaction-filters.css'),/body > \.live-app-filters\[open\]/);
+});
