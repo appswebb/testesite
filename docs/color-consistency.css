@@ -239,3 +239,19 @@ html[data-theme="dark"] :is(.post-card,.post-compose,.settings-card,.form-panel,
  .profile-preview,.comments-dialog,.comments-dialog-header,.comments-dialog-footer){
  background-color:#191c21!important;border-color:#373c45!important;color:#f7f8fa!important
 }
+
+/* Keep dark surfaces immediately dark even if legacy rules animate
+   background-color during theme switching (transitions outrank !important). */
+html[data-theme="dark"] :is(.post-card,.post-compose,.settings-card,.form-panel,
+ .profile-preview,.conversation-entry,.comments-dialog,.online-person,
+ .support-card,.support-history,.room-shell,.camera-live-stage,.global-search-section){
+ transition-property:transform,box-shadow,border-color!important;
+ transition-duration:.16s!important;
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-theme="dark"] :is(.post-card,.post-compose,.settings-card,.form-panel,
+ .profile-preview,.conversation-entry,.comments-dialog,.online-person,
+ .support-card,.support-history,.room-shell,.camera-live-stage,.global-search-section){
+  transition:none!important
+ }
+}
