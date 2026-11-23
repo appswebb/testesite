@@ -56,7 +56,7 @@ test('When both match, a permanent chat opens outside Ao vivo',()=>{
  assert.match(app,/chat:pairView/);
  assert.match(app,/state.view=data.status==='connected'\?'chat':'connect'/);
  assert.match(app,/state.view='chat';render\(\)/);
- assert.match(app,/function connectView\(\)\{if\(state.pair\?\.status==='active'\)/);
+ assert.match(app,/function connectView\(\)\{\s*if\(state.pair\?\.status==='active'\)/);
 });
 
 test('Permanent conversations have one discreet menu and an individual delete action',()=>{
@@ -158,4 +158,63 @@ test('Admin creates official notices and polls, and can read responses',()=>{
  assert.match(editor,/Enquete obrigatória/);
  assert.match(editor,/Voto único|voto/i);
  assert.doesNotMatch(admin,/data-action="send-announcement"/);
+});
+
+test('Posts feed supports publishing, likes, comments and own deletion',()=>{
+ const app=read('app.js'),src=read('entre-features.js');
+ assert.match(app,/\['posts','Posts','edit'\]/);
+ assert.match(src,/entre_posts_feed/);
+ for(const action of ['entre_post_create','entre_post_comment','entre_post_like','entre_post_delete'])assert.ok(src.includes(action));
+ assert.match(src,/postCreateForm/);
+ assert.match(src,/post-comment-form/);
+});
+test('Live encounters can choose chat or video and request exclusive Premium matching',()=>{
+ const app=read('app.js'),video=read('entre-video.js');
+ assert.match(app,/data-action="liveMode"/);
+ assert.match(app,/data-value="video"/);
+ assert.match(app,/data-value="chat"/);
+ assert.match(app,/entre_find_mode/);
+ assert.match(app,/_mode:state.liveMode/);
+ assert.match(app,/upgradeFilter/);
+ assert.match(video,/getUserMedia/);
+ assert.match(video,/RTCPeerConnection/);
+ assert.match(video,/private:true/);
+ assert.match(video,/cleanup/);
+ assert.match(video,/state.pair\?\.status/);
+});
+test('No 3D effects and subtle two-person introductory animation',()=>{
+ const css=read('social-animations.css'),effects=read('social-effects.js');
+ assert.doesNotMatch(css,/perspective:|rotateY\(|transform-style:preserve-3d/);
+ assert.match(css,/meet-stage/);
+ assert.match(effects,/meet-left/);
+ assert.match(effects,/1450/);
+});
+test('Profile toolbar opens menu with profile, settings, Premium and site support',()=>{
+ const app=read('app.js');
+ assert.match(app,/data-action="profileMenu"/);
+ assert.match(app,/class="profile-dropdown"/);
+ assert.match(app,/Ver perfil/);
+ assert.match(app,/Configurações/);
+ assert.match(app,/Assinatura Premium/);
+ assert.match(app,/Relatar problema/);
+});
+test('Premium checkout never claims to charge before an enabled plan and verified payment',()=>{
+ const src=read('entre-features.js');
+ assert.match(src,/entre_premium_overview/);
+ assert.match(src,/entre_premium_badges/);
+ assert.match(src,/premiumCheckout/);
+ assert.match(src,/checkout_enabled/);
+ assert.match(src,/mercadopago/);
+ assert.match(src,/paid_until/);
+ assert.match(src,/wa.me\/5518988234267/);
+});
+test('Support requires evidence and sends a secured ticket to the dedicated mailbox',()=>{
+ const src=read('entre-features.js'),admin=read('admin/extra-admin.js');
+ assert.match(src,/supportTicketForm/);
+ assert.match(src,/entre_support_submit/);
+ assert.match(src,/entre-support-evidence/);
+ assert.match(src,/entre-support-email/);
+ assert.match(src,/connectapp.w@gmail.com/);
+ assert.match(admin,/supportPage/);
+ assert.match(admin,/priceParams/);
 });
