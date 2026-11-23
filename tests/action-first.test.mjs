@@ -24,7 +24,8 @@ test('Ao vivo puts mode choice, filters and search action immediately upfront',(
  assert.match(section,/data-action="liveMode"/);
  assert.match(section,/data-value="video"/);
  assert.match(section,/data-value="chat"/);
- assert.match(section,/data-action="startsearch"/);
+ assert.match(section,/startsearch/);
+ assert.match(section,/cancelsearch/);
  assert.match(section,/compactPanel/);
  assert.match(section,/targetMode/);
  assert.doesNotMatch(section,/Uma conversa pode mudar seu dia/);
