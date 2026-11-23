@@ -7,7 +7,7 @@ function summary(n){
 }
 function notificationsView(){
  const d=api.data,hasItems=d.notifications.length>0;
- return heading('ATIVIDADE ENTRE PESSOAS','Notificações<em>.</em>','Seus pedidos, respostas, mensagens e encontros. Cada notificação desaparece automaticamente após 24 horas.')+
+ return heading('ATIVIDADE ENTRE PESSOAS','Notificações<em>.</em>','Pedidos, mensagens, encontros e avisos oficiais reunidos em um só lugar.')+
  '<div class="notification-controls"><strong>'+d.unread+' não lidas</strong>'+
  '<div><button type="button" class="ui-btn btn-outline btn-sm" data-action="notificationsRead"'+(!d.unread?' disabled':'')+'>Marcar como lidas</button>'+
  '<button type="button" class="ui-btn btn-quiet btn-sm notification-clear-all" data-action="notificationsClear"'+(!hasItems?' disabled':'')+'>Limpar tudo</button>'+
@@ -19,9 +19,10 @@ function notificationsView(){
  '<span class="notification-copy"><strong>'+esc(summary(n))+'</strong><small>'+new Date(n.created_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+'</small></span>'+
  ico('chevron',16)+'</button>'+
  '<button type="button" class="notification-dismiss" aria-label="Remover notificação" title="Remover notificação" data-action="notificationsDismiss" data-id="'+Number(n.id)+'">'+ico('close',16)+'</button></article>').join('')+'</div>':
- '<div class="social-empty"><h3>Nenhuma notificação por enquanto.</h3><p>Solicitações, aceitações e mensagens aparecerão aqui por até 24 horas. Você também pode apagar a qualquer momento. Comunicados da administração ficam em Avisos.</p></div>')+
+ '<div class="social-empty"><h3>Nenhuma notificação por enquanto.</h3><p>Solicitações, aceitações e mensagens aparecerão aqui por até 24 horas. Você também pode apagar a qualquer momento. Os comunicados oficiais aparecem logo abaixo.</p></div>')+
  (d.notiMore?'<div class="social-more"><button type="button" class="ui-btn btn-outline" data-action="notificationsMore">Carregar mais 15</button></div>':'')+
- '<p class="retention-small">Limpar notificações não apaga mensagens nem cancela solicitações de seguir.</p>';
+ '<p class="retention-small">Limpar notificações não apaga mensagens nem cancela solicitações de seguir.</p>'+ 
+  '<section class="notifications-official">'+(api.bulletinsView?.()||'')+'</section>';
 }
 Object.assign(api,{notificationsView,summary});
 })();
