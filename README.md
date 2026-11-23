@@ -9,14 +9,26 @@ https://appswebb.github.io/testesite/
 ## O que existe
 
 - Homepage pública, editorial, responsiva e animada — não é uma página de documentação.
-- Cadastro com e-mail/senha (confirmar e-mail se o provedor exigir) e onboarding 18+.
-- Login, logout, recuperação da sessão, perfil editável e preferências de gênero.
+- Cadastro com Google OAuth exclusivamente e onboarding 18+, sem campos de senha.
+- Login exclusivo pelo Google, logout, recuperação da sessão, perfil editável e preferências de gênero.
 - Fila de busca real e recíproca, transação atômica para encontrar parceiro compatível.
 - Conversa privada de 5 minutos e cronômetro validado pelo servidor.
 - Cada participante vota separadamente: **sim + sim** salva a conversa permanente; caso contrário encerra a sessão temporária.
 - Mensagens persistentes e atualizações em tempo real via Supabase Realtime, com checagem periódica de sincronização.
 - Aba de conversas permanentes, bloqueio, configurações e exclusão definitiva dos dados pertencentes ao aplicativo.
 - Esquema próprio com tabelas `entre_*` e políticas RLS (sem modificar as tabelas existentes).
+
+## Login exclusivamente pelo Google
+
+O frontend não oferece autenticação por senha. O botão inicia `db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })` e redireciona de volta à URL atual.
+A configuração do Google OAuth não pode ser substituída por frontend: é preciso ativar o provider e cadastrar o site nos sistemas Google/Supabase.
+
+1. No [Google Cloud Auth Platform](https://console.cloud.google.com/auth/clients), crie um OAuth Client do tipo **Web application**. Origem autorizada: `https://appswebb.github.io`. URI de redirecionamento do OAuth: `https://trrakyybnvxpdhxwgjrz.supabase.co/auth/v1/callback`.
+2. No [Supabase > Authentication > Providers > Google](https://supabase.com/dashboard/project/trrakyybnvxpdhxwgjrz/auth/providers), ative Google e informe Client ID e Client Secret. Nunca exponha o Client Secret no repositório.
+3. No [Supabase > Authentication > URL Configuration](https://supabase.com/dashboard/project/trrakyybnvxpdhxwgjrz/auth/url-configuration), inclua na lista de Redirect URLs: `https://appswebb.github.io/testesite/`. Preserve as URLs de outros aplicativos do projeto compartilhado.
+4. Em janela anônima, abra o site, clique em **Continuar com Google**, selecione a conta, retorne para completar o perfil 18+ e teste o logout.
+
+Como este projeto Supabase hospeda autenticação para outro aplicativo, **não desative os outros provedores globalmente**; isso poderia interromper o acesso dos demais usuários. Este site oferece apenas o fluxo Google.
 
 ## Arquitetura
 
@@ -32,7 +44,7 @@ https://appswebb.github.io/testesite/
 1. Esta versão usa **um projeto Supabase compartilhado com outro aplicativo**, mas mantém os dados próprios em tabelas isoladas `entre_*`. O gerenciamento de identidade (`auth.users`) continua compartilhado. Por isso, **Excluir meus dados** apaga o perfil, as mensagens e os matches dentro do `entre.`, mas não elimina a identidade global de autenticação. Antes de um lançamento público, migre para um projeto Supabase dedicado para permitir exclusão completa do usuário sem afetar outros aplicativos.
 2. Não há verificação independente de idade: somente autodeclaração de 18+.
 3. Não há moderação humana, detecção de abuso, proteção anti-bot/anti-spam ou criptografia ponta a ponta. Não publique dados sensíveis neste MVP.
-4. Se o provedor Supabase exigir confirmação por e-mail, o novo usuário deverá confirmar o e-mail antes do primeiro login. Se o cadastro estiver pendente, conclua o perfil após entrar.
+4. Google OAuth requer ativação do provedor e autorização de redirect URL no painel do Supabase. Sem isso, o botão de login não poderá concluir a autenticação.
 5. Não são criados usuários ou mensagens falsos para aparentar atividade.
 6. A busca considera preferências de ambos e evita usuários bloqueados. A presença na fila tem validade curta, renovada pelo navegador a cada 3,5s; conexão perdida pode ocasionar nova busca.
 7. As mensagens de encontros não correspondidos são descartadas quando a sessão for encerrada no backend. Conversas de match mútuo permanecem salvas até exclusão dos dados.
