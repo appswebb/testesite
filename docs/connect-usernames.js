@@ -73,6 +73,25 @@
   if(input){input.value='';input.focus();}
   resultsPaint();
  });
+document.addEventListener('focusout',async e=>{
+ const field=e.target;
+ if(!field||!['newusername','myusername'].includes(field.id))return;
+ const note=field.closest('.field')?.querySelector('.username-feedback');
+ if(!note)return;
+ const handle=String(field.value||'').trim().replace(/^@/,'').toLowerCase();
+ note.classList.remove('is-error');
+ if(!/^[a-z][a-z0-9_]{2,19}$/.test(handle)){
+  note.textContent='Use de 3 a 20 caracteres: letras, números e _, começando por letra.';
+  note.classList.add('is-error');return;
+ }
+ if(state.profile?.username===handle){note.textContent='Este é seu @ atual.';return;}
+ note.textContent='Verificando disponibilidade…';
+ const {data:available,error}=await db.rpc('entre_username_available',{_username:handle});
+ if(String(field.value||'').trim().replace(/^@/,'').toLowerCase()!==handle)return;
+ note.textContent=error?'Não foi possível verificar agora. Tente salvar para confirmar.':
+  available?'@ disponível!':'Este @ está em uso ou é reservado.';
+ note.classList.toggle('is-error',Boolean(error||!available));
+},true);
  api.openUsernameProfile=async function(raw){
   const username=clean(raw);
   if(!/^[a-z][a-z0-9_]{2,19}$/.test(username))return;
