@@ -186,14 +186,12 @@ async function selectImage(page){
   });
   assert.equal(await profile.locator('#messageForm').count(),0,'Ended chat still allows sending');
   assert.equal(await profile.locator('.pair-timer').count(),0,'Ended chat shows live timer');
-  assert((await profile.locator('.chat-origin-bar').innerText()).includes('temporário'),'Temporary chat status missing');
-  tests++;console.log('PASS ended temporary chat disables typing and saving controls');
+  assert.equal(await profile.locator('#messageList').count(),0,'Temporary ended chat must not persist.');
+  tests++;console.log('PASS ended temporary chat immediately disappears.');
 
-  await profile.evaluate(()=>{state.view='connections';render();});
-  assert.equal(await profile.locator('.recent-connection').count(),1,'Temporary encounter contact missing in 24h list');
-  assert.equal(await profile.locator('.recent-connection [data-action="socialFollow"]').count(),1,'Follow action missing from 24h connections');
-  assert.equal(await profile.locator('.conversation-entry-actions').count(),0,'Temporary contact has organization actions');
-  tests++;console.log('PASS temporary connection only allows profile and follow');
+  assert.equal(await profile.locator('.mobile-nav [data-view="connections"]').count(),0,'Retired Suas conexões tab still visible');
+  assert.equal(await profile.locator('.recent-connection').count(),0,'Unmatched contact leaked into the interface');
+  tests++;console.log('PASS unmatched encounters never become saved contacts.');
 
   await profile.evaluate(()=>{
    state.pair.status='connected';state.view='conversations';render();
