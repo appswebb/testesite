@@ -97,6 +97,7 @@ async function selectImage(page){
   }
   const profile=await browser.newPage({viewport:{width:390,height:844}});
   await profile.addInitScript(fixture);
+  await profile.route('https://images.example.invalid/**',route=>route.fulfill({status:200,contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Wn8AAAAASUVORK5CYII=','base64')}));
   await profile.route(/^https?:\/\/(cdn\.jsdelivr\.net|fonts\.googleapis\.com|fonts\.gstatic\.com)\//,r=>r.fulfill({status:200,body:'',contentType:'application/javascript'}));
   const errors=[];profile.on('pageerror',e=>errors.push(e.message));
   await profile.goto(base+'/',{waitUntil:'domcontentloaded'});
