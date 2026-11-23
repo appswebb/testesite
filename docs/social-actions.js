@@ -11,10 +11,15 @@ async function action(type,btn){
   api.data.presence={...p,...result};renderView();return true;
  }
  if(type==='onlineMore'||type==='onlineRestart'){await api.loadOnline(type==='onlineRestart');renderView();return true;}
+ if(type==='profileOpen'){
+  const person=[...Object.values(state.pairsProfiles||{}),...api.data.online].find(p=>p?.id===id);
+  if(!person){toast('O perfil não está mais disponível.',true);return true;}
+  api.data.socialProfile=person;state.modal='socialProfile';render();return true;
+ }
  if(type==='socialFollow'){
   const r=await call('entre_follow_request',{_target:id});
   toast(r?.status==='accepted'?'Vocês já se seguem.':'Pedido enviado. Aguarde o aceite.');
-  await api.loadOnline(true);renderView();return true;
+  state.modal=null;await api.loadOnline(true);render();return true;
  }
  if(type==='socialChat'){
   const r=await call('entre_chat_request',{_target:id});
@@ -36,6 +41,7 @@ async function action(type,btn){
   return true;
  }
  if(type==='conversationPin'||type==='conversationUnpin'||type==='conversationArchive'||type==='conversationRestore'){
+  if(!state.pairs.some(p=>p.id===id&&p.status==='connected')){toast('Só conversas após um match podem ser organizadas.',true);return true;}
   const p=type.includes('Pin')||type.includes('Unpin')?{_pinned:type==='conversationPin'}:{_archived:type==='conversationArchive'};
   await api.updateConversation(id,p);
   if(type==='conversationArchive')toast('Arquivada. As mensagens vencem após 10 dias sem atividade.');
