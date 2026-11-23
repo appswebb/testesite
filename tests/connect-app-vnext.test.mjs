@@ -99,7 +99,9 @@ test('filter state and inner scroll survive rerenders, and search automatically 
  const app=read('docs/app.js');
  assert.match(app,/liveFiltersOpen:false/);
  assert.match(app,/state\.liveFiltersOpen\?'open'/);
- assert.match(app,/const liveScroll=el\.querySelector\('\.live-app-filter-body'\)\?\.scrollTop/);
+ assert.match(app,/const liveScroll=document\.querySelector/);
+ assert.match(app,/body > \.live-app-filters \.live-app-filter-body/);
+ assert.match(app,/document\.body\.appendChild\(inline\)/);
  assert.match(app,/syncLiveFilters\(liveScroll\)/);
  assert.match(app,/state\.liveFiltersOpen=false;document\.body\.classList\.remove\('live-filters-open'\);state\.searching=true/);
  assert.match(app,/case'liveFiltersClose'/);
