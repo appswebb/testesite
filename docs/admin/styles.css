@@ -168,3 +168,9 @@
 .admin-gate-actions .btn-outline{display:inline-flex}
 .admin-gate-help{font-size:12px;color:#597c67;text-decoration:underline;text-underline-offset:3px}
 @media(max-width:840px){.admin-login-form{max-width:100%}.admin-gate-actions{width:100%}}
+
+.admin-password-wrap{position:relative;width:100%}
+.admin-password-wrap input{padding-right:95px}
+.admin-password-toggle{position:absolute;right:9px;top:50%;transform:translateY(-50%);border:1px solid #dce5d9;border-radius:10px;background:#fff;color:#365942;padding:8px 10px;min-height:38px;min-width:76px;font:700 12px system-ui,sans-serif;cursor:pointer}
+.admin-password-toggle:focus-visible{outline:3px solid #497c59;outline-offset:2px}
+.admin-password-toggle:hover{background:#f1f8ee}
