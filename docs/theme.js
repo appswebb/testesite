@@ -48,6 +48,19 @@ function apply(){
   document.body.style.setProperty('background-color',state.mode==='dark'?'#101114':'#FFFFFF','important');
   document.body.style.setProperty('color',state.mode==='dark'?'#F7F8FA':'#15191A','important');
  }
+ // Immediate background sync for mounted legacy cards. Several old stylesheets
+ // define a white !important shorthand and otherwise flash white on theme switch.
+ const surfaces=document.querySelectorAll('.post-card,.post-compose,.settings-card,.form-panel,.profile-preview,.online-person,.conversation-entry,.comments-dialog,.room-shell,.camera-live-stage,.global-search-section,.support-card,.support-history,.premium-checkout-card');
+ for(const el of surfaces){
+  if(state.mode==='dark'){
+   el.style.setProperty('background','#191c21','important');
+   el.style.setProperty('color','#f7f8fa','important');
+   el.dataset.themeSurfaceApplied='dark';
+  }else if(el.dataset.themeSurfaceApplied==='dark'){
+   el.style.removeProperty('background');el.style.removeProperty('color');
+   delete el.dataset.themeSurfaceApplied;
+  }
+ }
  window.dispatchEvent(new CustomEvent('entre:themechange',{detail:{mode:state.mode,accent}}));
 }
 function persist(){
