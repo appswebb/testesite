@@ -135,8 +135,8 @@ function webPaymentStatusMarkup(){
 }
 function premiumView(){
  const active=data.premium?.active,enabled=data.premium?.checkout_enabled&&price()&&!data.checkoutBusy;
- return heading('CONNECT PREMIUM','Uma experiência <em>mais sua.</em>','Mais opções para se conectar, destaque no perfil e suporte prioritário.')+
- '<section class="premium-checkout"><div class="premium-pitch"><span class="premium-label">✧ CONNECT PREMIUM</span><h3>Seja notado.<br><em>Conecte-se do seu jeito.</em></h3><p>Personalize quem você encontra, destaque seu perfil e tenha um canal direto de suporte.</p>'+
+ return heading('ENTRE. PREMIUM','Uma experiência <em>mais sua.</em>','Mais opções para se conectar, destaque no perfil e suporte prioritário.')+
+ '<section class="premium-checkout"><div class="premium-pitch"><span class="premium-label">✧ ENTRE. PREMIUM</span><h3>Seja notado.<br><em>Conecte-se do seu jeito.</em></h3><p>Personalize quem você encontra, destaque seu perfil e tenha um canal direto de suporte.</p>'+
  '<div class="premium-perks"><div>'+ico('check',19)+' <span>Filtro Premium de gênero no Ao Vivo</span></div>'+
  '<div>'+ico('star',19)+' <span>Selo de destaque no perfil</span></div>'+
  '<div>'+ico('chat',19)+' <span>Atendimento prioritário pelo WhatsApp</span></div></div></div>'+
