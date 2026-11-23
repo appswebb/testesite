@@ -3,10 +3,10 @@ const {readFileSync}=require('node:fs');
 const {resolve}=require('node:path');
 const assert=require('node:assert/strict');
 const docs=file=>readFileSync(resolve(__dirname,'../docs',file),'utf8');
-const appCss=['styles.css','motion.css','mobile.css','features.css','social.css','social-online.css','entre-features.css','encounter-ui.css','entre-location.css','functional-updates.css','interface-polish.css','live-experience.css','experience-hub.css','once-ui.css','once-public.css','once-maintenance.css','theme.css','once-source-fidelity.css','once-source-components.css'].map(docs).join('\n');
-const adminCss=['admin/styles.css','admin/comment-report-updates.css','admin/once-admin.css','theme.css','once-source-fidelity.css','once-source-components.css'].map(docs).join('\n');
-const publicCss=['perfil.css','perfil-once.css','theme.css','once-source-fidelity.css','once-source-components.css'].map(docs).join('\n');
-const infoCss=['features.css','once-info.css','theme.css','once-source-fidelity.css','once-source-components.css'].map(docs).join('\n');
+const appCss=['styles.css','motion.css','mobile.css','features.css','social.css','social-online.css','entre-features.css','encounter-ui.css','entre-location.css','functional-updates.css','interface-polish.css','live-experience.css','experience-hub.css','once-ui.css','once-public.css','once-maintenance.css','theme.css','once-source-fidelity.css','once-source-components.css','color-consistency.css'].map(docs).join('\n');
+const adminCss=['admin/styles.css','admin/comment-report-updates.css','admin/once-admin.css','theme.css','once-source-fidelity.css','once-source-components.css','color-consistency.css'].map(docs).join('\n');
+const publicCss=['perfil.css','perfil-once.css','theme.css','once-source-fidelity.css','once-source-components.css','color-consistency.css'].map(docs).join('\n');
+const infoCss=['features.css','once-info.css','theme.css','once-source-fidelity.css','once-source-components.css','color-consistency.css'].map(docs).join('\n');
 const icon='<svg viewBox="0 0 24 24" width="23" height="23"><circle cx="12" cy="12" r="8"/></svg>';
 const frame=(css,content)=>'<html lang="pt-BR" data-theme="light"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body>'+content+'</body></html>';
 async function checkOverflow(page,width,label){
@@ -50,7 +50,7 @@ async function checkOverflow(page,width,label){
    await page.setContent(frame(publicCss,share));
    await checkOverflow(page,width,'share');
    const cover=await page.evaluate(()=>getComputedStyle(document.querySelector('.share-cover')).backgroundColor);
-   assert.equal(cover,'rgb(26, 157, 145)','Shared profile cover should use configurable accent '+width);
+   assert(/^rgba?\(17, 17, 17(?:,|\))/.test(cover),'Shared profile cover must use neutral palette rather than old green '+width+': '+cover);
    const info='<div class="info-page"><header class="info-header"><div class="info-wrap"><a class="info-brand">entre.</a></div></header><section class="info-hero"><div class="info-wrap"><span class="info-kicker">DADOS</span><h1>Seus dados.</h1></div></section></div>';
    await page.setContent(frame(infoCss,info));
    await checkOverflow(page,width,'info');
