@@ -65,6 +65,7 @@ function infoError(e){
  if(/weak.password|password.*(weak|short)|should be at least/i.test(m))return 'Senha muito fraca. Use pelo menos 12 caracteres, com letras e números.';
  if(/email signups are disabled|signup.*disabled/i.test(m))return 'O cadastro por e-mail precisa ser habilitado no Supabase Authentication.';
  if(/rate limit|too many requests/i.test(m))return 'Muitas tentativas. Aguarde um pouco.';
+ if(/entre_profiles_username_lower_uidx|username.*duplicate key|username.*already exists/i.test(m))return 'Este @ já está em uso. Escolha outro.';
  if(/Failed to fetch|NetworkError|network request failed/i.test(m))return 'Sem conexão com o serviço de login. Confira sua internet e tente de novo.';
  return m;
 }
