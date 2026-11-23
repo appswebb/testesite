@@ -67,7 +67,7 @@ function pollGateView(){
 }
 async function action(type,btn){
  if(type==='bulletinsRefresh'){await refreshBulletins();return true;}
- if(type==='bulletinVoteJump'){render();document.querySelector('#bulletinGate .poll-choice input')?.focus();return true;}
+ if(type==='bulletinVoteJump'){if(state.pair?.status==='active'){toast('Conclua o encontro ao vivo antes de votar.');return true;}render();document.querySelector('#bulletinGate .poll-choice input')?.focus();return true;}
  if(type==='bulletinVote'){
   const poll=pending(),choice=document.querySelector('input[name="required-poll-choice"]:checked');
   if(!poll||Number(btn.dataset.id)!==Number(poll.id)){await refreshBulletins();toast('A enquete mudou. Confira a votação.',true);return true;}
@@ -88,8 +88,8 @@ async function action(type,btn){
   const id=Number(btn.dataset.id),box=document.getElementById('bulletin-reply-'+id),body=box?.value?.trim()||'';
   if(body.length<3||body.length>800){toast('Escreva uma resposta de 3 a 800 caracteres.',true);return true;}
   if(btn.disabled)return true;btn.disabled=true;
-  try{await api.rpc('entre_bulletin_reply',{_bulletin:id,_body:body});toast('Resposta enviada para a administração.');await refreshBulletins();}
-  catch(e){toast(infoError(e),true);btn.disabled=false;}
+  try{await api.rpc('entre_bulletin_reply',{_bulletin:id,_body:body});toast('Resposta enviada para a administração.');await refreshBulletins(true);renderView();}
+  catch(e){toast(infoError(e),true);btn.disabled=false;}finally{if(btn.isConnected)btn.disabled=false;}
   return true;
  }
  return false;
