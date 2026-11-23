@@ -3,10 +3,10 @@ const {readFileSync}=require('node:fs');
 const {resolve}=require('node:path');
 const assert=require('node:assert/strict');
 const docs=file=>readFileSync(resolve(__dirname,'../docs',file),'utf8');
-const appCss=['styles.css','motion.css','mobile.css','features.css','social.css','social-online.css','entre-features.css','encounter-ui.css','entre-location.css','functional-updates.css','interface-polish.css','live-experience.css','experience-hub.css','once-ui.css','once-public.css','once-maintenance.css','theme.css'].map(docs).join('\n');
-const adminCss=['admin/styles.css','admin/comment-report-updates.css','admin/once-admin.css','theme.css'].map(docs).join('\n');
-const publicCss=['perfil.css','perfil-once.css','theme.css'].map(docs).join('\n');
-const infoCss=['features.css','once-info.css','theme.css'].map(docs).join('\n');
+const appCss=['styles.css','motion.css','mobile.css','features.css','social.css','social-online.css','entre-features.css','encounter-ui.css','entre-location.css','functional-updates.css','interface-polish.css','live-experience.css','experience-hub.css','once-ui.css','once-public.css','once-maintenance.css','theme.css','once-source-fidelity.css','once-source-components.css'].map(docs).join('\n');
+const adminCss=['admin/styles.css','admin/comment-report-updates.css','admin/once-admin.css','theme.css','once-source-fidelity.css','once-source-components.css'].map(docs).join('\n');
+const publicCss=['perfil.css','perfil-once.css','theme.css','once-source-fidelity.css','once-source-components.css'].map(docs).join('\n');
+const infoCss=['features.css','once-info.css','theme.css','once-source-fidelity.css','once-source-components.css'].map(docs).join('\n');
 const icon='<svg viewBox="0 0 24 24" width="23" height="23"><circle cx="12" cy="12" r="8"/></svg>';
 const frame=(css,content)=>'<html lang="pt-BR" data-theme="light"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body>'+content+'</body></html>';
 async function checkOverflow(page,width,label){
