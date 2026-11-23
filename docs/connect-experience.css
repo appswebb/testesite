@@ -345,3 +345,123 @@ html[data-theme] :is(.notice-feature,.notice-help,.connections-info,.chat-origin
 @media(prefers-reduced-motion:reduce){
  html[data-theme] .camera-live-card{transition:none!important}
 }
+
+/* Action-first LIVE / Ao vivo: functions take priority over editorial copy. */
+html[data-theme] .live-action-first,html[data-theme] .connect-action-first{
+ display:flex!important;flex-direction:column!important;gap:12px!important;
+ width:min(100%,880px)!important;max-width:880px!important;margin:0 auto 32px!important;min-width:0!important;
+}
+html[data-theme] .live-action-first.camera-live-shell{padding:0!important;background:transparent!important;border:0!important}
+html[data-theme] .live-compact-header,html[data-theme] .connect-quick-head{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+ min-width:0;padding:0 1px!important;border:0!important;background:none!important;
+}
+html[data-theme] .live-compact-heading{display:flex;align-items:center;gap:11px;min-width:0}
+html[data-theme] .live-compact-heading h2,html[data-theme] .connect-quick-head h2{
+ font:800 clamp(23px,4vw,31px)/1.2 'Plus Jakarta Sans',system-ui,sans-serif!important;
+ color:var(--ui-text)!important;letter-spacing:-.05em!important;margin:0!important
+}
+html[data-theme] .live-compact-heading span,html[data-theme] .connect-quick-head>span{
+ display:inline-flex;align-items:center;gap:5px;padding:7px 10px;border-radius:99px;
+ background:var(--ui-panel-alt)!important;color:var(--ui-muted)!important;border:1px solid var(--ui-line)!important;
+ font-size:11px!important;font-weight:750!important;white-space:nowrap
+}
+html[data-theme] .live-compact-header .camera-live-head-actions{display:flex!important;align-items:center!important;gap:7px!important;width:auto!important}
+html[data-theme] .live-compact-header .camera-live-head-actions button{
+ display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:43px!important;
+ margin:0!important;padding:9px 13px!important;border-radius:13px!important
+}
+html[data-theme] .live-compact-header [data-live-action="refresh"]{width:43px!important;padding:9px!important}
+html[data-theme] .live-compact-header [data-live-action="create"]{
+ background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;border-color:var(--ui-accent)!important
+}
+html[data-theme] .live-action-first .live-discovery-board{
+ margin:0!important;padding:clamp(13px,2.4vw,19px)!important;border:1px solid var(--ui-line)!important;
+ border-radius:18px!important;background:var(--ui-panel)!important;
+}
+html[data-theme] .live-action-first .camera-live-filters{padding:0 0 13px!important;margin:0!important}
+html[data-theme] .live-results-header{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ margin:0 0 12px;padding-top:2px;
+}
+html[data-theme] .live-results-header strong{font-size:14px!important;color:var(--ui-text)!important}
+html[data-theme] .live-results-header span{
+ display:grid;place-items:center;min-width:27px;height:27px;padding:0 6px;
+ border-radius:99px;background:var(--ui-panel-alt)!important;
+ font-size:12px;font-weight:800;color:var(--ui-text)!important
+}
+html[data-theme] .live-action-first .camera-live-empty{
+ min-height:165px!important;padding:21px!important;display:flex;align-items:center;
+ justify-content:center;flex-direction:column;gap:12px!important;
+ background:var(--ui-panel-alt)!important;
+}
+html[data-theme] .live-action-first .camera-live-empty strong{font-size:15px!important}
+html[data-theme] .live-action-first .camera-live-empty button{
+ background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;border-radius:12px!important;
+ padding:10px 16px!important;min-height:43px!important
+}
+html[data-theme] .live-action-first .live-create-composer{
+ display:block!important;max-width:100%!important;width:100%!important;
+ padding:14px!important;margin:0!important;background:var(--ui-panel)!important;
+ border:1px solid var(--ui-line)!important;border-radius:16px!important
+}
+html[data-theme] .live-action-first .live-create-composer[hidden]{display:none!important}
+html[data-theme] .live-action-first .live-create-composer form{
+ display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+ align-items:end!important;gap:9px!important;min-width:0!important;max-width:100%
+}
+html[data-theme] .live-action-first .live-create-composer form label{
+ grid-column:1 / -1!important;font-size:12px!important;color:var(--ui-muted)!important;margin:0!important
+}
+html[data-theme] .live-action-first .live-create-composer form input{
+ min-width:0!important;min-height:45px!important;width:100%!important;
+ border:1px solid var(--ui-line)!important;border-radius:12px!important;
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;box-sizing:border-box!important
+}
+html[data-theme] .live-action-first .live-create-composer form button{
+ min-height:45px!important;white-space:nowrap!important;border-radius:12px!important;
+ background:var(--ui-accent)!important;color:var(--ui-accent-on)!important
+}
+html[data-theme] .connect-action-first .live-app-card{
+ padding:clamp(14px,2.8vw,22px)!important;gap:0!important;margin:0!important;
+ border-radius:18px!important;box-shadow:none!important
+}
+html[data-theme] .connect-action-first .connect-mode-label{
+ margin:0 0 13px!important;font-size:15px!important;font-weight:800!important;
+ color:var(--ui-text)!important;letter-spacing:-.015em!important
+}
+html[data-theme] .connect-action-first .live-app-card .live-modes{margin:0 0 12px!important;gap:9px!important}
+html[data-theme] .connect-action-first .live-app-card .live-mode{
+ min-height:75px!important;padding:12px!important;box-shadow:none;
+ display:flex!important;align-items:center!important;gap:9px!important
+}
+html[data-theme] .connect-action-first .live-mode strong{font-size:16px!important}
+html[data-theme] .connect-action-first .live-mode small{font-size:11px!important}
+html[data-theme] .connect-action-first .live-app-filters{
+ margin:0 0 12px!important;background:var(--ui-panel-alt)!important;
+}
+html[data-theme] .connect-action-first .live-app-filters summary{
+ display:flex!important;align-items:center!important;gap:9px!important;
+ min-height:47px!important;padding:11px 13px!important
+}
+html[data-theme] .connect-action-first .live-app-filters summary>span{
+ display:flex!important;flex-wrap:wrap!important;align-items:baseline!important;gap:4px!important;min-width:0!important;flex:1!important
+}
+html[data-theme] .connect-action-first .live-app-filters summary strong{font-size:12px!important;color:var(--ui-text)!important}
+html[data-theme] .connect-action-first .live-app-filters summary small{font-size:11px!important;color:var(--ui-muted)!important;overflow-wrap:anywhere!important}
+html[data-theme] .connect-action-first .live-app-find{
+ margin:0!important;min-height:53px!important;font-size:15px!important;font-weight:800!important;
+ border-radius:12px!important
+}
+html[data-theme] .connect-action-first .live-app-progress{
+ margin:12px 0 0!important;text-align:center!important;color:var(--ui-muted)!important
+}
+@media(max-width:520px){
+ html[data-theme] .live-compact-header{align-items:stretch!important}
+ html[data-theme] .live-compact-header .camera-live-head-actions{margin-left:auto!important}
+ html[data-theme] .live-compact-heading h2,html[data-theme] .connect-quick-head h2{font-size:24px!important}
+ html[data-theme] .live-action-first .live-create-composer form{grid-template-columns:minmax(0,1fr)!important}
+ html[data-theme] .live-action-first .live-create-composer form button{width:100%!important}
+ html[data-theme] .connect-quick-head{align-items:center!important}
+ html[data-theme] .connect-action-first .live-app-card .live-mode{min-height:78px!important;padding:10px!important}
+}

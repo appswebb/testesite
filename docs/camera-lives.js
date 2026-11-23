@@ -40,32 +40,34 @@ function viewer(){
  (role==='host'&&source.guest_requested_by&&!source.guest_id?'<div class="camera-live-invite"><strong>Alguém quer participar da transmissão</strong><button type="button" data-live-action="approve">Aceitar</button><button type="button" data-live-action="reject">Recusar</button></div>':'')+
  (role==='viewer'&&!source.guest_id?'<button type="button" data-live-action="request" '+(source.requested?'disabled':'')+'>'+ico('users',17)+' '+(source.requested?'Pedido enviado':'Pedir para entrar com câmera')+'</button>':'')+
  (role==='host'?'<button type="button" class="camera-live-danger" data-live-action="end">Encerrar live</button>':'')+'</div>'+
- '<p class="camera-live-security">Transmissão em tempo real. Só o apresentador e o convidado aceito podem compartilhar câmera e microfone. Nada é gravado pelo entre.</p></section>';
+ '<p class="camera-live-security">Só apresentador e convidado compartilham câmera e microfone.</p></section>';
 }
 function discoveryResults(){
  const rows=filtered();
  if(rows.length)return '<div class="camera-live-list">'+rows.map(card).join('')+'</div>';
- const where=s.region==='global'?'no momento':s.region==='state'?'neste estado':'nesta cidade';
- return '<div class="camera-live-empty" role="status"><span>'+ico('camera',27)+'</span><strong>'+(s.loading?'Buscando transmissões…':s.error?'Não foi possível carregar as lives':'Nenhuma transmissão '+where)+'</strong><p>'+(s.error?'Confira a conexão e toque em Atualizar.':s.rows.length?'Tente outra região ou volte ao filtro global.':'Quando alguém começar uma live, ela aparecerá aqui.')+'</p>'+(s.region!=='global'?'<button type="button" data-live-action="resetFilters">Ver lives globais</button>':'')+'</div>';
+ return '<div class="camera-live-empty" role="status">'+ico('camera',27)+
+ '<strong>'+(s.loading?'Carregando lives…':s.error?'Erro ao carregar lives':s.rows.length?'Nenhuma live neste filtro':'Nenhuma live no momento')+'</strong>'+
+ (s.error?'<button type="button" data-live-action="refresh">Tentar novamente</button>':s.region!=='global'||s.search?'<button type="button" data-live-action="resetFilters">Limpar filtros</button>':'<button type="button" data-live-action="create">Iniciar a primeira live</button>')+
+ '</div>';
 }
 function updateDiscovery(){
  const result=document.getElementById('liveDiscoverResults');
  if(result)result.innerHTML=discoveryResults();
  const count=document.getElementById('liveDiscoverCount');
  if(count)count.textContent=String(filtered().length);
+ const total=document.getElementById('liveTotalCount');
+ if(total)total.textContent=String(s.rows.length)+' no ar';
 }
 function view(){
- if(s.active)return heading('TRANSMITINDO AGORA','Sala <em>ao vivo.</em>','Acompanhe o apresentador e participe quando for convidado.')+
- '<section class="camera-live-shell live-discovery-screen">'+viewer()+'</section>';
- return heading('PESSOAS TRANSMITINDO','Descubra as <em>lives.</em>','Assista a transmissões reais de toda a comunidade ou encontre pessoas perto de você.')+
- '<section class="camera-live-shell live-discovery-screen">'+
- '<header class="live-discovery-intro"><div class="live-discovery-copy"><span class="live-discovery-kicker"><i aria-hidden="true"></i> TRANSMISSÕES EM TEMPO REAL</span><h2>Todo mundo tem uma história para contar.</h2><p>Entre para assistir, conheça quem está transmitindo ou abra sua própria live. Só quem transmite precisa ativar a câmera.</p></div><div class="live-discovery-stat"><strong>'+s.rows.length+'</strong><span>live'+(s.rows.length===1?'':'s')+' ativa'+(s.rows.length===1?'':'s')+'</span></div></header>'+
- '<div class="live-discovery-board"><div class="camera-live-list-head"><div><span class="live-discovery-section-eyebrow">EXPLORAR</span><h3>Lives acontecendo <small id="liveDiscoverCount">'+filtered().length+'</small></h3></div><div class="camera-live-head-actions"><button type="button" data-live-action="refresh">'+ico('refresh',17)+' Atualizar</button><button type="button" data-live-action="create" aria-expanded="'+String(s.showCreate)+'" aria-controls="cameraLiveComposer">'+ico('camera',17)+' '+(s.showCreate?'Fechar':'Iniciar live')+'</button></div></div>'+
- filterMarkup()+'<div id="liveDiscoverResults">'+discoveryResults()+'</div></div>'+
- '<div class="camera-live-hero live-create-composer" id="cameraLiveComposer" '+(s.showCreate?'':'hidden')+'><div><span>✳ SUA VEZ DE TRANSMITIR</span><h3>Comece uma conversa <em>ao vivo.</em></h3><p>Defina um título e autorize o acesso à câmera somente quando a transmissão começar.</p></div><form id="cameraLiveStartForm"><label for="cameraLiveTitle">Título da live</label><input id="cameraLiveTitle" name="title" minlength="3" maxlength="90" required placeholder="Sobre o que vamos conversar?" value="'+esc(s.title)+'"><button type="submit">'+ico('camera',19)+' Começar transmissão</button></form></div>'+
- '</section>';
+ if(s.active)return '<section class="camera-live-shell live-discovery-screen live-active-screen">'+viewer()+'</section>';
+ return '<section class="camera-live-shell live-discovery-screen live-action-first" aria-label="Lives da comunidade">'+
+ '<header class="live-compact-header"><div class="live-compact-heading"><h2>Lives</h2><span id="liveTotalCount" aria-live="polite">'+s.rows.length+' no ar</span></div>'+
+ '<div class="camera-live-head-actions"><button type="button" data-live-action="refresh" aria-label="Atualizar transmissões" title="Atualizar">'+ico('refresh',18)+'</button><button type="button" data-live-action="create" aria-expanded="'+String(s.showCreate)+'" aria-controls="cameraLiveComposer">'+ico('camera',18)+' '+(s.showCreate?'Fechar':'Iniciar live')+'</button></div></header>'+
+ '<div class="live-create-composer camera-live-hero" id="cameraLiveComposer" '+(s.showCreate?'':'hidden')+'><form id="cameraLiveStartForm"><label for="cameraLiveTitle">Título da live</label><input id="cameraLiveTitle" name="title" minlength="3" maxlength="90" required placeholder="Ex.: Vamos conversar?" value="'+esc(s.title)+'"><button type="submit">'+ico('camera',18)+' Transmitir</button></form></div>'+
+ '<div class="live-discovery-board">'+filterMarkup()+
+ '<div class="live-results-header"><strong>Transmitindo agora</strong><span id="liveDiscoverCount">'+filtered().length+'</span></div>'+
+ '<div id="liveDiscoverResults">'+discoveryResults()+'</div></div></section>';
 }
-
 async function refresh(paint=true){
  if(s.loading||!state.session)return;
  s.loading=true;
@@ -87,7 +89,7 @@ async function refresh(paint=true){
    // Preserve the user's typing and keyboard while the live directory polls.
    if(!s.active&&document.activeElement?.closest?.('.camera-live-filters')){
     updateDiscovery();
-    const total=document.querySelector('.live-discovery-stat strong');if(total)total.textContent=String(s.rows.length);
+    const total=document.getElementById('liveTotalCount');if(total)total.textContent=String(s.rows.length)+' no ar';
    }else{renderView();if(s.active)attachAll();}
   }
  }catch(e){console.warn('Lives indisponíveis',e);s.error=infoError(e);if(paint&&state.view==='lives'&&!s.active)renderView();}
