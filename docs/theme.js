@@ -53,11 +53,11 @@ function apply(){
  const surfaces=document.querySelectorAll('.post-card,.post-compose,.settings-card,.form-panel,.profile-preview,.online-person,.conversation-entry,.comments-dialog,.room-shell,.camera-live-stage,.global-search-section,.support-card,.support-history,.premium-checkout-card');
  for(const el of surfaces){
   if(state.mode==='dark'){
-   el.style.setProperty('background','#191c21','important');
+   el.style.setProperty('background-color','#191c21','important');
    el.style.setProperty('color','#f7f8fa','important');
    el.dataset.themeSurfaceApplied='dark';
   }else if(el.dataset.themeSurfaceApplied==='dark'){
-   el.style.removeProperty('background');el.style.removeProperty('color');
+   el.style.removeProperty('background-color');el.style.removeProperty('background');el.style.removeProperty('color');
    delete el.dataset.themeSurfaceApplied;
   }
  }
