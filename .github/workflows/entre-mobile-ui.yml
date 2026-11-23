@@ -9,6 +9,7 @@ on:
       - 'docs/maintenance.css'
       - 'docs/mobile.css'
       - 'tests/admin-mobile-audit.cjs'
+      - 'tests/avatar-mobile-audit.cjs'
       - '.github/workflows/entre-mobile-ui.yml'
   workflow_dispatch:
 permissions:
@@ -33,4 +34,6 @@ jobs:
           node --check docs/app.js
           node --check docs/admin/app.js
           node --check tests/admin-mobile-audit.cjs
+          node --check tests/avatar-mobile-audit.cjs
           node tests/admin-mobile-audit.cjs
+          node tests/avatar-mobile-audit.cjs
