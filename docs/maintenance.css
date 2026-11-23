@@ -22,3 +22,37 @@
 .maint-footer{padding-bottom:30px;color:#849b88;font:700 9px 'Space Grotesk',sans-serif;letter-spacing:.12em}.maint-line{height:3px;width:100%;background:#ffffff15;position:relative;overflow:hidden}.maint-line span{position:absolute;inset:0 auto 0 0;width:27%;background:linear-gradient(90deg,transparent,#fb967a,#e1f1c4,transparent);animation:maint-scan 3.6s ease-in-out infinite}
 @keyframes maint-pulse{50%{box-shadow:0 0 0 12px #d5efac00;opacity:.65}}@keyframes maint-spin{to{transform:rotate(360deg)}}@keyframes maint-dots{0%,70%,100%{opacity:.2;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}@keyframes maint-turn{to{transform:rotate(360deg)}}@keyframes maint-breathe{50%{transform:scale(1.08);opacity:.6}}@keyframes maint-float{50%{translate:0 -14px;rotate:2deg}}@keyframes maint-scan{0%{left:-28%}100%{left:100%}}
 @media(max-width:1040px){.maint-container{gap:10px}.maint-visual{min-height:430px}.maint-visual-card{width:min(80%,330px);min-height:356px}.maint-float-pill{font-size:10px}.maint-copy h1{font-size:clamp(42px,6.2vw,72px)}}@media(max-width:760px){.maint-container{grid-template-columns:1fr;gap:20px;align-content:center;padding-top:40px;padding-bottom:45px}.maint-visual{min-height:285px;max-width:470px;width:100%;margin:0 auto}.maint-copy{text-align:center;margin:0 auto}.maint-copy h1{font-size:clamp(42px,9vw,65px);letter-spacing:-.075em}.maint-eyebrow{margin-bottom:23px}.maint-lead{max-width:540px;margin:0 auto 22px}.maint-promise{margin:0 auto 22px;text-align:left}.maint-status{margin:0 auto}.maint-actions{justify-content:center}.maint-visual-card{width:235px;min-height:248px;padding:16px;border-radius:25px;transform:rotate(-5deg)}.maint-mini-tag{font-size:7px;padding:7px 10px}.maint-big-five{font-size:61px}.maint-center-sub{font-size:6px}.maint-avatar{width:36px;height:36px;font-size:20px}.maint-connection{font-size:18px}.maint-visual-star.star-one{top:1%;left:7%}.maint-visual-star.star-two{top:14%;right:9%}.maint-float-pill{padding:8px 12px}.pill-one{top:12%;right:0}.pill-two{bottom:6%;left:2%}.maint-orbit.orbit-outer{width:315px}.maint-orbit.orbit-mid{width:270px}.maint-orbit.orbit-inner{width:212px}.maint-footer{flex-wrap:wrap;justify-content:center;text-align:center;line-height:1.8;gap:2px;padding-bottom:20px}.maint-header{padding-top:20px}.maint-top-label{font-size:8px}}@media(max-width:390px){.maint-container{padding-left:18px;padding-right:18px}.maint-header,.maint-footer{padding-left:18px;padding-right:18px}.maint-copy h1{font-size:clamp(39px,10vw,47px)}.maint-eyebrow{font-size:9px}.maint-status{padding:13px}.maint-status small{font-size:10px}.maint-live-dots{display:none}.maint-visual{min-height:275px}.maint-visual-card{width:215px;min-height:231px}.maint-float-pill{font-size:9px}.maint-footer{font-size:8px}}@media(prefers-reduced-motion:reduce){.maintenance-screen *, .maintenance-screen *:before,.maintenance-screen *:after{animation:none!important;transition:none!important;translate:0 0!important;transform:none!important}.maint-orbit{opacity:.65}}
+
+
+/* Maintenance brand: SVG lockup with mobile-safe geometry */
+.maint-brand-lockup{display:flex;align-items:center;gap:10px;flex:0 0 auto;min-width:0;white-space:nowrap}
+.maint-brand-symbol{display:block;width:42px;height:42px;flex:none;overflow:visible}
+.maint-brand-name{font:800 28px/1 'Space Grotesk',system-ui,sans-serif;letter-spacing:-.08em;color:#f4f5e9}
+.maint-brand-name>span{color:#fa9577}
+.maint-header{max-width:1320px;min-width:0}
+.maint-header .maint-top-label{min-width:0;text-align:right;line-height:1.4;letter-spacing:.12em}
+.maint-copy,.maint-container{min-width:0}
+.maint-copy h1{overflow-wrap:anywhere;hyphens:auto}
+.maint-visual{min-width:0;max-width:100%}
+.maint-float-pill{white-space:normal;overflow-wrap:anywhere;max-width:90%;text-align:center}
+.maint-visual-card{flex-shrink:0}
+.maintenance-screen{overflow-x:clip}
+@media(max-width:760px){
+ .maint-visual{overflow:hidden;border-radius:28px}
+ .maint-visual-card{max-width:70vw}
+ .maint-float-pill.pill-one{right:1%;top:7%;max-width:62%}
+ .maint-float-pill.pill-two{left:1%;bottom:6%;max-width:55%}
+ .maint-brand-symbol{width:39px;height:39px}
+ .maint-brand-name{font-size:25px}
+}
+@media(max-width:390px){
+ .maint-brand-lockup{gap:7px}
+ .maint-brand-symbol{width:35px;height:35px}
+ .maint-brand-name{font-size:23px}
+ .maint-top-label{font-size:8px;letter-spacing:.05em}
+ .maint-visual-card{width:204px;min-height:225px}
+ .maint-big-five{font-size:55px}
+ .maint-float-pill{font-size:8px}
+ .maint-actions{gap:12px}
+}
+@media(prefers-reduced-motion:reduce){.maint-visual-card,.maint-visual-star{animation:none!important}}

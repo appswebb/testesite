@@ -134,3 +134,27 @@ body { overflow-x: clip; }
 .report-textarea,.modal-card .form-select{display:block;width:100%;min-width:0;border:1px solid #d9ddd3;background:#fffefb;border-radius:14px;padding:12px 14px;font:inherit;font-size:13px;color:#252e27;line-height:1.5}
 .report-textarea{min-height:100px;resize:vertical}
 @media(max-width:760px){.admin-entry{font-size:11px}.modal-card{max-height:calc(100dvh - 28px);overflow-y:auto}}
+
+
+/* Tiny WebP-only profile photos with clear mobile picker */
+.avatar{position:relative;overflow:hidden}
+.avatar>img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;border-radius:inherit}
+.avatar-uploader{display:flex;align-items:center;gap:16px;padding:17px;margin:0 0 22px;border-radius:19px;background:#edf1e6;border:1px solid #d9e2d0;min-width:0}
+.avatar-photo-preview{display:grid;place-content:center;flex:0 0 86px;width:86px;height:86px;border-radius:20px;background:#d9e5d1;color:#3e5b47;overflow:hidden;border:3px solid #fff;font:800 28px 'Space Grotesk',system-ui}
+.avatar-photo-preview img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar-uploader-info{flex:1;min-width:0}
+.avatar-uploader-info>strong{display:block;font:750 15px 'Space Grotesk',system-ui;color:#293c2e}
+.avatar-uploader-info>p{font-size:11px;color:#72826f;line-height:1.55;overflow-wrap:anywhere;margin:5px 0 10px}
+.avatar-select{display:inline-flex;align-items:center;justify-content:center;gap:7px;position:relative;padding:10px 14px;border-radius:11px;background:#21372b;color:white;font-size:11px;font-weight:800;cursor:pointer;max-width:100%;overflow:hidden}
+.avatar-select:hover{background:#426149}.avatar-select:focus-within{outline:3px solid #f79478;outline-offset:2px}
+.avatar-select input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.avatar-remove{border:0;background:transparent;color:#b26354;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:750;padding:10px 3px;margin-left:8px;cursor:pointer}
+.avatar-remove:hover{text-decoration:underline}
+@media(max-width:540px){
+ .avatar-uploader{padding:12px;gap:11px;align-items:flex-start}
+ .avatar-photo-preview{flex-basis:69px;width:69px;height:69px;border-radius:16px;font-size:23px}
+ .avatar-uploader-info>strong{font-size:13px}
+ .avatar-select{padding:9px 12px}
+ .avatar-remove{margin-left:0;display:flex;width:max-content}
+}
+@media(max-width:340px){.avatar-uploader{flex-wrap:wrap}.avatar-photo-preview{flex:0 0 70px}}
