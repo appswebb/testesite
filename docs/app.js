@@ -101,8 +101,8 @@ async function sendReport(form){
 }
 
 function modalView(){const m=state.modal;if(!m)return '';if(m==='report')return reportDialog();const del=m==='delete1'||m==='delete2';return `<div class="modal-backdrop" id="modalBackdrop"><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><h2 id="modalTitle">${m==='delete1'?'Excluir seus dados?':m==='delete2'?'Confirma a exclusão?':m==='block'?'Bloquear esta pessoa?':'Encerrar encontro?'}</h2><p>${m==='delete1'?'Seu perfil, suas conversas e suas conexões deste aplicativo serão removidos permanentemente. Isso também pode apagar mensagens compartilhadas com outras pessoas.':m==='delete2'?'Esta é a confirmação final. Digite EXCLUIR abaixo. O login do servidor compartilhado continuará existindo, mas sua conta no entre. não.':m==='block'?'Vocês não serão conectados de novo por este sistema. A conversa temporária será encerrada.':'Este encontro será encerrado, e mensagens temporárias serão descartadas.'}</p>${m==='delete2'?`<div class="field"><label for="deleteConfirm">Digite EXCLUIR para confirmar</label><input id="deleteConfirm" autocomplete="off" placeholder="EXCLUIR"></div>`:''}<div class="modal-actions"><button class="ui-btn btn-outline btn-sm" data-action="closemodal">Cancelar</button><button class="ui-btn ${del?'btn-danger':'btn-dark'} btn-sm" data-action="${m==='delete1'?'delete2':m==='delete2'?'deleteFinal':m==='block'?'blockFinal':'endpairFinal'}">${del?'Excluir':'Confirmar'} ${ico('arrow',15)}</button></div></div></div>`}
-function render(){applyMotion();if(!state.session){app.innerHTML=state.mode==='login'||state.mode==='signup'?authView():landing()}else if(!state.profile){state.mode='onboard';app.innerHTML=authView()}else{app.innerHTML=appLayout();updateTimerText()}if(state.view==='connect'&&state.pair){const el=document.getElementById('messageList');if(el)el.scrollTop=el.scrollHeight}}
-function renderView(){if(state.session&&state.profile){const el=document.getElementById('view-content');if(el){el.innerHTML=viewContent();updateTimerText();const m=document.getElementById('messageList');if(m)m.scrollTop=m.scrollHeight}}}
+function render(){applyMotion();if(maintenanceIsActive()){app.innerHTML=maintenanceView();return;}if(!state.session){app.innerHTML=state.mode==='login'||state.mode==='signup'?authView():landing()}else if(!state.profile){state.mode='onboard';app.innerHTML=authView()}else{app.innerHTML=appLayout();updateTimerText()}if(state.view==='connect'&&state.pair){const el=document.getElementById('messageList');if(el)el.scrollTop=el.scrollHeight}}
+function renderView(){if(maintenanceIsActive())return;if(state.session&&state.profile){const el=document.getElementById('view-content');if(el){el.innerHTML=viewContent();updateTimerText();const m=document.getElementById('messageList');if(m)m.scrollTop=m.scrollHeight}}}
 function showFormMessage(msg,success=false){const id=success?'form-success':'form-error';const target=document.getElementById(id);if(target){target.classList.remove('hidden');target.textContent=msg}}
 function busy(btn,value){if(btn){btn.disabled=value;btn.dataset.oldLabel ||= btn.innerHTML;if(value)btn.textContent='Só um instante...';else btn.innerHTML=btn.dataset.oldLabel}}
 async function getProfile(){const uid=state.session?.user.id;if(!uid)return null;const {data,error}=await db.from('entre_profiles').select('*').eq('id',uid).maybeSingle();if(error)throw error;return data}
@@ -126,7 +126,7 @@ async function createProfile(data){const {error}=await db.from('entre_profiles')
 async function profileSetup(form){const submit=form.querySelector('[type=submit]');busy(submit,true);try{const profile=getProfileData(form);if(!form.adult.checked||profile.age<18)throw Error('Você deve ter pelo menos 18 anos.');await createProfile(profile);state.view='home';await initializeAccount();toast('Perfil concluído. Bem-vindo ao entre.!')}catch(e){showFormMessage(infoError(e))}finally{busy(submit,false)}}
 async function saveProfile(form){const submit=form.querySelector('[type=submit]');busy(submit,true);try{const p=getProfileData(form);const {data,error}=await db.from('entre_profiles').update({...p,bio:form.bio.value.trim(),updated_at:new Date().toISOString()}).eq('id',state.session.user.id).select('*').single();if(error)throw error;state.profile=data;state.preference=data.preference;render();toast('Perfil atualizado!')}catch(e){toast(infoError(e),true)}finally{busy(submit,false)}}
 function clearSearchTimer(){if(state.searchLoop){clearInterval(state.searchLoop);state.searchLoop=null}}
-async function startSearch(){if(!state.session||!state.profile)return;state.searching=true;state.pair=null;state.peer=null;state.view='connect';render();await pollSearch();if(state.searching&&!state.searchLoop)state.searchLoop=setInterval(pollSearch,3500)}
+async function startSearch(){if(maintenanceIsActive())return;if(!state.session||!state.profile)return;state.searching=true;state.pair=null;state.peer=null;state.view='connect';render();await pollSearch();if(state.searching&&!state.searchLoop)state.searchLoop=setInterval(pollSearch,3500)}
 let polling=false;
 async function pollSearch(){if(polling||!state.searching)return;polling=true;try{const {data,error}=await db.rpc('entre_find',{_preference:state.preference});if(error)throw error;if(data?.status==='matched'&&data.pair_id){state.searching=false;clearSearchTimer();await openPair(data.pair_id);toast('Você encontrou uma conexão!')}}catch(e){toast(infoError(e),true);state.searching=false;clearSearchTimer();renderView()}finally{polling=false}}
 async function cancelSearch(){state.searching=false;clearSearchTimer();try{const {error}=await db.rpc('entre_leave');if(error)throw error}catch(e){toast(infoError(e),true)}renderView()}
@@ -134,8 +134,8 @@ async function openPair(id){const {data,error}=await db.from('entre_pairs').sele
 async function loadMessages(){if(!state.pair)return;const {data,error}=await db.from('entre_messages').select('id,body,sender_id,created_at').eq('pair_id',state.pair.id).order('id',{ascending:true}).limit(250);if(error){console.warn(error);return}state.messages=data||[]}
 function subscribePair(id){if(state.channel){db.removeChannel(state.channel);state.channel=null}state.channel=db.channel(`entre_pair_${id}_${Math.random().toString(36).slice(2,7)}`).on('postgres_changes',{event:'INSERT',schema:'public',table:'entre_messages',filter:`pair_id=eq.${id}`},async()=>{if(state.pair?.id===id){await loadMessages();renderView()}}).on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_pairs',filter:`id=eq.${id}`},async()=>{if(state.pair?.id===id)await refreshPair()}).subscribe()}
 async function refreshPair(){if(!state.pair)return;const id=state.pair.id;const {data,error}=await db.from('entre_pairs').select('*').eq('id',id).maybeSingle();if(error)return;if(!data||data.status==='closed'){state.pair=null;state.messages=[];state.peer=null;state.view='connect';if(state.channel){db.removeChannel(state.channel);state.channel=null}render();toast('Este encontro foi encerrado.');return}const oldStatus=state.pair.status;state.pair=data;if(data.status==='connected'&&oldStatus!=='connected'){toast('Os dois disseram sim! Conexão salva. ♡');await loadPairs()}renderView()}
-async function sendMessage(form){if(!state.pair)return;const input=form.querySelector('#messageInput');const body=input.value.trim();if(!body)return;input.value='';const {data,error}=await db.from('entre_messages').insert({pair_id:state.pair.id,sender_id:state.session.user.id,body}).select('id,body,sender_id,created_at').single();if(error){input.value=body;toast(infoError(error),true);return}if(!state.messages.some(m=>m.id===data.id)){state.messages.push(data);renderView()}setTimeout(()=>document.getElementById('messageInput')?.focus(),0)}
-async function vote(accept){if(!state.pair)return;try{const {data,error}=await db.rpc('entre_vote',{_pair:state.pair.id,_accept:accept});if(error)throw error;if(data==='closed'){state.pair=null;state.peer=null;state.messages=[];await loadPairs();render();toast('Conversa encerrada. Você pode conhecer outra pessoa.');return}await refreshPair();if(accept&&data==='active')toast('Sua escolha foi registrada. Falta a outra pessoa.')}catch(e){toast(infoError(e),true)}}
+async function sendMessage(form){if(maintenanceIsActive())return;if(!state.pair)return;const input=form.querySelector('#messageInput');const body=input.value.trim();if(!body)return;input.value='';const {data,error}=await db.from('entre_messages').insert({pair_id:state.pair.id,sender_id:state.session.user.id,body}).select('id,body,sender_id,created_at').single();if(error){input.value=body;toast(infoError(error),true);return}if(!state.messages.some(m=>m.id===data.id)){state.messages.push(data);renderView()}setTimeout(()=>document.getElementById('messageInput')?.focus(),0)}
+async function vote(accept){if(maintenanceIsActive())return;if(!state.pair)return;try{const {data,error}=await db.rpc('entre_vote',{_pair:state.pair.id,_accept:accept});if(error)throw error;if(data==='closed'){state.pair=null;state.peer=null;state.messages=[];await loadPairs();render();toast('Conversa encerrada. Você pode conhecer outra pessoa.');return}await refreshPair();if(accept&&data==='active')toast('Sua escolha foi registrada. Falta a outra pessoa.')}catch(e){toast(infoError(e),true)}}
 async function endPair(){if(!state.pair)return;try{const {error}=await db.rpc('entre_close',{_pair:state.pair.id});if(error)throw error;state.pair=null;state.messages=[];state.peer=null;state.modal=null;if(state.channel){db.removeChannel(state.channel);state.channel=null}await loadPairs();state.view='connect';render();toast('Encontro encerrado.')}catch(e){toast(infoError(e),true)}}
 async function blockPartner(){if(!state.peer)return;try{const {error}=await db.rpc('entre_block',{_user:state.peer.id});if(error)throw error;state.modal=null;state.pair=null;state.peer=null;state.messages=[];await loadPairs();state.view='connect';render();toast('Pessoa bloqueada. Vocês não serão reconectados.')}catch(e){toast(infoError(e),true)}}
 async function logout(){try{if(state.searching)await db.rpc('entre_leave');clearSearchTimer();if(state.channel){await db.removeChannel(state.channel);state.channel=null}const {error}=await db.auth.signOut({scope:'local'});if(error)throw error;state.session=null;state.profile=null;state.pair=null;state.peer=null;state.pairs=[];state.searching=false;state.mode='landing';state.view='home';render();toast('Você saiu da conta.')}catch(e){toast(infoError(e),true)}}
@@ -143,11 +143,72 @@ async function deleteData(){const val=document.getElementById('deleteConfirm')?.
 function updateTimerText(){if(!state.pair||state.pair.status!=='active')return;const seconds=Math.max(0,Math.ceil((new Date(state.pair.expires_at).getTime()-Date.now())/1000));const mm=String(Math.floor(seconds/60)).padStart(2,'0'),ss=String(seconds%60).padStart(2,'0');document.querySelectorAll('.timer-text').forEach(el=>{el.textContent=`${mm}:${ss}`;el.classList.toggle('urgent',seconds<=30)});if(seconds===0&&state.closedOnce!==state.pair.id){state.closedOnce=state.pair.id;db.rpc('entre_close',{_pair:state.pair.id}).then(()=>refreshPair()).catch(()=>{})}}
 function nav(view){state.view=view;if(view!=='connect'&&state.pair?.status==='active'){toast('Sua conversa de 5 minutos continua ativa na aba Conectar.')}render();window.scrollTo({top:0,behavior:state.motionOff?'instant':'smooth'})}
 function scrollHow(){document.getElementById('como-funciona')?.scrollIntoView({behavior:'smooth'})}
-async function clickAction(event){const btn=event.target.closest('[data-action]');if(!btn||btn.disabled)return;const action=btn.dataset.action;try{switch(action){case'logo':event.preventDefault();if(state.session&&state.profile)nav('home');else{state.mode='landing';render()}break;case'landing':state.mode='landing';render();break;case'how':scrollHow();break;case'login':state.mode='login';render();break;case'signup':state.mode='signup';render();break;case'google':await signInGoogle(btn);break;case'nav':nav(btn.dataset.view);break;case'filter':state.preference=btn.dataset.value;renderView();break;case'startsearch':await startSearch();break;case'cancelsearch':await cancelSearch();break;case'openpair':await openPair(btn.dataset.id);break;case'vote':await vote(btn.dataset.value==='yes');break;case'endpair':state.modal='endpair';render();break;case'endpairFinal':await endPair();break;case'report':state.modal='report';render();break;case'block':state.modal='block';render();break;case'blockFinal':await blockPartner();break;case'closemodal':state.modal=null;render();break;case'logout':await logout();break;case'motion':state.motionOff=!state.motionOff;localStorage.setItem('entre.motionOff',state.motionOff?'1':'0');render();break;case'delete1':state.modal='delete1';render();break;case'delete2':state.modal='delete2';render();break;case'deleteFinal':await deleteData();break;default:break}}catch(e){toast(infoError(e),true)}}
+async function clickAction(event){const btn=event.target.closest('[data-action]');if(!btn||btn.disabled)return;const action=btn.dataset.action;try{switch(action){case'logo':event.preventDefault();if(state.session&&state.profile)nav('home');else{state.mode='landing';render()}break;case'landing':state.mode='landing';render();break;case'how':scrollHow();break;case'login':state.mode='login';render();break;case'signup':state.mode='signup';render();break;case'google':await signInGoogle(btn);break;case'maintenanceRefresh':await maintenanceCheck(true);break;case'nav':nav(btn.dataset.view);break;case'filter':state.preference=btn.dataset.value;renderView();break;case'startsearch':await startSearch();break;case'cancelsearch':await cancelSearch();break;case'openpair':await openPair(btn.dataset.id);break;case'vote':await vote(btn.dataset.value==='yes');break;case'endpair':state.modal='endpair';render();break;case'endpairFinal':await endPair();break;case'report':state.modal='report';render();break;case'block':state.modal='block';render();break;case'blockFinal':await blockPartner();break;case'closemodal':state.modal=null;render();break;case'logout':await logout();break;case'motion':state.motionOff=!state.motionOff;localStorage.setItem('entre.motionOff',state.motionOff?'1':'0');render();break;case'delete1':state.modal='delete1';render();break;case'delete2':state.modal='delete2';render();break;case'deleteFinal':await deleteData();break;default:break}}catch(e){toast(infoError(e),true)}}
 document.addEventListener('click',clickAction);
 document.addEventListener('submit',async e=>{const form=e.target;if(!(form instanceof HTMLFormElement))return;e.preventDefault();const name=form.id;try{if(name==='authForm'&&form.dataset.form==='profileSetup')await profileSetup(form);else if(name==='profileForm')await saveProfile(form);else if(name==='messageForm')await sendMessage(form);else if(name==='reportForm')await sendReport(form)}catch(err){toast(infoError(err),true)}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal){state.modal=null;render()}});
 window.addEventListener('beforeunload',()=>{if(state.searching)db.rpc('entre_leave').catch(()=>{})});
+
+function maintenanceIsPreview(){return new URLSearchParams(location.search).has('maintenance_preview')}
+function maintenanceIsActive(){return maintenanceIsPreview()||Boolean(state.siteSettings?.maintenance_enabled&&!state.isAdmin)}
+function maintenanceView(){
+ const s=state.siteSettings||{};
+ const title=esc(s.maintenance_title||'Tem coisa boa chegando.');
+ const message=esc(s.maintenance_message||'Estamos preparando uma nova versão do entre. Seu próximo oi merece uma experiência ainda melhor.');
+ const preview=maintenanceIsPreview();
+ return '<main class="maintenance-screen" id="maintenance-screen" role="main">'
+  +'<div class="maint-grain" aria-hidden="true"></div><div class="maint-halo maint-halo-one" aria-hidden="true"></div><div class="maint-halo maint-halo-two" aria-hidden="true"></div>'
+  +'<header class="maint-header"><a href="./" class="maint-logo" aria-label="entre."><span class="maint-logo-icon">e<span>.</span></span><span class="maint-wordmark">entre<span>.</span></span></a><span class="maint-top-label">UM NOVO CAPÍTULO</span></header>'
+  +'<div class="maint-container"><div class="maint-copy"><div class="maint-eyebrow"><span class="maint-beat"></span> '+(preview?'VISUALIZAÇÃO DA TELA':'MODO ATUALIZAÇÃO ATIVO')+'</div>'
+  +'<h1 id="maintenance-title">'+title+'</h1><p class="maint-lead" id="maintenance-message">'+message+'</p>'
+  +'<div class="maint-promise"><span class="maint-promise-glyph">✳</span><span>Estamos cuidando de cada detalhe para deixar seus próximos cinco minutos ainda mais especiais.</span></div>'
+  +'<div class="maint-status"><span class="maint-status-light"></span><div><strong>Preparando novidades</strong><small id="maintenance-status-text">A página verifica automaticamente quando tudo estiver pronto.</small></div><span class="maint-live-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>'
+  +'<div class="maint-actions"><button type="button" data-action="maintenanceRefresh" class="maint-refresh">'+ico("refresh",18)+' Verificar agora</button><a class="maint-admin-link" href="./admin/">'+ico("shield",17)+' Área administrativa</a></div>'
+  +'</div><div class="maint-visual" aria-hidden="true"><div class="maint-orbit orbit-outer"></div><div class="maint-orbit orbit-mid"></div><div class="maint-orbit orbit-inner"></div>'
+  +'<span class="maint-visual-star star-one">✳</span><span class="maint-visual-star star-two">✴</span><span class="maint-visual-star star-three">✧</span>'
+  +'<div class="maint-visual-card"><div class="maint-mini-tag">UMA CONEXÃO DE CADA VEZ</div><div class="maint-center"><span class="maint-big-five">05<span>:</span>00</span><div class="maint-center-sub">CINCO MINUTOS. UMA POSSIBILIDADE.</div></div><div class="maint-card-footer"><span class="maint-avatar first">e</span><span class="maint-connection">↝</span><span class="maint-avatar second">♡</span></div></div>'
+  +'<div class="maint-float-pill pill-one">algo especial está chegando <span>✷</span></div><div class="maint-float-pill pill-two">feito pra sentir. ♡</div></div></div>'
+  +'<footer class="maint-footer"><span>ENTRE. — GENTE DE VERDADE, CONEXÕES REAIS.</span><span>VOLTAMOS QUANDO A ATUALIZAÇÃO FOR LIBERADA.</span></footer>'
+  +'<div class="maint-line" aria-hidden="true"><span></span></div></main>';
+}
+let maintenancePolling=false;
+async function maintenanceCheck(manual=false){
+ if(maintenancePolling)return;
+ maintenancePolling=true;
+ try{
+  const previous=maintenanceIsActive();
+  const response=await db.rpc('entre_public_settings');
+  if(response.error)throw response.error;
+  if(!response.data)return;
+  const before=state.siteSettings;
+  state.siteSettings=response.data;
+  const active=maintenanceIsActive();
+  if(previous&&!active&&!maintenanceIsPreview()){
+   const status=document.getElementById('maintenance-status-text');
+   if(status)status.textContent='Atualização liberada! Abrindo a nova versão…';
+   const target=new URL(window.location.href);
+   target.searchParams.delete('maintenance_preview');
+   target.searchParams.set('released',new Date(response.data.release_at||Date.now()).getTime().toString());
+   setTimeout(()=>window.location.replace(target.href),800);
+   return;
+  }
+  if(active&&!previous){
+   state.searching=false;clearSearchTimer();
+   if(state.channel){db.removeChannel(state.channel);state.channel=null;}
+   state.pair=null;state.peer=null;state.modal=null;
+   render();
+  }else if(active){
+   const title=document.getElementById('maintenance-title'),msg=document.getElementById('maintenance-message');
+   if(title)title.textContent=response.data.maintenance_title||'Tem coisa boa chegando.';
+   if(msg)msg.textContent=response.data.maintenance_message||'Uma nova versão está chegando.';
+   if(manual){const status=document.getElementById('maintenance-status-text');if(status)status.textContent='Ainda estamos preparando. Esta página será liberada automaticamente.';}
+  }else if(before?.announcement!==response.data.announcement){render();}
+ }catch(err){
+  if(manual){const target=document.getElementById('maintenance-status-text');if(target)target.textContent='Não foi possível verificar agora. Continuaremos tentando.';}
+  console.warn('Maintenance status check failed',err);
+ }finally{maintenancePolling=false;}
+}
+
 function getOAuthError(){
  const query=new URLSearchParams(window.location.search);
  const hash=new URLSearchParams(window.location.hash.replace(/^#/,''));
@@ -167,10 +228,11 @@ async function boot(){
    const verified=await db.auth.getUser();if(verified.error)throw verified.error;
    if(!hasGoogleIdentity(verified.data.user)){
     await db.auth.signOut({scope:'local'});state.session=null;state.mode='login';render();showFormMessage('O entre. aceita somente login pelo Google.');
-   }else{state.session={...data.session,user:verified.data.user};const {data:admin}=await db.rpc('entre_admin_check');state.isAdmin=admin===true;if(state.isAdmin&&localStorage.getItem('entre.admin.return')==='1'){localStorage.removeItem('entre.admin.return');window.location.replace('./admin/');return;}state.mode='app';await initializeAccount()}
+   }else{state.session={...data.session,user:verified.data.user};const {data:admin}=await db.rpc('entre_admin_check');state.isAdmin=admin===true;if(state.isAdmin&&localStorage.getItem('entre.admin.return')==='1'){localStorage.removeItem('entre.admin.return');window.location.replace('./admin/');return;}state.mode='app';if(maintenanceIsActive())render();else await initializeAccount()}
   }else{state.mode=oauthError?'login':'landing';render();if(oauthError)showFormMessage(oauthError)}
   db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'&&state.session){state.session=null;state.profile=null;state.isAdmin=false;state.mode='landing';render()}});
   state.timerLoop=setInterval(updateTimerText,1000);
+  setInterval(()=>maintenanceCheck(false),10000);
   setInterval(async()=>{if(state.session?.user&&state.pair&&document.visibilityState==='visible'){await refreshPair()}},12000)
  }catch(e){state.mode='login';render();showFormMessage(oauthError||infoError(e));console.error(e)}
 }

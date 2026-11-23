@@ -14,13 +14,14 @@
 <link rel="stylesheet" href="./styles.css">
 <title>entre. — O próximo oi pode mudar tudo.</title>
 <link rel="stylesheet" href="./motion.css">
-<link rel="stylesheet" href="./mobile.css">
+<link rel="stylesheet" href="./mobile.css?v=maintenance1">
+<link rel="stylesheet" href="./maintenance.css?v=maintenance1">
 </head>
 <body>
 <div id="app"><div class="startup"><span class="brand-glyph"><i></i><i></i></span><span>entre<span class="dot">.</span></span><span class="startup-pulse"></span></div></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
-<script defer src="./app.js?v=oauth-fix-20261123"></script>
+<script>\n// Cache-bust the app bundle on every visit, including after a maintenance release.\nwindow.addEventListener('DOMContentLoaded',function(){var script=document.createElement('script');script.src='./app.js?live='+Date.now();document.body.appendChild(script);});\n</script>
 <script defer src="./motion.js"></script>
 </body>
 </html>
