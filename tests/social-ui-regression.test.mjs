@@ -251,3 +251,21 @@ test('An admin can access the normal app without a persistent forced return to t
  assert.match(admin,/href="\.\.\/\?site=1"/);
  assert.doesNotMatch(admin,/localStorage\.setItem\("entre\.admin\.return","1"\)/);
 });
+
+test('Google OAuth callbacks do not persist stale access_denied errors or mask valid sessions',()=>{
+ const app=read('app.js');
+ assert.match(app,/entre\.app\.oauth\.started/);
+ assert.match(app,/function getOAuthError\(\)/);
+ assert.match(app,/window\.history\.replaceState/);
+ assert.match(app,/return fresh\?infoError/);
+ assert.match(app,/sessionStorage\.removeItem\('entre\.app\.oauth\.started'\)/);
+ assert.match(app,/showFormMessage\(infoError\(e\)\)/);
+ assert.doesNotMatch(app,/showFormMessage\(oauthError\|\|infoError\(e\)\)/);
+});
+test('Optional social services do not block a successful Google login',()=>{
+ const app=read('app.js');
+ assert.match(app,/try\{await loadPairs\(\);\}catch\(e\)/);
+ assert.match(app,/try\{await window\.entreSocial\?\.refreshBulletins\?\.\(true\);\}catch\(e\)/);
+ assert.match(app,/try\{await window\.entreSocial\?\.init\?\.\(\);\}catch\(e\)/);
+ assert.match(app,/state\.profile=await getProfile\(\)/);
+});
