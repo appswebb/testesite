@@ -507,7 +507,7 @@ async function signInGoogle(btn){
   const redirectTo=window.location.hostname==='appswebb.github.io'
    ? 'https://appswebb.github.io/testesite/'
    : new URL(window.location.pathname,window.location.origin).href;
-  const {data,error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo,queryParams:{prompt:'select_account'}}});
+  const {data,error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo,scopes:'openid email profile',queryParams:{prompt:'select_account'}}});
   if(error)throw error;
   if(!data?.url)throw new Error('O provedor não retornou um endereço para autenticação. Verifique a configuração do Google no Supabase.');
  }catch(e){sessionStorage.removeItem('entre.app.oauth.started');showFormMessage(infoError(e));busy(btn,false)}
@@ -751,6 +751,15 @@ async function maintenanceCheck(manual=false){
  }finally{maintenancePolling=false;}
 }
 
+function googleOAuthCallbackMessage(code,description){
+ const kind=String(code||'').trim().slice(0,64);
+ const detail=String(description||'').replace(/[\r\n\t]+/g,' ').trim().slice(0,240);
+ if(/^access_denied$/i.test(kind)||/access_denied|consent.*denied|permission.*denied/i.test(detail)){
+  const extra=detail&&!/^(access_denied|the user denied the request)$/i.test(detail)?' Motivo informado pelo Google: '+detail+'.':'';
+  return 'O Google não autorizou este acesso (access_denied).'+extra+' Se você não cancelou, confira no Google Cloud → Google Auth Platform → Público-alvo se o aplicativo permite a sua conta. Em modo de teste, confira Usuários de teste; para abrir a todos, confira o status de publicação. Tente pelo navegador Chrome, fora do navegador interno de outros aplicativos.';
+ }
+ return infoError({message:detail||kind});
+}
 function getOAuthError(){
  const query=new URLSearchParams(window.location.search);
  const hash=new URLSearchParams(window.location.hash.replace(/^#/,''));
@@ -770,7 +779,7 @@ function getOAuthError(){
   clean.hash=fragment.toString()?'#'+fragment.toString():'';
   window.history.replaceState(window.history.state,'',clean.pathname+clean.search+clean.hash);
  }catch(e){console.warn('Could not clear stale OAuth callback',e);}
- return fresh?infoError({message:description}):null;
+ return fresh?googleOAuthCallbackMessage(code,description):null;
 }
 async function loadSiteSettings(){try{const {data,error}=await db.rpc('entre_public_settings');if(!error&&data)state.siteSettings=data}catch(e){console.warn('Public settings unavailable')}}
 function consumeAdminOAuthReturn(){
