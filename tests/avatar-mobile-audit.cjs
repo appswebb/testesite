@@ -35,6 +35,7 @@ const fixture=()=>{
    return {data:null,error:null};
   },
   from:next,
+  channel(){return {on(kind,filter,cb){if(filter.table==='entre_profiles')window.__onAvatarChange=cb;return this;},subscribe(){return this;}};},
   storage:{from:()=>({
    async upload(p,blob,opt){window.__uploads.push({path:p,size:blob.size,type:blob.type,contentType:opt.contentType});
       if(blob.size>40960||blob.type!=='image/webp')return {error:{message:'Too large'}};
@@ -111,6 +112,10 @@ async function selectImage(page){
   assert.equal(uploaded[0].type,'image/webp');
   assert(uploaded[0].path.endsWith('.webp'),'Avatar path invalid');
   tests++;console.log('PASS onboarding compresses photo to '+uploaded[0].size+' bytes and uploads private WebP');
+  await profile.waitForFunction(()=>Boolean(document.querySelector('.profile-preview .avatar img')),{timeout:6000});
+  const behindClock=await profile.evaluate(()=>avatarFresh({...window.__profile,avatar_uploaded_at:new Date(Date.now()+3600000).toISOString()}));
+  assert(behindClock,'Avatar hidden when phone clock is one hour behind the server');
+  tests++;console.log('PASS saved photo visible and tolerates phone clock skew');
   await selectImage(profile);
   await profile.locator('#profileForm button[type=submit]').click();
   await profile.waitForFunction(()=>window.__uploads.length===2,{timeout:12000});
@@ -121,6 +126,17 @@ async function selectImage(page){
   assert.equal(final.photo,final.uploads[1].path,'Profile photo path not saved');
   assert.deepEqual(errors,[],'Photo upload script errors');
   tests++;console.log('PASS photo replacement and old-object removal');
+  await profile.waitForFunction(()=>{
+     const img=document.querySelector('.profile-preview .avatar img');
+     return img&&img.src.includes(window.__profile.avatar_path);
+  },{timeout:9000});
+  assert.equal(typeof (await profile.evaluate(()=>window.__onAvatarChange)),'function','Realtime profile subscription absent');
+  tests++;console.log('PASS updated photo appears immediately and profile subscribes to realtime');
+  await profile.evaluate(async()=>{
+   await window.__onAvatarChange({new:{id:window.__profile.id,avatar_path:null,avatar_uploaded_at:null}});
+  });
+  await profile.waitForFunction(()=>!document.querySelector('.profile-preview .avatar img'),{timeout:5000});
+  tests++;console.log('PASS remote avatar deletion updates all avatar nodes live');
   await profile.close();
   console.log('SUCCESS '+tests+' photo + maintenance regression checks');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
