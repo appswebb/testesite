@@ -306,7 +306,7 @@ function maintenanceView(){
  const preview=maintenanceIsPreview();
  return '<main class="maintenance-screen" id="maintenance-screen" role="main">'
   +'<div class="maint-grain" aria-hidden="true"></div><div class="maint-halo maint-halo-one" aria-hidden="true"></div><div class="maint-halo maint-halo-two" aria-hidden="true"></div>'
-  +'<header class="maint-header"><a href="./" class="maint-logo" aria-label="entre."><span class="maint-logo-icon">e<span>.</span></span><span class="maint-wordmark">entre<span>.</span></span></a><span class="maint-top-label">UM NOVO CAPÍTULO</span></header>'
+  +'<header class="maint-header"><div class="maint-brand-lockup" aria-label="entre."><svg class="maint-brand-symbol" viewBox="0 0 60 60" aria-hidden="true"><path d="M11 30c-2-12 4-19 14-18 13 1 11 21 18 27" fill="none" stroke="#F69C7B" stroke-width="9" stroke-linecap="round"/><path d="M49 30c2 12-4 19-14 18-13-1-11-21-18-27" fill="none" stroke="#E6F0D5" stroke-width="9" stroke-linecap="round"/></svg><span class="maint-brand-name">entre<span>.</span></span></div><span class="maint-top-label">UM NOVO CAPÍTULO</span></header>'
   +'<div class="maint-container"><div class="maint-copy"><div class="maint-eyebrow"><span class="maint-beat"></span> '+(preview?'VISUALIZAÇÃO DA TELA':'MODO ATUALIZAÇÃO ATIVO')+'</div>'
   +'<h1 id="maintenance-title">'+title+'</h1><p class="maint-lead" id="maintenance-message">'+message+'</p>'
   +'<div class="maint-promise"><span class="maint-promise-glyph">✳</span><span>Estamos cuidando de cada detalhe para deixar seus próximos cinco minutos ainda mais especiais.</span></div>'
