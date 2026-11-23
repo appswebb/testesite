@@ -32,7 +32,7 @@ const fmtTime=date=>new Date(date).toLocaleTimeString('pt-BR',{hour:'2-digit',mi
 const fmtDate=date=>new Date(date).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
 let toastTimer;
 function toast(message,error=false){const el=document.getElementById('toast');el.textContent=message;el.style.background=error?'#a64c40':'#272a25';el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),4700)}
-const state={mode:'landing',view:'home',isAdmin:false,siteSettings:null,session:null,profile:null,avatarUrls:{},avatarPendingFile:null,avatarPreviewUrl:null,pendingCompressedAvatarUrl:null,profileChannel:null,pairs:[],pair:null,peer:null,messages:[],searching:false,preference:'any',activeTab:'all',busy:false,roomReady:false,channel:null,searchLoop:null,timerLoop:null,closedOnce:null,modal:null,signup:null,motionOff:localStorage.getItem('entre.motionOff')==='1',notice:null};
+const state={mode:'landing',view:'home',isAdmin:false,siteSettings:null,session:null,profile:null,avatarUrls:{},avatarPendingFile:null,avatarPreviewUrl:null,pendingCompressedAvatarUrl:null,profileChannel:null,pairs:[],pair:null,peer:null,messages:[],searching:false,preference:'any',activeTab:'all',busy:false,roomReady:false,channel:null,searchLoop:null,timerLoop:null,closedOnce:null,modal:null,signup:null,motionOff:localStorage.getItem('entre.motionOff')==='1',notice:null,suspension:null};
 function applyMotion(){document.body.classList.toggle('motion-off',state.motionOff)}
 function infoError(e){
  const m=String(e?.message||e||'Não foi possível concluir. Tente novamente.');
@@ -51,7 +51,7 @@ function landing(){const scrollWords=Array(2).fill('<span>UMA CONVERSA DE CADA V
 <section class="section-pad how-section" id="como-funciona"><div class="wrap"><div class="section-intro"><div><span class="eyebrow">01 / Sem complicação</span><h2 class="section-title">Conhecer gente,<br><i>não colecionar perfis.</i></h2></div><p>Um sistema pensado para voltar à coisa mais natural do mundo: duas pessoas conversando e descobrindo se há sintonia.</p></div><div class="steps-grid"><article class="step-card"><span class="step-number">01 — VOCÊ ESCOLHE</span><span class="step-icon">${ico('user',33)}</span><h3>Seu tipo de conexão.</h3><p>Crie seu perfil, defina com quem deseja conversar e entre na busca com um toque.</p></article><article class="step-card"><span class="step-number">02 — ACONTECE AGORA</span><span class="step-icon">${ico('clock',34)}</span><h3>Cinco minutos reais.</h3><p>A gente conecta vocês em um chat privado por cinco minutos. É uma pessoa por vez.</p></article><article class="step-card"><span class="step-number">03 — DECISÃO DOS DOIS</span><span class="step-icon">${ico('heart',34)}</span><h3>Deu match? Fica.</h3><p>Vocês dois precisam escolher continuar. Só então a conversa fica salva para depois.</p></article></div></div></section>
 <section class="manifesto" id="experiencia"><div class="wrap manifesto-inner"><h2>Conexões de verdade não começam com um <em>algoritmo perfeito.</em><br>Começam com coragem.</h2><div class="caption"><strong>O que torna isso diferente</strong><p>Sem feed infinito, sem disputa por curtidas, sem grupos barulhentos. Um encontro novo, uma conversa reservada e a liberdade de escolher.</p><button class="ui-btn btn-coral" data-action="signup">Quero experimentar ${ico('arrow',18)}</button></div></div></section>
 <section class="section-pad" id="manifesto"><div class="wrap" style="text-align:center;max-width:840px"><span class="eyebrow">UM CONVITE SIMPLES</span><h2 class="section-title">E se os próximos <i>5 minutos</i><br>mudassem alguma coisa?</h2><p style="color:var(--mute);font-size:15px;line-height:1.8;margin:20px auto 30px">Uma nova pessoa, uma história inesperada, uma conversa que pode continuar — mas só se os dois quiserem.</p><button class="ui-btn btn-dark" data-action="signup">Criar minha conta ${ico('arrow',18)}</button></div></section></main>
-<footer class="home-footer"><div class="wrap footer-row">${brand()}<small>Feito para conversas que importam. © 2026 entre.</small><small>Experiência para maiores de 18 anos.</small></div></footer>`}
+<footer class="home-footer"><div class="wrap footer-row">${brand()}<small>Feito para conversas que importam. © 2026 entre.</small><small>Experiência para maiores de 18 anos. <a href="./instalar.html">Instalar</a> · <a href="./dados.html">Retenção</a> · <a href="./privacidade.html">Privacidade</a> · <a href="./termos.html">Termos</a></small></div></footer>`}
 const googleLogo="<svg class=\"google-mark\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path fill=\"#4285F4\" d=\"M21.35 12.2c0-.64-.06-1.25-.17-1.85H12v3.5h5.25a4.49 4.49 0 0 1-1.95 2.95v2.45h3.16c1.85-1.71 2.89-4.22 2.89-7.05Z\"/><path fill=\"#34A853\" d=\"M12 21.72c2.64 0 4.86-.87 6.48-2.47l-3.16-2.45c-.87.58-1.98.93-3.32.93-2.56 0-4.72-1.73-5.49-4.06H3.25v2.55A9.78 9.78 0 0 0 12 21.72Z\"/><path fill=\"#FBBC05\" d=\"M6.51 13.67a5.91 5.91 0 0 1 0-3.34V7.78H3.25a9.8 9.8 0 0 0 0 8.44l3.26-2.55Z\"/><path fill=\"#EA4335\" d=\"M12 6.27c1.44 0 2.73.5 3.75 1.47l2.81-2.82A9.58 9.58 0 0 0 12 2.28a9.78 9.78 0 0 0-8.75 5.5l3.26 2.55C7.28 8 9.44 6.27 12 6.27Z\"/></svg>";
 
 // All original uploads are downscaled and stripped of metadata in the browser.
@@ -393,7 +393,7 @@ function profileView(){const p=state.profile;return `${heading('É SOBRE QUEM VO
 <div class="profile-layout"><div class="profile-preview">${avatar(p,'xlarge')}<h3>${esc(p.display_name)}, ${p.age}</h3><p>${esc(p.bio||'Uma conversa de cada vez. Vamos nos conhecer?')}</p><span class="pill">${ico('user',15)} ${esc(genders[p.gender])}</span></div><div class="form-panel"><h3>Editar perfil</h3><form id="profileForm">${avatarUploader(p)}<div class="form-grid"><div class="field full"><label for="myname">Nome exibido</label><input id="myname" name="display_name" minlength="2" maxlength="42" required value="${esc(p.display_name)}"></div><div class="field"><label for="myage">Idade</label><input id="myage" name="age" type="number" min="18" max="100" required value="${p.age}"></div><div class="field"><label for="mygender">Identidade</label><select id="mygender" name="gender">${options({woman:'Mulher',man:'Homem',nonbinary:'Não binário'},p.gender)}</select></div><div class="field full"><label for="mypref">Preferência de busca</label><select id="mypref" name="preference">${options({any:'Qualquer pessoa',woman:'Mulheres',man:'Homens',nonbinary:'Não binárias'},p.preference)}</select></div><div class="field full"><label for="mybio">Sobre você</label><textarea id="mybio" name="bio" maxlength="220" placeholder="Conta algo interessante sobre você...">${esc(p.bio||'')}</textarea><small>Até 220 caracteres. Não informe dados pessoais.</small></div></div><button type="submit" class="ui-btn btn-dark">Salvar alterações ${ico('check',17)}</button></form></div></div>`}
 function settingsView(){return `${heading('VOCÊ NO CONTROLE','Configurações<em>.</em>','Seu espaço, suas preferências e o controle da sua experiência.')}
 <div class="settings-card"><h3>Preferências</h3><div class="setting-row"><div><strong>Reduzir animações</strong><p>Desativa movimentos e transições para uma experiência mais tranquila.</p></div><button type="button" class="toggle ${state.motionOff?'on':''}" data-action="motion" aria-label="Ativar ou desativar redução de animações" aria-pressed="${state.motionOff}"></button></div><div class="setting-row"><div><strong>Quem você procura</strong><p>${esc(genders[state.profile.preference])} — altere seu filtro na área de perfil.</p></div><button class="ui-btn btn-outline btn-sm" data-action="nav" data-view="profile">Editar ${ico('edit',15)}</button></div></div>
-<div class="settings-card"><h3>Sessão e privacidade</h3><div class="setting-row"><div><strong>Conta conectada</strong><p>${esc(state.session.user.email)}</p></div><span class="pill">${ico('shield',15)} Google</span></div><div class="setting-row"><div><strong>Sair da conta</strong><p>Encerra sua sessão neste dispositivo.</p></div><button class="ui-btn btn-outline btn-sm" data-action="logout">${ico('exit',16)} Sair</button></div><div class="danger-zone"><strong>Excluir meu perfil do entre.</strong><p>Remove definitivamente seu perfil, mensagens e conexões deste aplicativo. O cadastro de autenticação compartilhado com outros produtos no mesmo servidor não será excluído.</p><button class="ui-btn btn-danger btn-sm" data-action="delete1">${ico('trash',15)} Excluir meus dados</button></div></div>${state.isAdmin?`<div class="settings-card"><h3>Painel administrativo</h3><div class="setting-row"><div><strong>Gerenciar o entre.</strong><p>Usuários, denúncias, estatísticas e configurações da plataforma.</p></div><a class="admin-entry" href="./admin/">Abrir painel ${ico("arrow",15)}</a></div></div>`:""}`}
+<div class="settings-card"><h3>Sessão e privacidade</h3><div class="setting-row"><div><strong>Conta conectada</strong><p>${esc(state.session.user.email)}</p></div><span class="pill">${ico('shield',15)} Google</span></div><div class="setting-row"><div><strong>Sair da conta</strong><p>Encerra sua sessão neste dispositivo.</p></div><button class="ui-btn btn-outline btn-sm" data-action="logout">${ico('exit',16)} Sair</button></div><div class="danger-zone"><strong>Excluir meu perfil do entre.</strong><p>Remove definitivamente seu perfil, mensagens e conexões deste aplicativo. O cadastro de autenticação compartilhado com outros produtos no mesmo servidor não será excluído.</p><button class="ui-btn btn-danger btn-sm" data-action="delete1">${ico('trash',15)} Excluir meus dados</button></div></div><div class="settings-card"><h3>Instalação e privacidade</h3><div class="setting-row"><div><strong>Usar o entre. como app</strong><p>Adicione um ícone na tela inicial do celular.</p></div><a class="admin-entry" href="./instalar.html">Instalar app</a></div><div class="setting-row"><div><strong>Seus dados e por quanto tempo são guardados</strong><p>Fotos de perfil permanentes, texto das conversas preservado e anexos temporários por 24 horas.</p></div><a class="admin-entry" href="./dados.html">Ver detalhes</a></div></div>${state.isAdmin?`<div class="settings-card"><h3>Painel administrativo</h3><div class="setting-row"><div><strong>Gerenciar o entre.</strong><p>Usuários, denúncias, estatísticas e configurações da plataforma.</p></div><a class="admin-entry" href="./admin/">Abrir painel ${ico("arrow",15)}</a></div></div>`:""}`}
 
 function reportDialog(){
  const name=esc(state.peer?.display_name||'esta pessoa');
@@ -426,7 +426,7 @@ async function sendReport(form){
 }
 
 function modalView(){const m=state.modal;if(!m)return '';if(m==='report')return reportDialog();const del=m==='delete1'||m==='delete2';return `<div class="modal-backdrop" id="modalBackdrop"><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><h2 id="modalTitle">${m==='delete1'?'Excluir seus dados?':m==='delete2'?'Confirma a exclusão?':m==='block'?'Bloquear esta pessoa?':'Encerrar encontro?'}</h2><p>${m==='delete1'?'Seu perfil, suas conversas e suas conexões deste aplicativo serão removidos permanentemente. Isso também pode apagar mensagens compartilhadas com outras pessoas.':m==='delete2'?'Esta é a confirmação final. Digite EXCLUIR abaixo. O login do servidor compartilhado continuará existindo, mas sua conta no entre. não.':m==='block'?'Vocês não serão conectados de novo por este sistema. A conversa temporária será encerrada.':'Este encontro será encerrado, mas o texto ficará salvo no histórico da conversa.'}</p>${m==='delete2'?`<div class="field"><label for="deleteConfirm">Digite EXCLUIR para confirmar</label><input id="deleteConfirm" autocomplete="off" placeholder="EXCLUIR"></div>`:''}<div class="modal-actions"><button class="ui-btn btn-outline btn-sm" data-action="closemodal">Cancelar</button><button class="ui-btn ${del?'btn-danger':'btn-dark'} btn-sm" data-action="${m==='delete1'?'delete2':m==='delete2'?'deleteFinal':m==='block'?'blockFinal':'endpairFinal'}">${del?'Excluir':'Confirmar'} ${ico('arrow',15)}</button></div></div></div>`}
-function render(){applyMotion();if(maintenanceIsActive()){app.innerHTML=maintenanceView();return;}if(!state.session){app.innerHTML=state.mode==='login'||state.mode==='signup'?authView():landing()}else if(!state.profile){state.mode='onboard';app.innerHTML=authView()}else{app.innerHTML=appLayout();updateTimerText()}if(state.view==='connect'&&state.pair){const el=document.getElementById('messageList');if(el)el.scrollTop=el.scrollHeight}}
+function render(){applyMotion();if(maintenanceIsActive()){dismissPublicNotice();app.innerHTML=maintenanceView();return;}if(state.suspension){dismissPublicNotice();app.innerHTML=suspensionView();return;}if(!state.session){app.innerHTML=state.mode==='login'||state.mode==='signup'?authView():landing()}else if(!state.profile){state.mode='onboard';app.innerHTML=authView()}else{app.innerHTML=appLayout();updateTimerText()}if(state.view==='connect'&&state.pair){const el=document.getElementById('messageList');if(el)el.scrollTop=el.scrollHeight}}
 function renderView(){if(maintenanceIsActive())return;if(state.session&&state.profile){const el=document.getElementById('view-content');if(el){el.innerHTML=viewContent();updateTimerText();const m=document.getElementById('messageList');if(m)m.scrollTop=m.scrollHeight}}}
 function showFormMessage(msg,success=false){const id=success?'form-success':'form-error';const target=document.getElementById(id);if(target){target.classList.remove('hidden');target.textContent=msg}}
 function busy(btn,value){if(btn){btn.disabled=value;btn.dataset.oldLabel ||= btn.innerHTML;if(value)btn.textContent='Só um instante...';else btn.innerHTML=btn.dataset.oldLabel}}
@@ -502,7 +502,7 @@ async function sendMessage(form){if(maintenanceIsActive())return;if(!state.pair)
 async function vote(accept){if(maintenanceIsActive())return;if(!state.pair)return;try{const {data,error}=await db.rpc('entre_vote',{_pair:state.pair.id,_accept:accept});if(error)throw error;if(data==='closed'){state.pair=null;state.peer=null;state.messages=[];await loadPairs();render();toast('Conversa encerrada. Você pode conhecer outra pessoa.');return}await refreshPair();if(accept&&data==='active')toast('Sua escolha foi registrada. Falta a outra pessoa.')}catch(e){toast(infoError(e),true)}}
 async function endPair(){if(!state.pair)return;try{const {error}=await db.rpc('entre_close',{_pair:state.pair.id});if(error)throw error;state.pair=null;state.messages=[];state.peer=null;state.modal=null;if(state.channel){db.removeChannel(state.channel);state.channel=null}await loadPairs();state.view='connect';render();toast('Encontro encerrado.')}catch(e){toast(infoError(e),true)}}
 async function blockPartner(){if(!state.peer)return;try{const {error}=await db.rpc('entre_block',{_user:state.peer.id});if(error)throw error;state.modal=null;state.pair=null;state.peer=null;state.messages=[];await loadPairs();state.view='connect';render();toast('Pessoa bloqueada. Vocês não serão reconectados.')}catch(e){toast(infoError(e),true)}}
-async function logout(){try{if(state.searching)await db.rpc('entre_leave');clearSearchTimer();if(state.channel){await db.removeChannel(state.channel);state.channel=null}const {error}=await db.auth.signOut({scope:'local'});if(error)throw error;state.session=null;state.profile=null;state.pair=null;state.peer=null;state.pairs=[];state.searching=false;state.mode='landing';state.view='home';render();toast('Você saiu da conta.')}catch(e){toast(infoError(e),true)}}
+async function logout(){try{if(state.searching)await db.rpc('entre_leave');clearSearchTimer();if(state.channel){await db.removeChannel(state.channel);state.channel=null}const {error}=await db.auth.signOut({scope:'local'});if(error)throw error;state.session=null;state.profile=null;state.pair=null;state.peer=null;state.pairs=[];state.suspension=null;state.searching=false;state.mode='landing';state.view='home';render();toast('Você saiu da conta.')}catch(e){toast(infoError(e),true)}}
 async function deleteData(){const val=document.getElementById('deleteConfirm')?.value||'';if(val!=='EXCLUIR'){toast('Digite EXCLUIR para confirmar.',true);return}try{const {error}=await db.rpc('entre_delete_my_profile');if(error)throw error;state.modal=null;await logout();toast('Seus dados do entre. foram excluídos.')}catch(e){toast(infoError(e),true)}}
 function updateTimerText(){if(!state.pair||state.pair.status!=='active')return;const seconds=Math.max(0,Math.ceil((new Date(state.pair.expires_at).getTime()-Date.now())/1000));const mm=String(Math.floor(seconds/60)).padStart(2,'0'),ss=String(seconds%60).padStart(2,'0');document.querySelectorAll('.timer-text').forEach(el=>{el.textContent=`${mm}:${ss}`;el.classList.toggle('urgent',seconds<=30)});if(seconds===0&&state.closedOnce!==state.pair.id){state.closedOnce=state.pair.id;db.rpc('entre_close',{_pair:state.pair.id}).then(()=>refreshPair()).catch(()=>{})}}
 function nav(view){if(view==='connect'&&state.pair?.status==='closed'){state.pair=null;state.peer=null;state.messages=[];}state.view=view;if(view!=='connect'&&state.pair?.status==='active'){toast('Sua conversa de 5 minutos continua ativa na aba Conectar.')}render();window.scrollTo({top:0,behavior:state.motionOff?'instant':'smooth'})}
@@ -516,12 +516,95 @@ document.addEventListener('change',async e=>{
  if(!file)return;
  try{await openImageCrop(file,{title:'Ajustar sua foto'});}catch(error){toast(infoError(error),true)}
 });
-document.addEventListener('submit',async e=>{const form=e.target;if(!(form instanceof HTMLFormElement))return;e.preventDefault();const name=form.id;try{if(name==='authForm'&&form.dataset.form==='profileSetup')await profileSetup(form);else if(name==='profileForm')await saveProfile(form);else if(name==='messageForm')await sendMessage(form);else if(name==='reportForm')await sendReport(form)}catch(err){toast(infoError(err),true)}});
+document.addEventListener('submit',async e=>{const form=e.target;if(!(form instanceof HTMLFormElement))return;e.preventDefault();const name=form.id;try{if(name==='authForm'&&form.dataset.form==='profileSetup')await profileSetup(form);else if(name==='profileForm')await saveProfile(form);else if(name==='suspensionAppeal')await submitSuspensionAppeal(form);else if(name==='messageForm')await sendMessage(form);else if(name==='reportForm')await sendReport(form)}catch(err){toast(infoError(err),true)}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&activeImageCrop){closeImageCrop();return;}if(e.key==='Escape'&&state.modal){state.modal=null;render()}});
 window.addEventListener('beforeunload',()=>{if(state.searching)db.rpc('entre_leave').catch(()=>{})});
 
 function maintenanceIsPreview(){return new URLSearchParams(location.search).has('maintenance_preview')}
 function maintenanceIsActive(){return maintenanceIsPreview()||state.siteSettings?.maintenance_enabled!==false}
+
+/* Server-controlled suspension and timed announcements. Static HTML never authorizes access. */
+function suspensionView(){
+ const value=state.suspension||{};
+ return '<main class="suspension-screen"><div class="suspension-glow" aria-hidden="true"></div>'
+ +'<header class="suspension-header"><a href="./" class="suspension-logo" aria-label="entre.">entre<span>.</span></a><span>SEGURANÇA DA COMUNIDADE</span></header>'
+ +'<section class="suspension-card" role="alert" aria-labelledby="suspension-title">'
+ +'<div class="suspension-sign" aria-hidden="true">!</div><span class="suspension-eyebrow">ACESSO TEMPORARIAMENTE BLOQUEADO</span>'
+ +'<h1 id="suspension-title">Sua conta está <em>suspensa.</em></h1>'
+ +'<p>O acesso ao entre. está bloqueado enquanto esta decisão estiver ativa. Você não pode entrar em conversas nem buscar novas conexões.</p>'
+ +'<div class="suspension-reason"><strong>Motivo informado</strong><p>'+esc(value.reason||'Esta conta não atende às regras de segurança da comunidade.')+'</p></div>'
+ +'<p class="suspension-explain">Acredita que houve um engano? Solicite uma revisão. Sua contestação será recebida pela administração, sem reativação automática.</p>'
+ +'<form id="suspensionAppeal" class="suspension-form"><label for="suspension-appeal">Pedir revisão da suspensão</label>'
+ +'<textarea id="suspension-appeal" name="appeal" minlength="15" maxlength="1000" required placeholder="Explique sua situação com pelo menos 15 caracteres…"></textarea>'
+ +'<button class="suspension-submit" type="submit">Enviar contestação</button><small>Limite: uma contestação a cada 24 horas.</small></form>'
+ +'<div class="suspension-footer-actions"><button type="button" data-action="logout" class="suspension-signout">Sair desta conta</button>'
+ +'<a href="./dados.html">Privacidade e retenção</a><a href="./termos.html">Regras da comunidade</a></div></section>'
+ +'<footer class="suspension-footer">entre. · Segurança, respeito e transparência.</footer></main>';
+}
+let publicNoticeInterval=null;
+function dismissPublicNotice(){
+ if(publicNoticeInterval){clearInterval(publicNoticeInterval);publicNoticeInterval=null;}
+ document.getElementById('global-announcement')?.remove();
+ state.notice=null;
+}
+function considerPublicAnnouncement(settings){
+ if(!settings||maintenanceIsActive()||state.suspension)return;
+ const version=Number(settings.announcement_version)||0, sent=Date.parse(settings.announcement_sent_at||'');
+ if(!version||!settings.announcement||!Number.isFinite(sent))return;
+ if(Date.now()-sent>20000||sent-Date.now()>60000)return;
+ if(sessionStorage.getItem('entre.notice.last')===String(version)||state.notice?.version===version)return;
+ dismissPublicNotice();
+ sessionStorage.setItem('entre.notice.last',String(version));
+ const message=String(settings.announcement||'').slice(0,240);
+ state.notice={version,message,endsAt:Date.now()+10000};
+ const overlay=document.createElement('div');overlay.id='global-announcement';overlay.className='announcement-screen';
+ overlay.setAttribute('role','alertdialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','global-announcement-title');
+ overlay.innerHTML='<div class="announcement-backdrop" aria-hidden="true"></div><div class="announcement-dialog">'
+ +'<div class="announcement-identity">entre<span>.</span></div><div class="announcement-icon" aria-hidden="true">✳</div>'
+ +'<span class="announcement-kicker">COMUNICADO DA PLATAFORMA</span><h2 id="global-announcement-title">Um aviso pra você<span>.</span></h2>'
+ +'<p class="announcement-text">'+esc(message)+'</p>'
+ +'<div class="announcement-timer"><div class="announcement-timer-bar"><div id="announcement-progress"></div></div>'
+ +'<div class="announcement-timer-copy">O site volta em <strong id="announcement-seconds">10</strong> segundos</div></div>'
+ +'</div>';
+ document.body.appendChild(overlay);
+ const update=()=>{
+  if(!state.notice||state.notice.version!==version){dismissPublicNotice();return;}
+  const left=Math.max(0,state.notice.endsAt-Date.now());
+  const seconds=Math.ceil(left/1000);
+  const number=document.getElementById('announcement-seconds'),bar=document.getElementById('announcement-progress');
+  if(number)number.textContent=String(seconds);
+  if(bar)bar.style.width=(left/100)+'%';
+  if(left<=0)dismissPublicNotice();
+ };
+ update();publicNoticeInterval=setInterval(update,100);
+}
+async function checkSuspension(){
+ if(!state.session?.user)return false;
+ const response=await db.rpc('entre_my_suspension');
+ if(response.error)throw response.error;
+ const suspended=response.data?.suspended===true;
+ if(suspended){
+  const was=!!state.suspension;
+  state.suspension=response.data;
+  state.searching=false;clearSearchTimer();
+  if(state.channel){db.removeChannel(state.channel);state.channel=null;}
+  if(!was)render();
+ }else if(state.suspension){
+  state.suspension=null;
+  window.location.reload();return false;
+ }
+ return suspended;
+}
+async function submitSuspensionAppeal(form){
+ const btn=form.querySelector('[type="submit"]');
+ if(btn){btn.disabled=true;btn.textContent='Enviando…';}
+ try{
+  const {error}=await db.rpc('entre_submit_suspension_appeal',{_message:form.elements.appeal.value.trim()});
+  if(error)throw error;
+  form.innerHTML='<p class="suspension-success" role="status">Contestação enviada. A administração poderá avaliar seu pedido.</p>';
+ }catch(error){toast(infoError(error),true);if(btn){btn.disabled=false;btn.textContent='Enviar contestação';}}
+}
+
 function maintenanceView(){
  const s=state.siteSettings||{};
  const title=esc(!state.siteSettings?'Verificando o site…':s.maintenance_title||'Tem coisa boa chegando.');
@@ -534,7 +617,7 @@ function maintenanceView(){
   +'<h1 id="maintenance-title">'+title+'</h1><p class="maint-lead" id="maintenance-message">'+message+'</p>'
   +'<div class="maint-promise"><span class="maint-promise-glyph">✳</span><span>Estamos cuidando de cada detalhe para deixar seus próximos cinco minutos ainda mais especiais.</span></div>'
   +'<div class="maint-status"><span class="maint-status-light"></span><div><strong>Preparando novidades</strong><small id="maintenance-status-text">A página verifica automaticamente quando tudo estiver pronto.</small></div><span class="maint-live-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>'
-  +'<div class="maint-actions"><button type="button" data-action="maintenanceRefresh" class="maint-refresh">'+ico("refresh",18)+' Verificar agora</button><a class="maint-admin-link" href="./admin/">'+ico("shield",17)+' Área administrativa</a></div>'
+  +'<div class="maint-actions"><button type="button" data-action="maintenanceRefresh" class="maint-refresh">'+ico("refresh",18)+' Verificar agora</button></div>'
   +'</div><div class="maint-visual" aria-hidden="true"><div class="maint-orbit orbit-outer"></div><div class="maint-orbit orbit-mid"></div><div class="maint-orbit orbit-inner"></div>'
   +'<span class="maint-visual-star star-one">✳</span><span class="maint-visual-star star-two">✴</span><span class="maint-visual-star star-three">✧</span>'
   +'<div class="maint-visual-card"><div class="maint-mini-tag">UMA CONEXÃO DE CADA VEZ</div><div class="maint-center"><span class="maint-big-five">05<span>:</span>00</span><div class="maint-center-sub">CINCO MINUTOS. UMA POSSIBILIDADE.</div></div><div class="maint-card-footer"><span class="maint-avatar first">e</span><span class="maint-connection">↝</span><span class="maint-avatar second">♡</span></div></div>'
@@ -554,6 +637,8 @@ async function maintenanceCheck(manual=false){
   const before=state.siteSettings;
   state.siteSettings=response.data;
   const active=maintenanceIsActive();
+  if(state.session&&!active)await checkSuspension();
+  if(!active&&!state.suspension)considerPublicAnnouncement(response.data);
   if(previous&&!active&&!maintenanceIsPreview()){
    const status=document.getElementById('maintenance-status-text');
    if(status)status.textContent='Atualização liberada! Abrindo a nova versão…';
@@ -573,7 +658,7 @@ async function maintenanceCheck(manual=false){
    if(title)title.textContent=response.data.maintenance_title||'Tem coisa boa chegando.';
    if(msg)msg.textContent=response.data.maintenance_message||'Uma nova versão está chegando.';
    if(manual){const status=document.getElementById('maintenance-status-text');if(status)status.textContent='A atualização continua ativa. Esta página será liberada automaticamente.';}
-  }else if(before?.announcement!==response.data.announcement){render();}
+  }else if(before?.maintenance_enabled!==response.data.maintenance_enabled){render();}
  }catch(err){
   if(manual){const target=document.getElementById('maintenance-status-text');if(target)target.textContent='Não foi possível verificar agora. Continuaremos tentando.';}
   console.warn('Maintenance status check failed',err);
@@ -608,9 +693,10 @@ async function boot(){
    const verified=await db.auth.getUser();if(verified.error)throw verified.error;
    if(!hasGoogleIdentity(verified.data.user)){
     await db.auth.signOut({scope:'local'});state.session=null;state.mode='login';render();showFormMessage('O entre. aceita somente login pelo Google.');
-   }else{state.session={...data.session,user:verified.data.user};const {data:admin}=await db.rpc('entre_admin_check');state.isAdmin=admin===true;if(state.isAdmin&&localStorage.getItem('entre.admin.return')==='1'){localStorage.removeItem('entre.admin.return');window.location.replace('./admin/');return;}state.mode='app';if(maintenanceIsActive())render();else await initializeAccount()}
+   }else{state.session={...data.session,user:verified.data.user};const {data:admin}=await db.rpc('entre_admin_check');state.isAdmin=admin===true;if(state.isAdmin&&localStorage.getItem('entre.admin.return')==='1'){localStorage.removeItem('entre.admin.return');window.location.replace('./admin/');return;}state.mode='app';const suspended=await checkSuspension();if(maintenanceIsActive()||suspended)render();else await initializeAccount()}
   }else{state.mode=oauthError?'login':'landing';render();if(oauthError)showFormMessage(oauthError)}
   db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'&&state.session){state.session=null;state.profile=null;state.isAdmin=false;state.mode='landing';render()}});
+  if(!maintenanceIsActive()&&!state.suspension)considerPublicAnnouncement(state.siteSettings);
   state.timerLoop=setInterval(updateTimerText,1000);
   setInterval(async()=>{if(state.session?.user&&state.pair&&document.visibilityState==='visible'){await refreshPair()}},12000)
  }catch(e){state.mode='login';render();showFormMessage(oauthError||infoError(e));console.error(e)}
