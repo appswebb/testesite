@@ -13,7 +13,7 @@ function notificationsView(){
  (data.notifications.length?'<div class="notification-list">'+data.notifications.map(n=>
  '<button class="notification-item '+(n.read_at?'':'is-unread')+'" data-action="notificationOpen" data-id="'+n.id+'" data-pair="'+esc(n.pair_id||'')+'">'+
  '<span class="notification-icon">'+ico(n.kind==='message'?'chat':n.kind==='matched'?'heart':'spark',18)+'</span><span><strong>'+esc(summary(n))+'</strong><small>'+new Date(n.created_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+'</small></span>'+ico('chevron',16)+'</button>').join('')+'</div>':
- '<div class="social-empty"><h3>Nenhuma novidade por enquanto.</h3><p>Novos convites e mensagens aparecerão aqui.</p></div>')+
+ '<div class="social-empty"><h3>Nenhuma novidade por enquanto.</h3><p>Quando alguém seguir você, aceitar um pedido, enviar convite ou mensagem, a atividade aparecerá aqui. Avisos oficiais ficam separados em Avisos.</p></div>')+
  (data.notiMore?'<div class="social-more"><button class="ui-btn btn-outline" data-action="notificationsMore">Carregar mais 15</button></div>':'');
 }
 Object.assign(api,{notificationsView,summary});
