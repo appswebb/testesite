@@ -191,7 +191,7 @@ body:has(.auth-shell) .auth-card input,body:has(.auth-shell) .auth-card select{b
 #view-content .premium-checkout-card{background:#25202f!important;border-color:#6c527f!important;color:#f9f0ff}
 #view-content .premium-checkout-card h3{color:#f8edff}
 #view-content .premium-checkout-card p,#view-content .premium-checkout-card small{color:#c7b6d1}
-#view-content .premium-confirmed{background:#284a3b;color:#d4f3d5}
+#view-content .premium-confirmed{background:#424242;color:#eaeaea}
 .web-checkout-embed[hidden]{display:none!important}
 .web-checkout-embed{width:100%;max-width:100%;margin:13px 0;border:1px solid #695276;border-radius:16px;background:white;padding:15px 10px;overflow:hidden;color:#222}
 .web-checkout-embed iframe{max-width:100%}
@@ -203,7 +203,7 @@ body:has(.auth-shell) .auth-card input,body:has(.auth-shell) .auth-card select{b
 .web-pay-pending p{color:#ded1e7!important;margin:0}
 .web-pix-qr{width:215px;max-width:100%;height:auto;image-rendering:pixelated;background:white;border-radius:14px;padding:8px;margin:0 auto}
 .web-pay-pending textarea{width:100%;max-width:100%;min-height:70px;resize:none;background:#211c2b!important;color:#f4ecff!important;border:1px solid #6b5879;padding:10px;border-radius:10px;font-size:11px;overflow-wrap:anywhere}
-.web-pay-success{display:flex;align-items:center;gap:8px;color:#bce7c5}
+.web-pay-success{display:flex;align-items:center;gap:8px;color:#dbdbdb}
 .web-pay-error{padding:11px 13px;color:#ffd2d2;background:#5b2d39;border-radius:12px}
 .connect-brand{font-weight:900;letter-spacing:-.06em}
 ::view-transition-old(root){animation:connectOut .17s ease both}
