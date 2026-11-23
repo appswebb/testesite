@@ -110,7 +110,7 @@ async function selectImage(page){
   await profile.locator('[name=adult]').check();
   await profile.locator('#authSubmit').click();
   await profile.locator('.app-shell').waitFor({timeout:9000});
-  await profile.locator('.mobile-nav [data-view="profile"]').click();
+  await profile.locator('.app-toolbar .toolbar-profile[data-view="profile"]').click();
   await profile.locator('#profileForm').waitFor({timeout:9000}).catch(async err=>{ const diagnostic=await profile.evaluate(()=>({formError:document.querySelector('#form-error')?.textContent,toast:document.getElementById('toast')?.textContent,uploads:window.__uploads,profile:window.__profile,body:document.body.innerText.slice(-600)})); throw new Error('Onboarding failed '+JSON.stringify(diagnostic)+' / '+err.message); });
   const uploaded=await profile.evaluate(()=>window.__uploads);
   assert.equal(uploaded.length,1,'Onboarding upload not sent');
@@ -180,29 +180,29 @@ async function selectImage(page){
   assert(/desconhecid/i.test(chatUi.privateMessage),'Stranger-request restriction absent');
   tests++;console.log('PASS online profile card and stranger request privacy');
   await profile.evaluate(()=>{
-   state.pair.status='closed';state.view='connect';render();
+   state.pair.status='closed';state.pair.closed_at=new Date().toISOString();state.messages=[];
+   state.view='connect';render();
   });
   assert.equal(await profile.locator('#messageForm').count(),0,'Ended chat still allows sending');
   assert.equal(await profile.locator('.pair-timer').count(),0,'Ended chat shows live timer');
-  assert((await profile.locator('#messageList').innerText()).includes('Olá'),'Ended chat text lost');
-  tests++;console.log('PASS ended conversation preserves text and disables typing');
+  assert((await profile.locator('.chat-origin-bar').innerText()).includes('temporário'),'Temporary chat status missing');
+  tests++;console.log('PASS ended temporary chat disables typing and saving controls');
+
+  await profile.evaluate(()=>{state.view='connections';render();});
+  assert.equal(await profile.locator('.recent-connection').count(),1,'Temporary encounter contact missing in 24h list');
+  assert.equal(await profile.locator('.recent-connection [data-action="socialFollow"]').count(),1,'Follow action missing from 24h connections');
+  assert.equal(await profile.locator('.conversation-entry-actions').count(),0,'Temporary contact has organization actions');
+  tests++;console.log('PASS temporary connection only allows profile and follow');
 
   await profile.evaluate(()=>{
-   state.messages=[];
-   state.pair.messages_cleared_at=new Date().toISOString();
-   render();
+   state.pair.status='connected';state.view='conversations';render();
   });
-  assert((await profile.locator('#messageList').innerText()).includes('Mensagens anteriores removidas'),'Purged history must be explained to users');
-  assert((await profile.locator('#messageList').innerText()).includes('contato'),'Text purge should confirm the contact remains');
-  tests++;console.log('PASS expired text is explained without deleting the person contact');
+  assert.equal(await profile.locator('.conversation-entry').count(),1,'Permanent conversation absent in list');
+  await profile.locator('.conversation-entry .conversation-menu summary').click();
+  assert.equal(await profile.locator('.conversation-entry [data-social-folder]').isVisible(),true,'Move action absent from conversation menu');
+  assert.equal(await profile.locator('.conversation-entry [data-action="conversationDeletePrompt"]').isVisible(),true,'Conversation delete option absent');
+  tests++;console.log('PASS permanent chat has compact organization and delete menu');
 
-  await profile.evaluate(()=>{
-   const api=window.entreSocial;
-   state.view='conversations';render();
-  });
-  assert.equal(await profile.locator('.conversation-entry').count(),1,'Preserved chat absent in list');
-  assert.equal(await profile.locator('[data-social-folder]').count()>0,true,'Conversation move control absent');
-  tests++;console.log('PASS pinned and categorized conversation controls');
   await profile.evaluate(()=>{
    window.entreSocial.data.notifications=[{id:91,kind:'message',actor_name:'Pessoa Teste',created_at:new Date().toISOString(),read_at:null,pair_id:state.pair.id}];
    state.view='notifications';render();
