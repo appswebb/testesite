@@ -18,7 +18,7 @@ api.showEndAnimation=function(){
 
 api.chatToolbar=function(pair){
  const p=api.pref(pair),folder=p.folder||pair.origin||'live',archived=!!p.archived_at;
- return '<div class="chat-origin-bar"><div><strong>'+ico('spark',14)+' Começou em '+(pair.origin==='online'?'Pessoas online':'Chat ao vivo')+'</strong><small>Mova a conversa para outra aba</small></div>'+
+ return '<div class="chat-origin-bar"><div><strong>'+ico('spark',14)+' Começou em '+(pair.origin==='online'?'Pessoas online':'Chat ao vivo')+'</strong><small>Textos expiram após 10 dias sem atividade; o contato fica salvo.</small></div>'+
  '<div class="chat-origin-actions"><select aria-label="Mover conversa" data-social-folder="'+esc(pair.id)+'">'+
  '<option value="live"'+(folder==='live'?' selected':'')+'>Ao vivo</option><option value="online"'+(folder==='online'?' selected':'')+'>Online</option><option value="other"'+(folder==='other'?' selected':'')+'>Outras</option></select>'+
  '<button data-action="'+(p.pinned?'conversationUnpin':'conversationPin')+'" data-id="'+esc(pair.id)+'">'+(p.pinned?'★':'☆')+'</button>'+

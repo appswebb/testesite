@@ -186,6 +186,16 @@ async function selectImage(page){
   assert.equal(await profile.locator('.pair-timer').count(),0,'Ended chat shows live timer');
   assert((await profile.locator('#messageList').innerText()).includes('Olá'),'Ended chat text lost');
   tests++;console.log('PASS ended conversation preserves text and disables typing');
+
+  await profile.evaluate(()=>{
+   state.messages=[];
+   state.pair.messages_cleared_at=new Date().toISOString();
+   render();
+  });
+  assert((await profile.locator('#messageList').innerText()).includes('Mensagens anteriores removidas'),'Purged history must be explained to users');
+  assert((await profile.locator('#messageList').innerText()).includes('contato'),'Text purge should confirm the contact remains');
+  tests++;console.log('PASS expired text is explained without deleting the person contact');
+
   await profile.evaluate(()=>{
    const api=window.entreSocial;
    state.view='conversations';render();
