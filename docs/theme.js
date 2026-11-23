@@ -89,7 +89,14 @@ document.addEventListener('click',event=>{
 },true);
 document.addEventListener('input',event=>{if(event.target.matches?.('[data-theme-color]'))setColor(event.target.value);},true);
 window.addEventListener('storage',event=>{if(event.key===KEY){state=read();apply();syncControls();}});
-document.addEventListener('DOMContentLoaded',()=>{apply();syncControls();},{once:true});
+document.addEventListener('DOMContentLoaded',()=>{
+ // Apply a previously chosen motion mode without waiting for async login.
+ try{
+  document.body.classList.toggle('motion-off',localStorage.getItem('entre.motionOff')==='1');
+  document.body.classList.toggle('motion-force',localStorage.getItem('entre.motionForce')==='1'&&localStorage.getItem('entre.motionOff')!=='1');
+ }catch(e){}
+ apply();syncControls();
+},{once:true});
 window.entreTheme={read:()=>({...state}),setMode,setColor,renderControls,syncControls,PRESETS};
 apply();
 })();
