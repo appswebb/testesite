@@ -17,7 +17,7 @@ test('Main menu has four sections and excludes Suas conexões',()=>{
  assert.match(app,/\['online','Online','users'\]/);
  assert.match(app,/\['avisos','Avisos','megaphone'\]/);
  assert.doesNotMatch(app,/\['connections','Suas conexões'/);
- assert.match(app,/class="toolbar-profile"/);
+ assert.match(app,/class="toolbar-profile/);
 });
 test('Unmatched temporary encounters do not appear in the conversations view',()=>{
  const source=read('social-conversations.js');
@@ -180,7 +180,7 @@ test('Live encounters can choose chat or video and request exclusive Premium mat
  assert.match(video,/RTCPeerConnection/);
  assert.match(video,/private:true/);
  assert.match(video,/cleanup/);
- assert.match(video,/state.pair\?\.status/);
+ assert.match(video,/activePair\(state.pair\)/);
 });
 test('No 3D effects and subtle two-person introductory animation',()=>{
  const css=read('social-animations.css'),effects=read('social-effects.js');
