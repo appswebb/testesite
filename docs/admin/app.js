@@ -99,12 +99,18 @@ function users(){
  '<div class="table-footer"><span>Página '+(state.userPage+1)+' · '+e(total)+' usuário(s)</span><div style="display:flex;gap:8px"><button class="small-btn" data-action="prev-users" '+(state.userPage<=0?"disabled":"")+'>'+ico("chevron-left",13)+' Anterior</button><button class="small-btn" data-action="next-users" '+((state.userPage+1)*perPage>=total?"disabled":"")+'>Próxima '+ico("chevron-right",13)+'</button></div></div></section>';
 }
 var reasonNames={harassment:"Assédio / comportamento abusivo",hate:"Discurso de ódio",spam:"Spam / golpes",underage:"Suspeita de menor de idade",fake:"Perfil falso",other:"Outro motivo"};
+function commentReportsPanel(){
+ var rows=state.commentReports||[];
+ return '<section class="data-panel comment-reports-admin"><div class="data-tools"><div><h3>Denúncias de comentários</h3><small>Comentários públicos denunciados por usuários</small></div>'+badge(rows.filter(function(r){return r.status==='open';}).length+' pendentes','neutral')+'</div>'+
+ (rows.length?rows.map(function(r){return '<article class="admin-comment-report"><div><strong>Comentário #'+e(r.comment_id)+' · '+e(r.reported_name)+'</strong><small>Denunciado por '+e(r.reporter_name)+' · '+fmt(r.created_at)+' · '+e(r.reason)+'</small><p>'+e(r.comment_body||'Comentário removido')+'</p>'+(r.details?'<p>Relato: '+e(r.details)+'</p>':'')+'</div><div class="admin-report-actions">'+badge(r.status==='open'?'PENDENTE':r.status==='reviewed'?'ANALISADO':'DESCARTADO',r.status==='open'?'warn':'neutral')+(r.status==='open'?'<button type="button" class="small-btn" data-action="commentReview" data-id="'+e(r.id)+'">Analisado</button><button type="button" class="small-btn" data-action="commentDismiss" data-id="'+e(r.id)+'">Descartar</button>':'')+'</div></article>';}).join(''):
+ '<div class="social-empty">Nenhuma denúncia de comentários registrada.</div>')+'</section>';
+}
 function reports(){
  var arr=state.reports||[];
  var filters=[["open","Pendentes"],["reviewed","Analisadas"],["dismissed","Descartadas"],["all","Todas"]];
  return heading("MODERAÇÃO","Uma comunidade <em>mais segura.</em>","Denúncias enviadas por participantes reais. Mensagens privadas não são exibidas aqui.")+
  '<section class="data-panel"><div class="data-tools"><div><h3>Central de denúncias</h3><small>Ações de moderação registradas no banco</small></div><div class="filter-row">'+filters.map(function(f){return '<button class="chip '+(state.reportStatus===f[0]?"active":"")+'" data-report-status="'+f[0]+'">'+e(f[1])+'</button>';}).join("")+'</div></div>'+
- (arr.length?arr.map(function(r){return '<div class="list-row"><div class="list-main">'+person(r.reported_name,reasonNames[r.reason]||r.reason,true)+'</div><div class="row-meta">'+fmt(r.created_at)+'</div>'+badge(r.status==="open"?"PENDENTE":r.status==="reviewed"?"ANALISADA":"DESCARTADA",r.status==="open"?"warn":"neutral")+'<button class="small-btn" data-action="review" data-id="'+e(r.id)+'">Analisar '+ico("chevron-right",13)+'</button></div>';}).join(""):empty("Nenhuma denúncia aqui","Quando houver denúncias, elas aparecerão nesta seção."))+'</section>';
+ (arr.length?arr.map(function(r){return '<div class="list-row"><div class="list-main">'+person(r.reported_name,reasonNames[r.reason]||r.reason,true)+'</div><div class="row-meta">'+fmt(r.created_at)+'</div>'+badge(r.status==="open"?"PENDENTE":r.status==="reviewed"?"ANALISADA":"DESCARTADA",r.status==="open"?"warn":"neutral")+'<button class="small-btn" data-action="review" data-id="'+e(r.id)+'">Analisar '+ico("chevron-right",13)+'</button></div>';}).join(""):empty("Nenhuma denúncia aqui","Quando houver denúncias, elas aparecerão nesta seção."))+'</section>'+commentReportsPanel();
 }
 function pairs(){
  var arr=state.pairs||[];
@@ -182,7 +188,7 @@ async function load(view){
     if(view==="overview")state.appeals=await rpc("entre_admin_appeals");
   }
   if(view==="users")state.users=await rpc("entre_admin_users",{_query:state.search,_limit:perPage,_offset:state.userPage*perPage});
-  if(view==="reports")state.reports=await rpc("entre_admin_reports",{_status:state.reportStatus,_limit:100});
+  if(view==="reports"){var results=await Promise.all([rpc("entre_admin_reports",{_status:state.reportStatus,_limit:100}),rpc('entre_admin_comment_reports')]);state.reports=results[0];state.commentReports=results[1]||[];}
   if(view==="pairs")state.pairs=await rpc("entre_admin_pairs",{_limit:60});
    if(view==="bulletins")state.bulletins=await rpc("entre_admin_bulletins");
   if(view==="support")state.supportTickets=await rpc("entre_admin_support_tickets");
@@ -243,6 +249,10 @@ document.addEventListener("click",async function(ev){
  }
  if(a==="toggle-maintenance"){await saveRelease(!Boolean(state.settings?.maintenance_enabled),false);return;}
  if(a==="signout"){await db.auth.signOut({scope:"local"});state.user=null;state.verified=false;gate(false);return;}
+ if(a==="commentReview"||a==="commentDismiss"){
+  try{await rpc('entre_admin_review_comment_report',{_id:Number(n.dataset.id),_status:a==="commentReview"?"reviewed":"dismissed"});toast("Denúncia atualizada.");await load("reports");}
+  catch(err){toast(errorText(err),true);}return;
+ }
  if(a==="edit-user"){openUser(n.dataset.id);return;}
  if(a==="review"){openReport(n.dataset.id);return;}
  if(a==="prev-users"&&state.userPage>0){state.userPage--;await load("users");return;}
