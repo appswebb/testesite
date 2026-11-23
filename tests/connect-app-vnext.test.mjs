@@ -91,7 +91,7 @@ test('live filters are a contained sheet with the primary search action permanen
  assert.match(css,/overflow-y:auto;overflow-x:hidden/);
  assert.match(css,/@media\(max-width:760px\)/);
  assert.match(geo,/function compactPanel\(/);
- assert.match(geo,/geo-home-settings/);
+ assert.match(geo,/geo-location-mini/);
  const original=live.match(/data-action="'\+\(waiting\?'cancelsearch':'startsearch'\)\+'/g)||[];
  assert.equal(original.length,2,'Both default card and filter sheet must start the same search');
 });
