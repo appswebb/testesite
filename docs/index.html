@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>(function(){var p=new URLSearchParams(location.search);var u=p.get('u');if(u&&/^[a-z][a-z0-9_]{2,19}$/i.test(u)){location.replace('./perfil.html?u='+encodeURIComponent(u.toLowerCase()));}})();</script>
-<meta name="theme-color" content="#ffd633">
+<meta name="theme-color" content="#f6f7f7">
 <meta name="description" content="entre. Uma pessoa de cada vez. Cinco minutos para se conhecer, uma escolha para continuar.">
 <meta property="og:title" content="entre. | Cinco minutos. Uma conexão.">
 <meta property="og:description" content="Uma conexão real começa com uma conversa. Conheça alguém ao vivo por cinco minutos.">
@@ -19,12 +19,13 @@
 <link rel="stylesheet" href="./mobile.css?v=crop-editor-20261123">
 <link rel="stylesheet" href="./features.css?v=20261123e">
 <link rel="stylesheet" href="./maintenance.css?v=photos-20261123">
-<link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#ffd633"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="apple-touch-icon" href="./icons/icon-192.png"><link rel="stylesheet" href="./social.css?v=entre-20261123-social-v5">
+<link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#f6f7f7"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="apple-touch-icon" href="./icons/icon-192.png"><link rel="stylesheet" href="./social.css?v=entre-20261123-social-v5">
 <link rel="stylesheet" href="./social-online.css?v=connect-handles-20261123b">
 <link rel="stylesheet" href="./social-animations.css?v=entre-20261123-social-v5">
 <link rel="stylesheet" href="./entre-features.css?v=entre-20261123-features-v1">
 <link rel="stylesheet" href="./encounter-ui.css?v=entre-20261123-encounter-v1">
 <link rel="stylesheet" href="./entre-location.css?v=20261123-geo-v1"><link rel="stylesheet" href="./functional-updates.css?v=live-filter-sheet-20261123c"><link rel="stylesheet" href="./interface-polish.css?v=entre-profile-comments-media-20261123d"><link rel="stylesheet" href="./live-experience.css?v=entre-live-compact-v3-20261123"><link rel="stylesheet" href="./experience-hub.css?v=entre-community-20261123a"><link rel="stylesheet" href="./once-ui.css?v=yellow-pop-20261123a"><link rel="stylesheet" href="./once-public.css?v=yellow-pop-20261123a"><link rel="stylesheet" href="./once-maintenance.css?v=yellow-pop-20261123a"><link rel="stylesheet" href="./theme.css?v=appearance-v2"><link rel="stylesheet" href="./once-source-fidelity.css?v=source-archive-20261123a"><link rel="stylesheet" href="./once-source-components.css?v=source-archive-20261123a">
+<link rel="stylesheet" href="./connect-fixes.css?v=20261123a">
 <script defer src="./social-core.js?v=entre-20261123-social-v5"></script>
 <script defer src="./social-online.js?v=entre-community-20261123a"></script>
 <script defer src="./connect-usernames.js?v=entre-community-20261123a"></script>
@@ -54,7 +55,7 @@ window.setTimeout(function () {
   var root = document.getElementById('app');
   if (root && root.firstElementChild && root.firstElementChild.classList.contains('startup') && !root.querySelector('button')) {
     root.innerHTML = '<main style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:17px;text-align:center;padding:25px;font-family:system-ui">' +
-      '<h1 style="font-size:42px;letter-spacing:-.06em;margin:0">entre<span style="color:#ec8b73">.</span></h1>' +
+      '<h1 style="font-size:42px;letter-spacing:-.06em;margin:0">entre<span style="color:var(--ui-accent,#1a9d91)">.</span></h1>' +
       '<p style="max-width:350px;line-height:1.6;color:#646861">A conexão está demorando. Verifique sua internet e tente novamente.</p>' +
       '<button type="button" onclick="location.reload()" style="padding:13px 22px;border:0;border-radius:13px;background:#111;color:#fff;font-weight:800">Tentar novamente</button></main>';
   }
