@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 const mod={};
-const data={posts:[],postLoading:false,postBefore:null,postMore:false,premium:null,premiumIds:new Set(),support:[],supportBusy:false,checkoutBusy:false};
+const data={posts:[],postLoading:false,postBefore:null,postMore:false,premium:null,premiumIds:new Set(),support:[],supportBusy:false,checkoutBusy:false,premiumChecking:false};
 const call=async(name,params)=>{const r=await db.rpc(name,params||{});if(r.error)throw r.error;return r.data;};
 const premium=id=>Boolean(id&&(data.premiumIds.has(id)||(id===state.session?.user?.id&&data.premium?.active===true)));
 const badge=p=>premium(p?.id)?'<span class="verified-mark" title="Assinante entre. Premium" aria-label="Perfil verificado Premium">'+ico('check',12)+'</span>':'';
@@ -87,10 +87,12 @@ function premiumView(){
  '<div>'+ico('chat',19)+' <span>Atendimento prioritário pelo WhatsApp</span></div></div></div>'+
  '<div class="premium-checkout-card"><span>ASSINATURA RECORRENTE</span><h3>'+ (price()||'Valor a definir')+'</h3><p>'+(price()?'Cobrança mensal, administrada pelo Mercado Pago.':'O valor será definido no painel antes da abertura das assinaturas.')+'</p>'+
  (active?'<div class="premium-confirmed">'+ico('check',19)+' Sua assinatura está ativa.</div>'+
- '<button type="button" class="ui-btn btn-dark premium-whatsapp" data-action="premiumWhatsapp">'+ico('chat',18)+' WhatsApp prioritário</button>'+
+ '<button type="button" class="ui-btn btn-dark premium-whatsapp" data-action="premiumWhatsapp">'+ico('chat',18)+' WhatsApp prioritário</button>'+ 
+  '<button type="button" class="ui-btn btn-outline" data-action="premiumVerify">'+ico('refresh',17)+' Atualizar assinatura</button>'+ 
  (data.premium.paid_until?'<small>Válida até '+new Date(data.premium.paid_until).toLocaleDateString('pt-BR')+'</small>':''):
  '<button type="button" class="ui-btn btn-dark premium-buy" data-action="premiumCheckout" '+(enabled?'':'disabled')+'>'+ico('shield',17)+' '+(data.checkoutBusy?'Preparando checkout…':enabled?'Continuar no Mercado Pago':'Aguardando ativação do checkout')+'</button>')+
- '<small>Pagamento processado pelo Mercado Pago. Nenhum dado do cartão é armazenado neste site. Recursos pagos só são liberados após confirmação do pagamento.</small></div></section>';
+ '<button type="button" class="ui-btn btn-outline" data-action="premiumVerify" '+(data.premiumChecking?'disabled':'')+'>'+ico('refresh',17)+' '+(data.premiumChecking?'Verificando pagamento…':'Já paguei · verificar assinatura')+'</button>'+ 
+  '<small>O pagamento não exige uma conta Mercado Pago quando os métodos disponíveis permitirem compra como convidado. A confirmação depende do provedor e do servidor; atualizar não libera assinatura sem pagamento aprovado.</small></div></section>';
 }
 async function openPremiumWhatsapp(){
  if(!data.premium?.active)throw Error('O atendimento prioritário exige Premium ativo.');
@@ -112,10 +114,17 @@ async function checkout(){
   window.location.assign(url);
  }finally{data.checkoutBusy=false;renderView();}
 }
+async function verifyPremium(){
+ if(data.premiumChecking)return;
+ data.premiumChecking=true;renderView();
+ try{await refreshPremium();toast(data.premium?.active?'Pagamento confirmado: Premium ativo!':'Pagamento ainda não confirmado. Tente novamente depois da aprovação.');}
+ finally{data.premiumChecking=false;renderView();}
+}
 function supportView(){
  return heading('CUIDAR DO ENTRE.','Central de <em>suporte.</em>','Relate problemas do site ou da sua conta. Imagens são opcionais e ajudam na análise, mas nunca são obrigatórias.')+
- '<div class="support-layout"><form class="support-ticket-form" id="supportTicketForm">'+
- '<div class="field"><label for="supportCategory">O que aconteceu?</label><select name="category" id="supportCategory" required><option value="bug">Erro no site ou aplicativo</option><option value="account">Problema na conta</option><option value="security">Segurança e privacidade</option><option value="other">Outra dificuldade</option></select></div>'+
+ '<div class="support-access"><div class="support-access-card"><span>SUPORTE PADRÃO</span><h3>Problemas com o site, conta ou pagamento</h3><p>Envie um protocolo para a equipe. O envio para o e-mail de suporte ocorre quando a integração está configurada.</p><a href="#supportTicketForm" class="ui-btn btn-outline">Abrir chamado</a></div><div class="support-access-card premium"><span>SUPORTE PREMIUM</span><h3>WhatsApp direto e prioritário</h3><p>Exclusivo para assinantes com pagamento confirmado.</p>'+(data.premium?.active?'<button type="button" class="ui-btn btn-dark" data-action="premiumWhatsapp">Abrir WhatsApp Premium</button>':'<button type="button" class="ui-btn btn-outline" data-action="nav" data-view="premium">Conhecer Premium</button>')+'</div></div>'+ 
+  '<div class="support-layout"><form class="support-ticket-form" id="supportTicketForm">'+ 
+ '<div class="field"><label for="supportCategory">O que aconteceu?</label><select name="category" id="supportCategory" required><option value="bug">Erro no site ou aplicativo</option><option value="account">Problema na conta</option><option value="payment">Pagamento ou assinatura</option><option value="security">Segurança e privacidade</option><option value="other">Outra dificuldade</option></select></div>'+
  '<div class="field"><label for="supportSubject">Assunto</label><input type="text" name="subject" id="supportSubject" minlength="5" maxlength="120" placeholder="Descreva o problema em poucas palavras" required></div>'+
  '<div class="field"><label for="supportDescription">O que aconteceu? Explique os detalhes.</label><textarea name="description" id="supportDescription" minlength="20" maxlength="3000" rows="6" required placeholder="Conte o que tentou fazer, o que apareceu e quando aconteceu."></textarea></div>'+
  '<div class="field"><label for="supportProof">Anexos (opcionais)</label><input type="file" name="proof" id="supportProof" accept="image/png,image/jpeg,image/webp,application/pdf" multiple><small>Se quiser, anexe até 3 imagens ou PDF (5 MB cada). Não envie senhas, documentos nem dados bancários.</small></div>'+
@@ -155,9 +164,9 @@ async function submitSupport(form){
 }
 async function enter(view){
  if(view==='posts')await loadPosts();
- if(view==='premium')await refreshPremium();
- if(view==='support'){await loadSupport();renderView();}
+ if(view==='premium'){await refreshPremium();renderView();}
+ if(view==='support'){await Promise.all([loadSupport(),refreshPremium()]);renderView();}
 }
-Object.assign(mod,{data,isPremium:premium,badge,loadBadges,refreshPremium,loadPosts,postsView,postAction,postForm,premiumView,checkout,openPremiumWhatsapp,supportView,submitSupport,loadSupport,enter});
+Object.assign(mod,{data,isPremium:premium,badge,loadBadges,refreshPremium,loadPosts,postsView,postAction,postForm,premiumView,checkout,verifyPremium,openPremiumWhatsapp,supportView,submitSupport,loadSupport,enter});
 window.entreExtras=mod;
 })();
