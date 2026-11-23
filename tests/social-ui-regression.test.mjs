@@ -245,7 +245,7 @@ test('An admin can access the normal app without a persistent forced return to t
  assert.match(app,/sessionStorage\.removeItem\('entre\.admin\.oauth\.started'\)/);
  assert.match(app,/localStorage\.removeItem\('entre\.admin\.return'\)/);
  assert.match(app,/new URLSearchParams\(window\.location\.search\)\.get\('site'\)==='1'/);
- assert.match(app,/if\(state\.isAdmin&&adminOAuthReturn\)/);
+ assert.match(read('email-auth.js'),/if\(state\.isAdmin&&adminOAuthReturn\)/);
  assert.doesNotMatch(app,/if\(state\.isAdmin&&localStorage\.getItem\('entre\.admin\.return'\)/);
  assert.match(admin,/sessionStorage\.setItem\("entre\.admin\.oauth\.started",String\(Date\.now\(\)\)\)/);
  assert.match(admin,/href="\.\.\/\?site=1"/);
