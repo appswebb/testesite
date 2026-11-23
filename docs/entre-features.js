@@ -36,7 +36,7 @@ async function loadPosts(more=false){
  }catch(e){toast(infoError(e),true);}finally{data.postLoading=false;}
 }
 function postsView(){
- return heading('UMA COMUNIDADE DE VERDADE','Posts <em>da comunidade.</em>','Compartilhe ideias, conheça pontos de vista e converse com respeito. Publicações são públicas para usuários conectados.')+
+ return heading('UMA COMUNIDADE DE VERDADE','Feed <em>da comunidade.</em>','Compartilhe ideias, conheça pontos de vista e converse com respeito. Publicações são públicas para usuários conectados.')+
  '<section class="posts-shell"><div class="posts-stream"><form id="postCreateForm" class="post-compose"><div class="post-compose-top">'+avatar(state.profile)+'<div><strong>O que você quer compartilhar?</strong><small>Seu espaço para começar uma conversa.</small></div>'+badge(state.profile)+'</div>'+
  '<textarea name="body" minlength="3" maxlength="900" placeholder="Uma ideia, uma pergunta ou algo que vale a pena contar…" required></textarea>'+
  '<div class="post-compose-footer"><small>Até 900 caracteres · respeite os outros.</small><button type="submit" class="ui-btn btn-dark btn-sm">Publicar '+ico('arrow',15)+'</button></div></form>'+
@@ -108,13 +108,13 @@ async function checkout(){
  window.location.assign(url);
 }
 function supportView(){
- return heading('CUIDAR DO ENTRE.','Central de <em>suporte.</em>','Relate problemas do site ou da sua conta com provas. A equipe poderá analisar a ocorrência com segurança.')+
+ return heading('CUIDAR DO ENTRE.','Central de <em>suporte.</em>','Relate problemas do site ou da sua conta. Imagens são opcionais e ajudam na análise, mas nunca são obrigatórias.')+
  '<div class="support-layout"><form class="support-ticket-form" id="supportTicketForm">'+
  '<div class="field"><label for="supportCategory">O que aconteceu?</label><select name="category" id="supportCategory" required><option value="bug">Erro no site ou aplicativo</option><option value="account">Problema na conta</option><option value="security">Segurança e privacidade</option><option value="other">Outra dificuldade</option></select></div>'+
  '<div class="field"><label for="supportSubject">Assunto</label><input type="text" name="subject" id="supportSubject" minlength="5" maxlength="120" placeholder="Descreva o problema em poucas palavras" required></div>'+
  '<div class="field"><label for="supportDescription">O que aconteceu? Explique os detalhes.</label><textarea name="description" id="supportDescription" minlength="20" maxlength="3000" rows="6" required placeholder="Conte o que tentou fazer, o que apareceu e quando aconteceu."></textarea></div>'+
- '<div class="field"><label for="supportProof">Provas obrigatórias</label><input type="file" name="proof" id="supportProof" accept="image/png,image/jpeg,image/webp,application/pdf" multiple required><small>Anexe de 1 a 3 capturas de tela, fotos ou PDF (até 5 MB cada). Não inclua senhas, documentos ou dados bancários.</small></div>'+
- '<button class="ui-btn btn-dark" type="submit" '+(data.supportBusy?'disabled':'')+'>Enviar ocorrência com provas '+ico('send',17)+'</button>'+
+ '<div class="field"><label for="supportProof">Anexos (opcionais)</label><input type="file" name="proof" id="supportProof" accept="image/png,image/jpeg,image/webp,application/pdf" multiple><small>Se quiser, anexe até 3 imagens ou PDF (5 MB cada). Não envie senhas, documentos nem dados bancários.</small></div>'+
+ '<button class="ui-btn btn-dark" type="submit" '+(data.supportBusy?'disabled':'')+'>Enviar relato '+ico('send',17)+'</button>'+
  '<p class="support-security">'+ico('lock',14)+' As provas ficam em armazenamento privado, acessíveis à equipe autorizada.</p></form>'+
  '<aside class="support-contact"><span class="premium-label">SUPORTE ENTRE.</span><h3>Estamos aqui para ouvir.</h3><p>Seu relato é salvo com um número de protocolo. Envio por e-mail será confirmado apenas quando a integração estiver configurada.</p><strong>Contato da equipe</strong><span>Atendimento por protocolo dentro do aplicativo. O e-mail separado de suporte será configurado pelo administrador.</span>'+
  (data.premium?.active?'<button type="button" class="ui-btn btn-outline" data-action="premiumWhatsapp">WhatsApp Premium '+ico('arrow',16)+'</button>':
@@ -125,7 +125,7 @@ async function loadSupport(){try{const rows=await call('entre_my_support_tickets
 async function submitSupport(form){
  if(data.supportBusy)return;
  const files=[...(form.elements.proof?.files||[])];
- if(files.length<1||files.length>3)throw Error('Selecione de 1 a 3 provas.');
+ if(files.length>3)throw Error('Anexe no máximo 3 arquivos.');
  for(const file of files)if(file.size>5242880||!['image/png','image/jpeg','image/webp','application/pdf'].includes(file.type))throw Error('Use imagem ou PDF de até 5 MB.');
  data.supportBusy=true;const button=form.querySelector('[type=submit]');if(button)button.disabled=true;
  try{
@@ -145,7 +145,7 @@ async function submitSupport(form){
    if(!error&&mail?.email_status==='sent')sent=true;
   }catch(e){console.warn('Email pending',e);}
   await loadSupport();renderView();
-  toast('Protocolo #'+id+' registrado com '+files.length+' prova(s). '+(sent?'E-mail enviado.':'A equipe pode consultar o chamado no painel; e-mail aguarda configuração.'));
+  toast('Protocolo #'+id+' registrado'+(files.length?' com '+files.length+' anexo(s)':' sem anexos')+'. '+(sent?'E-mail enviado.':'A equipe pode consultar seu chamado no painel.'));
  }finally{data.supportBusy=false;if(button?.isConnected)button.disabled=false;}
 }
 async function enter(view){
