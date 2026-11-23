@@ -56,6 +56,12 @@ async function selectImage(page){
   const dt=new DataTransfer();dt.items.add(new File([b],'foto.png',{type:'image/png'}));
   const input=document.getElementById('avatarFile');input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));
  });
+ await page.locator('#avatarCropDialog').waitFor({timeout:8000});
+ await page.locator('#cropZoom').evaluate(el=>{el.value='1.65';el.dispatchEvent(new Event('input',{bubbles:true}));});
+ assert.equal(await page.locator('#cropZoomNumber').innerText(),'165%','Zoom slider did not update crop');
+ await page.locator('#cropApply').click();
+ await page.locator('#avatarCropDialog').waitFor({state:'detached',timeout:10000});
+ assert.equal(await page.locator('.avatar-photo-preview img').count(),1,'Cropped preview missing');
 }
 (async()=>{
  const server=http.createServer((req,res)=>{
