@@ -17,13 +17,14 @@ function setup(hostname='entre-ruby.vercel.app'){
   updateUser:async()=>({error:null}),
   signOut:async()=>({error:null})
  },rpc:async()=>({data:false,error:null})};
- const document={getElementById:()=>({classList:{add(){}}})};
+ const listeners={};
+ const document={getElementById:()=>({classList:{add(){}}}),addEventListener:(type,handler)=>{listeners[type]=handler}};
  const context={window:win,db,state,document,URL,URLSearchParams,console,
   brand:()=>'<span>entre.</span>',busy:()=>{},render:()=>events.push('render'),
   showFormMessage:(msg,success=false)=>events.push({msg,success}),infoError:e=>e.message,
   checkSuspension:async()=>false,maintenanceIsActive:()=>false,initializeAccount:async()=>events.push('account-initialized')};
  vm.runInNewContext(read('email-auth.js'),context,{filename:'email-auth.js'});
- return {api:win.entreEmailAuth,db,state,win,events};
+ return {api:win.entreEmailAuth,db,state,win,events,document,listeners};
 }
 function form(mode,values){
  const submit={disabled:false};
@@ -43,6 +44,42 @@ test('email authentication supplies accessible forms and avoids exposing passwor
  assert.doesNotMatch(forgot,/type="password"/);
  assert.match(api.resetView(),/data-form="reset"/);
  assert.match(read('app.js'),/entreEmailAuth\.submit\(form\)/);
+});
+test('password eye control toggles visibility without changing typed password',()=>{
+ const {api,document,listeners}=setup();
+ const signup=api.fields(true,false),login=api.fields(false,false),reset=api.resetView();
+ assert.match(signup,/data-password-toggle="auth-password"/);
+ assert.match(signup,/data-password-toggle="auth-password-confirm"/);
+ assert.match(login,/data-password-toggle="auth-password"/);
+ assert.match(reset,/data-password-toggle="new-password"/);
+ assert.match(reset,/data-password-toggle="new-password-confirm"/);
+ assert.match(signup,/aria-pressed="false"/);
+ const input={tagName:'INPUT',type:'password',value:'SenhaTeste2026'};
+ const attrs={};
+ const button={dataset:{passwordToggle:'auth-password'},textContent:'Mostrar',
+  closest:selector=>selector==='form'?{contains:el=>el===input}:null,
+  setAttribute:(name,value)=>{attrs[name]=value}};
+ document.getElementById=()=>input;
+ const event={target:{closest:selector=>selector==='[data-password-toggle]'?button:null}};
+ listeners.click(event);
+ assert.equal(input.type,'text');
+ assert.equal(input.value,'SenhaTeste2026');
+ assert.equal(button.textContent,'Ocultar');
+ assert.equal(attrs['aria-pressed'],'true');
+ assert.equal(attrs['aria-label'],'Ocultar senha');
+ listeners.click(event);
+ assert.equal(input.type,'password');
+ assert.equal(button.textContent,'Mostrar');
+ assert.equal(attrs['aria-pressed'],'false');
+ assert.equal(attrs['aria-label'],'Mostrar senha');
+});
+test('admin login has an independent show password control',()=>{
+ const admin=read('admin/app.js'),css=read('admin/styles.css');
+ assert.match(admin,/data-admin-password-toggle/);
+ assert.match(admin,/admin-password-wrap/);
+ assert.match(admin,/aria-controls="admin-password"/);
+ assert.match(admin,/field\.type=reveal\?"text":"password"/);
+ assert.match(css,/\.admin-password-toggle/);
 });
 test('password strength blocks mismatches and short or letter-only passwords',()=>{
  const {api}=setup();
