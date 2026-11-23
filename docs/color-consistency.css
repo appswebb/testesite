@@ -1,0 +1,179 @@
+/*
+ * CONNECT / entre. · Palette consistency layer (Nov 2026).
+ * Loaded after legacy feature and reference CSS. All decorative surfaces and
+ * text use theme tokens; semantic errors/success statuses keep their meaning.
+ * Light: neutral ink; dark: light ink; custom: selected user accent.
+ */
+
+/* Comments drawer: header, blank state, list, actions and composer. */
+html[data-theme] :is(.comments-dialog-header>div>span,.comments-dialog-footer>small,
+ .comments-dialog-empty,.comments-dialog-empty>svg,.comments-dialog-empty>p,
+ .full-comment-top small,.post-comment-head small,.post-comments-sheet>summary,
+ .post-comments-sheet>summary svg){color:var(--ui-muted)!important}
+html[data-theme] :is(.comments-dialog-header h2,.comments-dialog-empty strong,
+ .full-comment-top strong,.full-comment-content>p,.post-comment-head strong,
+ .post-comment-content>p){color:var(--ui-text)!important}
+html[data-theme] .comments-dialog{color:var(--ui-text)!important;background:var(--ui-panel)!important;border-color:var(--ui-line)!important}
+html[data-theme] :is(.comments-dialog-header,.comments-dialog-footer){background:var(--ui-panel)!important;border-color:var(--ui-line)!important}
+html[data-theme] .comments-dialog-list{background:var(--ui-panel)!important}
+html[data-theme] .comments-dialog-close{background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+html[data-theme] .comments-dialog-footer .post-comment-form input,
+html[data-theme] :is(.comment-inline-form input,.comment-inline-form textarea,.comment-inline-form select){
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+html[data-theme] .comments-dialog-footer .post-comment-form input::placeholder{color:var(--ui-muted)!important}
+html[data-theme] .comments-dialog-footer .post-comment-form button{background:var(--ui-accent)!important;color:var(--ui-accent-on)!important}
+html[data-theme] :is(.comments-more,.comment-inline-form button,.post-comments-launch){
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+html[data-theme] :is(.comment-actions summary,.comment-actions-menu button,.comment-inline-form label){color:var(--ui-muted)!important}
+html[data-theme] .comment-actions-menu{background:var(--ui-panel)!important;border-color:var(--ui-line)!important}
+html[data-theme] .comment-initial{background:var(--ui-accent-soft)!important;color:var(--ui-text)!important}
+html[data-theme] .post-comments-sheet{border-color:var(--ui-line)!important}
+
+/* Search, rooms, and conversation discovery. */
+html[data-theme] :is(.global-search-section h3,.global-result-info strong,
+ .conversation-person-lookup>label,.rooms-head h3,.rooms-empty strong,
+ .room-message-content header strong,.room-message-content>p,
+ .camera-live-list-head h3,.camera-live-empty strong,.camera-live-stage-head h3){
+ color:var(--ui-text)!important}
+html[data-theme] :is(.global-search-welcome p,.global-search-empty,
+ .global-result-info small,.search-post-hit small,.search-post-hit p,
+ .conversation-person-lookup #conversationSearchResults>small,
+ .rooms-head-title>span,.rooms-state-choice span,.room-city-row label,
+ .room-message-content header span,.room-message-content time,
+ .rooms-empty,.rooms-cooldown,.rooms-guideline,
+ .camera-live-info>small,.camera-live-empty,.camera-live-empty>span,
+ .camera-live-stage-head p,.camera-live-security){
+ color:var(--ui-muted)!important}
+html[data-theme] :is(.global-search-field,.global-search-section,.room-shell,
+ .camera-live-shell,.conversation-person-lookup,.people-lookup){
+ background:var(--ui-panel)!important;border-color:var(--ui-line)!important}
+html[data-theme] :is(.global-search-field input,.room-composer input,
+ .room-city-row select,.rooms-state-choice select,.people-search-field input){
+ color:var(--ui-text)!important}
+html[data-theme] :is(.global-search-field>svg,.global-search-field button,
+ .people-search-field>svg){color:var(--ui-muted)!important}
+html[data-theme] .global-search-field:focus-within{border-color:var(--ui-accent)!important;box-shadow:0 0 0 3px var(--ui-accent-shadow)!important}
+html[data-theme] :is(.global-search-shortcuts button,.global-search-section h3 span,
+ .room-pill,.rooms-state-choice,.rooms-retention,.rooms-load-more,
+ .camera-live-list-head button,.camera-live-back,.camera-live-tools>button,
+ .camera-live-invite button,.room-city-row button){
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+html[data-theme] :is(.room-pill.active,.room-city-row button,
+ .room-composer>button,.global-result>button,.search-post-hit button){
+ background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;border-color:var(--ui-accent)!important}
+html[data-theme] :is(.room-composer input,.room-city-row select,#cameraLiveStartForm input){
+ background:var(--ui-panel-alt)!important;border-color:var(--ui-line)!important;color:var(--ui-text)!important}
+html[data-theme] .room-message-avatar{background:var(--ui-accent-soft)!important;color:var(--ui-text)!important}
+html[data-theme] .camera-live-hero{background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border:1px solid var(--ui-line)!important}
+html[data-theme] .camera-live-hero :is(h3,p,span,#cameraLiveStartForm label){color:var(--ui-text)!important}
+html[data-theme] .camera-live-hero p{color:var(--ui-muted)!important}
+html[data-theme] .camera-live-cover{background:linear-gradient(135deg,var(--ui-accent-soft),var(--ui-panel-alt))!important;color:var(--ui-text)!important}
+html[data-theme] .camera-live-empty{background:var(--ui-panel-alt)!important;border-color:var(--ui-line)!important}
+html[data-theme] #cameraLiveStartForm button,
+html[data-theme] .camera-live-info>button,
+html[data-theme] .camera-live-head-actions button[data-live-action="create"]{
+ background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;border-color:var(--ui-accent)!important}
+html[data-theme] .camera-live-invite>strong{color:var(--ui-text)!important}
+
+/* Region selectors and encounter filters. */
+html[data-theme] :is(.geo-discovery,.geo-panel-card,.geo-location-mini,
+ .live-app-card,.live-app-filters,.live-app-filter-body,
+ .geo-discovery-compact,.geo-edit-mode){
+ background:var(--ui-panel)!important;border-color:var(--ui-line)!important}
+html[data-theme] :is(.geo-discovery h3,.geo-panel-card>strong,.geo-edit-heading strong,
+ .geo-location-mini>span strong,.live-app-card h2,.live-app-card .live-mode strong,
+ .live-app-filter-body .filter-bar h3,.live-app-filters[open] .filter-bar h3,
+ .encounter-page-head h2,.encounter-decision strong,.encounter-chat-heading h3,
+ .encounter-mini-details strong){color:var(--ui-text)!important}
+html[data-theme] :is(.geo-eyebrow,.geo-discovery p,.geo-panel-card>small,
+ .geo-panel-card label,.geo-privacy-note,.geo-edit-caption,.geo-edit-mode .geo-input-row label,
+ .geo-location-mini>span,.geo-target-label,.live-app-eyebrow,.live-app-info,
+ .live-app-card .live-mode small,.live-app-filters>summary small,
+ .live-app-filter-body .filter-bar p,.encounter-eyebrow,.encounter-page-head p,
+ .encounter-decision small,.encounter-page-tip,.encounter-safety,
+ .encounter-mini-details small,.encounter-mini-controls>p){
+ color:var(--ui-muted)!important}
+html[data-theme] :is(.geo-privacy-pill,.geo-location-mini button,.geo-edit-heading button,
+ .live-app-card .live-mode,.live-app-filters>summary,.live-filter-back,
+ .encounter-clock,.encounter-choice-later,.encounter-mini-controls .video-control){
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+html[data-theme] :is(.geo-panel-card select,.geo-panel-card input,.geo-edit-mode select,
+ .geo-edit-mode input,.geo-target-label select,.live-app-filter-body select,
+ .live-app-filters select,.live-app-filters input){
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+html[data-theme] :is(.geo-actions button:first-child,.live-app-find,.live-filter-find,
+ .encounter-choice-yes,.encounter-floating-return){
+ background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;border-color:var(--ui-accent)!important}
+html[data-theme] :is(.live-app-card .live-mode.selected,.geo-actions button:not(:first-child)){
+ background:var(--ui-accent-soft)!important;color:var(--ui-text)!important;border-color:var(--ui-accent-shadow)!important}
+html[data-theme] :is(.live-app-filters>summary,.live-app-filters>summary svg,
+ .live-app-progress){color:var(--ui-text)!important}
+html[data-theme] .geo-discovery .geo-privacy-note{color:var(--ui-muted)!important}
+html[data-theme] body > .live-app-filters[open],
+html[data-theme] body > .live-app-filters[open] :is(summary,.live-app-filter-body,.live-filter-footer){
+ background:var(--ui-panel)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+html[data-theme] body > .live-app-filters[open] .live-filter-find{background:var(--ui-accent)!important;color:var(--ui-accent-on)!important}
+html[data-theme] .encounter-floating{background:var(--ui-panel)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+
+/* Feed, online people, notifications and media tools. */
+html[data-theme] :is(.post-card,.post-compose,.posts-aside,.online-person,.online-controls,
+ .people-lookup,.social-empty,.notifications-official .bulletin-card,
+ .feed-crop-dialog,.feed-media-loading){background:var(--ui-panel)!important;border-color:var(--ui-line)!important}
+html[data-theme] :is(.social-empty h3,.online-controls strong,
+ .online-person-content h3,.people-lookup>label,
+ .notifications-official .bulletin-card h3,.feed-crop-dialog header h2,
+ .post-author strong){color:var(--ui-text)!important}
+html[data-theme] :is(.social-empty,.online-controls p,.online-section-title small,
+ .online-person-content small,.online-person-bio,.inbox-item p,
+ .people-search-hint,.handle-helper,.notifications-official .bulletin-card p,
+ .notifications-official .bulletin-card-top small,
+ .feed-crop-dialog header span,.feed-crop-dialog header p,
+ .feed-crop-options label,.feed-media-tools>small,.feed-media-loading){
+ color:var(--ui-muted)!important}
+html[data-theme] :is(.online-person-head,.person-handle,.profile-handle,.people-search-field>svg,
+ .feed-crop-dialog header button){color:var(--ui-text)!important}
+html[data-theme] :is(.social-switch,.people-search-field,.feed-add-media,
+ .feed-remove-media,.feed-crop-dialog header button,.feed-crop-dialog footer button,
+ .notifications-official .notice-label){
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+html[data-theme] :is(.social-switch.is-on,.notifications-official .bulletin-voted){
+ background:var(--ui-accent-soft)!important;color:var(--ui-text)!important;border-color:var(--ui-accent-shadow)!important}
+html[data-theme] :is(.feed-crop-options select,.notifications-official .bulletin-reply-form textarea){
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+html[data-theme] .feed-crop-options input{accent-color:var(--ui-accent)!important}
+html[data-theme] .feed-crop-dialog footer .feed-crop-apply{
+ background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;border-color:var(--ui-accent)!important}
+html[data-theme] .person-online-indicator{background:var(--ui-accent)!important}
+
+/* Premium/recurring copy uses neutral typography. Keep actual success and error
+   notices semantic (green/red) so payment state is never disguised. */
+html[data-theme] :is(.recurring-premium-header h3,.recurring-premium-price strong){color:var(--ui-text)!important}
+html[data-theme] :is(.recurring-kicker,.recurring-premium-header>p,
+ .recurring-premium-price small,.recurring-premium-note){color:var(--ui-muted)!important}
+html[data-theme] .recurring-consent{background:var(--ui-panel-alt)!important;border-color:var(--ui-line)!important;color:var(--ui-text)!important}
+
+/* Shared public pages and administrative chrome: no obsolete gold/green. */
+html[data-theme] :is(.info-kicker,.info-hero p,.share-kicker,
+ .profile-menu-identity small){color:var(--ui-muted)!important}
+html[data-theme] :is(.info-hero,.share-cover,.share-kicker,
+ .info-card.accent,.info-step b,.info-alert){
+ background:var(--ui-accent-soft)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+html[data-theme] .info-hero :is(h1,h1 em){color:var(--ui-text)!important;text-shadow:none!important}
+html[data-theme] .info-hero::after{color:var(--ui-accent-shadow)!important}
+html[data-theme] .info-nav a[aria-current=page]{background:var(--ui-accent)!important;color:var(--ui-accent-on)!important}
+html[data-theme] .share-pulse{background:var(--ui-accent)!important;box-shadow:0 0 0 4px var(--ui-accent-shadow)!important}
+html[data-theme] .share-intro::after{color:var(--ui-accent)!important}
+html[data-theme] .admin-bottom-bar [data-view].active,
+html[data-theme] .rail-item.active{background:var(--ui-accent)!important;color:var(--ui-accent-on)!important}
+html[data-theme] .topbar-live{background:var(--ui-accent-soft)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+html[data-theme] :is(.stat.accent,.quick,.admin-note){background:var(--ui-panel-alt)!important;border-color:var(--ui-line)!important;color:var(--ui-text)!important}
+
+/* Reset any legacy yellow/green focus rings on themed views. */
+html[data-theme] :is(a,button,input,select,textarea):focus-visible{
+ outline:2px solid var(--ui-accent)!important;outline-offset:3px!important}
+@media(max-width:760px){
+ html[data-theme] .comments-dialog{width:100%!important;max-height:100dvh!important;border-radius:22px 22px 0 0!important}
+ html[data-theme] .comments-overlay{padding:0!important;align-items:flex-end!important}
+ html[data-theme] .comments-dialog-header{padding:15px 17px!important}
+ html[data-theme] .comments-dialog-footer{padding-bottom:max(13px,env(safe-area-inset-bottom))!important}
+}
