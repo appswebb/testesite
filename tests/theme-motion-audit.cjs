@@ -12,6 +12,7 @@ const fixture='<div id="app"><div class="app-shell"><aside class="sidebar"><div 
   for(const width of [320,375,430,800,1280]){
    const context=await browser.newContext({viewport:{width,height:850},reducedMotion:'reduce'});
    const page=await context.newPage();
+   page.setDefaultTimeout(5000);
    await page.route('http://entre-test.local/**',async route=>{
     const url=new URL(route.request().url());
     const name=url.pathname.slice(1);
@@ -24,7 +25,7 @@ const fixture='<div id="app"><div class="app-shell"><aside class="sidebar"><div 
    await page.evaluate(()=>{document.getElementById('themePanel').innerHTML=window.entreTheme.renderControls();});
    assert.equal(await page.locator('[data-theme-mode]').count(),3);
    assert.equal(await page.locator('[data-theme-mode=light]').getAttribute('aria-pressed'),'true');
-   await page.getByRole('button',{name:'Escuro Conforto à noite'}).click();
+   await page.locator('[data-theme-mode="dark"]').click();
    const dark=await page.evaluate(()=>({
     mode:document.documentElement.dataset.theme,
     background:getComputedStyle(document.body).backgroundColor,
