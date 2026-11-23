@@ -251,7 +251,7 @@ test('Email and password are the only visible login methods in the entre. fronte
 });
 test('Administrators can use their own email login without a forced redirect trap',()=>{
  const app=read('app.js'),admin=read('admin/app.js'),auth=read('email-auth.js');
- assert.match(app,/if\(state\.isAdmin\)/);
+ assert.match(app,/state\.isAdmin\?/);
  assert.match(admin,/href="\.\.\/\?site=1"/);
  assert.match(auth,/getUser\(\)/);
  assert.match(auth,/entre_admin_check/);
