@@ -24,7 +24,7 @@ function row(pair){
  return '<article class="conversation-entry '+(p.pinned?'is-pinned':'')+'">'+
  '<button class="convo-card" type="button" data-action="openpair" data-id="'+esc(pair.id)+'">'+
  avatar(peer)+'<div class="convo-details"><strong>'+esc(peer.display_name)+(window.entreExtras?.badge?.(peer)||'')+'</strong>'+
- '<p>'+(archived?'Arquivada':p.pinned?'Fixada · conversa permanente':'Conversa permanente')+'</p>'+
+ '<p>'+(peer.username?'@'+esc(peer.username)+' · ':'')+(archived?'Arquivada':p.pinned?'Fixada · conversa permanente':'Conversa permanente')+'</p>'+
  '<small>Começou em '+(pair.origin==='online'?'Pessoas online':'Chat ao vivo')+'</small></div>'+
  '<span class="conversation-card-arrow">'+ico('chevron',17)+'</span></button>'+conversationMenu(pair)+'</article>';
 }
@@ -42,9 +42,9 @@ function conversationsView(){
 function profileModal(){
  const p=d.socialProfile;if(!p)return '';
  return '<div class="modal-backdrop" id="modalBackdrop"><div class="modal-card social-profile-modal" role="dialog" aria-modal="true" aria-labelledby="socialProfileTitle">'+
- '<div class="social-profile-person">'+avatar(p,'large')+'<div><h2 id="socialProfileTitle">'+esc(p.display_name)+'</h2><small>'+esc(p.age||'')+(p.age?' anos · ':'')+esc(genders[p.gender]||'')+'</small></div></div>'+
+ '<div class="social-profile-person">'+avatar(p,'large')+'<div><h2 id="socialProfileTitle">'+esc(p.display_name)+'</h2><span class="person-handle">@'+esc(p.username||'')+'</span><small>'+esc(p.age||'')+(p.age?' anos · ':'')+esc(genders[p.gender]||'')+'</small></div></div>'+
  '<p>'+esc(p.bio||'Esta pessoa ainda não escreveu uma apresentação.')+'</p>'+
- '<div class="modal-actions"><button class="ui-btn btn-outline btn-sm" data-action="closemodal">Fechar</button>'+
+ '<div class="modal-actions"><button class="ui-btn btn-outline btn-sm" data-action="closemodal">Fechar</button><button type="button" class="ui-btn btn-outline btn-sm" data-action="copyUsernameLink" data-username="'+esc(p.username||'')+'">Copiar link</button>'+ 
  '<button class="ui-btn btn-dark btn-sm" data-action="socialFollow" data-id="'+esc(p.id)+'">Solicitar para seguir</button></div></div></div>';
 }
 Object.assign(api,{conversationsView,conversationRow:row,conversationMenu,profileModal});
