@@ -20,6 +20,8 @@ on:
       - 'docs/entre-livekit.js'
       - 'docs/feed-media.js'
       - 'docs/interface-polish.css'
+      - 'docs/live-experience.css'
+      - 'tests/live-sheet-viewport-audit.cjs'
       - 'tests/shared-media-reviews.test.mjs'
       - 'docs/admin/connect-admin.css'
       - 'tests/connect-app-vnext.test.mjs'
@@ -84,5 +86,6 @@ jobs:
           node --test tests/geo-feed-support.test.mjs
           node --test tests/encounter-layout.test.mjs
           node tests/encounter-mobile-audit.cjs
+          node tests/live-sheet-viewport-audit.cjs
           node tests/admin-mobile-audit.cjs
           node tests/avatar-mobile-audit.cjs

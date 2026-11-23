@@ -21,6 +21,13 @@ test('public profile has meaningful guest and member navigation, secure server a
  assert.doesNotMatch(html,/service.role|service_role|sb_secret_/i);
  assert.doesNotMatch(js,/service.role|service_role|sb_secret_/i);
 });
+test('server creates an avatar signed link for a valid private .webp path',()=>{
+ const source=read('supabase/functions/entre-shared-profile/index.ts');
+ assert.ok(source.includes(String.raw`/^[0-9a-f-]{36}\.webp$/i`));
+ assert.ok(!source.includes(String.raw`/^[0-9a-f-]{36}\\.webp$/i`));
+ assert.match(source,/createSignedUrl/);
+ assert.match(source,/startsWith\(p\.id\+"\/"\)/);
+});
 test('share link keeps legacy ?u= and new high contrast CTA',()=>{
  const app=read('docs/app.js'),index=read('docs/index.html'),css=read('docs/interface-polish.css');
  assert.match(index,/\.\/perfil\.html\?u=/);
