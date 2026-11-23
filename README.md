@@ -70,3 +70,7 @@ Acesse http://localhost:8000/. Para publicar, GitHub Actions envia a pasta `docs
 ## Painel administrativo entre.
 
 O painel está disponível em https://appswebb.github.io/testesite/admin/. O administrador autorizado no Supabase é l.demelo2004@gmail.com, verificado com Google OAuth e funções SQL protegidas por RLS. O painel permite gerenciar usuários, banimentos, denúncias, sessões de matches, avisos e o status do matchmaking. Conteúdos de conversas privadas não aparecem no painel. Todas as operações administrativas exigem validação no servidor. Funciona no desktop e no mobile.
+
+## Modo atualização (controle manual)
+
+Em `/admin/` → **Atualização**, o administrador ativa ou desativa a tela especial de manutenção. Personaliza o título e a mensagem. Visitantes veem uma tela responsiva de alta qualidade com verificação automática de estado (`entre_public_settings`); após desativar o modo, o cliente recarrega com `?released=` para obter a nova versão do GitHub Pages. Durante a manutenção, o Supabase suspende matchmaking, votação e leitura/envio de mensagens (RLS + RPC), exceto para administradores autorizados. A atualização só deve ser finalizada depois de confirmado o deploy no GitHub. O controle não faz o deploy por si só. O modo é **desativado por padrão**.

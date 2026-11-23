@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'docs/admin/**'
+      - 'docs/maintenance.css'
       - 'docs/app.js'
       - 'docs/mobile.css'
       - '.github/workflows/verify-entre-admin.yml'
@@ -19,17 +20,19 @@ jobs:
         run: |
           node --check docs/app.js
           node --check docs/admin/app.js
+          test -s docs/maintenance.css
       - name: Check admin RPC integration
         run: |
           node - <<'NODE'
           const fs=require('node:fs');
           const a=fs.readFileSync('docs/admin/app.js','utf8'), b=fs.readFileSync('docs/app.js','utf8');
           const html=fs.readFileSync('docs/admin/index.html','utf8');
-          for(const name of ['entre_admin_check','entre_admin_overview','entre_admin_users','entre_admin_reports','entre_admin_pairs','entre_admin_set_ban','entre_admin_save_settings'])
+          for(const name of ['entre_admin_check','entre_admin_overview','entre_admin_users','entre_admin_reports','entre_admin_pairs','entre_admin_set_ban','entre_admin_save_settings','entre_admin_set_maintenance'])
             if(!a.includes(name))throw Error('Missing admin RPC: '+name);
-          for(const key of ['data-action="report"','entre_report_user','entre.admin.return','isAdmin'])
+          for(const key of ['data-action="report"','entre_report_user','entre.admin.return','isAdmin','maintenanceIsActive','maintenanceCheck'])
             if(!b.includes(key))throw Error('Missing site integration: '+key);
           if(!html.includes('./app.js'))throw Error('Admin bundle not loaded');
           if(a.includes('service_role')||a.includes('sb_secret_'))throw Error('Backend secret exposed');
-          console.log('Admin routes and RPCs verified.');
+          if(!a.includes('function maintenancePage()')||!a.includes('data-action="toggle-maintenance"'))throw Error('Update console not wired');
+          console.log('Admin routes, maintenance and RPCs verified.');
           NODE
