@@ -150,11 +150,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal){state.
 window.addEventListener('beforeunload',()=>{if(state.searching)db.rpc('entre_leave').catch(()=>{})});
 
 function maintenanceIsPreview(){return new URLSearchParams(location.search).has('maintenance_preview')}
-function maintenanceIsActive(){return maintenanceIsPreview()||Boolean(state.siteSettings?.maintenance_enabled&&!state.isAdmin)}
+function maintenanceIsActive(){return maintenanceIsPreview()||state.siteSettings?.maintenance_enabled!==false}
 function maintenanceView(){
  const s=state.siteSettings||{};
- const title=esc(s.maintenance_title||'Tem coisa boa chegando.');
- const message=esc(s.maintenance_message||'Estamos preparando uma nova versão do entre. Seu próximo oi merece uma experiência ainda melhor.');
+ const title=esc(!state.siteSettings?'Verificando o site…':s.maintenance_title||'Tem coisa boa chegando.');
+ const message=esc(!state.siteSettings?'Não conseguimos confirmar o status da plataforma. Por segurança, o acesso permanece pausado enquanto tentamos novamente.':s.maintenance_message||'Estamos preparando uma nova versão do entre. Seu próximo oi merece uma experiência ainda melhor.');
  const preview=maintenanceIsPreview();
  return '<main class="maintenance-screen" id="maintenance-screen" role="main">'
   +'<div class="maint-grain" aria-hidden="true"></div><div class="maint-halo maint-halo-one" aria-hidden="true"></div><div class="maint-halo maint-halo-two" aria-hidden="true"></div>'
@@ -201,7 +201,7 @@ async function maintenanceCheck(manual=false){
    const title=document.getElementById('maintenance-title'),msg=document.getElementById('maintenance-message');
    if(title)title.textContent=response.data.maintenance_title||'Tem coisa boa chegando.';
    if(msg)msg.textContent=response.data.maintenance_message||'Uma nova versão está chegando.';
-   if(manual){const status=document.getElementById('maintenance-status-text');if(status)status.textContent='Ainda estamos preparando. Esta página será liberada automaticamente.';}
+   if(manual){const status=document.getElementById('maintenance-status-text');if(status)status.textContent='A atualização continua ativa. Esta página será liberada automaticamente.';}
   }else if(before?.announcement!==response.data.announcement){render();}
  }catch(err){
   if(manual){const target=document.getElementById('maintenance-status-text');if(target)target.textContent='Não foi possível verificar agora. Continuaremos tentando.';}
@@ -223,6 +223,15 @@ async function boot(){
  const oauthError=getOAuthError();
  try{
   await loadSiteSettings();
+  // Public maintenance is for EVERYONE, including the account that owns the admin panel.
+  // Start polling even when authentication is deliberately skipped during maintenance.
+  setInterval(()=>maintenanceCheck(false),6000);
+  if(maintenanceIsActive()){
+    render();
+    // The only exception is an admin OAuth callback that must return to /admin/.
+    // The site itself is never rendered as an admin-only backdoor.
+    if(localStorage.getItem('entre.admin.return')!=='1')return;
+  }
   const {data,error}=await db.auth.getSession();if(error)throw error;
   if(data.session){
    const verified=await db.auth.getUser();if(verified.error)throw verified.error;
@@ -232,7 +241,6 @@ async function boot(){
   }else{state.mode=oauthError?'login':'landing';render();if(oauthError)showFormMessage(oauthError)}
   db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'&&state.session){state.session=null;state.profile=null;state.isAdmin=false;state.mode='landing';render()}});
   state.timerLoop=setInterval(updateTimerText,1000);
-  setInterval(()=>maintenanceCheck(false),10000);
   setInterval(async()=>{if(state.session?.user&&state.pair&&document.visibilityState==='visible'){await refreshPair()}},12000)
  }catch(e){state.mode='login';render();showFormMessage(oauthError||infoError(e));console.error(e)}
 }
