@@ -4,6 +4,20 @@
 
 ![Ícone da freq.](public/favicon.svg)
 
+## 🌐 Site no GitHub Pages
+
+**Endereço do site:** https://appswebb.github.io/testesite/
+
+O nome **testesite** é exclusivamente o nome do repositório. A identidade do site é **freq.**
+
+A versão pronta para GitHub Pages está na pasta [docs](docs/). O GitHub Actions publica essa pasta no endereço acima, sem necessidade de Vercel ou Node.js para servir as páginas. As mensagens ao vivo são encaminhadas por um **broker público MQTT de terceiros** (`wss://broker.emqx.io:8084/mqtt`). Assim, pessoas em dispositivos diferentes podem conversar sem servidor próprio nesta fase. O navegador pode demorar alguns segundos para carregar as salas na primeira conexão.
+
+⚠️ **Importante:** essa é uma versão pública experimental. Conversas e presença são públicas no serviço MQTT, sem criptografia ponta a ponta, autenticação ou garantias de retenção/disponibilidade. **Não compartilhe dados pessoais ou sensíveis.** Não use esse broker de testes para um lançamento comercial. A implementação Node original continua em `public/` + `server.mjs` para migrar para backend privado posteriormente.
+
+### Publicação do site
+
+O workflow `.github/workflows/pages.yml` tenta habilitar GitHub Pages automaticamente e publica `docs/` quando há alterações em `main`. Se GitHub Pages estiver desabilitado nas configurações e a permissão do workflow não permitir ativá-lo, vá a **Settings → Pages → Build and deployment → Source: GitHub Actions** e execute novamente o workflow **Publish freq. to GitHub Pages** na aba Actions.
+
 ## Recursos incluídos
 
 - **Salas ao vivo**: Praça central, No repeat, Fora da caixa, Depois das 00h, Sem contexto, além de novas salas criadas pelos usuários.
@@ -68,7 +82,7 @@ Use uma hospedagem que execute **um processo Node.js continuamente** (VPS, Rende
 4. Configure **armazenamento persistente** montado em `/app/data` (Docker) ou ajuste `DATA_DIR` para o diretório persistente disponível no provedor.
 5. Use **uma única instância** desta versão do servidor; dados e presença são mantidos no processo local.
 
-**GitHub Pages, sozinho, não serve**: ele hospeda somente arquivos estáticos. Da mesma forma, funções serverless com execução curta geralmente não são indicadas para as conexões SSE duradouras deste projeto.
+**A versão Node com SSE não roda no GitHub Pages**: somente a alternativa estática em `docs/` funciona no Pages, com comunicação por um broker externo. Funções serverless com execução curta também não são adequadas para conexões SSE duradouras.
 
 ### Variáveis de ambiente
 
