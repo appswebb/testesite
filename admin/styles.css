@@ -88,3 +88,15 @@
   .topbar-right .toolbar-btn{width:39px;height:39px;min-height:39px;min-width:39px}
 }
 @media(prefers-reduced-motion:reduce){.release-entry--compact,.release-entry--compact .release-entry-chevron{transition:none!important}}
+
+
+/* Admin mobile: broadcast and review buttons never collide with text. */
+.admin-broadcast-btn{display:inline-flex;align-items:center;justify-content:center;white-space:normal;text-align:center;max-width:100%;min-height:46px;margin-top:14px;padding:11px 18px}
+.appeal-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:18px;padding:20px 0;border-bottom:1px solid var(--line)}
+.appeal-row:last-child{border-bottom:0}.appeal-row>div{min-width:0}.appeal-row strong,.appeal-row small{display:block;overflow-wrap:anywhere}
+.appeal-row strong{font-size:14px;color:var(--ink)}.appeal-row small{font-size:11px;color:var(--mute);margin-top:5px}
+.appeal-row p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65;color:#56685b;font-size:13px;max-width:660px}
+.appeal-buttons{display:flex;gap:9px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.appeal-buttons button{min-height:43px;font-size:12px;white-space:normal;text-align:center}
+@media(max-width:760px){.appeal-row{grid-template-columns:minmax(0,1fr)}.appeal-buttons{justify-content:stretch}.appeal-buttons button{flex:1;min-width:130px}.admin-broadcast-btn{width:100%;font-size:12px}}
+@media(max-width:360px){.appeal-buttons{flex-direction:column;align-items:stretch}.appeal-buttons button{width:100%}}

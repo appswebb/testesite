@@ -40,3 +40,11 @@
 .info-form{display:grid;gap:12px}.info-form label{font-weight:800;font-size:13px}.info-form select,.info-form textarea{width:100%;min-width:0;padding:12px;border-radius:12px;border:1px solid #c9d7c7;background:white;color:#223525;font:inherit}.info-form textarea{min-height:115px;resize:vertical}
 .info-status{font-size:13px;font-weight:750;color:#407249}.info-footer{padding:30px 0;background:#182d20;color:#d2e2ce}.info-footer .info-wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}.info-footer nav{display:flex;gap:15px;flex-wrap:wrap}.info-footer a{color:#e9f2e4;font-size:12px}
 @media(max-width:720px){.info-grid,.info-steps{grid-template-columns:minmax(0,1fr)}.info-nav{gap:9px}.info-nav a{font-size:11px}}@media(max-width:350px){.announcement-dialog{padding:20px 16px}}
+
+
+/* Hide real login-dependent form, despite its grid display rule. */
+.info-page [hidden]{display:none!important}
+.info-page a:focus-visible,.info-page button:focus-visible,.suspension-screen button:focus-visible,.suspension-screen a:focus-visible{outline:3px solid #f6a489;outline-offset:3px}
+.maint-actions{justify-content:flex-start}
+.maint-header .maint-brand-lockup{min-width:0;flex-shrink:0}
+@media(max-width:760px){.maint-actions{justify-content:center}.maint-copy{min-width:0}.maint-header .maint-top-label{min-width:0;font-size:9px;line-height:1.4;text-align:right;overflow-wrap:anywhere}}
