@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 const UF=[['AC','Acre'],['AL','Alagoas'],['AP','Amapá'],['AM','Amazonas'],['BA','Bahia'],['CE','Ceará'],['DF','Distrito Federal'],['ES','Espírito Santo'],['GO','Goiás'],['MA','Maranhão'],['MT','Mato Grosso'],['MS','Mato Grosso do Sul'],['MG','Minas Gerais'],['PA','Pará'],['PB','Paraíba'],['PR','Paraná'],['PE','Pernambuco'],['PI','Piauí'],['RJ','Rio de Janeiro'],['RN','Rio Grande do Norte'],['RS','Rio Grande do Sul'],['RO','Rondônia'],['RR','Roraima'],['SC','Santa Catarina'],['SP','São Paulo'],['SE','Sergipe'],['TO','Tocantins']];
-const s={room:'br',state:'SP',city:'',cities:[],loading:false,busy:false,rows:[],older:false,loadingMore:false,after:0,expiresCooldown:0,refreshTimer:null,cityLoading:false};
+const s={room:'br',state:'SP',city:'',cities:[],loading:false,busy:false,rows:[],older:false,loadingMore:false,after:0,expiresCooldown:0,refreshTimer:null,cityLoading:false,cityError:false,filterOpen:false};
 const clean=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9_-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,80);
 const flags=uf=>'<img class="uf-flag" loading="lazy" width="33" height="24" alt="Bandeira de '+esc(uf)+'" src="https://strategicprojects.github.io/flags-brasil/flags/uf/'+uf.toLowerCase()+'.svg">';
 const title=key=>key==='br'?'Brasil · Sala global':key.startsWith('s:')?UF.find(u=>u[0].toLowerCase()===key.slice(2))?.[1]||'Estado':s.city||'Sala da cidade';
@@ -25,37 +25,69 @@ function paint(scrollToEnd=false){
  if(cool)cool.textContent=s.expiresCooldown>Date.now()?'Aguarde '+Math.ceil((s.expiresCooldown-Date.now())/1000)+'s para enviar outra.':'Uma mensagem a cada 5 segundos · apaga em 24h';
 }
 function view(){
- const mine=window.entreGeo?.details?.().self;
- if(mine?.state&&s.room==='br'&&s.state==='SP')s.state=mine.state;
- const current=title(s.room);
- const label=s.room==='br'?'🇧🇷':icon(s.room);
- return heading('SALAS OFICIAIS','Converse com o <em>Brasil.</em>','Salas públicas por país, estado e cidade. Cada mensagem é removida do banco após 24 horas.')+
- '<section class="room-shell"><header class="rooms-head"><div class="rooms-head-title"><span>✳ CHAT PÚBLICO</span><h3>'+label+' '+esc(current)+'</h3></div><span class="rooms-retention">24h · mensagens temporárias</span></header>'+
- '<div class="room-picks"><button type="button" class="room-pill '+(s.room==='br'?'active':'')+'" data-room-action="choose" data-room="br">🇧🇷 Brasil · Global</button>'+
- '<label class="rooms-state-choice"><span>Estado</span><select id="roomsStateSelect" aria-label="Selecionar estado"><option value="">Escolher estado</option>'+
- UF.map(([uf,n])=>'<option value="'+uf+'" '+(s.state===uf?'selected':'')+'>'+esc(n)+' · '+uf+'</option>').join('')+'</select></label>'+
- '<button type="button" class="room-pill '+(s.room==='s:'+s.state.toLowerCase()?'active':'')+'" data-room-action="state" '+(!s.state?'disabled':'')+'>'+flags(s.state||'SP')+' Sala do estado</button></div>'+
- '<div class="room-city-row"><label for="roomsCitySelect">Cidade</label><select id="roomsCitySelect" aria-label="Selecionar cidade" '+(s.cityLoading?'disabled':'')+'>'+
- '<option value="">'+(s.cityLoading?'Carregando cidades…':'Selecionar cidade')+'</option>'+s.cities.map(c=>'<option value="'+esc(c)+'" '+(s.city===c?'selected':'')+'>'+esc(c)+'</option>').join('')+'</select>'+
- '<button type="button" data-room-action="city" '+(!s.city?'disabled':'')+'>Entrar na sala da cidade</button></div>'+
+ const current=title(s.room),label=s.room==='br'?'🇧🇷':icon(s.room);
+ return '<section class="room-shell rooms-static-shell" aria-label="Salas públicas">'+
+ '<header class="rooms-static-header"><div class="rooms-static-title"><h2>Salas</h2><div class="rooms-current-name">'+label+' <strong>'+esc(current)+'</strong></div></div>'+
+ '<button type="button" class="rooms-open-filter" data-room-action="filter" aria-haspopup="dialog" aria-controls="roomsFilterOverlay">'+ico('settings',17)+' Estado / cidade</button></header>'+
  '<div class="rooms-discussion" id="roomMessages" aria-live="polite" aria-label="Mensagens da sala">'+chatRows()+'</div>'+
- '<form id="roomChatForm" class="room-composer"><label class="sr-only" for="roomText">Sua mensagem na sala</label><input autocomplete="off" id="roomText" maxlength="400" placeholder="Escreva para '+esc(current)+'…" required><button type="submit" title="Enviar mensagem" aria-label="Enviar mensagem">'+ico('send',19)+'</button></form>'+
+ '<form id="roomChatForm" class="room-composer"><label class="sr-only" for="roomText">Sua mensagem na sala</label>'+
+ '<input autocomplete="off" id="roomText" maxlength="400" placeholder="Enviar mensagem…" required>'+
+ '<button type="submit" title="Enviar mensagem" aria-label="Enviar mensagem">'+ico('send',19)+'</button></form>'+
  '<p class="rooms-cooldown" id="roomCooldown">Uma mensagem a cada 5 segundos · apaga em 24h</p>'+
- '<p class="rooms-guideline">Respeite outras pessoas. Não publique números de telefone, endereços nem dados sensíveis. As salas são oficiais: ninguém pode criar salas próprias.</p></section>';
+ '</section>';
+}
+function filterCities(){
+ const select=document.getElementById('roomsCitySelect'),button=document.querySelector('#roomsFilterOverlay [data-room-action="city"]'),status=document.getElementById('roomsCityStatus');
+ if(!select)return;
+ select.disabled=s.cityLoading||!s.state||!s.cities.length;
+ select.innerHTML='<option value="">'+(s.cityLoading?'Carregando cidades…':s.cityError?'Cidades indisponíveis':'Selecione a cidade')+'</option>'+
+ s.cities.map(city=>'<option value="'+esc(city)+'" '+(city===s.city?'selected':'')+'>'+esc(city)+'</option>').join('');
+ if(button)button.disabled=!s.city||!s.cities.includes(s.city)||s.cityLoading;
+ if(status)status.textContent=s.cityError?'Não foi possível consultar o IBGE. Tente outro estado.':'';
+}
+function closeRoomFilter(focus=true){
+ document.getElementById('roomsFilterOverlay')?.remove();
+ document.body.classList.remove('rooms-filter-open');
+ s.filterOpen=false;
+ if(focus&&state.view==='rooms')document.querySelector('.rooms-open-filter')?.focus();
+}
+function openRoomFilter(){
+ if(state.view!=='rooms')return;
+ closeRoomFilter(false);
+ const overlay=document.createElement('div');overlay.id='roomsFilterOverlay';overlay.className='rooms-filter-overlay';
+ overlay.innerHTML='<section class="rooms-filter-dialog" role="dialog" aria-modal="true" aria-labelledby="roomsFilterHeading">'+
+ '<header class="rooms-filter-heading"><h2 id="roomsFilterHeading">Entrar em uma sala</h2>'+
+ '<button type="button" data-room-action="closeFilter" aria-label="Fechar filtro">'+ico('close',20)+'</button></header>'+
+ '<div class="rooms-filter-body"><button type="button" class="rooms-filter-global" data-room-action="choose" data-room="br">🇧🇷 Chat do Brasil '+ico('arrow',17)+'</button>'+
+ '<label for="roomsStateSelect">Estado</label>'+
+ '<select id="roomsStateSelect"><option value="">Selecione o estado</option>'+
+ UF.map(([uf,name])=>'<option value="'+uf+'" '+(s.state===uf?'selected':'')+'>'+esc(name)+' ('+uf+')</option>').join('')+'</select>'+
+ '<button type="button" class="rooms-filter-action" data-room-action="state" '+(!s.state?'disabled':'')+'>Entrar no chat do estado '+ico('arrow',16)+'</button>'+
+ '<label for="roomsCitySelect">Cidade</label>'+
+ '<select id="roomsCitySelect" aria-describedby="roomsCityStatus"><option value="">Selecione a cidade</option></select>'+
+ '<p id="roomsCityStatus" class="rooms-city-status" role="status"></p>'+
+ '<button type="button" class="rooms-filter-action rooms-filter-city" data-room-action="city">Entrar no chat da cidade '+ico('arrow',16)+'</button>'+
+ '</div></section>';
+ document.body.appendChild(overlay);document.body.classList.add('rooms-filter-open');s.filterOpen=true;
+ filterCities();document.getElementById('roomsStateSelect')?.focus();
+ if(s.state&&!s.cities.length&&!s.cityLoading)void cities(s.state);
 }
 async function cities(uf){
  if(!UF.some(([code])=>code===uf))return;
- const stamp=uf;s.cityLoading=true;
- const select=document.getElementById('roomsCitySelect');
- if(select){select.disabled=true;select.innerHTML='<option>Carregando cidades…</option>';}
+ const stamp=uf;s.cityLoading=true;s.cityError=false;filterCities();
  try{
-  const r=await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/'+uf+'/municipios');
-  if(!r.ok)throw Error('Falha ao consultar cidades.');
-  const rows=await r.json();
+  const response=await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/'+encodeURIComponent(uf)+'/municipios');
+  if(!response.ok)throw Error('Falha ao consultar cidades.');
+  const rows=await response.json();
+  if(!Array.isArray(rows)||!rows.length||rows.length>1500)throw Error('Lista de cidades inválida.');
   if(stamp!==s.state)return;
-  s.cities=rows.map(c=>c.nome).sort((a,b)=>a.localeCompare(b,'pt-BR'));
- }catch(e){s.cities=[];console.warn('Cidade IBGE não disponível',e)}
- finally{if(stamp===s.state){s.cityLoading=false;if(state.view==='rooms')renderView();}}
+  s.cities=rows.map(item=>String(item.nome||'')).filter(Boolean).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+ }catch(error){
+  if(stamp===s.state){s.cities=[];s.cityError=true;}
+  console.warn('Cidades IBGE indisponíveis',error);
+ }finally{
+  if(stamp===s.state){s.cityLoading=false;filterCities();}
+ }
 }
 async function load(more=false){
  if(s.loading||s.loadingMore||!state.session)return;
@@ -74,7 +106,7 @@ async function load(more=false){
 }
 function roomChange(key){
  if(!/^br$|^s:[a-z]{2}$|^c:[a-z]{2}:[a-z0-9][a-z0-9_-]{1,79}$/.test(key))return;
- s.room=key;s.rows=[];s.older=false;renderView();void load();startPolling();
+ closeRoomFilter(false);s.room=key;s.rows=[];s.older=false;renderView();void load();startPolling();
 }
 function startPolling(){
  if(s.refreshTimer)clearInterval(s.refreshTimer);
@@ -102,13 +134,27 @@ async function send(form){
  finally{s.busy=false;if(btn?.isConnected)btn.disabled=false;paint();}
 }
 document.addEventListener('submit',e=>{if(e.target?.id!=='roomChatForm')return;e.preventDefault();void send(e.target);});
-document.addEventListener('change',e=>{
- if(e.target?.id==='roomsStateSelect'){s.state=e.target.value;s.city='';s.cities=[];void cities(s.state);return;}
- if(e.target?.id==='roomsCitySelect'){s.city=e.target.value;const btn=document.querySelector('[data-room-action="city"]');if(btn)btn.disabled=!s.city;}
+document.addEventListener('change',event=>{
+ const el=event.target;
+ if(el?.id==='roomsStateSelect'){
+  if(!UF.some(([uf])=>uf===el.value))return;
+  s.state=el.value;s.city='';s.cities=[];s.cityError=false;
+  const stateBtn=document.querySelector('#roomsFilterOverlay [data-room-action="state"]');
+  if(stateBtn)stateBtn.disabled=false;
+  filterCities();void cities(s.state);
+ }else if(el?.id==='roomsCitySelect'){
+  s.city=el.value;filterCities();
+ }
 });
+document.addEventListener('keydown',event=>{
+ if(event.key==='Escape'&&s.filterOpen){event.preventDefault();closeRoomFilter();}
+});
+
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-room-action]');if(!b)return;
  const a=b.dataset.roomAction;
+ if(a==='filter'){openRoomFilter();return;}
+ if(a==='closeFilter'){closeRoomFilter();return;}
  if(a==='choose')roomChange('br');
  if(a==='state'&&UF.some(([uf])=>uf===s.state))roomChange('s:'+s.state.toLowerCase());
  if(a==='city'&&s.city&&s.cities.includes(s.city))roomChange('c:'+s.state.toLowerCase()+':'+clean(s.city));
@@ -117,5 +163,6 @@ document.addEventListener('click',e=>{
   void (async()=>{const {error}=await db.rpc('entre_room_delete_my_message',{_id:Number(b.dataset.id)});if(error)toast(infoError(error),true);else await load();})();
  }
 });
-window.entreRooms={view,enter,stop:()=>{if(s.refreshTimer)clearInterval(s.refreshTimer);s.refreshTimer=null;},roomChange,details:()=>({room:s.room,rows:s.rows.length})};
+document.addEventListener('click',event=>{if(event.target?.id==='roomsFilterOverlay')closeRoomFilter();});
+window.entreRooms={view,enter,stop:()=>{closeRoomFilter(false);if(s.refreshTimer)clearInterval(s.refreshTimer);s.refreshTimer=null;},roomChange,details:()=>({room:s.room,rows:s.rows.length,filterOpen:s.filterOpen})};
 })();
