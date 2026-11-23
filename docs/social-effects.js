@@ -25,4 +25,32 @@ api.chatToolbar=function(pair){
  '<button data-action="'+(archived?'conversationRestore':'conversationArchive')+'" data-id="'+esc(pair.id)+'">'+(archived?'Restaurar':'Arquivar')+'</button></div></div>';
 };
 
+api.historyButton=function(){return api.data.hasEarlier?'<button type="button" class="older-messages" data-action="messagesOlder">Carregar 30 mensagens anteriores</button>':'';};
+api.olderMessages=async function(){
+ if(!state.pair||!state.messages?.length)return;
+ const id=state.messages[0].id,list=document.getElementById('messageList'),beforeHeight=list?.scrollHeight||0;
+ try{
+  const r=await db.from('entre_messages').select('id,body,sender_id,created_at').eq('pair_id',state.pair.id).lt('id',id).order('id',{ascending:false}).limit(30);
+  if(r.error)throw r.error;
+  const older=(r.data||[]).reverse();
+  api.data.hasEarlier=older.length===30;
+  state.messages=older.concat(state.messages).slice(0,120);
+  renderView();
+  requestAnimationFrame(()=>{const box=document.getElementById('messageList');if(box)box.scrollTop=Math.max(0,box.scrollHeight-beforeHeight);});
+ }catch(e){toast(infoError(e),true);}
+};
+let scrollObserver=null;
+api.afterRender=function(){
+ if(scrollObserver){scrollObserver.disconnect();scrollObserver=null;}
+ if(state.view!=='online'||!api.data.hasMore||api.data.busy)return;
+ const node=document.getElementById('onlineScrollAnchor');
+ if(!node||!('IntersectionObserver'in window))return;
+ scrollObserver=new IntersectionObserver(entries=>{
+  if(!entries.some(x=>x.isIntersecting)||api.data.busy||!api.data.hasMore)return;
+  scrollObserver.disconnect();
+  api.loadOnline(false).then(()=>renderView());
+ },{rootMargin:'0px 0px 140px 0px'});
+ scrollObserver.observe(node);
+};
+
 })();
