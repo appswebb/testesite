@@ -8,7 +8,7 @@ if(!window.supabase || !window.supabase.createClient){
  app.innerHTML='<div class="preload"><h1>Falha de conexão</h1><p>Atualize a página quando estiver conectado à internet.</p></div>';return;
 }
 var db=window.supabase.createClient(URL,KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
-var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[],supportTickets:[],commentReports:[],premiumConfig:null,moreOpen:false};
+var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[],supportTickets:[],commentReports:[],premiumConfig:null,recurringConfig:null,moreOpen:false};
 var perPage=20, searchTimer=null, toastTimer=null, lastLoad=0;
 var sections=[
  ["overview","Visão geral","layout-dashboard"],
@@ -16,7 +16,6 @@ var sections=[
  ["users","Usuários","users"],
  ["reports","Denúncias","flag"],
  ["appeals","Contestações","alert-circle"],
- ["pairs","Conexões","heart-handshake"],
   ["bulletins","Avisos","message-circle"],
   ["support","Suporte","flag"],
   ["premium","Premium","shield-check"],
@@ -96,16 +95,16 @@ function overview(){
  var x=state.overview||{},s=x.settings||{},trend=x.signup_trend||[],mx=Math.max(1,...trend.map(function(v){return Number(v.count||0);}));
  var chart=trend.map(function(v){var n=Number(v.count||0);var percent=Math.max(4,Math.round(n/mx*100));return '<div class="chart-col" title="'+n+' cadastros"><div class="chart-bar-box"><div class="chart-bar" style="height:'+percent+'%"></div></div><span class="chart-day">'+e(day(v.day))+'</span></div>';}).join("");
  return heading("VISÃO GERAL · TEMPO REAL","Tudo em <em>perspectiva.</em>","Acompanhe sua comunidade, a qualidade dos encontros e o estado da plataforma.")+
- releaseShortcut(Boolean(s.maintenance_enabled),s.maintenance_enabled?"Site em atualização":"Modo atualização",s.maintenance_enabled?"Visitantes veem a tela especial até você liberar.":"Ative, acompanhe e libere quando quiser.")+'<div class="stat-grid">'+stat("Usuários cadastrados",x.users,"users","Contas de autenticação","accent")+stat("Novos nos últimos 7 dias",x.new_users_7d,"users","Cadastros recentes")+stat("Buscando agora",x.waiting,"zap","Fila ativa (30 segundos)","coral")+stat("Conversas em andamento",x.active_pairs,"message-circle","Pares com tempo restante")+stat("Matches recíprocos",x.connected_pairs,"heart-handshake","Escolha dos dois")+stat("Denúncias pendentes",x.reports_open,"flag","Aguardando moderação")+'</div>'+
+ releaseShortcut(Boolean(s.maintenance_enabled),s.maintenance_enabled?"Site em atualização":"Modo atualização",s.maintenance_enabled?"Visitantes veem a tela especial até você liberar.":"Ative, acompanhe e libere quando quiser.")+'<div class="stat-grid">'+stat("Usuários cadastrados",x.users,"users","Contas de autenticação","accent")+stat("Novos nos últimos 7 dias",x.new_users_7d,"users","Cadastros recentes")+stat("Denúncias pendentes",x.reports_open,"flag","Aguardando moderação")+'</div>'+
  '<div class="panel-grid"><section class="panel"><h3>Crescimento da comunidade</h3><p class="panel-desc">Cadastros por dia · últimos sete dias</p><div class="chart">'+chart+'</div></section><section class="panel"><h3>Saúde da plataforma</h3><p class="panel-desc">Acompanhamento das operações principais</p><div class="health-row"><strong>Novas conexões</strong><span class="health-state '+(!s.matchmaking_enabled?"state-off":"")+'"><span class="pulse"></span>'+(!s.matchmaking_enabled?"Pausadas":"Ativas")+'</span></div><div class="health-row"><strong>Recebimento de denúncias</strong><span class="health-state '+(!s.reporting_enabled?"state-off":"")+'"><span class="pulse"></span>'+(!s.reporting_enabled?"Pausado":"Ativo")+'</span></div><div class="health-row"><strong>Usuários suspensos</strong>'+badge(x.banned||0,(x.banned||0)>0?"warn":"neutral")+'</div><div class="health-row"><strong>Mensagens nas últimas 24h</strong>'+badge(x.messages_24h||0,"neutral")+'</div></section></div>'+
  '<section class="panel admin-appeals-overview"><h3>Contestações recentes</h3><p class="panel-desc">Pedidos de reativação enviados pelos usuários.</p><strong>'+(state.appeals||[]).filter(function(a){return a.status==='pending';}).length+' pendente(s)</strong><button type="button" class="btn-main" data-view="appeals">Analisar contestações</button></section>'+ 
  '<div class="quick-links"><button class="quick" data-view="users">'+ico("users",17)+' Gerenciar usuários '+ico("arrow-right",15)+'</button><button class="quick" data-view="reports">'+ico("flag",17)+' Moderar denúncias '+ico("arrow-right",15)+'</button><button class="quick" data-view="settings">'+ico("sliders-horizontal",17)+' Configurar site '+ico("arrow-right",15)+'</button></div>';
 }
 function users(){
  var arr=state.users.rows||[],total=state.users.total||0;
- return heading("GERENCIAMENTO","As pessoas <em>do entre.</em>","Pesquise usuários cadastrados, acompanhe cadastros e suspenda acessos abusivos.")+
+ return heading("GERENCIAMENTO","As pessoas <em>do entre.</em>","Pesquise usuários cadastrados e controle suspensão ou exclusão definitiva.")+
  '<section class="data-panel"><div class="data-tools"><div><h3>Contas cadastradas</h3><small>'+e(total)+' registro(s)</small></div><label class="search-box">'+ico("search",17)+'<input id="user-search" placeholder="Nome ou e-mail…" aria-label="Pesquisar usuários" autocomplete="off" maxlength="120" value="'+e(state.search)+'"></label></div>'+
- (arr.length?arr.map(function(u){return '<div class="list-row"><div class="list-main">'+person(u.display_name||u.email,u.email,u.admin)+'</div><div class="row-meta">'+fmt(u.created_at)+'</div>'+badge(u.admin?"ADMIN":u.banned?"SUSPENSO":"ATIVO",u.banned?"warn":u.admin?"":"neutral")+'<button class="small-btn '+(u.banned?"":"danger")+'" data-action="edit-user" data-id="'+e(u.id)+'">'+(u.admin?"Detalhes":u.banned?"Reativar":"Suspender")+'</button></div>';}).join(""):empty("Nenhuma conta encontrada","Ajuste os termos de busca ou aguarde novos cadastros."))+
+ (arr.length?arr.map(function(u){return '<div class="list-row"><div class="list-main">'+person(u.display_name||u.email,u.email,u.admin)+'</div><div class="row-meta">'+fmt(u.created_at)+'</div>'+badge(u.admin?"ADMIN":u.banned?"SUSPENSO":"ATIVO",u.banned?"warn":u.admin?"":"neutral")+'<div class="admin-user-actions"><button class="small-btn '+(u.banned?"":"danger")+'" data-action="edit-user" data-id="'+e(u.id)+'">'+(u.admin?"Detalhes":u.banned?"Reativar":"Suspender")+'</button>'+(!u.admin?'<button type="button" class="small-btn user-delete-action" data-action="delete-user" data-id="'+e(u.id)+'">Excluir conta</button>':'')+'</div></div>';}).join(""):empty("Nenhuma conta encontrada","Ajuste os termos de busca ou aguarde novos cadastros."))+
  '<div class="table-footer"><span>Página '+(state.userPage+1)+' · '+e(total)+' usuário(s)</span><div style="display:flex;gap:8px"><button class="small-btn" data-action="prev-users" '+(state.userPage<=0?"disabled":"")+'>'+ico("chevron-left",13)+' Anterior</button><button class="small-btn" data-action="next-users" '+((state.userPage+1)*perPage>=total?"disabled":"")+'>Próxima '+ico("chevron-right",13)+'</button></div></div></section>';
 }
 var reasonNames={harassment:"Assédio / comportamento abusivo",hate:"Discurso de ódio",spam:"Spam / golpes",underage:"Suspeita de menor de idade",fake:"Perfil falso",other:"Outro motivo"};
@@ -188,7 +187,7 @@ function renderView(){
  var target=document.getElementById("admin-view");if(!target)return;
  document.querySelectorAll("[data-view]").forEach(function(el){el.classList.toggle("active",el.getAttribute("data-view")===state.view);});
  var loc=document.getElementById("topbar-location");if(loc)loc.textContent=viewTitle();
- target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="appeals"?heading("RECURSOS E MODERAÇÃO","Contestações <em>de suspensão.</em>","Confira as solicitações e analise cada recurso.")+appealsPanel():state.view==="pairs"?pairs():state.view==="bulletins"?heading("COMUNICAÇÃO OFICIAL","Avisos <em>e enquetes.</em>","Gerencie suas publicações por 24 horas.")+window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico}):state.view==="support"?heading("ATENDIMENTO","Suporte <em>e provas.</em>","Protocolos recebidos dos usuários.")+window.entreAdminExtras.supportPage(state.supportTickets,e,fmt,ico,badge):state.view==="premium"?heading("ASSINATURAS","Premium <em>no navegador.</em>","Acompanhe o Premium e a configuração de pagamentos web.")+window.entreAdminExtras.premiumPage(state.premiumConfig,e,ico):state.view==="settings"?settings():security());
+ target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="appeals"?heading("RECURSOS E MODERAÇÃO","Contestações <em>de suspensão.</em>","Confira as solicitações e analise cada recurso.")+appealsPanel():state.view==="pairs"?pairs():state.view==="bulletins"?heading("COMUNICAÇÃO OFICIAL","Avisos <em>e enquetes.</em>","Gerencie suas publicações por 24 horas.")+window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico}):state.view==="support"?heading("ATENDIMENTO","Suporte <em>e provas.</em>","Protocolos recebidos dos usuários.")+window.entreAdminExtras.supportPage(state.supportTickets,e,fmt,ico,badge):state.view==="premium"?heading("ASSINATURAS","Premium <em>no navegador.</em>","Acompanhe o Premium e a configuração de pagamentos web.")+window.entreAdminExtras.premiumPage(state.premiumConfig,e,ico)+(window.entreAdminExtras.recurringPage?.(state.recurringConfig,e)||""):state.view==="settings"?settings():security());
 }
 async function load(view){
  state.loading=true;renderView();
@@ -203,7 +202,7 @@ async function load(view){
   if(view==="pairs")state.pairs=await rpc("entre_admin_pairs",{_limit:60});
    if(view==="bulletins")state.bulletins=await rpc("entre_admin_bulletins");
   if(view==="support")state.supportTickets=await rpc("entre_admin_support_tickets");
-  if(view==="premium")state.premiumConfig=await rpc("entre_admin_premium_settings");
+  if(view==="premium"){state.premiumConfig=await rpc("entre_admin_premium_settings");state.recurringConfig=await rpc("entre_admin_premium_recurring_settings");}
   if(view==="security"){state.appeals=await rpc("entre_admin_appeals");state.privacyRequests=await rpc("entre_admin_privacy_requests");}
   state.refreshAt=new Date();lastLoad=Date.now();
  }catch(err){toast(errorText(err),true);}
@@ -219,6 +218,18 @@ function openUser(id){
  if(!u.admin){body+='<form id="ban-form"><div class="field"><label for="ban-reason">Motivo da '+(u.banned?"reativação":"suspensão")+'</label><textarea class="form-textarea" id="ban-reason" name="reason" maxlength="300" placeholder="Informe um motivo para a equipe.">'+e(u.ban_reason||"")+'</textarea></div><p>'+(u.banned?"Reativar libera a conta para novas conversas.":"Suspender bloqueia novas conexões e o envio de mensagens. Conversas ativas serão encerradas.")+'</p><div class="modal-actions"><button type="button" class="btn-outline" data-action="close-modal">Cancelar</button><button type="submit" class="btn-main '+(u.banned?"":"danger")+'">'+(u.banned?"Reativar conta":"Confirmar suspensão")+'</button></div></form>';}
  else body+='<div class="modal-actions"><button class="btn-outline" data-action="close-modal">Fechar</button></div>';
  modal(body);
+}
+function openDeleteUser(id){
+ var u=(state.users.rows||[]).find(function(x){return x.id===id;});
+ if(!u||u.admin||u.id===state.user?.id){toast("Não é possível excluir um administrador.",true);return;}
+ state.modal={type:"delete-user",data:u};
+ modal('<div class="admin-delete-confirm"><span class="admin-critical-label">AÇÃO DEFINITIVA</span><h2>Excluir esta conta?</h2>'+
+ '<p>Isso exclui o cadastro, o login e os dados relacionados do aplicativo. Não é o mesmo que suspender. Esta ação não pode ser desfeita.</p>'+
+ '<p class="admin-target-email">'+e(u.email)+'</p>'+
+ '<form id="admin-delete-user-form"><label class="field" for="adminDeleteConfirm">Para confirmar, digite <strong>EXCLUIR '+e(u.email.toLowerCase())+'</strong></label>'+
+ '<input id="adminDeleteConfirm" name="confirmation" autocomplete="off" required placeholder="EXCLUIR '+e(u.email.toLowerCase())+'">'+
+ '<label class="field" for="adminDeleteReason">Motivo da exclusão</label><textarea id="adminDeleteReason" name="reason" maxlength="300" placeholder="Opcional para registro interno"></textarea>'+
+ '<div class="modal-actions"><button type="button" class="btn-outline" data-action="close-modal">Cancelar</button><button type="submit" class="btn-main danger">Excluir definitivamente</button></div></form></div>');
 }
 function openReport(id){
  var r=(state.reports||[]).find(function(x){return String(x.id)===String(id);});if(!r)return;
@@ -266,6 +277,7 @@ document.addEventListener("click",async function(ev){
   catch(err){toast(errorText(err),true);}return;
  }
  if(a==="edit-user"){openUser(n.dataset.id);return;}
+ if(a==="delete-user"){openDeleteUser(n.dataset.id);return;}
  if(a==="review"){openReport(n.dataset.id);return;}
  if(a==="prev-users"&&state.userPage>0){state.userPage--;await load("users");return;}
  if(a==="next-users"&&(state.userPage+1)*perPage<(state.users.total||0)){state.userPage++;await load("users");return;}
@@ -297,7 +309,9 @@ document.addEventListener("submit",async function(ev){
  if(form.id==="release-form"){await saveRelease(Boolean(state.settings?.maintenance_enabled),true);return;}if(state.busy)return;
  state.busy=true;var btn=form.querySelector('[type="submit"]');if(btn)btn.disabled=true;
  try{
-  if(form.id==="premium-config-form"){
+  if(form.id==="premium-recurring-settings-form"){
+   var recurring=await rpc("entre_admin_premium_recurring_toggle",{_enabled:form.elements.enabled.checked});state.recurringConfig=recurring;toast("Recorrência atualizada. Verifique webhooks e credenciais antes de ativar.");await load("premium");
+  }else if(form.id==="premium-config-form"){
    var config=await rpc("entre_admin_premium_config",window.entreAdminExtras.priceParams(form));state.premiumConfig=config;toast("Configuração Premium salva.");await load("premium");
   }else if(form.id==="bulletin-form"){
    var payload=window.entreAdminBulletins.params(form);
@@ -308,6 +322,16 @@ document.addEventListener("submit",async function(ev){
   }else if(form.id==="settings-form"){
    var s=await rpc("entre_admin_save_settings",{_matchmaking:form.elements.matchmaking.checked,_reporting:form.elements.reporting.checked,_announcement:state.settings?.announcement||''});
    state.settings=s;if(state.overview)state.overview.settings=s;toast("Configurações salvas no Supabase.");await load("settings");
+  }else if(form.id==="admin-delete-user-form"&&state.modal?.type==="delete-user"){
+   var u=state.modal.data;
+   if(form.elements.confirmation.value!=="EXCLUIR "+u.email.toLowerCase())throw Error("Digite o e-mail completo para confirmar a exclusão.");
+   if(!window.confirm("ÚLTIMA CONFIRMAÇÃO: excluir permanentemente a conta de "+u.email+"?"))return;
+   var response=await db.functions.invoke("entre-admin-delete-user",{
+    body:{user_id:u.id,confirmation:form.elements.confirmation.value,reason:form.elements.reason.value}
+   });
+   if(response.error||!response.data?.deleted)throw Error(response.data?.error||response.error?.message||"Exclusão não concluída.");
+   closeModal();toast("Conta excluída no Supabase."+(response.data.cleanup_pending?" Arquivos pendentes de limpeza.":""));
+   await load("users");
   }else if(form.id==="ban-form"&&state.modal&&state.modal.type==="user"){
    var u=state.modal.data,ban=!u.banned;
    await rpc("entre_admin_set_ban",{_user:u.id,_banned:ban,_reason:form.elements.reason.value});
