@@ -359,8 +359,8 @@ html[data-theme] .appearance-panel{animation:entre-panel-pop .35s cubic-bezier(.
 html[data-theme] .entre-touch-layer{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:999998;contain:layout paint}
 html[data-theme] .entre-touch-wave{position:absolute;pointer-events:none;z-index:1;left:var(--x);top:var(--y);
  width:10px;height:10px;border-radius:50%;border:2px solid var(--ui-accent);background:var(--ui-accent-shadow);
- transform:translate(-50%,-50%) scale(.4);animation:entre-touch-wave-animation .45s ease-out forwards}
-@keyframes entre-touch-wave-animation{to{opacity:0;transform:translate(-50%,-50%) scale(var(--wave-scale,7))}}
+ transform:translate(-50%,-50%);box-shadow:0 0 0 0 var(--ui-accent-shadow);animation:entre-touch-wave-animation .45s ease-out forwards}
+@keyframes entre-touch-wave-animation{to{opacity:0;box-shadow:0 0 0 var(--wave-radius,60px) var(--ui-accent-faint)}}
 @media(prefers-reduced-motion:reduce){
  html:not(:has(body.motion-force)) {scroll-behavior:auto!important}
  body:not(.motion-force) .scene-enter,body:not(.motion-force) .appearance-panel{
