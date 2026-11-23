@@ -21,6 +21,13 @@ on:
       - 'docs/feed-media.js'
       - 'docs/interface-polish.css'
       - 'docs/live-experience.css'
+      - 'docs/experience-hub.css'
+      - 'docs/site-search.js'
+      - 'docs/rooms.js'
+      - 'docs/camera-lives.js'
+      - 'docs/premium-recurring.js'
+      - 'tests/community-hub.test.mjs'
+      - 'tests/community-mobile-audit.cjs'
       - 'tests/live-sheet-viewport-audit.cjs'
       - 'tests/shared-media-reviews.test.mjs'
       - 'docs/admin/connect-admin.css'
@@ -74,6 +81,10 @@ jobs:
           node --check docs/perfil.js
           node --check docs/entre-livekit.js
           node --check docs/feed-media.js
+          node --check docs/site-search.js
+          node --check docs/rooms.js
+          node --check docs/camera-lives.js
+          node --check docs/premium-recurring.js
           node --check docs/entre-video.js
           node --check docs/admin/app.js
           for f in docs/social*.js; do node --check "$f"; done
@@ -83,9 +94,11 @@ jobs:
           node --test tests/usernames-regression.test.mjs
           node --test tests/connect-app-vnext.test.mjs
           node --test tests/shared-media-reviews.test.mjs
+          node --test tests/community-hub.test.mjs
           node --test tests/geo-feed-support.test.mjs
           node --test tests/encounter-layout.test.mjs
           node tests/encounter-mobile-audit.cjs
           node tests/live-sheet-viewport-audit.cjs
+          node tests/community-mobile-audit.cjs
           node tests/admin-mobile-audit.cjs
           node tests/avatar-mobile-audit.cjs
