@@ -29,13 +29,13 @@ html {scroll-behavior:smooth;scroll-padding-top:90px}
 @media(hover:hover) and (pointer:fine) {
 .step-card:hover,.insight-card:hover,.profile-preview:hover {transform:translateY(-5px);box-shadow:0 26px 55px rgba(40,27,15,.10)}
 }
-.chip.active {box-shadow:0 5px 0 rgba(24,26,22,.08)}
+.chip.active {box-shadow:0 5px 0 rgba(0,0,0,.08)}
 .chip:focus-visible,.ui-btn:focus-visible,.google-login:focus-visible,.nav-item:focus-visible {outline:3px solid #ED9A81;outline-offset:4px}
 .stage-art.searching .ring {will-change:transform,opacity}
 .stage-art.searching .ring:first-child {border-color:#E78F77;box-shadow:0 0 0 1px rgba(241,126,96,.12)}
 .stage-art.searching .center-icon {box-shadow:0 12px 50px rgba(241,126,96,.18)}
-.pair-card.is-continued .pair-banner {background:linear-gradient(110deg,#E9F2DD,#F9EFE0);color:#416648}
-.pair-card.is-continued .pair-messages {background:radial-gradient(ellipse at 50% 0%,rgba(219,239,202,.22),transparent 62%)}
+.pair-card.is-continued .pair-banner {background:linear-gradient(110deg,var(--ui-panel-alt),var(--ui-panel));color:var(--ui-text)}
+.pair-card.is-continued .pair-messages {background:radial-gradient(ellipse at 50% 0%,var(--ui-accent-faint),transparent 62%)}
 .bubble-row {transform-origin:bottom left}
 .bubble-row.mine {transform-origin:bottom right}
 .bubble-row:last-child .bubble {animation:entre-bubble .4s var(--ease-out-expo)}

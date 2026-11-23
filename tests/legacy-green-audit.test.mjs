@@ -42,3 +42,21 @@ test('legacy green colors are not hardcoded in site pages, app scripts or styles
  }
  assert.deepEqual(failures,[],'Use neutral CSS tokens or user-selected --ui-accent, not forest/teal/green');
 });
+
+test('installable PNG icons cannot reintroduce the retired green palette',()=>{
+ for(const size of [192,512]){
+  const file=readFileSync(resolve(docs,'icons','icon-'+size+'.png'));
+  assert.equal(file.subarray(1,4).toString(),'PNG');
+  let off=8,palette=null;
+  while(off+12<=file.length){
+   const len=file.readUInt32BE(off),type=file.toString('ascii',off+4,off+8);
+   if(type==='PLTE'){palette=file.subarray(off+8,off+8+len);break}
+   off+=len+12;
+   if(type==='IEND')break;
+  }
+  assert.ok(palette,'Icon palette is missing at '+size+'px');
+  for(let i=0;i<palette.length;i+=3){
+   assert.ok(!legacyGreen(palette[i],palette[i+1],palette[i+2]),'Old green in icon '+size+'px palette entry '+i/3);
+  }
+ }
+});

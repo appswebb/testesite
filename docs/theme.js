@@ -7,7 +7,7 @@ const KEY='entre.appearance.v1';
 const MODES=['light','dark','custom'];
 const DEFAULT={mode:'light',color:'#2977D5'};
 const PRESETS=[
- ['#1A9D91','Verde-petróleo'],['#2977D5','Azul'],['#F07C55','Coral'],
+ ['#17191D','Grafite'],['#2977D5','Azul'],['#F07C55','Coral'],
  ['#AE63CF','Lavanda'],['#DAA520','Dourado'],['#EA5386','Rosa']
 ];
 const hex=v=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v)?v.toUpperCase():null;
