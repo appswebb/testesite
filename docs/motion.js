@@ -28,7 +28,8 @@ function enhance(){
 function celebrate(){
  if(shouldReduce())return;
  const container=document.createElement('div');container.className='entre-celebration';container.setAttribute('aria-hidden','true');
- const colors=['#F17E60','#D6E9AE','#CABCF3','#F6E5CF','#FFA985'];
+ const accent=getComputedStyle(document.documentElement).getPropertyValue('--ui-accent').trim()||'#1A9D91';
+ const colors=[accent,'#FFFFFF','#55D8D4','#FBC5D2',accent];
  for(let i=0;i<34;i++){
   const piece=document.createElement('i');piece.className='entre-confetti';
   const a=i*2.3999632297,dist=80+(i*41%260);
@@ -42,20 +43,40 @@ function celebrate(){
  document.body.appendChild(container);
  setTimeout(()=>container.remove(),1100);
 }
+/* The original ripple lived INSIDE buttons. Re-rendered views removed it
+ * before an animation frame — especially on Android. Render outside the app. */
+const INTERACTIVE='button,.ui-btn,.nav-item,.mobile-nav button,.rail-item,.toolbar-btn,[role="button"]';
+function wave(target,clientX,clientY){
+ if(shouldReduce()||!target||target.disabled)return;
+ const box=target.getBoundingClientRect();
+ if(!box.width||!box.height)return;
+ const el=document.createElement('span');
+ el.className='entre-touch-wave';el.setAttribute('aria-hidden','true');
+ el.style.setProperty('--x',clientX+'px');el.style.setProperty('--y',clientY+'px');
+ el.style.setProperty('--wave-scale',String(Math.max(6,Math.min(14,Math.max(box.width,box.height)/12))));
+ document.body.appendChild(el);
+ el.addEventListener('animationend',()=>el.remove(),{once:true});
+ setTimeout(()=>el.remove(),650);
+}
+document.addEventListener('pointerdown',event=>{
+ if(!event.isPrimary||event.button!==0)return;
+ const btn=event.target.closest(INTERACTIVE);
+ if(!btn||!btn.isConnected)return;
+ const rect=btn.getBoundingClientRect();
+ wave(btn,event.clientX||rect.left+rect.width/2,event.clientY||rect.top+rect.height/2);
+},true);
 document.addEventListener('click',event=>{
  const btn=event.target.closest('button');
  if(!btn)return;
  if(btn.dataset.action==='vote'&&btn.dataset.value==='yes')votedRecently=Date.now();
- if(shouldReduce()||!btn.matches('.ui-btn,.google-login,.chip,.nav-item,.mobile-nav button'))return;
- const b=btn.getBoundingClientRect();
- if(!b.width||!b.height)return;
- const p=document.createElement('span');p.className='press-ripple';p.setAttribute('aria-hidden','true');
- const x=(event.clientX||b.left+b.width/2)-b.left,y=(event.clientY||b.top+b.height/2)-b.top;
- p.style.left=x+'px';p.style.top=y+'px';p.style.setProperty('--press-scale',Math.max(10,Math.ceil(Math.max(b.width,b.height)/15)));
- btn.appendChild(p);setTimeout(()=>p.remove(),700);
+ if(event.detail!==0)return; // keyboard activation: the pointer already handled touch
+ const box=btn.getBoundingClientRect();
+ wave(btn,box.left+box.width/2,box.top+box.height/2);
 },true);
 function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;enhance()})}
 const root=document.getElementById('app');
 if(root)new MutationObserver(schedule).observe(root,{childList:true,subtree:true,characterData:true});
+window.addEventListener('entre:themechange',schedule);
+reduce.addEventListener?.('change',schedule);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhance,{once:true});else enhance();
 })();
