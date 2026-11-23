@@ -46,6 +46,16 @@ async function checkOverflow(page,width,label){
     const toolbar=await page.locator('.app-toolbar').boundingBox();
     assert(toolbar&&toolbar.x>=0&&toolbar.x+toolbar.width<=width+1,'Toolbar overflow '+width);
    }
+   // Regression: mobile comments drawer must never resurrect olive/green text.
+   const comments='<div class="comments-overlay"><div class="comments-dialog"><header class="comments-dialog-header"><div><span>ENTRE. · COMUNIDADE</span><h2>Comentários</h2><p>Post de uma pessoa</p></div><button class="comments-dialog-close">×</button></header><div class="comments-dialog-list"><div class="comments-dialog-empty">'+icon+'<strong>Ninguém comentou ainda</strong><p>Seja a primeira pessoa a participar.</p></div></div><footer class="comments-dialog-footer"><form class="post-comment-form"><input placeholder="Escreva um comentário"><button>Enviar</button></form><small>Moderação ativa.</small></footer></div></div>';
+   await page.setContent(frame(appCss,comments));
+   const palette=await page.evaluate(()=>({label:getComputedStyle(document.querySelector('.comments-dialog-header span')).color,empty:getComputedStyle(document.querySelector('.comments-dialog-empty strong')).color,helper:getComputedStyle(document.querySelector('.comments-dialog-empty p')).color,button:getComputedStyle(document.querySelector('.post-comment-form button')).backgroundColor}));
+   assert.equal(palette.label,'rgb(114, 122, 128)','Legacy green eyebrow in comments '+width);
+   assert.equal(palette.empty,'rgb(21, 25, 26)','Legacy green empty-state headline '+width);
+   assert.equal(palette.helper,'rgb(114, 122, 128)','Legacy green empty-state copy '+width);
+   assert.equal(palette.button,'rgb(17, 17, 17)','Comments submit must use selected theme accent '+width);
+   await checkOverflow(page,width,'comments');
+
    const share='<div class="share-wrap"><header class="share-topbar"><a class="share-brand"><span class="brand-mark">e.</span>entre.</a><a class="share-home-top">Ir para o site</a></header><main class="share-main"><section class="share-intro"><span class="share-kicker">PERFIL COMPARTILHADO</span><h1>Um novo papo.<br><em>Uma conexão.</em></h1><p>Conheça uma pessoa.</p></section><section class="share-profile-card"><div class="share-cover"><span class="cover-label">CONEXÕES REAIS</span></div><div class="share-profile-content"><div class="share-avatar-wrap"><div class="share-avatar">L</div></div><div class="share-identity"><h2>Uma pessoa</h2><p>@usuario</p></div><div class="share-cta"><a class="share-primary">Ir para o site</a><a class="share-secondary">Criar minha conta</a></div></div></section></main></div>';
    await page.setContent(frame(publicCss,share));
    await checkOverflow(page,width,'share');
