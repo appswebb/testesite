@@ -15,14 +15,17 @@
   else{actions.append(button("Entrar na minha conta","./?auth=login","share-secondary"));actions.append(button("Criar conta gratuita","./?auth=signup","share-secondary"));}
  }
  if(!safe.test(handle)){name.textContent="Link inválido";message("Confira o link compartilhado.",true);setActions(false);return;}
- let logged=false;
- try{
-  if(window.supabase?.createClient){
+ // Guest previews are fully independent of Supabase Auth. Never await
+ // session initialization before fetching the publicly shareable profile.
+ setActions(false);
+ void (async()=>{
+  try{
+   if(!window.supabase?.createClient)return;
    const sb=window.supabase.createClient("https://trrakyybnvxpdhxwgjrz.supabase.co","sb_publishable_OJ4wBPPNVBBcrcNl12yonw_hRSlMKsZ",{auth:{autoRefreshToken:false,persistSession:true,detectSessionInUrl:false}});
-   const {data}=await sb.auth.getSession();logged=Boolean(data?.session);
-  }
- }catch(error){console.warn("shared profile session",error);}
- setActions(logged);
+   const {data}=await sb.auth.getSession();
+   if(data?.session)setActions(true);
+  }catch(error){console.warn("Session detection unavailable; continuing in visitor mode.");}
+ })();
  try{
   const endpoint="https://trrakyybnvxpdhxwgjrz.supabase.co/functions/v1/entre-shared-profile?u="+encodeURIComponent(handle);
   const res=await fetch(endpoint,{headers:{"apikey":"sb_publishable_OJ4wBPPNVBBcrcNl12yonw_hRSlMKsZ","Accept":"application/json"},cache:"no-store"});
