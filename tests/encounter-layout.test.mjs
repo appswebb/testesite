@@ -103,7 +103,7 @@ test('Premium checkout has a bounded card and disabled checkout remains unchange
 test('new encounter stylesheet and WebRTC cache version are loaded',()=>{
  const html=read('index.html');
  assert.match(html,/encounter-ui\.css\?v=entre-20261123-encounter-v1/);
- assert.match(html,/entre-video\.js\?v=entre-20261123-encounter-v1/);
+ assert.match(html,/entre-video\.js\?v=entre-video-livekit-20261123d/);
  assert.ok(html.indexOf('encounter-ui.css')>html.indexOf('entre-features.css'));
  assert.match(read('app.js'),/function videoEncounterView\(/);
 });

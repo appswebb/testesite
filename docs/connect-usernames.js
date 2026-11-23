@@ -1,4 +1,4 @@
-/* CONNECT: user-handle discovery and shareable profile links. */
+/* entre.: user-handle discovery and shareable profile links. */
 (function(){
  'use strict';
  const api=window.entreSocial;
@@ -99,6 +99,16 @@ document.addEventListener('focusout',async e=>{
   const results=await queryPeople(username);
   const found=results.find(p=>p.username===username);
   if(!found){toast('Esse @ não foi encontrado ou está indisponível.',true);return;}
+  if(found.avatar_path){
+   try{
+    const response=await fetch('https://trrakyybnvxpdhxwgjrz.supabase.co/functions/v1/entre-shared-profile?u='+encodeURIComponent(username),{
+     headers:{apikey:'sb_publishable_OJ4wBPPNVBBcrcNl12yonw_hRSlMKsZ'},cache:'no-store'
+    });
+    if(response.ok){const preview=(await response.json())?.profile;
+     if(preview?.avatar_url)state.avatarUrls[found.avatar_path]={url:preview.avatar_url,expires:Date.now()+150000,local:false};
+    }
+   }catch(error){console.warn('Shared profile avatar temporarily unavailable');}
+  }
   data.peopleQuery='@'+username;
   data.socialProfile=found;
   state.view='online';

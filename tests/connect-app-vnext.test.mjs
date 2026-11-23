@@ -24,12 +24,14 @@ test('profiles menu keeps data rules; settings do not duplicate core actions',()
 });
 test('comment threads are bounded, expandable, and owner scoped',()=>{
  const js=read('docs/entre-features.js'),css=read('docs/functional-updates.css');
- assert.match(js,/post-comments-sheet/);
+ assert.match(js,/comments-overlay/);
+ assert.match(js,/entre_post_comments_page/);
+ assert.match(js,/postCommentsOpen/);
  assert.match(js,/post-comment-edit-form/);
  assert.match(js,/post-comment-report-form/);
  assert.match(js,/postCommentDelete/);
  assert.match(js,/entre_post_comment_edit/);
- assert.match(css,/\.post-comment-list\{max-height/);
+ assert.match(read('docs/interface-polish.css'),/\.comments-dialog-list\{flex:1;min-height:0;overflow-y:auto/);
  const sql=read('supabase/migrations/20261123213000_comments_moderation_notices.sql');
  assert.match(sql,/where id=_comment and author_id=uid/);
  assert.match(sql,/create table if not exists public\.entre_comment_reports/);
