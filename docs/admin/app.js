@@ -8,13 +8,14 @@ if(!window.supabase || !window.supabase.createClient){
  app.innerHTML='<div class="preload"><h1>Falha de conexão</h1><p>Atualize a página quando estiver conectado à internet.</p></div>';return;
 }
 var db=window.supabase.createClient(URL,KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
-var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[],supportTickets:[],commentReports:[],premiumConfig:null};
+var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[],supportTickets:[],commentReports:[],premiumConfig:null,moreOpen:false};
 var perPage=20, searchTimer=null, toastTimer=null, lastLoad=0;
 var sections=[
  ["overview","Visão geral","layout-dashboard"],
  ["updates","Atualização","refresh-cw"],
  ["users","Usuários","users"],
  ["reports","Denúncias","flag"],
+ ["appeals","Contestações","alert-circle"],
  ["pairs","Conexões","heart-handshake"],
   ["bulletins","Avisos","message-circle"],
   ["support","Suporte","flag"],
@@ -67,8 +68,17 @@ function gate(locked){
  +'<div class="gate-art"><div class="gate-orbit"><strong>e.</strong><span>CONTROL</span></div><h2>O controle que uma comunidade real merece.</h2><p>Um painel feito para cuidar de conexões, não invadir conversas.</p></div></div>';
 }
 function navItem(s,compact){return '<button type="button" class="'+(compact?"":"rail-item ")+(state.view===s[0]?"active":"")+'" data-view="'+s[0]+'" aria-label="'+e(s[1])+'">'+ico(s[2],compact?19:19)+'<span>'+e(s[1])+'</span></button>';}
+var mainMobileSections=["overview","users","reports","appeals"];
+function adminMobileNav(){
+ return '<nav class="bottom-nav admin-bottom-bar" aria-label="Navegação administrativa">'+
+ sections.filter(function(s){return mainMobileSections.includes(s[0]);}).map(function(s){return navItem(s,true);}).join('')+
+ '<button type="button" class="admin-more-button" data-action="admin-more" aria-expanded="'+Boolean(state.moreOpen)+'" aria-controls="adminMoreMenu">'+ico("sliders-horizontal",19)+'<span>Mais</span></button></nav>'+
+ '<div class="admin-more-menu" id="adminMoreMenu" '+(state.moreOpen?'':'hidden')+' role="dialog" aria-label="Mais áreas do painel">'+
+ '<div class="admin-more-header"><strong>Mais ferramentas</strong><button type="button" class="small-btn" data-action="admin-more">Fechar ×</button></div>'+
+ '<div class="admin-more-links">'+sections.filter(function(s){return !mainMobileSections.includes(s[0]);}).map(function(s){return navItem(s,true);}).join('')+'</div></div>';
+}
 function shell(){
- app.innerHTML='<div class="shell"><aside class="rail"><div class="brand"><span class="brand-mark">e</span><div><div class="brand-text">entre<i>.</i></div><div class="brand-sub">COMMAND CENTER</div></div></div><div class="rail-label">WORKSPACE</div><div class="rail-links">'+sections.map(function(s){return navItem(s,false);}).join("")+'</div><div class="rail-spacer"></div><div class="rail-bottom"><div class="admin-identity"><div class="admin-avatar">'+e((state.user&&state.user.email||"A")[0].toUpperCase())+'</div><div><strong>Admin principal</strong><small>'+e(state.user&&state.user.email||"")+'</small></div></div><div class="rail-out"><a href="../?site=1">'+ico("external-link",13)+' Ver site</a><button data-action="signout">'+ico("log-out",13)+' Sair</button></div></div></aside><main class="main"><header class="topbar"><div class="topbar-left"><span class="topbar-label">entre. / ADMIN / <span id="topbar-location">'+e(viewTitle())+'</span></span></div><div class="topbar-right"><span class="topbar-live"><span class="pulse"></span> SISTEMA CONECTADO</span><button class="toolbar-btn" data-action="refresh">'+ico("refresh-cw",16)+' Atualizar</button><a class="toolbar-btn" href="../?site=1">'+ico("external-link",16)+' Ver site</a></div></header><div id="admin-view"></div></main><nav class="bottom-nav" aria-label="Navegação administrativa">'+sections.map(function(s){return navItem(s,true);}).join("")+'</nav></div><div id="modal-root"></div>';
+ app.innerHTML='<div class="shell"><aside class="rail"><div class="brand"><span class="brand-mark">e</span><div><div class="brand-text">entre<i>.</i></div><div class="brand-sub">COMMAND CENTER</div></div></div><div class="rail-label">WORKSPACE</div><div class="rail-links">'+sections.map(function(s){return navItem(s,false);}).join("")+'</div><div class="rail-spacer"></div><div class="rail-bottom"><div class="admin-identity"><div class="admin-avatar">'+e((state.user&&state.user.email||"A")[0].toUpperCase())+'</div><div><strong>Admin principal</strong><small>'+e(state.user&&state.user.email||"")+'</small></div></div><div class="rail-out"><button data-action="signout">'+ico("log-out",13)+' Sair</button></div></div></aside><main class="main"><header class="topbar"><div class="topbar-left"><span class="topbar-label">entre. / ADMIN / <span id="topbar-location">'+e(viewTitle())+'</span></span></div><div class="topbar-right"><span class="topbar-live"><span class="pulse"></span> SISTEMA CONECTADO</span><button class="toolbar-btn" data-action="refresh">'+ico("refresh-cw",16)+' Atualizar</button><a class="toolbar-btn" href="../?site=1">'+ico("external-link",16)+' Ver site</a></div></header><div id="admin-view"></div></main>'+adminMobileNav()+'</div><div id="modal-root"></div>';
 }
 function viewTitle(){return (sections.find(function(s){return s[0]===state.view;})||sections[0])[1];}
 function heading(k,title,desc){return '<div class="page-intro"><span class="eyebrow">'+e(k)+'</span><h1 class="page-title">'+title+'</h1><p>'+e(desc)+'</p></div>';}
@@ -88,7 +98,7 @@ function overview(){
  return heading("VISÃO GERAL · TEMPO REAL","Tudo em <em>perspectiva.</em>","Acompanhe sua comunidade, a qualidade dos encontros e o estado da plataforma.")+
  releaseShortcut(Boolean(s.maintenance_enabled),s.maintenance_enabled?"Site em atualização":"Modo atualização",s.maintenance_enabled?"Visitantes veem a tela especial até você liberar.":"Ative, acompanhe e libere quando quiser.")+'<div class="stat-grid">'+stat("Usuários cadastrados",x.users,"users","Contas de autenticação","accent")+stat("Novos nos últimos 7 dias",x.new_users_7d,"users","Cadastros recentes")+stat("Buscando agora",x.waiting,"zap","Fila ativa (30 segundos)","coral")+stat("Conversas em andamento",x.active_pairs,"message-circle","Pares com tempo restante")+stat("Matches recíprocos",x.connected_pairs,"heart-handshake","Escolha dos dois")+stat("Denúncias pendentes",x.reports_open,"flag","Aguardando moderação")+'</div>'+
  '<div class="panel-grid"><section class="panel"><h3>Crescimento da comunidade</h3><p class="panel-desc">Cadastros por dia · últimos sete dias</p><div class="chart">'+chart+'</div></section><section class="panel"><h3>Saúde da plataforma</h3><p class="panel-desc">Acompanhamento das operações principais</p><div class="health-row"><strong>Novas conexões</strong><span class="health-state '+(!s.matchmaking_enabled?"state-off":"")+'"><span class="pulse"></span>'+(!s.matchmaking_enabled?"Pausadas":"Ativas")+'</span></div><div class="health-row"><strong>Recebimento de denúncias</strong><span class="health-state '+(!s.reporting_enabled?"state-off":"")+'"><span class="pulse"></span>'+(!s.reporting_enabled?"Pausado":"Ativo")+'</span></div><div class="health-row"><strong>Usuários suspensos</strong>'+badge(x.banned||0,(x.banned||0)>0?"warn":"neutral")+'</div><div class="health-row"><strong>Mensagens nas últimas 24h</strong>'+badge(x.messages_24h||0,"neutral")+'</div></section></div>'+
- '<section class="panel admin-appeals-overview"><h3>Contestações recentes</h3><p class="panel-desc">Pedidos de reativação enviados pelos usuários.</p><strong>'+(state.appeals||[]).filter(function(a){return a.status==='pending';}).length+' pendente(s)</strong><button type="button" class="btn-main" data-view="security">Analisar contestações</button></section>'+ 
+ '<section class="panel admin-appeals-overview"><h3>Contestações recentes</h3><p class="panel-desc">Pedidos de reativação enviados pelos usuários.</p><strong>'+(state.appeals||[]).filter(function(a){return a.status==='pending';}).length+' pendente(s)</strong><button type="button" class="btn-main" data-view="appeals">Analisar contestações</button></section>'+ 
  '<div class="quick-links"><button class="quick" data-view="users">'+ico("users",17)+' Gerenciar usuários '+ico("arrow-right",15)+'</button><button class="quick" data-view="reports">'+ico("flag",17)+' Moderar denúncias '+ico("arrow-right",15)+'</button><button class="quick" data-view="settings">'+ico("sliders-horizontal",17)+' Configurar site '+ico("arrow-right",15)+'</button></div>';
 }
 function users(){
@@ -171,14 +181,14 @@ function privacyRequestsPanel(){
 function security(){
  return heading("ACESSO E PRIVACIDADE","Segurança <em>sem atalhos.</em>","O acesso administrativo é verificado no servidor. Seu navegador nunca recebe a chave secreta do Supabase.")+
  '<section class="form-card"><h2 class="section-heading">Administrador principal</h2><p class="section-desc">Conta reconhecida pela identidade E-mail e pela lista de autorização do banco.</p><div class="security-card"><span class="admin-avatar">'+e((state.user.email||"A").slice(0,1).toUpperCase())+'</span><div style="flex:1"><strong>'+e(state.user.email)+'</strong><small>E-mail confirmado · administrador autorizado</small></div>'+badge("ACESSO ATIVO")+'</div>'+
- '<div class="security-note"><b>Proteção em camadas.</b> Todas as operações de usuários, denúncias, suspensões e configurações são executadas por funções SQL com verificação administrativa. O controle não depende de esconder botões ou comparar e-mails no JavaScript.</div><div class="health-row"><strong>Autenticação</strong>'+badge("Supabase Auth")+'</div><div class="health-row"><strong>Banco de dados</strong>'+badge("Supabase + RLS")+'</div><div class="health-row"><strong>Conteúdo de conversas</strong>'+badge("Não acessível aqui","neutral")+'</div><div class="health-row"><strong>Endereço do painel</strong><span style="overflow-wrap:anywhere;font-size:11px">/testesite/admin/</span></div></section>'+appealsPanel()+privacyRequestsPanel();
+ '<div class="security-note"><b>Proteção em camadas.</b> Todas as operações de usuários, denúncias, suspensões e configurações são executadas por funções SQL com verificação administrativa. O controle não depende de esconder botões ou comparar e-mails no JavaScript.</div><div class="health-row"><strong>Autenticação</strong>'+badge("Supabase Auth")+'</div><div class="health-row"><strong>Banco de dados</strong>'+badge("Supabase + RLS")+'</div><div class="health-row"><strong>Conteúdo de conversas</strong>'+badge("Não acessível aqui","neutral")+'</div><div class="health-row"><strong>Endereço do painel</strong><span style="overflow-wrap:anywhere;font-size:11px">/testesite/admin/</span></div></section>'+privacyRequestsPanel();
 }
 function spinner(){return '<div class="loading-panel"><div class="loading-indicator"></div>Atualizando dados…</div>';}
 function renderView(){
  var target=document.getElementById("admin-view");if(!target)return;
  document.querySelectorAll("[data-view]").forEach(function(el){el.classList.toggle("active",el.getAttribute("data-view")===state.view);});
  var loc=document.getElementById("topbar-location");if(loc)loc.textContent=viewTitle();
- target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="pairs"?pairs():state.view==="bulletins"?heading("COMUNICAÇÃO OFICIAL","Avisos <em>e enquetes.</em>","Gerencie suas publicações por 24 horas.")+window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico}):state.view==="support"?heading("ATENDIMENTO","Suporte <em>e provas.</em>","Protocolos recebidos dos usuários.")+window.entreAdminExtras.supportPage(state.supportTickets,e,fmt,ico,badge):state.view==="premium"?heading("ASSINATURAS","Premium <em>no navegador.</em>","Acompanhe o Premium e a configuração de pagamentos web.")+window.entreAdminExtras.premiumPage(state.premiumConfig,e,ico):state.view==="settings"?settings():security());
+ target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="appeals"?heading("RECURSOS E MODERAÇÃO","Contestações <em>de suspensão.</em>","Confira as solicitações e analise cada recurso.")+appealsPanel():state.view==="pairs"?pairs():state.view==="bulletins"?heading("COMUNICAÇÃO OFICIAL","Avisos <em>e enquetes.</em>","Gerencie suas publicações por 24 horas.")+window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico}):state.view==="support"?heading("ATENDIMENTO","Suporte <em>e provas.</em>","Protocolos recebidos dos usuários.")+window.entreAdminExtras.supportPage(state.supportTickets,e,fmt,ico,badge):state.view==="premium"?heading("ASSINATURAS","Premium <em>no navegador.</em>","Acompanhe o Premium e a configuração de pagamentos web.")+window.entreAdminExtras.premiumPage(state.premiumConfig,e,ico):state.view==="settings"?settings():security());
 }
 async function load(view){
  state.loading=true;renderView();
@@ -188,6 +198,7 @@ async function load(view){
     if(view==="overview")state.appeals=await rpc("entre_admin_appeals");
   }
   if(view==="users")state.users=await rpc("entre_admin_users",{_query:state.search,_limit:perPage,_offset:state.userPage*perPage});
+  if(view==="appeals")state.appeals=await rpc("entre_admin_appeals");
   if(view==="reports"){var results=await Promise.all([rpc("entre_admin_reports",{_status:state.reportStatus,_limit:100}),rpc('entre_admin_comment_reports')]);state.reports=results[0];state.commentReports=results[1]||[];}
   if(view==="pairs")state.pairs=await rpc("entre_admin_pairs",{_limit:60});
    if(view==="bulletins")state.bulletins=await rpc("entre_admin_bulletins");
@@ -198,7 +209,7 @@ async function load(view){
  }catch(err){toast(errorText(err),true);}
  finally{state.loading=false;renderView();}
 }
-async function navigate(view){if(!sections.some(function(s){return s[0]===view;}))return;state.view=view;renderView();await load(view);}
+async function navigate(view){if(!sections.some(function(s){return s[0]===view;}))return;state.moreOpen=false;state.view=view;renderView();await load(view);}
 function modal(content){document.getElementById("modal-root").innerHTML='<div class="modal-back" id="modal-back"><div class="modal" role="dialog" aria-modal="true" aria-label="Ação administrativa">'+content+'</div></div>';var el=document.querySelector(".modal input,.modal textarea,.modal select");if(el)el.focus();}
 function closeModal(){state.modal=null;var el=document.getElementById("modal-root");if(el)el.innerHTML="";}
 function openUser(id){
@@ -232,6 +243,7 @@ document.addEventListener("click",async function(ev){
  if(n.dataset.view){await navigate(n.dataset.view);return;}
  if(n.dataset.reportStatus){state.reportStatus=n.dataset.reportStatus;await load("reports");return;}
  var a=n.dataset.action;
+ if(a==="admin-more"){state.moreOpen=!state.moreOpen;var m=document.getElementById("adminMoreMenu");if(m)m.hidden=!state.moreOpen;var t=document.querySelector(".admin-more-button");if(t)t.setAttribute("aria-expanded",String(state.moreOpen));return;}
  if(a==="close-modal"){closeModal();return;}
  if(a==="refresh"){await load(state.view);toast("Dados atualizados.");return;}
  if(a==="evidenceOpen"){
@@ -239,7 +251,7 @@ document.addEventListener("click",async function(ev){
  }
  if(a==="review-appeal"||a==="reject-appeal"){
   if(!window.confirm(a==="review-appeal"?'Aprovar contestação e reativar?':'Rejeitar contestação?'))return;
-  try{await rpc('entre_admin_review_appeal',{_id:Number(n.dataset.id),_approve:a==="review-appeal"});toast('Revisão registrada.');await load('security');}
+  try{await rpc('entre_admin_review_appeal',{_id:Number(n.dataset.id),_approve:a==="review-appeal"});toast('Revisão registrada.');await load('appeals');}
   catch(err){toast(errorText(err),true);}return;
  }
  if(a==="privacy-handled"||a==="privacy-denied"){
