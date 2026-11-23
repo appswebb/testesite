@@ -238,63 +238,22 @@ test('Posts, temporary video, premium checkout and account support remain wired 
  assert.match(video,/private:true/);
 });
 
-test('An admin can access the normal app without a persistent forced return to the panel',()=>{
+
+test('Email and password are the only visible login methods in the entre. frontend',()=>{
  const app=read('app.js'),admin=read('admin/app.js');
- assert.match(app,/function consumeAdminOAuthReturn\(\)/);
- assert.match(app,/sessionStorage\.getItem\('entre\.admin\.oauth\.started'\)/);
- assert.match(app,/sessionStorage\.removeItem\('entre\.admin\.oauth\.started'\)/);
- assert.match(app,/localStorage\.removeItem\('entre\.admin\.return'\)/);
- assert.match(app,/new URLSearchParams\(window\.location\.search\)\.get\('site'\)==='1'/);
- assert.match(read('email-auth.js'),/if\(state\.isAdmin&&adminOAuthReturn\)/);
- assert.doesNotMatch(app,/if\(state\.isAdmin&&localStorage\.getItem\('entre\.admin\.return'\)/);
- assert.match(admin,/sessionStorage\.setItem\("entre\.admin\.oauth\.started",String\(Date\.now\(\)\)\)/);
+ assert.match(app,/window\.entreEmailAuth\.fields\(signup,forgot\)/);
+ assert.match(app,/window\.entreEmailAuth\.acceptSession\(data\.session\)/);
+ assert.match(admin,/db\.auth\.signInWithPassword/);
+ assert.match(admin,/id="admin-login-form"/);
+ assert.match(admin,/entre_admin_check/);
+ assert.doesNotMatch(app,/signInWithOAuth|data-action="google"|google-login|googleLogo/);
+ assert.doesNotMatch(admin,/signInWithOAuth|data-action="google"/);
+});
+test('Administrators can use their own email login without a forced redirect trap',()=>{
+ const app=read('app.js'),admin=read('admin/app.js'),auth=read('email-auth.js');
+ assert.match(app,/if\(state\.isAdmin\)/);
  assert.match(admin,/href="\.\.\/\?site=1"/);
- assert.doesNotMatch(admin,/localStorage\.setItem\("entre\.admin\.return","1"\)/);
-});
-
-test('Google OAuth callbacks do not persist stale access_denied errors or mask valid sessions',()=>{
- const app=read('app.js');
- assert.match(app,/entre\.app\.oauth\.started/);
- assert.match(app,/function getOAuthError\(\)/);
- assert.match(app,/window\.history\.replaceState/);
- assert.match(app,/return fresh\?googleOAuthCallbackMessage/);
- assert.match(app,/sessionStorage\.removeItem\('entre\.app\.oauth\.started'\)/);
- assert.match(app,/showFormMessage\(infoError\(e\)\)/);
- assert.doesNotMatch(app,/showFormMessage\(oauthError\|\|infoError\(e\)\)/);
-});
-test('Optional social services do not block a successful Google login',()=>{
- const app=read('app.js');
- assert.match(app,/try\{await loadPairs\(\);\}catch\(e\)/);
- assert.match(app,/try\{await window\.entreSocial\?\.refreshBulletins\?\.\(true\);\}catch\(e\)/);
- assert.match(app,/try\{await window\.entreSocial\?\.init\?\.\(\);\}catch\(e\)/);
- assert.match(app,/state\.profile=await getProfile\(\)/);
-});
-
-test('OAuth errors preserve the actual Google rejection reason rather than claiming users cancelled',()=>{
- const src=read('app.js'),admin=read('admin/app.js');
- assert.match(src,/function googleOAuthCallbackMessage\(code,description\)/);
- assert.match(src,/Motivo informado pelo Google/);
- assert.match(src,/Público-alvo/);
- assert.match(src,/Usuários de teste/);
- assert.match(src,/scopes:'openid email profile'/);
- assert.match(admin,/scopes:"openid email profile"/);
- const from=src.indexOf('function googleOAuthCallbackMessage(');
- const to=src.indexOf('function getOAuthError()',from);
- const callback=new Function('infoError',src.slice(from,to)+'return googleOAuthCallbackMessage;')(e=>e.message);
- const result=callback('access_denied','Access blocked: user is not authorized');
- assert.match(result,/access_denied/);
- assert.match(result,/Access blocked: user is not authorized/);
- assert.match(result,/Google Cloud/);
- assert.doesNotMatch(result,/foi cancelada ou não foi autorizada/);
-});
-
-test('Google OAuth returns to the correct site on GitHub Pages and Vercel',()=>{
- const app=read('app.js'),admin=read('admin/app.js');
- assert.match(app,/window\.location\.hostname==='appswebb\.github\.io'/);
- assert.match(app,/window\.location\.origin\+'\/'/);
- assert.match(admin,/window\.location\.hostname==="appswebb\.github\.io"/);
- assert.match(admin,/window\.location\.origin\+"\/"\s*;/);
- assert.doesNotMatch(admin,/redirectTo:"https:\/\/appswebb\.github\.io\/testesite\/"/);
- assert.match(app,/scopes:'openid email profile'/);
- assert.match(admin,/scopes:"openid email profile"/);
+ assert.match(auth,/getUser\(\)/);
+ assert.match(auth,/entre_admin_check/);
+ assert.doesNotMatch(app,/consumeAdminOAuthReturn|entre\.admin\.oauth\.started/);
 });
