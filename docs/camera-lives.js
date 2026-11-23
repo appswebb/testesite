@@ -1,10 +1,21 @@
 /* entre. Lives · LiveKit host + one approved guest + spectators. */
 (function(){
 'use strict';
-const s={rows:[],loading:false,active:null,room:null,localRole:null,joining:false,camera:true,mic:true,timer:null,remoteTracks:new Map(),title:'',error:'',region:'global',state:'',city:'',showCreate:false};
+const s={rows:[],loading:false,active:null,room:null,localRole:null,joining:false,camera:true,mic:true,timer:null,remoteTracks:new Map(),title:'',error:'',region:'global',state:'',city:'',showCreate:false,search:''};
 const UFS='AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ');
-const filtered=()=>s.rows.filter(l=>s.region==='global'||(s.region==='state'&&l.state_code===s.state)||(s.region==='city'&&l.state_code===s.state&&String(l.city_name||'').toLocaleLowerCase('pt-BR')===s.city.toLocaleLowerCase('pt-BR')));
-const filterMarkup=()=>'<div class="camera-live-filters"><label>Explorar<select data-live-filter="region"><option value="global" '+(s.region==='global'?'selected':'')+'>Global · todas as lives</option><option value="state" '+(s.region==='state'?'selected':'')+'>Por estado</option><option value="city" '+(s.region==='city'?'selected':'')+'>Por cidade</option></select></label>'+(s.region!=='global'?'<label>Estado<select data-live-filter="state"><option value="">Selecione o estado</option>'+UFS.map(uf=>'<option value="'+uf+'" '+(s.state===uf?'selected':'')+'>'+uf+'</option>').join('')+'</select></label>':'')+(s.region==='city'?'<label>Cidade<input data-live-filter="city" maxlength="100" placeholder="Digite o nome da cidade" value="'+esc(s.city)+'"></label>':'')+'</div>';
+const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+const filtered=()=>s.rows.filter(l=>{
+ const locationOk=s.region==='global'||(s.state&&l.state_code===s.state&&(s.region==='state'||(s.city&&normalize(l.city_name)===normalize(s.city))));
+ const query=normalize(s.search);
+ return locationOk&&(!query||normalize(l.title+' '+l.host_name+' '+(l.guest_name||'')).includes(query));
+});
+
+const filterMarkup=()=>'<div class="camera-live-filters">'+
+ '<label class="live-search-field">Pesquisar live<input data-live-filter="search" type="search" maxlength="90" placeholder="Título ou apresentador" value="'+esc(s.search)+'" autocomplete="off"></label>'+
+ '<label>Explorar<select data-live-filter="region"><option value="global" '+(s.region==='global'?'selected':'')+'>Global · todas as lives</option><option value="state" '+(s.region==='state'?'selected':'')+'>Por estado</option><option value="city" '+(s.region==='city'?'selected':'')+'>Por cidade</option></select></label>'+
+ (s.region!=='global'?'<label>Estado<select data-live-filter="state"><option value="">Selecione o estado</option>'+UFS.map(uf=>'<option value="'+uf+'" '+(s.state===uf?'selected':'')+'>'+uf+'</option>').join('')+'</select></label>':'')+
+ (s.region==='city'?'<label>Cidade<input data-live-filter="city" maxlength="100" placeholder="Digite sua cidade" value="'+esc(s.city)+'" autocomplete="off"></label>':'')+'</div>';
+
 let sdkPromise=null;
 async function sdk(){
  if(window.LivekitClient?.Room)return window.LivekitClient;
@@ -31,20 +42,36 @@ function viewer(){
  (role==='host'?'<button type="button" class="camera-live-danger" data-live-action="end">Encerrar live</button>':'')+'</div>'+
  '<p class="camera-live-security">Transmissão em tempo real. Só o apresentador e o convidado aceito podem compartilhar câmera e microfone. Nada é gravado pelo entre.</p></section>';
 }
+function discoveryResults(){
+ const rows=filtered();
+ if(rows.length)return '<div class="camera-live-list">'+rows.map(card).join('')+'</div>';
+ const where=s.region==='global'?'no momento':s.region==='state'?'neste estado':'nesta cidade';
+ return '<div class="camera-live-empty" role="status"><span>'+ico('camera',27)+'</span><strong>'+(s.loading?'Buscando transmissões…':s.error?'Não foi possível carregar as lives':'Nenhuma transmissão '+where)+'</strong><p>'+(s.error?'Confira a conexão e toque em Atualizar.':s.rows.length?'Tente outra região ou volte ao filtro global.':'Quando alguém começar uma live, ela aparecerá aqui.')+'</p>'+(s.region!=='global'?'<button type="button" data-live-action="resetFilters">Ver lives globais</button>':'')+'</div>';
+}
+function updateDiscovery(){
+ const result=document.getElementById('liveDiscoverResults');
+ if(result)result.innerHTML=discoveryResults();
+ const count=document.getElementById('liveDiscoverCount');
+ if(count)count.textContent=String(filtered().length);
+}
 function view(){
- return heading('TRANSMISSÕES AO VIVO','Lives de <em>câmera.</em>','Assista a transmissões ou convide outra pessoa para participar da mesma live.')+
- '<section class="camera-live-shell">'+(s.active?viewer(): '<div class="camera-live-hero" '+(s.showCreate?'':'hidden')+'><div><span>✳ UMA COMUNIDADE, AO VIVO</span><h3>Compartilhe um momento <em>real.</em></h3><p>Você pode transmitir com sua câmera ou convidar uma pessoa. O público assiste sem precisar liberar a própria câmera.</p></div><form id="cameraLiveStartForm"><label for="cameraLiveTitle">Título da sua live</label><input id="cameraLiveTitle" name="title" minlength="3" maxlength="90" required placeholder="Sobre o que vamos conversar?" value="'+esc(s.title)+'"><button type="submit">'+ico('camera',19)+' Começar live</button></form></div>')+
- '<div class="camera-live-list-head"><h3>Transmissões acontecendo <small>'+filtered().length+'</small></h3><div class="camera-live-head-actions"><button type="button" data-live-action="create">'+ico('camera',16)+' '+(s.showCreate?'Fechar':'Fazer live')+'</button><button type="button" data-live-action="refresh">'+ico('refresh',17)+' Atualizar</button></div></div>'+filterMarkup()+
- (filtered().length?'<div class="camera-live-list">'+filtered().map(card).join('')+'</div>':
- '<div class="camera-live-empty"><span>'+ico('camera',26)+'</span><strong>'+(s.loading?'Carregando lives…':'Nenhuma live no momento')+'</strong><p>Quando alguém iniciar uma transmissão, ela aparece aqui.</p></div>')+
+ if(s.active)return heading('TRANSMITINDO AGORA','Sala <em>ao vivo.</em>','Acompanhe o apresentador e participe quando for convidado.')+
+ '<section class="camera-live-shell live-discovery-screen">'+viewer()+'</section>';
+ return heading('PESSOAS TRANSMITINDO','Descubra as <em>lives.</em>','Assista a transmissões reais de toda a comunidade ou encontre pessoas perto de você.')+
+ '<section class="camera-live-shell live-discovery-screen">'+
+ '<header class="live-discovery-intro"><div class="live-discovery-copy"><span class="live-discovery-kicker"><i aria-hidden="true"></i> TRANSMISSÕES EM TEMPO REAL</span><h2>Todo mundo tem uma história para contar.</h2><p>Entre para assistir, conheça quem está transmitindo ou abra sua própria live. Só quem transmite precisa ativar a câmera.</p></div><div class="live-discovery-stat"><strong>'+s.rows.length+'</strong><span>live'+(s.rows.length===1?'':'s')+' ativa'+(s.rows.length===1?'':'s')+'</span></div></header>'+
+ '<div class="live-discovery-board"><div class="camera-live-list-head"><div><span class="live-discovery-section-eyebrow">EXPLORAR</span><h3>Lives acontecendo <small id="liveDiscoverCount">'+filtered().length+'</small></h3></div><div class="camera-live-head-actions"><button type="button" data-live-action="refresh">'+ico('refresh',17)+' Atualizar</button><button type="button" data-live-action="create" aria-expanded="'+String(s.showCreate)+'" aria-controls="cameraLiveComposer">'+ico('camera',17)+' '+(s.showCreate?'Fechar':'Iniciar live')+'</button></div></div>'+
+ filterMarkup()+'<div id="liveDiscoverResults">'+discoveryResults()+'</div></div>'+
+ '<div class="camera-live-hero live-create-composer" id="cameraLiveComposer" '+(s.showCreate?'':'hidden')+'><div><span>✳ SUA VEZ DE TRANSMITIR</span><h3>Comece uma conversa <em>ao vivo.</em></h3><p>Defina um título e autorize o acesso à câmera somente quando a transmissão começar.</p></div><form id="cameraLiveStartForm"><label for="cameraLiveTitle">Título da live</label><input id="cameraLiveTitle" name="title" minlength="3" maxlength="90" required placeholder="Sobre o que vamos conversar?" value="'+esc(s.title)+'"><button type="submit">'+ico('camera',19)+' Começar transmissão</button></form></div>'+
  '</section>';
 }
+
 async function refresh(paint=true){
  if(s.loading||!state.session)return;
  s.loading=true;
  try{
   const {data,error}=await db.rpc('entre_lives_list');if(error)throw error;
-  s.rows=Array.isArray(data)?data:[];
+  s.rows=Array.isArray(data)?data:[];s.error='';
   if(s.active){
    const found=s.rows.find(x=>x.id===s.active.id);
    if(!found){await leave(false);toast('A transmissão foi encerrada.');}
@@ -139,7 +166,8 @@ async function start(form){
 }
 async function action(type,button){
  if(type==='refresh'){await refresh();return;}
- if(type==='create'){s.showCreate=!s.showCreate;if(state.view==='lives')renderView();return;}
+ if(type==='create'){s.showCreate=!s.showCreate;if(state.view==='lives'){renderView();if(s.showCreate)document.getElementById('cameraLiveTitle')?.focus();}return;}
+ if(type==='resetFilters'){s.region='global';s.state='';s.city='';s.search='';if(state.view==='lives')renderView();return;}
  if(type==='join'){try{await join(button.dataset.id);}catch(e){}return;}
  if(type==='leave'){await leave();await refresh();return;}
  if(type==='end'){if(confirm('Encerrar sua live agora?')){await leave();await refresh();}return;}
@@ -156,8 +184,23 @@ async function action(type,button){
   if(state.view==='lives'){renderView();attachAll();}
  }
 }
-document.addEventListener('change',event=>{const el=event.target.closest?.('[data-live-filter]');if(!el)return;const k=el.dataset.liveFilter;if(k==='region'){s.region=el.value;s.city='';}else if(k==='state'){s.state=el.value;s.city='';}else if(k==='city')s.city=el.value.trim();if(state.view==='lives')renderView();});
-document.addEventListener('input',event=>{const el=event.target;if(el?.dataset?.liveFilter==='city'){s.city=el.value.trim();const cards=document.querySelector('.camera-live-list');if(cards)cards.innerHTML=filtered().map(card).join('');}});
+document.addEventListener('change',event=>{
+ const el=event.target.closest?.('[data-live-filter]');if(!el)return;
+ const k=el.dataset.liveFilter;
+ if(k==='region'){s.region=['global','state','city'].includes(el.value)?el.value:'global';s.city='';}
+ else if(k==='state'){s.state=UFS.includes(el.value)?el.value:'';s.city='';}
+ else if(k==='city')s.city=el.value.trim();
+ else if(k==='search')s.search=el.value.trim();
+ if(state.view==='lives')renderView();
+});
+document.addEventListener('input',event=>{
+ const el=event.target;
+ if(!el?.dataset?.liveFilter)return;
+ if(el.dataset.liveFilter==='city')s.city=el.value.trim();
+ else if(el.dataset.liveFilter==='search')s.search=el.value.trim();
+ else return;
+ updateDiscovery(); 
+});
 document.addEventListener('submit',event=>{if(event.target?.id!=='cameraLiveStartForm')return;event.preventDefault();void start(event.target);});
 document.addEventListener('click',event=>{
  const button=event.target.closest('[data-live-action]');if(!button)return;
