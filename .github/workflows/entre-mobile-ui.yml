@@ -4,6 +4,14 @@ on:
     branches: [main]
     paths:
       - 'docs/admin/**'
+      - 'docs/features.css'
+      - 'docs/manifest.webmanifest'
+      - 'docs/instalar.html'
+      - 'docs/dados.html'
+      - 'docs/privacidade.html'
+      - 'docs/termos.html'
+      - 'docs/sw.js'
+      - 'docs/icons/**'
       - 'docs/app.js'
       - 'docs/index.html'
       - 'docs/maintenance.css'

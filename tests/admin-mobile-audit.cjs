@@ -12,7 +12,7 @@ let settings={...defaultSettings};
 const user={id:'0d6a946d-e827-4b87-b1be-b719ac6e2776',email:'l.demelo2004@gmail.com',app_metadata:{provider:'google',providers:['google']}};
 const fixture=()=>{
 window.__mockedSettings={
- matchmaking_enabled:true,reporting_enabled:true,announcement:'',maintenance_enabled:new URLSearchParams(location.search).has('maintenance_test'),
+ matchmaking_enabled:true,reporting_enabled:true,announcement:new URLSearchParams(location.search).has('announcement_test')?'Aviso importante da comunidade.':'',announcement_version:new URLSearchParams(location.search).has('announcement_test')?77:0,announcement_sent_at:new URLSearchParams(location.search).has('announcement_test')?new Date().toISOString():null,maintenance_enabled:new URLSearchParams(location.search).has('maintenance_test'),
  maintenance_title:'Tem coisa boa chegando.',maintenance_message:'Estamos preparando uma nova versão do entre.',
  release_at:new Date().toISOString()
 };
@@ -28,7 +28,10 @@ if(name==='entre_admin_set_maintenance'){Object.assign(s,{maintenance_enabled:pa
 if(name==='entre_admin_users')return {data:{total:0,rows:[]},error:null};
 if(name==='entre_admin_reports'||name==='entre_admin_pairs')return {data:[],error:null};
 if(name==='entre_admin_save_settings'){Object.assign(s,{matchmaking_enabled:params._matchmaking,reporting_enabled:params._reporting,announcement:params._announcement});return {data:{...s},error:null};}
-if(name==='entre_is_banned')return {data:false,error:null};
+if(name==='entre_is_banned')return {data:new URLSearchParams(location.search).has('ban_test'),error:null};
+if(name==='entre_my_suspension')return {data:{suspended:new URLSearchParams(location.search).has('ban_test'),reason:'Suspensão de teste'},error:null};
+if(name==='entre_submit_suspension_appeal')return {data:{id:1,status:'pending'},error:null};
+if(name==='entre_admin_appeals'||name==='entre_admin_privacy_requests')return {data:[],error:null};
 return {data:null,error:null};
 },
 from(){return {select(){return {eq(){return {maybeSingle:async()=>({data:null,error:null})}}}}};}
@@ -94,7 +97,7 @@ await preview.addInitScript(fixture);
 await preview.route(/^https?:\/\/(cdn\.jsdelivr\.net|fonts\.googleapis\.com|fonts\.gstatic\.com)\//,route=>route.fulfill({status:200,contentType:'application/javascript',body:''}));
 await preview.goto(host+'/?maintenance_preview=1',{waitUntil:'domcontentloaded'});
 await preview.locator('#maintenance-screen').waitFor({timeout:20000});
-assert((await preview.evaluate(()=>document.documentElement.scrollWidth))<=361,'maintenance preview horizontal overflow');
+assert((await preview.evaluate(()=>document.documentElement.scrollWidth))<=361,'maintenance preview horizontal overflow');assert.equal(await preview.locator('.maint-admin-link').count(),0,'Maintenance must hide admin entry');
 total++;
 await preview.close();
 console.log('PASS maintenance mobile preview');
@@ -109,6 +112,51 @@ await maintenancePage.click('[data-action="maintenanceRefresh"]');
 await maintenancePage.waitForURL(/released=/,{timeout:15000});
 await maintenancePage.close();
 total+=2;console.log('PASS logged-in admin blocked during maintenance and release reload');
+
+const manifest=JSON.parse(fs.readFileSync(path.join(site,'manifest.webmanifest'),'utf8'));
+assert.equal(manifest.display,'standalone');
+for(const size of [192,512]){
+ const png=fs.readFileSync(path.join(site,'icons','icon-'+size+'.png'));
+ assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+ assert.equal(png.readUInt32BE(16),size);
+}
+total++;console.log('PASS installable PWA manifest and valid PNG signatures');
+for(const width of [320,390,768]){
+ const page=await browser.newPage({viewport:{width,height:850}});
+ await page.route(/^https?:\/\/(cdn\.jsdelivr\.net|fonts\.googleapis\.com|fonts\.gstatic\.com)\//,r=>r.fulfill({status:200,contentType:'application/javascript',body:''}));
+ for(const slug of ['instalar','dados','privacidade','termos']){
+  await page.goto(host+'/'+slug+'.html',{waitUntil:'domcontentloaded'});
+  assert.equal(await page.locator('h1').count(),1,slug+' title missing');
+  const w=await page.evaluate(()=>document.documentElement.scrollWidth);
+  assert(w<=width+1,slug+' overflows at '+width+'px: '+w);
+  total++;
+ }
+ await page.close();
+}
+console.log('PASS install and LGPD information pages at 320, 390, 768px');
+const banned=await browser.newPage({viewport:{width:320,height:800}});
+await banned.addInitScript(fixture);
+await banned.route(/^https?:\/\/(cdn\.jsdelivr\.net|fonts\.googleapis\.com|fonts\.gstatic\.com)\//,r=>r.fulfill({status:200,contentType:'application/javascript',body:''}));
+await banned.goto(host+'/?ban_test=1',{waitUntil:'domcontentloaded'});
+await banned.locator('#suspension-title').waitFor({timeout:15000});
+assert.equal(await banned.locator('.app-shell').count(),0);
+assert((await banned.evaluate(()=>document.documentElement.scrollWidth))<=321,'suspension mobile overflow');
+await banned.locator('#suspension-appeal').fill('Peço revisão da suspensão por engano.');
+await banned.locator('.suspension-submit').click();
+await banned.locator('.suspension-success').waitFor({timeout:9000});
+await banned.close();
+total+=2;console.log('PASS suspension gate and appeal form on Android-size screen');
+const announced=await browser.newPage({viewport:{width:390,height:830}});
+await announced.addInitScript(fixture);
+await announced.route(/^https?:\/\/(cdn\.jsdelivr\.net|fonts\.googleapis\.com|fonts\.gstatic\.com)\//,r=>r.fulfill({status:200,contentType:'application/javascript',body:''}));
+await announced.goto(host+'/?announcement_test=1',{waitUntil:'domcontentloaded'});
+await announced.locator('#global-announcement').waitFor({timeout:15000});
+assert((await announced.locator('.announcement-text').innerText()).includes('Aviso importante'));
+await announced.locator('#global-announcement').waitFor({state:'detached',timeout:14000});
+assert.equal(await announced.locator('.landing-hero').count(),0,'Logged-in user unexpectedly saw public landing');
+await announced.close();total++;
+console.log('PASS fullscreen announcement automatically exits after 10 seconds');
+
 console.log('SUCCESS '+total+' visual and functional checks');
 }finally{await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error('FAILED',e);process.exitCode=1;});
