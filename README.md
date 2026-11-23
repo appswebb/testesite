@@ -11,17 +11,17 @@ https://appswebb.github.io/testesite/
 - Homepage pública, editorial, responsiva e animada — não é uma página de documentação.
 - Cadastro com Google OAuth exclusivamente e onboarding 18+, sem campos de senha.
 - Login exclusivo pelo Google, logout, recuperação da sessão, perfil editável e preferências de gênero.
-- Fila de busca real e recíproca, transação atômica para encontrar parceiro compatível.
+- Fila de busca real e recíproca com escolha entre chat temporário e chamada de vídeo WebRTC, usando canais privados Supabase Realtime. Vídeo não é gravado pelo aplicativo, e termina ao encerrar o encontro. Redes restritivas podem exigir TURN para melhor conexão.\n- Filtro exato de gênero no Ao vivo exclusivo do Premium: o servidor confere a assinatura antes de aceitar a preferência.
 - Conversa privada de 5 minutos e cronômetro validado pelo servidor.
 - Cada participante vota separadamente: **sim + sim** salva a conversa permanente; caso contrário encerra a sessão temporária.
 - Mensagens persistentes e atualizações em tempo real via Supabase Realtime, com checagem periódica de sincronização.
 - Conversas permanentes com menu compacto para fixar, arquivar, organizar ou apagar apenas da própria conta. Mensagens apagadas não ficam legíveis para quem apagou, mas continuam disponíveis ao outro participante.
 - Matchmaking não repete pares que já têm um follow aceito ou conversa permanente, mesmo que o chat esteja oculto.
 - Encontros temporários sem match não viram contatos nem ficam em uma seção de conexões; conversas permanentes só surgem após match ou aceite de seguir.
-- Avisos oficiais com respostas privadas à administração e enquetes com voto único obrigatório, ambos por 24 horas e com notificações para todos os perfis cadastrados. Notificações pessoais continuam no sino e expiram em 24 horas.
+- Posts de texto publicados por usuários com curtidas e comentários, protegidos por autenticação, limites de criação e opção de apagar o próprio post.\n- Assinatura Premium com checkout recorrente preparado para Mercado Pago, selo elegante e brilho para perfis verificados pelo servidor e WhatsApp prioritário para assinantes. Sem credenciais ou valor configurado, a cobrança permanece desativada.\n- Suporte com protocolo, anexos privados obrigatórios (até 3 provas de 5MB), área administrativa e integração opcional com Resend para encaminhar à caixa de suporte separada.\n- Avisos oficiais com respostas privadas à administração e enquetes com voto único obrigatório, ambos por 24 horas e com notificações para todos os perfis cadastrados. Notificações pessoais continuam no sino e expiram em 24 horas.
 - Esquema próprio com tabelas `entre_*` e políticas RLS (sem modificar as tabelas existentes).
 
-## Login exclusivamente pelo Google
+## Integrações externas\n\nConfira [INTEGRATIONS.md](INTEGRATIONS.md) para ativar o Mercado Pago, as notificações por e-mail e as chamadas de vídeo. Nunca coloque tokens privados no frontend ou no repositório.\n\n## Login exclusivamente pelo Google
 
 O frontend não oferece autenticação por senha. O botão inicia `db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })` e redireciona de volta à URL atual.
 A configuração do Google OAuth não pode ser substituída por frontend: é preciso ativar o provider e cadastrar o site nos sistemas Google/Supabase.
@@ -64,7 +64,7 @@ Acesse http://localhost:8000/. Para publicar, GitHub Actions envia a pasta `docs
 
 ## Testes
 
-`node --check app.js` verifica sintaxe; testes de banco e RLS devem ser repetidos em um projeto de teste isolado com contas criadas exclusivamente para esse fim. O sistema real de matchmaking não pode ser validado apenas com um navegador sem duas contas distintas.
+`node --check app.js` verifica sintaxe; testes de banco e RLS devem ser repetidos em um projeto de teste isolado com contas criadas exclusivamente para esse fim. O sistema real de matchmaking e a ligação WebRTC exigem duas contas reais autorizadas e acesso a câmera e microfone. Os testes estáticos não substituem a validação de vídeo ou pagamento real.
 
 ## Marca
 
