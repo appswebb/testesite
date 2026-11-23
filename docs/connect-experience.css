@@ -1,0 +1,347 @@
+/* CONNECT experience redesign — last stylesheet, mobile-first and theme-aware.
+   All decorative colors come from one palette. Status danger and warning retain meaning. */
+html[data-theme] .profile-page,
+html[data-theme] .live-discovery-screen,
+html[data-theme] .connect-app-screen{width:min(100%,1000px);min-width:0;margin:0 auto 44px}
+
+/* Profile: a viewer, not a fully expanded settings form. */
+html[data-theme] .profile-page .profile-layout{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:14px!important;
+ align-items:start!important;max-width:800px!important;margin:0!important;
+}
+html[data-theme] .profile-page .profile-view-card{
+ box-sizing:border-box!important;display:flex!important;flex-direction:column!important;align-items:center!important;
+ text-align:center!important;gap:10px!important;min-width:0!important;width:100%!important;
+ padding:clamp(18px,3vw,32px)!important;min-height:0!important;
+ border:1px solid var(--ui-line)!important;border-radius:22px!important;
+ background:var(--ui-panel)!important;color:var(--ui-text)!important;
+ box-shadow:0 14px 45px rgba(0,0,0,.035)!important;overflow:hidden!important
+}
+html[data-theme] .profile-page .profile-view-card:after{display:none!important}
+html[data-theme] .profile-view-tag{
+ align-self:flex-start;display:inline-flex;padding:7px 11px;border:1px solid var(--ui-line);
+ border-radius:999px;color:var(--ui-muted);font-size:10px;font-weight:850;letter-spacing:.13em;
+}
+html[data-theme] .profile-page .profile-view-card .avatar.xlarge{
+ width:88px!important;height:88px!important;min-width:88px!important;
+ margin:4px auto 2px!important;border:4px solid var(--ui-panel)!important;
+ box-shadow:0 0 0 3px var(--ui-accent-soft)!important
+}
+html[data-theme] .profile-page .profile-view-card h3{
+ max-width:100%;font-size:clamp(19px,3.2vw,25px)!important;margin:3px 0 0!important;
+ overflow-wrap:anywhere!important;color:var(--ui-text)!important;line-height:1.25!important
+}
+html[data-theme] .profile-page .profile-view-card .profile-handle{
+ font-size:12px!important;margin:0!important;color:var(--ui-muted)!important;overflow-wrap:anywhere
+}
+html[data-theme] .profile-page .profile-view-card p{
+ max-width:570px!important;margin:3px 0 5px!important;color:var(--ui-muted)!important;
+ font-size:13px!important;line-height:1.6!important;overflow-wrap:anywhere!important;white-space:pre-wrap
+}
+html[data-theme] .profile-page .profile-view-card .pill{
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;
+ border:1px solid var(--ui-line)!important;max-width:100%
+}
+html[data-theme] .profile-page .profile-share-primary{
+ width:auto!important;max-width:100%!important;min-height:42px!important;
+ margin:4px auto 0!important;padding:10px 17px!important;box-shadow:none!important;
+ background:var(--ui-accent)!important;color:var(--ui-accent-on)!important
+}
+html[data-theme] .profile-edit-panel{
+ display:block!important;min-width:0!important;width:100%!important;max-width:800px!important;
+ border:1px solid var(--ui-line)!important;border-radius:17px!important;
+ background:var(--ui-panel)!important;overflow:hidden!important;
+}
+html[data-theme] .profile-edit-trigger{
+ display:flex!important;align-items:center!important;gap:12px!important;
+ padding:16px 18px!important;min-height:73px!important;
+ list-style:none!important;cursor:pointer!important;user-select:none;
+ background:var(--ui-panel)!important;color:var(--ui-text)!important;
+}
+html[data-theme] .profile-edit-trigger::-webkit-details-marker{display:none!important}
+html[data-theme] .profile-edit-trigger-icon{
+ flex:0 0 auto;width:43px;height:43px;border-radius:13px;display:grid;place-items:center;
+ background:var(--ui-accent-soft)!important;color:var(--ui-text)!important;
+}
+html[data-theme] .profile-edit-trigger-label{display:grid;gap:3px;flex:1;min-width:0}
+html[data-theme] .profile-edit-trigger-label strong{font-size:14px;color:var(--ui-text)!important}
+html[data-theme] .profile-edit-trigger-label small{font-size:11px;color:var(--ui-muted)!important;overflow-wrap:anywhere}
+html[data-theme] .profile-edit-chevron{display:grid;place-items:center;color:var(--ui-muted)!important;transition:transform .18s}
+html[data-theme] .profile-edit-panel[open] .profile-edit-chevron{transform:rotate(90deg)}
+html[data-theme] .profile-edit-panel:not([open]) .profile-edit-content{display:none!important}
+html[data-theme] .profile-edit-panel .profile-edit-content{
+ box-sizing:border-box;width:100%!important;max-width:100%!important;
+ border:0!important;border-top:1px solid var(--ui-line)!important;
+ border-radius:0!important;padding:clamp(16px,3vw,24px)!important;
+ background:var(--ui-panel)!important;color:var(--ui-text)!important
+}
+html[data-theme] .profile-edit-content .profile-settings-link h3{margin:0 0 5px!important;color:var(--ui-text)!important;font-size:18px}
+html[data-theme] .profile-edit-content .profile-settings-link p{margin:0 0 19px;color:var(--ui-muted)!important;font-size:12px}
+html[data-theme] .profile-edit-content .form-grid{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:14px!important;width:100%!important;max-width:100%!important
+}
+html[data-theme] .profile-edit-content .field{min-width:0!important;max-width:100%!important}
+html[data-theme] .profile-edit-content .field.full{grid-column:1 / -1!important}
+html[data-theme] .profile-edit-content :is(input,select,textarea){
+ display:block;width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+ background:var(--ui-panel-alt)!important;border:1px solid var(--ui-line)!important;color:var(--ui-text)!important
+}
+html[data-theme] .profile-edit-content .ui-btn[type="submit"]{
+ display:inline-flex!important;width:auto!important;max-width:100%;min-height:45px!important;
+ background:var(--ui-accent)!important;color:var(--ui-accent-on)!important
+}
+
+/* Live discovery: ongoing streams first, creation is a secondary explicit action. */
+html[data-theme] .live-discovery-screen.camera-live-shell{
+ display:grid!important;gap:17px!important;width:100%!important;max-width:1040px!important
+}
+html[data-theme] .live-discovery-intro{
+ display:flex;align-items:center;justify-content:space-between;gap:22px;
+ border:1px solid var(--ui-line);border-radius:24px;
+ padding:clamp(20px,4vw,33px);background:linear-gradient(125deg,var(--ui-panel-alt),var(--ui-panel))!important
+}
+html[data-theme] .live-discovery-copy{min-width:0;max-width:660px}
+html[data-theme] .live-discovery-kicker,.live-discovery-section-eyebrow{
+ display:inline-flex;align-items:center;gap:8px;
+ color:var(--ui-muted)!important;font-size:10px!important;letter-spacing:.13em;font-weight:800
+}
+html[data-theme] .live-discovery-kicker i{
+ display:inline-block;width:9px;height:9px;background:var(--ui-accent)!important;border-radius:50%;
+ box-shadow:0 0 0 4px var(--ui-accent-soft)
+}
+html[data-theme] .live-discovery-intro h2{
+ font-family:var(--ef-display,'Plus Jakarta Sans',sans-serif)!important;
+ font-size:clamp(25px,4vw,38px)!important;line-height:1.13!important;letter-spacing:-.05em!important;
+ color:var(--ui-text)!important;margin:12px 0 10px!important
+}
+html[data-theme] .live-discovery-intro p{color:var(--ui-muted)!important;line-height:1.7!important;font-size:12px;margin:0}
+html[data-theme] .live-discovery-stat{
+ flex:0 0 128px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+ min-height:110px;border-radius:19px;border:1px solid var(--ui-line);background:var(--ui-panel)!important;
+}
+html[data-theme] .live-discovery-stat strong{font-size:38px;color:var(--ui-text)!important;line-height:1.05}
+html[data-theme] .live-discovery-stat span{color:var(--ui-muted)!important;font-size:11px}
+html[data-theme] .live-discovery-board{
+ min-width:0;width:100%;border-radius:22px;border:1px solid var(--ui-line);
+ background:var(--ui-panel)!important;padding:clamp(14px,2.7vw,23px);
+}
+html[data-theme] .live-discovery-board .camera-live-list-head{gap:14px;flex-wrap:wrap;margin:0 0 17px!important}
+html[data-theme] .live-discovery-board .camera-live-list-head h3{color:var(--ui-text)!important;margin:4px 0 0!important}
+html[data-theme] .live-discovery-board .camera-live-list-head h3 small{
+ display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;
+ border-radius:50%;background:var(--ui-panel-alt);color:var(--ui-text);font-size:12px;margin-left:5px
+}
+html[data-theme] .camera-live-head-actions{gap:8px!important}
+html[data-theme] .camera-live-head-actions button{
+ border-radius:999px!important;min-height:43px!important;
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border:1px solid var(--ui-line)!important;
+}
+html[data-theme] .camera-live-head-actions [data-live-action="create"]{
+ background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;border-color:var(--ui-accent)!important
+}
+html[data-theme] .camera-live-filters{
+ display:grid!important;grid-template-columns:minmax(180px,1.5fr) repeat(2,minmax(120px,1fr))!important;
+ gap:11px!important;padding:0 0 18px!important
+}
+html[data-theme] .camera-live-filters label{min-width:0!important;color:var(--ui-muted)!important}
+html[data-theme] .camera-live-filters :is(select,input){
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important;
+ border-radius:13px!important;min-height:46px!important;font-size:13px!important
+}
+html[data-theme] .camera-live-list{
+ grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr))!important;gap:14px!important
+}
+html[data-theme] .camera-live-card{
+ border-radius:18px!important;border:1px solid var(--ui-line)!important;
+ background:var(--ui-panel)!important;color:var(--ui-text)!important;overflow:hidden!important;
+ transition:transform .16s ease,box-shadow .16s ease;
+}
+html[data-theme] .camera-live-card:hover{transform:translateY(-3px);box-shadow:0 12px 25px #00000013}
+html[data-theme] .camera-live-cover{
+ height:126px!important;display:flex;align-items:center;justify-content:center;
+ background:radial-gradient(circle at 75% 20%,var(--ui-accent-soft),transparent 58%),var(--ui-panel-alt)!important;
+ color:var(--ui-text)!important
+}
+html[data-theme] .camera-live-label{
+ background:#be384a!important;color:#fff!important;border-radius:999px!important
+}
+html[data-theme] .camera-live-camera{border:1px solid var(--ui-line)!important;background:var(--ui-panel)!important;color:var(--ui-text)!important}
+html[data-theme] .camera-live-info{padding:16px!important}
+html[data-theme] .camera-live-info strong{font-size:14px!important;color:var(--ui-text)!important}
+html[data-theme] .camera-live-info>small{color:var(--ui-muted)!important}
+html[data-theme] .camera-live-info>button{
+ background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;
+ border-radius:13px!important;min-height:45px!important
+}
+html[data-theme] .camera-live-empty{
+ min-height:230px!important;padding:25px!important;
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border:1px dashed var(--ui-line)!important;
+}
+html[data-theme] .camera-live-empty strong{font-size:17px!important;color:var(--ui-text)!important}
+html[data-theme] .camera-live-empty p{font-size:12px!important;color:var(--ui-muted)!important;max-width:330px}
+html[data-theme] .camera-live-empty button{
+ min-height:39px;padding:8px 15px;margin-top:4px;border-radius:999px;cursor:pointer;
+ background:var(--ui-accent);color:var(--ui-accent-on);border:0
+}
+html[data-theme] .live-create-composer[hidden]{display:none!important}
+html[data-theme] .live-create-composer{
+ grid-template-columns:minmax(0,1fr) minmax(0,320px)!important;
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;
+ border:1px solid var(--ui-line)!important;box-shadow:none!important
+}
+html[data-theme] .live-create-composer h3{color:var(--ui-text)!important}
+html[data-theme] .live-create-composer h3 em{color:var(--ui-accent)!important}
+html[data-theme] .live-create-composer>div>span{color:var(--ui-muted)!important}
+html[data-theme] .live-create-composer p{color:var(--ui-muted)!important}
+html[data-theme] .live-create-composer #cameraLiveStartForm input{
+ background:var(--ui-panel)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important
+}
+html[data-theme] .live-create-composer #cameraLiveStartForm button{
+ background:var(--ui-accent)!important;color:var(--ui-accent-on)!important
+}
+html[data-theme] .camera-live-stage{
+ background:var(--ui-panel)!important;border:1px solid var(--ui-line)!important;border-radius:22px!important
+}
+html[data-theme] .camera-live-stage-head{align-items:center!important;padding:19px!important;flex-wrap:wrap}
+html[data-theme] .camera-live-stage-head h3{color:var(--ui-text)!important;font-size:23px!important}
+html[data-theme] .camera-live-stage-head p{color:var(--ui-muted)!important}
+html[data-theme] .camera-live-grid{min-height:260px;max-height:70dvh;background:#111319!important}
+html[data-theme] .camera-live-tools{padding:14px!important;gap:10px!important;flex-wrap:wrap}
+html[data-theme] .camera-live-tools button:not(.camera-live-danger){
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important;
+ border-radius:12px!important;min-height:44px!important
+}
+html[data-theme] .camera-live-danger{border-radius:12px!important}
+html[data-theme] .camera-live-security{color:var(--ui-muted)!important}
+
+/* Private one-to-one meeting entry. */
+html[data-theme] .connect-app-screen{display:grid;gap:14px;max-width:830px!important}
+html[data-theme] .connect-experience-header{
+ border:1px solid var(--ui-line);border-radius:22px;
+ background:linear-gradient(125deg,var(--ui-panel-alt),var(--ui-panel))!important;
+ padding:clamp(20px,4vw,32px);min-width:0
+}
+html[data-theme] .connect-experience-kicker{
+ display:flex;align-items:center;gap:9px;letter-spacing:.14em;font-size:10px;
+ font-weight:850;color:var(--ui-muted)!important
+}
+html[data-theme] .connect-experience-header h2{
+ font-family:var(--ef-display,'Plus Jakarta Sans',sans-serif)!important;
+ font-size:clamp(27px,4.5vw,39px)!important;letter-spacing:-.05em!important;line-height:1.13!important;
+ color:var(--ui-text)!important;margin:12px 0!important
+}
+html[data-theme] .connect-experience-header p{font-size:13px;color:var(--ui-muted)!important;line-height:1.7!important;margin:0}
+html[data-theme] .connect-experience-facts{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:17px}
+html[data-theme] .connect-experience-facts span{
+ display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border-radius:999px;
+ font-size:11px;font-weight:750;color:var(--ui-text)!important;
+ background:var(--ui-panel)!important;border:1px solid var(--ui-line)!important
+}
+html[data-theme] .connect-app-screen .live-app-card{
+ min-width:0!important;width:100%!important;max-width:100%!important;
+ background:var(--ui-panel)!important;color:var(--ui-text)!important;
+ border:1px solid var(--ui-line)!important;box-shadow:none!important;border-radius:22px!important;
+ padding:clamp(18px,3vw,26px)!important
+}
+html[data-theme] .connect-app-screen .live-app-eyebrow{color:var(--ui-muted)!important}
+html[data-theme] .connect-app-screen .live-app-eyebrow svg{color:var(--ui-accent)!important}
+html[data-theme] .connect-app-screen .live-app-card h2{color:var(--ui-text)!important}
+html[data-theme] .connect-app-screen .live-app-card .live-modes{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:11px!important
+}
+html[data-theme] .connect-app-screen .live-mode{
+ position:relative;min-width:0!important;border:1px solid var(--ui-line)!important;
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;
+ border-radius:17px!important;padding:15px!important;min-height:90px!important
+}
+html[data-theme] .connect-app-screen .live-mode strong{color:var(--ui-text)!important}
+html[data-theme] .connect-app-screen .live-mode small{color:var(--ui-muted)!important}
+html[data-theme] .connect-app-screen .live-mode>svg{color:var(--ui-text)!important}
+html[data-theme] .connect-app-screen .live-mode.selected{
+ border-color:var(--ui-accent)!important;
+ background:var(--ui-accent-soft)!important;box-shadow:0 0 0 2px var(--ui-accent-faint)!important
+}
+html[data-theme] .connect-app-screen .live-app-filters{
+ background:var(--ui-panel-alt)!important;border:1px solid var(--ui-line)!important;border-radius:14px!important
+}
+html[data-theme] .connect-app-screen .live-app-filters>summary{color:var(--ui-text)!important}
+html[data-theme] .connect-app-screen .live-app-find{
+ width:100%!important;background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;
+ border-radius:14px!important;box-shadow:none!important
+}
+html[data-theme] .connect-experience-note{
+ display:flex;align-items:flex-start;gap:13px;padding:17px 19px;
+ border:1px solid var(--ui-line);border-radius:17px;
+ background:var(--ui-panel)!important;color:var(--ui-text)!important
+}
+html[data-theme] .connect-experience-note>span{color:var(--ui-accent)!important}
+html[data-theme] .connect-experience-note strong{font-size:13px;color:var(--ui-text)!important}
+html[data-theme] .connect-experience-note p{font-size:11px;color:var(--ui-muted)!important;line-height:1.65;margin:5px 0 0}
+
+/* Stories: usable mobile composer, media preview, accessible error and modal. */
+html[data-theme] body.stories-dialog-open{overflow:hidden!important}
+html[data-theme] .stories-shell{background:var(--ui-panel)!important;border-color:var(--ui-line)!important}
+html[data-theme] .stories-kicker{
+ display:block;color:var(--ui-muted)!important;letter-spacing:.13em;font-size:10px;font-weight:850;margin-bottom:6px
+}
+html[data-theme] .stories-head{gap:10px;flex-wrap:wrap}
+html[data-theme] .stories-head h3{color:var(--ui-text)!important}
+html[data-theme] .story-ring{background:var(--ui-accent-soft)!important;border-color:var(--ui-accent)!important;color:var(--ui-text)!important}
+html[data-theme] .stories-empty-note{margin:9px 0 0;color:var(--ui-muted)!important;font-size:12px}
+html[data-theme] .stories-alert{margin-top:11px;padding:11px;border-radius:12px;border:1px solid var(--ui-line);background:var(--ui-panel-alt);font-size:12px;color:var(--ui-text)}
+html[data-theme] .stories-alert button{border:0;background:none;text-decoration:underline;color:var(--ui-accent);font-weight:800;cursor:pointer}
+html[data-theme] .stories-modal{background:var(--ui-panel)!important;color:var(--ui-text)!important;border:1px solid var(--ui-line)}
+html[data-theme] .story-compose-preview{
+ display:flex;align-items:center;justify-content:center;min-height:120px;max-height:280px;
+ background:#121319;border-radius:13px;overflow:hidden
+}
+html[data-theme] .story-compose-preview[hidden]{display:none!important}
+html[data-theme] .story-compose-preview img,
+html[data-theme] .story-compose-preview video{display:block;width:100%;max-height:280px;object-fit:contain}
+html[data-theme] .stories-form-error{font-size:12px!important;color:var(--ui-danger)!important}
+html[data-theme] .stories-modal form small{font-size:11px;color:var(--ui-muted)!important}
+html[data-theme] .stories-modal form input{width:100%!important;box-sizing:border-box!important;color:var(--ui-text)!important;background:var(--ui-panel-alt)!important;border-color:var(--ui-line)!important}
+
+/* Remove some stubborn legacy greens not covered by previous token pass. */
+html[data-theme] :is(.live-mode strong,.profile-menu-identity strong,.chat-origin-bar strong,
+ .post-compose-top strong,.settings-card h3,.form-panel h3){color:var(--ui-text)!important}
+html[data-theme] :is(.post-compose textarea,.online-person,.inbox-item,.notification-item){
+ border-color:var(--ui-line)!important;color:var(--ui-text)!important
+}
+html[data-theme] :is(.notice-feature,.notice-help,.connections-info,.chat-origin-bar){
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important
+}
+@media(max-width:760px){
+ html[data-theme] .profile-page .profile-layout{max-width:100%!important}
+ html[data-theme] .profile-view-card{padding:18px!important}
+ html[data-theme] .profile-edit-content .form-grid{grid-template-columns:minmax(0,1fr)!important}
+ html[data-theme] .profile-edit-content .field{grid-column:1 / -1!important}
+ html[data-theme] .live-discovery-intro{align-items:flex-start}
+ html[data-theme] .live-discovery-stat{flex-basis:100px;min-height:95px}
+ html[data-theme] .camera-live-filters{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ html[data-theme] .camera-live-filters .live-search-field{grid-column:1 / -1}
+ html[data-theme] .camera-live-head-actions{width:auto!important}
+ html[data-theme] .live-create-composer{grid-template-columns:1fr!important}
+ html[data-theme] .connect-experience-header{padding:20px!important}
+}
+@media(max-width:520px){
+ html[data-theme] .live-discovery-intro{flex-direction:column;gap:12px}
+ html[data-theme] .live-discovery-stat{min-height:72px;flex:auto;flex-direction:row;gap:12px;width:100%}
+ html[data-theme] .live-discovery-stat strong{font-size:27px}
+ html[data-theme] .camera-live-filters{grid-template-columns:1fr!important}
+ html[data-theme] .camera-live-filters .live-search-field{grid-column:auto!important}
+ html[data-theme] .live-discovery-board .camera-live-list-head{align-items:stretch!important}
+ html[data-theme] .camera-live-head-actions{display:grid!important;grid-template-columns:1fr 1fr;width:100%!important}
+ html[data-theme] .camera-live-head-actions button{min-width:0!important}
+ html[data-theme] .connect-app-screen .live-app-card .live-modes{gap:8px!important}
+ html[data-theme] .connect-app-screen .live-mode{padding:11px!important;min-height:78px!important;gap:7px!important}
+ html[data-theme] .connect-experience-facts{gap:6px}
+ html[data-theme] .connect-experience-facts span{font-size:10px}
+ html[data-theme] .stories-head>button{max-width:100%;font-size:11px}
+ html[data-theme] .story-viewer-media{height:min(59dvh,490px)}
+ html[data-theme] .stories-modal{max-height:calc(100dvh - 18px)!important;padding:17px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-theme] .camera-live-card{transition:none!important}
+}
