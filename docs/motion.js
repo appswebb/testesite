@@ -1,11 +1,12 @@
 /* entre. · Motion System / progressive enhancement; no auth, database or private chat access. */
 (()=>{'use strict';
 const reduce=matchMedia('(prefers-reduced-motion: reduce)');
+const shouldReduce=()=>document.body.classList.contains('motion-off')||(reduce.matches&&!document.body.classList.contains('motion-force'));
 let observer=null, scheduled=false, seenMatch=false, votedRecently=0;
 const $=(s,root=document)=>root.querySelector(s);
 const $$=(s,root=document)=>[...root.querySelectorAll(s)];
 function reveal(){
- if(reduce.matches)return;
+ if(shouldReduce()){document.querySelectorAll('[data-motion-reveal]').forEach(el=>el.classList.add('is-revealed'));return;}
  if(!observer){
   observer=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting){entry.target.classList.add('is-revealed');observer.unobserve(entry.target)}}},{rootMargin:'0px 0px -28px 0px',threshold:.07});
  }
@@ -25,7 +26,7 @@ function enhance(){
  } else seenMatch=false;
 }
 function celebrate(){
- if(reduce.matches)return;
+ if(shouldReduce())return;
  const container=document.createElement('div');container.className='entre-celebration';container.setAttribute('aria-hidden','true');
  const colors=['#F17E60','#D6E9AE','#CABCF3','#F6E5CF','#FFA985'];
  for(let i=0;i<34;i++){
@@ -45,7 +46,7 @@ document.addEventListener('click',event=>{
  const btn=event.target.closest('button');
  if(!btn)return;
  if(btn.dataset.action==='vote'&&btn.dataset.value==='yes')votedRecently=Date.now();
- if(reduce.matches||!btn.matches('.ui-btn,.google-login,.chip,.nav-item,.mobile-nav button'))return;
+ if(shouldReduce()||!btn.matches('.ui-btn,.google-login,.chip,.nav-item,.mobile-nav button'))return;
  const b=btn.getBoundingClientRect();
  if(!b.width||!b.height)return;
  const p=document.createElement('span');p.className='press-ripple';p.setAttribute('aria-hidden','true');
