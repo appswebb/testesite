@@ -748,7 +748,14 @@ async function boot(){
   }
   const {data,error}=await db.auth.getSession();if(error)throw error;
   if(data.session){
-   if(recovery){
+   // Previously removed Google accounts may still have tokens on this device.
+   // Remove the expired local session so the same email can sign up again.
+   const checked=await db.auth.getUser();
+   if(checked.error||!checked.data?.user){
+    await db.auth.signOut({scope:'local'});
+    state.session=null;state.isAdmin=false;state.mode='login';render();
+    showFormMessage('Sua sessão anterior expirou. Crie uma conta com e-mail e senha para continuar.',true);
+   }else if(recovery){
     const verified=await db.auth.getUser();if(verified.error||!verified.data?.user)throw verified.error||Error('Link inválido.');
     state.session={...data.session,user:verified.data.user};state.isAdmin=false;state.mode='reset';render();
    }else await window.entreEmailAuth.acceptSession(data.session);
