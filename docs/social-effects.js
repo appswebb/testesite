@@ -12,11 +12,12 @@ api.showMatchAnimation=function(peer){
 api.showEndAnimation=function(){
  document.getElementById('entre-ended')?.remove();
  const el=document.createElement('div');el.id='entre-ended';el.className='ended-toast';
- el.setAttribute('role','status');el.innerHTML='✓ <span><strong>Encontro encerrado.</strong><small>Seu histórico continua salvo.</small></span>';
+ el.setAttribute('role','status');el.innerHTML='✓ <span><strong>Encontro encerrado.</strong><small>O chat temporário foi apagado.</small></span>';
  document.body.append(el);setTimeout(()=>el.remove(),1850);
 };
 
 api.chatToolbar=function(pair){
+ if(pair.status!=='connected')return '<div class="chat-origin-bar"><div><strong>'+ico('clock',14)+' Chat ao vivo · temporário</strong><small>Sem salvar, mover ou arquivar. Apenas um match dos dois libera uma conversa permanente.</small></div></div>';
  const p=api.pref(pair),folder=p.folder||pair.origin||'live',archived=!!p.archived_at;
  return '<div class="chat-origin-bar"><div><strong>'+ico('spark',14)+' Começou em '+(pair.origin==='online'?'Pessoas online':'Chat ao vivo')+'</strong><small>Textos expiram após 10 dias sem atividade; o contato fica salvo.</small></div>'+
  '<div class="chat-origin-actions"><select aria-label="Mover conversa" data-social-folder="'+esc(pair.id)+'">'+
