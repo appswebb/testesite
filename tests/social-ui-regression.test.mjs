@@ -11,39 +11,27 @@ test('Avisos are separate from user notifications in a header bell',()=>{
  assert.match(app,/announcement_version/);
  assert.doesNotMatch(app,/\['notifications','Avisos'/);
 });
-test('Mobile menu shows five main sections with unique icons',()=>{
+test('Main menu has four sections and excludes Suas conexões',()=>{
  const app=read('app.js');
  assert.match(app,/tabs.filter\(t=>t\[0\]!=='home'\)/);
  assert.match(app,/\['online','Online','users'\]/);
- assert.match(app,/\['connections','Suas conexões','link'\]/);
+ assert.match(app,/\['avisos','Avisos','megaphone'\]/);
+ assert.doesNotMatch(app,/\['connections','Suas conexões'/);
  assert.match(app,/class="toolbar-profile"/);
 });
-test('Closed live connections appear only within 24 hours; conversations require a match',()=>{
- const conv=read('social-conversations.js'),state={
-  session:{user:{id:'self'}},pairsProfiles:{
-   recent:{id:'other',display_name:'Pessoa Recente'},
-   expired:{id:'gone',display_name:'Pessoa Antiga'},
-   connected:{id:'matched',display_name:'Match'}},
-  pairs:[
-   {id:'recent',a:'self',b:'other',status:'closed',origin:'live',closed_at:new Date(Date.now()-3600000).toISOString()},
-   {id:'expired',a:'self',b:'gone',status:'closed',origin:'live',closed_at:new Date(Date.now()-90000000).toISOString()},
-   {id:'connected',a:'self',b:'matched',status:'connected',origin:'live',created_at:new Date().toISOString()}
-  ]};
- const api={data:{filter:'all'},pref:()=>({})};
- const render=new Function('window','state','heading','avatar','esc','ico','genders',conv);
- const heading=(k,t,d)=>k+t+d;
- const avatar=p=>'<div>'+p.display_name+'</div>';
- render({entreSocial:api},state,heading,avatar,String,x=>'icon:'+x,{});
- const temp=api.connectionsView(),msgs=api.conversationsView();
- assert.match(temp,/Pessoa Recente/);
- assert.doesNotMatch(temp,/Pessoa Antiga/);
- assert.doesNotMatch(temp,/Match</);
- assert.match(temp,/data-action="profileOpen"/);
- assert.match(temp,/data-action="socialFollow"/);
- assert.doesNotMatch(temp,/conversationPin|conversationArchive|social-folder/);
- assert.match(msgs,/Match</);
- assert.doesNotMatch(msgs,/Pessoa Recente/);
- assert.match(msgs,/conversationArchive/);
+test('Unmatched temporary encounters do not appear in the conversations view',()=>{
+ const source=read('social-conversations.js');
+ const api={data:{filter:'all'},pref:()=>({}),isHidden:()=>false};
+ const state={session:{user:{id:'self'}},pairsProfiles:{recent:{id:'other',display_name:'Sem Match'},connected:{id:'match',display_name:'Com Match'}},
+  pairs:[{id:'recent',a:'self',b:'other',status:'closed',origin:'live',closed_at:new Date().toISOString()},
+         {id:'connected',a:'self',b:'match',status:'connected',origin:'live',created_at:new Date().toISOString()}]};
+ new Function('window','state','heading','avatar','esc','ico','genders',source)(
+  {entreSocial:api},state,(a,b,d)=>a+b+d,p=>'<div>'+p.display_name+'</div>',String,n=>'icon:'+n,{});
+ const view=api.conversationsView();
+ assert.match(view,/Com Match/);
+ assert.doesNotMatch(view,/Sem Match/);
+ assert.equal(api.connectionsView,undefined);
+ assert.doesNotMatch(view,/recent-connection/);
 });
 test('Temporary live chat cannot move, pin, archive or save',()=>{
  const effects=read('social-effects.js');
@@ -121,4 +109,53 @@ test('Conversation deletion and notification clearing execute the correct owner-
  assert.deepEqual(calls[1],['entre_notifications_clear',{_id:12}]);
  assert.deepEqual(calls[2],['entre_notifications_clear',undefined]);
  assert.equal(notificationRefresh,2);
+});
+
+test('Mandatory polls block site and release after one confirmed vote',async()=>{
+ const code=read('social-bulletins.js'),future=new Date(Date.now()+3600000).toISOString();
+ const poll={id:44,title:'Enquete de teste',kind:'poll',body:'Vote para continuar',options:['Sim','Não'],expires_at:future};
+ const called=[],viewState={session:{user:{id:'member'}},profile:{id:'member'},pair:null,suspension:null,view:'home'};
+ let renders=0,notification='',chosen=true;
+ const api={data:{},rpc:async(name,args)=>{
+  called.push([name,args]);
+  if(name==='entre_bulletin_vote')return {status:'voted',option:0};
+  if(name==='entre_bulletins_feed')return {required_poll:null,items:[{...poll,my_vote:0,votes_total:1,votes_by_option:[1,0]}]};
+ }};
+ const doc={querySelector:sel=>sel==='input[name="required-poll-choice"]:checked'&&chosen?{value:'0'}:null,
+  getElementById:()=>({textContent:''}),activeElement:null};
+ new Function('window','state','heading','ico','esc','document','maintenanceIsActive','render','renderView','toast','infoError',code)(
+  {entreSocial:api},viewState,(a,b,d)=>a+b+d,name=>name,String,doc,()=>false,()=>renders++,()=>{},s=>notification=s,e=>e.message
+ );
+ api.data.pendingPoll=poll;
+ assert.match(api.pollGateView(),/VOTO OBRIGATÓRIO/);
+ assert.match(api.pollGateView(),/Confirmar meu voto/);
+ await api.bulletinAction('bulletinVote',{dataset:{id:'44'},disabled:false,innerHTML:'Votar',textContent:''});
+ assert.equal(api.requiredPoll(),null);
+ assert.equal(api.pollGateView(),'');
+ assert.deepEqual(called[0],['entre_bulletin_vote',{_bulletin:44,_option:0}]);
+ assert.match(notification,/Voto registrado/);
+ assert.ok(renders>0);
+});
+test('Official posts have response forms and polls offer results after voting',()=>{
+ const code=read('social-bulletins.js');
+ const api={data:{}},now=new Date(Date.now()+3600000).toISOString();
+ new Function('window','state','heading','ico','esc',code)({entreSocial:api},{},(a,b,d)=>a+b+d,n=>n,String);
+ api.data.bulletinLoaded=true;api.data.bulletins=[
+  {id:1,kind:'notice',title:'Aviso',body:'Responda',expires_at:now,created_at:new Date().toISOString(),my_reply:null},
+  {id:2,kind:'poll',title:'Pergunta',body:'Voto salvo',options:['Sim','Não'],my_vote:1,votes_total:3,votes_by_option:[1,2],expires_at:now,created_at:new Date().toISOString()}
+ ];
+ const html=api.bulletinsView();
+ assert.match(html,/data-action="bulletinReply"/);
+ assert.match(html,/Voto registrado/);
+ assert.match(html,/3 voto\(s\)/);
+});
+test('Admin creates official notices and polls, and can read responses',()=>{
+ const admin=read('admin/app.js'),editor=read('admin/bulletins.js');
+ assert.match(admin,/entre_admin_publish_bulletin/);
+ assert.match(admin,/entre_admin_bulletins/);
+ assert.match(admin,/\["bulletins","Avisos","message-circle"\]/);
+ assert.match(editor,/Respostas/);
+ assert.match(editor,/Enquete obrigatória/);
+ assert.match(editor,/Voto único|voto/i);
+ assert.doesNotMatch(admin,/data-action="send-announcement"/);
 });
