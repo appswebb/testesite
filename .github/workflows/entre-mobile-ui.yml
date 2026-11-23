@@ -14,6 +14,13 @@ on:
       - 'docs/icons/**'
       - 'docs/app.js'
       - 'docs/connect-app.css'
+      - 'docs/perfil.html'
+      - 'docs/perfil.css'
+      - 'docs/perfil.js'
+      - 'docs/entre-livekit.js'
+      - 'docs/feed-media.js'
+      - 'docs/interface-polish.css'
+      - 'tests/shared-media-reviews.test.mjs'
       - 'docs/admin/connect-admin.css'
       - 'tests/connect-app-vnext.test.mjs'
       - 'docs/connect-usernames.js'
@@ -62,6 +69,9 @@ jobs:
           node --check docs/entre-location.js
           node --check docs/entre-features.js
           node --check docs/motion.js
+          node --check docs/perfil.js
+          node --check docs/entre-livekit.js
+          node --check docs/feed-media.js
           node --check docs/entre-video.js
           node --check docs/admin/app.js
           for f in docs/social*.js; do node --check "$f"; done
@@ -70,6 +80,7 @@ jobs:
           node --test tests/social-ui-regression.test.mjs
           node --test tests/usernames-regression.test.mjs
           node --test tests/connect-app-vnext.test.mjs
+          node --test tests/shared-media-reviews.test.mjs
           node --test tests/geo-feed-support.test.mjs
           node --test tests/encounter-layout.test.mjs
           node tests/encounter-mobile-audit.cjs
