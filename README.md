@@ -15,7 +15,9 @@ https://appswebb.github.io/testesite/
 - Conversa privada de 5 minutos e cronômetro validado pelo servidor.
 - Cada participante vota separadamente: **sim + sim** salva a conversa permanente; caso contrário encerra a sessão temporária.
 - Mensagens persistentes e atualizações em tempo real via Supabase Realtime, com checagem periódica de sincronização.
-- Aba de conversas permanentes após match, aba separada com pessoas de encontros encerrados visíveis por 24 horas para seguir, notificações pessoais no sino e avisos oficiais da administração.
+- Conversas permanentes com menu compacto para fixar, arquivar, organizar ou apagar apenas da própria conta. Mensagens apagadas não ficam legíveis para quem apagou, mas continuam disponíveis ao outro participante.
+- Matchmaking não repete pares que já têm um follow aceito ou conversa permanente, mesmo que o chat esteja oculto.
+- Aba separada com pessoas de encontros encerrados visíveis por 24 horas para seguir; notificações pessoais no sino, removíveis individualmente ou de uma vez e expiradas em até 24 horas; avisos oficiais em área própria.
 - Esquema próprio com tabelas `entre_*` e políticas RLS (sem modificar as tabelas existentes).
 
 ## Login exclusivamente pelo Google
