@@ -106,7 +106,7 @@ function settings(){
  releaseShortcut(Boolean(x.maintenance_enabled),"Atualizações do site","Ative a tela de manutenção ou libere a nova versão.")+'<form id="settings-form" class="form-card"><h2 class="section-heading">Experiência e segurança</h2><p class="section-desc">Controle operacional da plataforma. Novas regras são aplicadas sem publicar outra versão do site.</p>'+
  '<div class="setting-item"><div><strong>Permitir novas conexões</strong><small>Se desativado, a busca por novas pessoas será pausada no servidor.</small></div><label class="switch"><input type="checkbox" name="matchmaking" '+(x.matchmaking_enabled?"checked":"")+'><span></span></label></div>'+
  '<div class="setting-item"><div><strong>Aceitar denúncias</strong><small>Habilita o formulário de denúncia entre participantes de conversas.</small></div><label class="switch"><input type="checkbox" name="reporting" '+(x.reporting_enabled?"checked":"")+'><span></span></label></div>'+
- '<div class="setting-item" style="display:block"><label class="form-label" for="announcement">Aviso para usuários</label><textarea name="announcement" id="announcement" class="form-textarea" maxlength="240" placeholder="Ex.: Vamos fazer uma atualização rápida em breve…">'+e(x.announcement||"")+'</textarea><span class="form-hint">Até 240 caracteres. Deixe em branco para não mostrar aviso.</span></div>'+
+ '<div class="setting-item" style="display:block"><label class="form-label" for="announcement">Aviso para usuários</label><textarea name="announcement" id="announcement" class="form-textarea" maxlength="240" placeholder="Ex.: Vamos fazer uma atualização rápida em breve…">'+e(x.announcement||"")+'</textarea><span class="form-hint">Até 240 caracteres. Clique em Enviar para mostrar o aviso por 10 segundos.</span><button type="button" class="btn-main coral admin-broadcast-btn" data-action="send-announcement">Enviar aviso · 10 segundos</button></div>'+
  '<div class="setting-actions"><button type="submit" class="btn-main" '+(state.busy?"disabled":"")+'>'+ico("check-circle",17)+' Salvar configurações</button></div></form>';
 }
 
@@ -194,6 +194,16 @@ document.addEventListener("click",async function(ev){
  if(a==="close-modal"){closeModal();return;}
  if(a==="google"){await googleLogin();return;}
  if(a==="refresh"){await load(state.view);toast("Dados atualizados.");return;}
+ if(a==="send-announcement"){
+  if(state.busy)return;
+  var field=document.getElementById('announcement'),notice=field&&field.value.trim();
+  if(!notice||notice.length<3||notice.length>240){toast('O aviso deve ter entre 3 e 240 caracteres.',true);return;}
+  if(!window.confirm('Mostrar este aviso na tela inteira por 10 segundos?'))return;
+  state.busy=true;
+  try{var sent=await rpc('entre_admin_publish_announcement',{_message:notice});state.settings=Object.assign({},state.settings,sent);toast('Aviso enviado por 10 segundos!');await load('settings');}
+  catch(err){toast(errorText(err),true);}finally{state.busy=false;}
+  return;
+ }
  if(a==="toggle-maintenance"){await saveRelease(!Boolean(state.settings?.maintenance_enabled),false);return;}
  if(a==="signout"){await db.auth.signOut({scope:"local"});state.user=null;state.verified=false;gate(false);return;}
  if(a==="edit-user"){openUser(n.dataset.id);return;}
