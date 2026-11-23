@@ -3,7 +3,7 @@ const {readFileSync}=require('node:fs');
 const {resolve}=require('node:path');
 const assert=require('node:assert/strict');
 const read=n=>readFileSync(resolve(__dirname,'../docs',n),'utf8');
-const styles=['styles.css','motion.css','mobile.css','features.css','social.css','social-online.css','entre-features.css','encounter-ui.css','entre-location.css','functional-updates.css','interface-polish.css','live-experience.css','experience-hub.css'].map(read).join('\n');
+const styles=['styles.css','motion.css','mobile.css','features.css','social.css','social-online.css','entre-features.css','encounter-ui.css','entre-location.css','functional-updates.css','interface-polish.css','live-experience.css','experience-hub.css','once-ui.css','once-public.css','once-maintenance.css'].map(read).join('\n');
 const ico=(name,size=20)=>'<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>';
 const header='<header class="app-toolbar"><h1>entre.</h1><div class="toolbar-right"><button class="toolbar-global-search">'+ico('search')+'</button><button class="toolbar-bell">'+ico('bell')+'</button><button class="toolbar-profile"><span class="avatar">L</span></button></div></header>';
 const mobile='<nav class="mobile-nav">'+['Feed','Ao vivo','Salas','Lives','Conversas'].map(x=>'<button>'+ico(x)+'<span>'+x+'</span></button>').join('')+'</nav>';
