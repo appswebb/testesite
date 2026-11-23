@@ -1,0 +1,1 @@
+(function(){const api=window.entreSocial;api.conversationsView=function(){return heading('HISTÓRICO','Suas <em>conversas.</em>','Conteúdo removido após 10 dias sem atividade.');};})();
