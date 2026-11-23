@@ -13,6 +13,7 @@ async function loadOnline(reset=false){
   const result=await rpc('entre_online_page',{_offset:offset,_limit:12});
   const people=Array.isArray(result?.rows)?result.rows:[];
   await Promise.all(people.filter(p=>p.avatar_path).map(p=>signAvatar(p).catch(()=>false)));
+  await window.entreExtras?.loadBadges?.(people);
   if(reset){data.online=people;data.offset=0;}else{
    data.online=data.online.concat(people);
    if(data.online.length>36){data.online=data.online.slice(-36);data.offset=offset+people.length-data.online.length;}
