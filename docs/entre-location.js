@@ -39,20 +39,24 @@
   const busy=waiting||geo.busy;
   const modes=[['any','Todo o Brasil'],['my_state','Meu estado'],['my_city','Minha cidade'],['other_state','Outro estado'],['other_city','Outra cidade']];
   const custom=geo.targetMode==='other_state'||geo.targetMode==='other_city';
+  if(geo.homeExpanded)return `<section class="geo-discovery geo-discovery-compact geo-edit-mode" aria-label="Editar localização">
+    <div class="geo-edit-heading"><strong>Minha cidade</strong><button type="button" data-action="geoHomeClose" aria-label="Voltar aos filtros">${ico('back',15)} Voltar</button></div>
+    <p class="geo-edit-caption">Selecione sua cidade ou use a detecção. Você pode buscar pessoas de qualquer região depois.</p>
+    <div class="geo-input-row"><label>Meu estado${stateSelect('home-state',geo.homeState,busy)}</label><label>Minha cidade${cityControl('home-city',geo.homeState,geo.homeCity,busy)}</label></div>
+    <div class="geo-actions"><button type="button" data-action="geoSave" ${busy?'disabled':''}>${ico('check',15)} Salvar cidade</button>
+    <button type="button" data-action="geoDetect" ${busy?'disabled':''}>${ico('compass',15)} Detectar</button></div>
+    <p class="geo-privacy-note">${ico('shield',14)} Guardamos cidade e estado, nunca sua localização exata.</p>
+   </section>`;
   return `<section class="geo-discovery geo-discovery-compact" aria-label="Região do encontro">
    <label class="geo-target-label">Onde encontrar pessoas?
-   <select data-geo-field="target-mode" ${busy?'disabled':''}>${modes.map(([value,label])=>`<option value="${value}" ${geo.targetMode===value?'selected':''}>${esc(label)}</option>`).join('')}</select></label>
+    <select data-geo-field="target-mode" ${busy?'disabled':''}>${modes.map(([value,label])=>`<option value="${value}" ${geo.targetMode===value?'selected':''}>${esc(label)}</option>`).join('')}</select>
+   </label>
    ${custom?`<div class="geo-input-row"><label>Estado${stateSelect('target-state',geo.targetState,busy)}</label>${geo.targetMode==='other_city'?`<label>Cidade${cityControl('target-city',geo.targetState,geo.targetCity,busy)}</label>`:''}</div>`:''}
-   ${!geo.self&&geo.targetMode!=='any'?'<p class="geo-setup-hint">Configure sua cidade de referência abaixo para buscar por região.</p>':''}
-   <details class="geo-home-settings" ${geo.homeExpanded?'open':''}>
-    <summary>${ico('compass',15)} ${geo.self?`Minha localização: ${esc(geo.self.city)} · ${esc(geo.self.state)}`:'Configurar minha cidade'} ${ico('chevron',15)}</summary>
-    <div class="geo-home-content">
-     <div class="geo-input-row"><label>Meu estado${stateSelect('home-state',geo.homeState,busy)}</label><label>Minha cidade${cityControl('home-city',geo.homeState,geo.homeCity,busy)}</label></div>
-     <div class="geo-actions"><button type="button" data-action="geoSave" ${busy?'disabled':''}>${ico('check',15)} Salvar cidade</button>
-     <button type="button" data-action="geoDetect" ${busy?'disabled':''}>${ico('compass',15)} Detectar</button></div>
-     <p class="geo-privacy-note">${ico('shield',14)} Guardamos somente cidade e estado. Detecção automática pede sua autorização.</p>
-    </div>
-   </details>
+   ${!geo.self&&geo.targetMode!=='any'?'<p class="geo-setup-hint">Configure sua cidade para usar os filtros por região.</p>':''}
+   <div class="geo-location-mini">
+    <span>${ico('compass',16)} <span>${geo.self?`Minha cidade: <strong>${esc(geo.self.city)} · ${esc(geo.self.state)}</strong>`:'Sua cidade não foi configurada'}</span></span>
+    <button type="button" data-action="geoHomeEdit" ${busy?'disabled':''}>${geo.self?'Alterar':'Configurar'} ${ico('chevron',14)}</button>
+   </div>
   </section>`;
  }
  async function citiesFor(uf){
@@ -110,11 +114,15 @@
   await save(geo.homeState,geo.homeCity);
  }
  async function action(type){
+  if(type==='geoHomeEdit'||type==='geoHomeClose'){
+   geo.homeExpanded=type==='geoHomeEdit';if(state.view==='connect')renderView();return;
+  }
   if(geo.busy||state.searching)return;
   geo.busy=true;renderView();
   try{
    if(type==='geoDetect')await detect();
    else if(type==='geoSave')await save(geo.homeState,geo.homeCity);
+   geo.homeExpanded=false;
   }catch(error){toast(error?.message||'Não foi possível atualizar sua localização.',true);}
   finally{geo.busy=false;if(state.view==='connect')renderView();}
  }
@@ -141,9 +149,5 @@
    case'target-city':geo.targetCity=el.value;break;
   }
  });
- document.addEventListener('toggle',event=>{
-  const section=event.target;
-  if(section?.matches?.('.geo-home-settings')&&section.isConnected)geo.homeExpanded=section.open;
- },true);
  window.entreGeo={init,panel,compactPanel,action,target,details:()=>({...geo,self:geo.self?{...geo.self}:null})};
 })();
