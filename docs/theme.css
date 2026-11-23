@@ -386,3 +386,21 @@ html[data-theme] .entre-touch-wave{position:absolute;pointer-events:none;z-index
 /* Guard against content-box horizontal overflow in the mobile appearance picker. */
 .appearance-mode-grid{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
 .appearance-color-line,.appearance-swatches,.appearance-heading>div{min-width:0;max-width:100%}
+
+/* On narrow devices, settings actions must wrap instead of widening
+   the document (320px viewport previously produced 366px scrollWidth). */
+.appearance-illustration{font-size:20px!important;line-height:1!important;overflow:hidden}
+@media(max-width:600px){
+ html[data-theme] .settings-card{box-sizing:border-box!important;min-width:0!important;max-width:100%!important}
+ html[data-theme] .settings-card .setting-row{
+  display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+  min-width:0!important;max-width:100%!important;gap:10px!important
+ }
+ html[data-theme] .settings-card .setting-row>:is(strong,div,p,small){
+  min-width:0!important;max-width:100%!important;overflow-wrap:anywhere
+ }
+ html[data-theme] .settings-card .setting-row :is(button,.ui-btn,select,input){
+  max-width:100%!important;min-width:0!important;white-space:normal!important;
+  box-sizing:border-box!important;overflow-wrap:anywhere
+ }
+}
