@@ -1,68 +1,42 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.57.0";
-
-const ORIGIN = "https://appswebb.github.io";
-const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
-  status, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": ORIGIN, "Vary": "Origin", "Cache-Control": "no-store" }
-});
-Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response(null, {
-    headers: { "Access-Control-Allow-Origin": ORIGIN, "Access-Control-Allow-Headers": "authorization, apikey, x-client-info, content-type", "Access-Control-Allow-Methods": "POST,OPTIONS" }
-  });
-  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
-  try {
-    const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-    if (!token) return json({ error: "missing_session" }, 401);
-    const endpoint = Deno.env.get("SUPABASE_URL") || "";
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    const publishable = Deno.env.get("SUPABASE_ANON_KEY") || "";
-    if (!endpoint || !serviceKey || !publishable) return json({ error: "missing_supabase_config" }, 503);
-    const authClient = createClient(endpoint, publishable, { global: { headers: { Authorization: "Bearer " + token } }, auth: { persistSession: false } });
-    const { data: session, error: authError } = await authClient.auth.getUser(token);
-    if (authError || !session.user) return json({ error: "unauthorized" }, 401);
-    const payload = await req.json().catch(() => null);
-    const ticketId = Number(payload?.ticket_id);
-    if (!Number.isSafeInteger(ticketId) || ticketId <= 0) return json({ error: "invalid_ticket" }, 400);
-    const service = createClient(endpoint, serviceKey, { auth: { persistSession: false } });
-    const { data: ticket, error } = await service.from("entre_support_tickets").select("id,owner_id,category,subject,description,status,email_status").eq("id", ticketId).maybeSingle();
-    if (error || !ticket || ticket.owner_id !== session.user.id || ticket.status !== "submitted")
-      return json({ error: "ticket_not_found" }, 404);
-    if (ticket.email_status === "sent") return json({ email_status: "sent" });
-    const { data: evidence, error: proofError } = await service.from("entre_support_evidence").select("object_path").eq("ticket_id", ticketId);
-    if (proofError) return json({ error: "evidence_unavailable" }, 503);
-    const key = Deno.env.get("RESEND_API_KEY");
-    const sender = Deno.env.get("ENTRE_SUPPORT_FROM");
-    if (!key || !sender) {
-      await service.from("entre_support_tickets").update({ email_status: "unavailable" }).eq("id", ticketId);
-      return json({ email_status: "unavailable", message: "Ticket saved. Email delivery is not configured." }, 200);
-    }
-    const links: string[] = [];
-    for (const item of evidence || []) {
-      const { data: signed, error: signError } = await service.storage.from("entre-support-evidence").createSignedUrl(item.object_path, 3600 * 24);
-      if (!signError && signed?.signedUrl) links.push(signed.signedUrl);
-    }
-    const safe = (value: string) => value.replace(/[<>]/g, "");
-    const text = [
-      "Novo chamado #"+ ticket.id + " — entre.",
-      "Conta: "+ session.user.email,
-      "Categoria: "+ ticket.category,
-      "Assunto: "+ safe(ticket.subject),
-      "Descrição:\n"+ safe(ticket.description),
-      "Provas privadas (links válidos por 24h):",
-      ...links.map((url, i) => String(i+1) + ". " + url)
-    ].join("\n\n");
-    const sent = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: sender, to: [Deno.env.get("ENTRE_SUPPORT_TO") || "connectapp.w@gmail.com"], subject: "entre. | Suporte #"+ ticket.id + " — "+ safe(ticket.subject), text })
-    });
-    if (!sent.ok) {
-      await service.from("entre_support_tickets").update({ email_status: "error" }).eq("id", ticketId);
-      return json({ email_status: "error", message: "Ticket saved; email provider rejected delivery." });
-    }
-    await service.from("entre_support_tickets").update({ email_status: "sent", email_sent_at: new Date().toISOString() }).eq("id", ticketId);
-    return json({ email_status: "sent" });
-  } catch (error) {
-    console.error("entre-support-email", String(error));
-    return json({ error: "email_delivery_error" }, 500);
-  }
+const origins=new Set(["https://appswebb.github.io","https://entre-ruby.vercel.app","https://entre-orbytstudios.vercel.app"]);
+const esc=(s:unknown)=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]!));
+Deno.serve(async(req:Request)=>{
+ const origin=req.headers.get("origin")||"";
+ const headers={"Content-Type":"application/json","Access-Control-Allow-Origin":origins.has(origin)?origin:"https://appswebb.github.io","Access-Control-Allow-Headers":"authorization, apikey, x-client-info, content-type","Access-Control-Allow-Methods":"POST,OPTIONS","Vary":"Origin","Cache-Control":"no-store"};
+ const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers});
+ if(req.method==="OPTIONS")return new Response(null,{headers});
+ if(req.method!=="POST")return json({error:"Método inválido"},405);
+ if(origin&&!origins.has(origin))return json({error:"Origem não autorizada"},403);
+ try{
+ const token=req.headers.get("authorization")?.replace(/^Bearer\s+/i,"");
+ if(!token)return json({error:"Sessão inválida"},401);
+ const endpoint=Deno.env.get("SUPABASE_URL")!,anon=Deno.env.get("SUPABASE_ANON_KEY")!,secret=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+ const auth=createClient(endpoint,anon,{global:{headers:{Authorization:"Bearer "+token}},auth:{persistSession:false}});
+ const {data:user,error:authError}=await auth.auth.getUser(token);
+ if(authError||!user.user)return json({error:"Sessão inválida"},401);
+ const {data:admin,error:adminError}=await auth.rpc("entre_admin_check");
+ if(adminError||admin!==true)return json({error:"Acesso negado"},403);
+ const body=await req.json().catch(()=>null),replyId=Number(body?.reply_id);
+ if(!Number.isSafeInteger(replyId)||replyId<=0)return json({error:"Resposta inválida"},400);
+ const svc=createClient(endpoint,secret,{auth:{persistSession:false}});
+ const {data:reply,error:replyErr}=await svc.from("entre_support_replies").select("id,ticket_id,from_staff,body,email_sent_at").eq("id",replyId).maybeSingle();
+ if(replyErr||!reply||!reply.from_staff)return json({error:"Resposta não encontrada"},404);
+ if(reply.email_sent_at)return json({status:"sent",already_sent:true});
+ const {data:ticket,error:ticketErr}=await svc.from("entre_support_tickets").select("id,owner_id,subject,status").eq("id",reply.ticket_id).maybeSingle();
+ if(ticketErr||!ticket||ticket.status==="draft")return json({error:"Protocolo indisponível"},404);
+ const {data:recipient,error:recipientErr}=await svc.auth.admin.getUserById(ticket.owner_id);
+ const email=recipient?.user?.email;
+ if(recipientErr||!email||!recipient.user.email_confirmed_at)return json({error:"E-mail confirmado indisponível"},409);
+ const key=Deno.env.get("RESEND_API_KEY"),sender=Deno.env.get("ENTRE_SUPPORT_FROM");
+ if(!key||!sender)return json({error:"Remetente de e-mail ainda não configurado. A resposta continua disponível no protocolo."},503);
+ const subject="CONNECT | Resposta ao protocolo #"+ticket.id;
+ const text="Equipe CONNECT\n\nProtocolo #"+ticket.id+" — "+ticket.subject+"\n\n"+reply.body+"\n\nAcompanhe seu atendimento em https://appswebb.github.io/testesite/";
+ const html='<div style="background:#f7f7f7;padding:28px 10px;font-family:Arial,sans-serif;color:#171717"><div style="max-width:520px;margin:auto;background:white;border:1px solid #dedee2;border-radius:20px;padding:28px"><img src="https://appswebb.github.io/testesite/icons/icon-192.png" width="44" height="44" alt="" style="display:block;border-radius:12px"><h2 style="font-size:20px;letter-spacing:2px">CONNECT</h2><p style="color:#626269;font-size:12px">ATENDIMENTO · PROTOCOLO #'+ticket.id+'</p><h1 style="font-size:24px;line-height:1.2">'+esc(ticket.subject)+'</h1><p style="font-size:15px;line-height:1.6">'+esc(reply.body).replace(/\n/g,"<br>")+'</p><a href="https://appswebb.github.io/testesite/" style="display:inline-block;background:#000;color:white;text-decoration:none;border-radius:12px;padding:14px 20px;font-weight:bold">Acompanhar atendimento</a><p style="color:#626269;font-size:12px;line-height:1.5;margin-top:24px">Responda pelo protocolo dentro do CONNECT. Nunca envie senhas ou códigos de acesso.</p></div></div>';
+ const sent=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+key,"Content-Type":"application/json","Idempotency-Key":"connect-support-reply-"+reply.id},body:JSON.stringify({from:sender,to:[email],subject,text,html})});
+ if(!sent.ok)return json({error:"O provedor recusou o envio. Confira o remetente e a configuração."},502);
+ const {error:save}=await svc.from("entre_support_replies").update({email_sent_at:new Date().toISOString()}).eq("id",reply.id);
+ if(save)return json({error:"E-mail aceito pelo provedor, mas confirmação interna não gravada."},500);
+ return json({status:"sent"});
+ }catch(_){return json({error:"Não foi possível enviar o e-mail."},500);}
 });
