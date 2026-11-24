@@ -51,6 +51,7 @@ function subscribe(){
  .on('postgres_changes',{event:'INSERT',schema:'public',table:'entre_notifications',filter:'user_id=eq.'+user},activity)
  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_notifications',filter:'user_id=eq.'+user},activity)
  .on('postgres_changes',{event:'INSERT',schema:'public',table:'entre_messages'},activity)
+ .on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_messages'},activity)
  .on('postgres_changes',{event:'INSERT',schema:'public',table:'entre_pairs',filter:'a=eq.'+user},pairEvent)
  .on('postgres_changes',{event:'INSERT',schema:'public',table:'entre_pairs',filter:'b=eq.'+user},pairEvent)
  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_pairs',filter:'a=eq.'+user},pairEvent)

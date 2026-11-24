@@ -9,6 +9,7 @@ const title=key=>key==='br'?'Brasil · Sala global':key.startsWith('s:')?UF.find
 const formatDate=d=>new Date(d).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 const icon=key=>key==='br'?'🇧🇷':flags(key.slice(2,4).toUpperCase());
 function chatRows(){
+ s.rows=s.rows.filter(r=>!r.deleted_at);
  if(s.loading&&!s.rows.length)return '<div class="rooms-empty">Carregando mensagens…</div>';
  if(!s.rows.length)return '<div class="rooms-empty"><span class="cn-room-empty-icon">'+ico('rooms',32)+'</span><strong>Comece a conversa.</strong><p>Esta sala está tranquila. Seja a primeira pessoa a dar um oi.</p></div>';
  return (s.older?'<button class="rooms-load-more" type="button" data-room-action="more">Mensagens anteriores</button>':'')+
@@ -96,7 +97,7 @@ async function load(more=false){
  try{
   const {data,error}=await db.rpc('entre_room_messages_page',{_room:room,_before:more?s.rows[0]?.id||null:null});
   if(error)throw error;if(room!==s.room)return;
-  const next=(data?.items||[]).slice().reverse();
+  const next=(data?.items||[]).filter(r=>!r.deleted_at).slice().reverse();
   if(more)s.rows=next.concat(s.rows);
   else s.rows=next;
   s.older=data?.has_more===true;
@@ -181,5 +182,5 @@ document.addEventListener('click',e=>{
 
 });
 document.addEventListener('click',event=>{if(event.target?.id==='roomsFilterOverlay')closeRoomFilter();});
-window.entreRooms={view,enter,messageContext:id=>state.view==='rooms'?{room:s.room,message:s.rows.find(r=>String(r.id)===String(id))}:null,applyMutation:(room,row)=>{if(state.view!=='rooms'||room!==s.room)return;const item=s.rows.find(r=>r.id===row.id);if(item)Object.assign(item,row);paint();},refresh:()=>state.view==='rooms'&&!document.hidden?load():Promise.resolve(),stop:()=>{closeRoomFilter(false);if(s.refreshTimer)clearInterval(s.refreshTimer);s.refreshTimer=null;},roomChange,details:()=>({room:s.room,rows:s.rows.length,filterOpen:s.filterOpen})};
+window.entreRooms={view,enter,messageContext:id=>state.view==='rooms'?{room:s.room,message:s.rows.find(r=>String(r.id)===String(id))}:null,applyMutation:(room,row)=>{if(state.view!=='rooms'||room!==s.room)return;const item=s.rows.find(r=>r.id===row.id);if(row.deleted_at)s.rows=s.rows.filter(r=>String(r.id)!==String(row.id));else if(item)Object.assign(item,row);paint();},refresh:()=>state.view==='rooms'&&!document.hidden?load():Promise.resolve(),stop:()=>{closeRoomFilter(false);if(s.refreshTimer)clearInterval(s.refreshTimer);s.refreshTimer=null;},roomChange,details:()=>({room:s.room,rows:s.rows.length,filterOpen:s.filterOpen})};
 })();

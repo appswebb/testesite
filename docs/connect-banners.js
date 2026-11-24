@@ -79,7 +79,7 @@ async function open(file){
  const head=new Uint8Array(await file.slice(0,12).arrayBuffer()),gif=String.fromCharCode(...head.slice(0,6));
  const isGif=gif==='GIF87a'||gif==='GIF89a';
  if(isGif!== (file.type==='image/gif'))throw Error('O tipo do arquivo não corresponde ao conteúdo.');
- if(isGif){if(file.size>MAX_GIF)throw Error('GIF de até 2 MB.');if(!await allowedGIF())throw Error('Banner animado é exclusivo do Premium.')}
+ if(isGif){if(file.size>MAX_GIF)throw Error('GIF de até 2 MB.');if(!await allowedGIF()){window.connectPremiumNotice?.('O banner animado em GIF');return;}}
  else if(file.size>12*1024*1024)throw Error('Foto de até 12 MB.');
  closeEditor();const url=URL.createObjectURL(file);let img;
  try{img=await loadImage(url);const w=img.naturalWidth,h=img.naturalHeight;
@@ -100,7 +100,7 @@ async function save(){
  const button=e.dialog.querySelector('[data-cp-save]'),error=e.dialog.querySelector('.cp-crop-error');button.disabled=true;button.textContent='Salvando…';error.textContent='';
  try{
   if(!uid()||uid()!==e.uid)throw Error('Sua sessão mudou. Entre novamente.');
-  if(e.isGif&&!await allowedGIF())throw Error('Sua assinatura Premium não está ativa.');
+  if(e.isGif&&!await allowedGIF()){window.connectPremiumNotice?.('O banner animado em GIF');return;}
   const blob=e.isGif?e.file:await photoBlob(e.img,e.crop);
   const row={user_id:e.uid,mime:e.isGif?'image/gif':'image/jpeg',image_base64:await data64(blob),...(e.isGif?e.crop:{zoom:1,pos_x:.5,pos_y:.5})};
   if(uid()!==e.uid)throw Error('Sua sessão mudou.');

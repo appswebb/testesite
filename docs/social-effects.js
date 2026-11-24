@@ -21,7 +21,7 @@ api.olderMessages=async function(){
  if(!state.pair||!state.messages?.length)return;
  const id=state.messages[0].id,list=document.getElementById('messageList'),beforeHeight=list?.scrollHeight||0;
  try{
-  const r=await db.from('entre_messages').select('id,body,sender_id,created_at').eq('pair_id',state.pair.id).lt('id',id).order('id',{ascending:false}).limit(30);
+  const r=await db.from('entre_messages').select('id,body,sender_id,created_at,edited_at,deleted_at').eq('pair_id',state.pair.id).is('deleted_at',null).lt('id',id).order('id',{ascending:false}).limit(30);
   if(r.error)throw r.error;
   const older=(r.data||[]).reverse();
   api.data.hasEarlier=older.length===30;
