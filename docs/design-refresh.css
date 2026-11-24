@@ -1,379 +1,188 @@
-/* 2026 visual system · luminous, vivid but never all-black.
-   Loaded after legacy copies. The user-selected accent remains authoritative. */
-html[data-theme]{
- --ui-bg:#f7f7fd;--ui-panel:#ffffff;--ui-panel-alt:#f2f1fc;
- --ui-text:#24233b;--ui-muted:#73738c;--ui-line:#e6e4f3;
- --visual-glow:rgba(120,90,244,.14);--visual-pink:rgba(245,112,176,.14);
- --visual-blue:rgba(66,153,255,.12);
- background:var(--ui-bg)!important
+/* entre. — living design system. Shared across the app and public pages. */
+:root{
+ --ui-bg:#F7F7FD;--ui-panel:#FFFFFF;--ui-panel-alt:#F1EFF9;
+ --ui-text:#25223A;--ui-muted:#746F86;--ui-line:#E5E0F1;
+ --ui-accent:#6850EC;--ui-accent-on:#FFF;
+ --ui-accent-soft:rgb(104 80 236 / .12);--ui-accent-faint:rgb(104 80 236 / .06);
+ --ui-accent-shadow:rgb(104 80 236 / .22);
+ --ui-gradient:linear-gradient(115deg,#7759F0 0%,#A46BE8 56%,#F091B4 100%);
+ --ui-radius-xl:24px;--ui-card-shadow:0 14px 40px rgba(64,39,112,.08)
 }
 html[data-theme="dark"]{
- --ui-bg:#141827;--ui-panel:#20263a;--ui-panel-alt:#29324a;
- --ui-text:#f4f2ff;--ui-muted:#b4bad0;--ui-line:#38415b;
- --visual-glow:rgba(162,140,255,.17);--visual-pink:rgba(236,107,179,.12);
- --visual-blue:rgba(75,166,255,.12);color-scheme:dark
+ --ui-bg:#141827;--ui-panel:#1D2335;--ui-panel-alt:#282F47;
+ --ui-text:#F7F5FF;--ui-muted:#B3AEC8;--ui-line:#37405B;
+ --ui-accent:#B4A6FF;--ui-accent-on:#1B1632;
+ --ui-accent-soft:rgb(180 166 255 / .16);--ui-accent-faint:rgb(180 166 255 / .08);
+ --ui-accent-shadow:rgb(180 166 255 / .32);
+ --ui-gradient:linear-gradient(115deg,#A08BFF 0%,#C39DFF 65%,#F7ACCF 100%);
+ --ui-card-shadow:0 12px 34px rgba(0,0,0,.22)
 }
 html[data-theme="custom"]{
- --ui-bg:#f7f7fd;--ui-panel:#fff;--ui-panel-alt:#f3f2fa;
- --ui-text:#24233b;--ui-muted:#73738c;--ui-line:#e5e3f1
+ --ui-bg:#F7F7FD;--ui-panel:#FFFFFF;--ui-panel-alt:#F1EFF9;
+ --ui-text:#25223A;--ui-muted:#746F86;--ui-line:#E5E0F1;
+ --ui-card-shadow:0 14px 40px rgba(64,39,112,.08)
 }
-html[data-theme] body{background:var(--ui-bg)!important;color:var(--ui-text)!important}
-html[data-theme] :is(.app-shell,.app-main,.main,.shell,.auth-main,.sidebar){
- background-color:var(--ui-bg)!important;color:var(--ui-text)!important
+/* Avoid painting a solid black background over every child. */
+html[data-theme] body,html[data-theme] .app-shell,html[data-theme] .app-main,
+html[data-theme] .shell,html[data-theme] .main{
+ background:var(--ui-bg)!important;color:var(--ui-text)!important
 }
-html[data-theme="dark"] :is(.app-shell,.app-main,.main,.shell,.auth-main,.sidebar){
- background-color:#141827!important
+html[data-theme] :is(.app-toolbar,.sidebar,.settings-card,.post-card,.post-compose,
+ .premium-checkout-card,.premium-pitch,.stories-shell,.online-person,.room-shell,
+ .search-surface,.comments-dialog,.data-panel){
+ border-color:var(--ui-line)!important;color:var(--ui-text)!important
 }
-html[data-theme] :is(.app-toolbar,.sidebar,.mobile-nav,.topbar,.profile-dropdown){
- border-color:var(--ui-line)!important
+html[data-theme] :is(.app-toolbar,.settings-card,.post-card,.post-compose,
+ .premium-checkout-card,.stories-shell,.online-person,.room-shell,.comments-dialog){
+ background:var(--ui-panel)!important;box-shadow:var(--ui-card-shadow)!important
 }
-html[data-theme] :is(.post-card,.post-compose,.settings-card,.form-panel,.profile-preview,
- .online-person,.conversation-entry,.comments-dialog,.comments-dialog-header,
- .comments-dialog-footer,.room-shell,.camera-live-stage,.global-search-section,
- .support-card,.support-history,.premium-checkout-card,.premium-pitch,.recurring-premium-box,
- .stories-shell,.live-app-card,.encounter-conversation,.encounter-stage,
- .share-profile-card,.share-topbar,.share-wrap){
- background-color:var(--ui-panel)!important;color:var(--ui-text)!important;
- border-color:var(--ui-line)!important
+html[data-theme] :is(.profile-dropdown,.nav-popover,.modal-card){
+ background:var(--ui-panel)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important
 }
-html[data-theme] :is(.premium-checkout,.recurring-premium-box,.stories-shell,.post-card,
- .live-app-card,.support-card,.settings-card,.profile-page .profile-view-card){
- box-shadow:0 14px 42px rgba(72,55,138,.045)!important
+html[data-theme] :is(.hero-title em,.once-subline,.section-title i,
+ .landing-demo-heading em,.premium-pitch h3 em,.page-title em){
+ color:var(--ui-accent)!important
 }
-html[data-theme="dark"] :is(.post-card,.post-compose,.settings-card,.form-panel,.profile-preview,
- .online-person,.conversation-entry,.comments-dialog,.comments-dialog-header,
- .comments-dialog-footer,.room-shell,.camera-live-stage,.global-search-section,
- .support-card,.support-history,.premium-checkout-card,.premium-pitch,.recurring-premium-box,
- .stories-shell,.live-app-card,.encounter-conversation,.encounter-stage){
- background-color:#20263a!important;border-color:#38415b!important;color:#f4f2ff!important
-}
-html[data-theme] :is(.premium-pitch,.premium-checkout,.recurring-premium-header,.landing-hero){
- background-image:
-  radial-gradient(circle at 10% 15%,var(--visual-pink),transparent 34%),
-  radial-gradient(circle at 83% 8%,var(--visual-glow),transparent 42%)!important
-}
-html[data-theme] :is(.premium-pitch h3,.premium-checkout-card h3,.recurring-premium-header h3,
- .recurring-premium-price strong,.premium-pitch h3 em,.premium-checkout h2){
- color:var(--ui-text)!important
-}
-html[data-theme] :is(.premium-label,.recurring-kicker){
- background:var(--ui-accent-soft)!important;color:var(--ui-text)!important;
- border:1px solid var(--ui-accent-shadow)!important;border-radius:999px!important;
- padding:8px 12px!important;letter-spacing:.08em
-}
-html[data-theme] :is(.premium-perks>div,.recurring-premium-price,.recurring-premium-actions,
- .premium-confirmed,.recurring-consent){
- color:var(--ui-text)!important;border-color:var(--ui-line)!important
-}
-html[data-theme] :is(.premium-checkout-card>p,.premium-pitch p,.recurring-premium-header>p,
- .recurring-premium-note,.premium-checkout-card>small){
- color:var(--ui-muted)!important
-}
-html[data-theme] :is(.premium-buy,.premium-whatsapp,.recurring-premium-actions button[type=submit],
- .post-compose-footer button,.stories-head button){
+html[data-theme] :is(.btn-dark,.btn-coral,.ui-btn.btn-dark,.ui-btn.btn-coral,
+ .premium-buy,.premium-whatsapp,.story-add .story-ring){
  background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;
  border-color:var(--ui-accent)!important
 }
-html[data-theme] :is(.premium-checkout-card,.premium-pitch,.recurring-premium-box){
- border-radius:21px!important;overflow:hidden
+html[data-theme] :is(.nav-item.active,.mobile-nav button.active,.chip.active){
+ background:var(--ui-accent-soft)!important;color:var(--ui-text)!important;border-color:var(--ui-accent-shadow)!important
 }
-html[data-theme] .premium-checkout{align-items:stretch!important;gap:16px!important}
-html[data-theme] .premium-checkout-card{min-width:0!important}
-html[data-theme] .recurring-premium-box{max-width:100%!important}
-html[data-theme] :is(.web-checkout-embed,.web-payment-status){max-width:100%!important;overflow-wrap:anywhere}
-html[data-theme] .web-checkout-embed[hidden]{display:none!important}
-/* Feed and story area: single tight visual module before posting */
-html[data-theme] .stories-shell{
- border-radius:20px!important;padding:15px 17px!important;margin:0 0 15px!important;
- background:
-  radial-gradient(circle at 0 0,var(--visual-glow),transparent 54%),var(--ui-panel)!important
+html[data-theme] :is(.app-toolbar,.sidebar,.mobile-nav){
+ background:var(--ui-panel)!important;border-color:var(--ui-line)!important
 }
-html[data-theme] .stories-head{margin-bottom:9px!important}
-html[data-theme] .stories-head h3{font-size:17px!important;letter-spacing:-.04em}
-html[data-theme] .stories-head small{font-size:10px!important}
-html[data-theme] .stories-kicker{font-size:9px!important;letter-spacing:.09em!important}
-html[data-theme] .stories-strip{
- display:flex;align-items:start;gap:6px!important;
- padding:5px 0 8px!important;scroll-snap-type:x proximity;overflow-x:auto
+html[data-theme] :is(.sidebar .nav-item,.mobile-nav button){
+ color:var(--ui-muted)!important
 }
-html[data-theme] .story-tile{
- width:76px!important;min-width:76px!important;max-width:76px!important;gap:6px!important
+html[data-theme] .sidebar .nav-item.active,
+html[data-theme] .mobile-nav button.active{color:var(--ui-accent)!important}
+html[data-theme] .landing-hero{
+ position:relative;overflow:hidden;
+ background:radial-gradient(ellipse 65% 80% at 87% 20%,var(--ui-accent-soft),transparent 65%),
+ radial-gradient(ellipse 36% 50% at 3% 100%,rgba(248,158,192,.12),transparent 75%),var(--ui-bg)!important
 }
-html[data-theme] .story-ring{
- position:relative;overflow:hidden;width:62px!important;height:62px!important;
- border:2px solid var(--ui-accent)!important;box-shadow:0 0 0 3px var(--ui-panel-alt)!important
+html[data-theme] .hero-grid{align-items:center!important;gap:clamp(20px,4vw,60px)!important}
+html[data-theme] .hero-art.hero-showcase{
+ position:relative;isolation:isolate;border-radius:32px;overflow:visible!important;
+ filter:drop-shadow(0 27px 55px rgba(67,42,122,.16));
+ transform-style:preserve-3d;
+ animation:entre-hero-levitate 7s ease-in-out infinite
 }
-html[data-theme] .story-ring img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
-html[data-theme] .story-ring:has(img){font-size:0!important}
-html[data-theme] .story-tile strong{font-size:10px!important;max-width:76px!important}
-html[data-theme] .story-add .story-ring{
- background:linear-gradient(145deg,var(--ui-accent-soft),var(--visual-pink))!important;
- border-style:dashed!important;color:var(--ui-text)!important
+html[data-theme] .hero-art.hero-showcase::before{
+ content:"";position:absolute;inset:7% -3%;border-radius:40px;z-index:-1;
+ background:linear-gradient(130deg,rgba(156,111,250,.21),rgba(254,173,195,.2));
+ filter:blur(35px)
 }
-html[data-theme] .stories-head button{min-height:36px!important;padding:8px 12px!important;font-size:11px}
-html[data-theme] .stories-empty-note{font-size:11px!important;margin:1px 0 0!important}
-/* Profile / comments / subscriptions remain legible even with custom colors. */
-html[data-theme] :is(.post-card-head,.post-author strong,.post-body,.post-comments-launch,
- .online-person h3,.settings-card h3,.recurring-premium-header h3){
- color:var(--ui-text)!important
-}
-html[data-theme] :is(.post-card small,.post-compose small,.online-person small,
- .post-author small,.settings-card p){color:var(--ui-muted)!important}
-html[data-theme] :is(.post-comments-launch,.post-interactions button,.social-switch,
- .premium-checkout-card .ui-btn.btn-outline){
- background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important
-}
-/* Hero photography: the generated illustrations are non-representational promos,
-   never presented as real current members. */
-html[data-theme] .landing-hero{isolation:isolate;overflow:hidden}
-html[data-theme] .home-header{background:color-mix(in srgb,var(--ui-panel) 86%,transparent)!important;border-color:var(--ui-line)!important}
-html[data-theme] .landing-hero::before{
- content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;
- background:radial-gradient(circle at 83% 10%,var(--visual-glow),transparent 35%),
- radial-gradient(circle at 11% 80%,var(--visual-pink),transparent 44%)
-}
-html[data-theme] .hero-title{color:var(--ui-text)!important;letter-spacing:-.065em!important}
-html[data-theme] .hero-title em{color:var(--ui-accent)!important}
-html[data-theme] .hero-text{color:var(--ui-muted)!important}
-html[data-theme] .hero-foot{color:var(--ui-muted)!important}
-html[data-theme] .hero-art{
- transform-style:preserve-3d;perspective:1000px;
- filter:drop-shadow(0 30px 58px rgba(96,72,160,.16))!important
-}
-html[data-theme] .hero-grid{align-items:center!important}
-html[data-theme] .hero-cta .btn-dark{background:var(--ui-accent)!important;color:var(--ui-accent-on)!important}
-html[data-theme] .once-feature-spotlight{
- border-color:var(--ui-line)!important
-}
-html[data-theme] .once-feature-spotlight.is-alt{background-color:var(--ui-panel-alt)!important}
-html[data-theme] :is(.step-card,.once-feature-art,.manifesto){
- border-color:var(--ui-line)!important
-}
-/* Animation controls and hardware-composited, depth-rich effects. */
-html[data-theme] .motion-level-picker{
- display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;width:100%;margin:11px 0
-}
-html[data-theme] .motion-level-option{
- display:flex;flex-direction:column;align-items:flex-start;gap:5px;
- padding:13px 12px;min-height:74px;border:1px solid var(--ui-line)!important;
- border-radius:14px!important;background:var(--ui-panel-alt)!important;
- color:var(--ui-text)!important;cursor:pointer;text-align:left
-}
-html[data-theme] .motion-level-option strong{font-size:12px}
-html[data-theme] .motion-level-option small{font-size:10px;color:var(--ui-muted)!important}
-html[data-theme] .motion-level-option.is-active{
- border-color:var(--ui-accent)!important;background:var(--ui-accent-soft)!important
-}
-html[data-theme] .motion-level-note{font-size:11px!important;color:var(--ui-muted)!important;line-height:1.6}
-html[data-motion-level="light"] *{scroll-behavior:auto!important}
-html[data-motion-level="light"] :is(.hero-art,.step-card,.post-card,.card,.ui-btn){animation-duration:.22s!important;transition-duration:.15s!important}
-html[data-motion-level="medium"] :is(.hero-art,.story-ring,.premium-pitch,.stat-icon){transform-style:preserve-3d}
-html[data-motion-level="high"] :is(.hero-art,.story-ring,.premium-pitch,.stat-icon){transform-style:preserve-3d}
-html[data-motion-level="high"] .landing-hero .hero-art{
- animation:connect-art-3d 9s ease-in-out infinite!important;will-change:transform
-}
-html[data-motion-level="high"] .landing-hero .orbit{
- animation:connect-orbit-3d 18s linear infinite!important;will-change:transform
-}
-html[data-motion-level="high"] :is(.story-tile:hover .story-ring,.live-visual-card:hover){
- transform:translateY(-4px) rotateX(3deg) rotateY(-2deg)!important
-}
-html[data-motion-level="high"] .step-card:hover{
- transform:translateY(-8px) perspective(600px) rotateX(3deg)!important
-}
-html[data-motion-level="medium"] .landing-hero .hero-art{
- animation:connect-art-3d 13s ease-in-out infinite!important
-}
-@keyframes connect-art-3d{
- 0%,100%{transform:translateY(0) rotate3d(1,1,0,0deg)}
- 50%{transform:translateY(-10px) rotate3d(1,1,0,3deg)}
-}
-@keyframes connect-orbit-3d{to{transform:rotate(360deg)}}
-/* When Android reduces animation but the user explicitly selects Medium or
-   Maximum, re-enable the lightweight custom reveal/microinteractions. */
-@media(prefers-reduced-motion:reduce){
- html[data-motion-level="medium"] .landing-hero .hero-art,
- html[data-motion-level="high"] .landing-hero .hero-art{
-  animation:connect-art-3d 13s ease-in-out infinite!important
- }
- html[data-motion-level="high"] .landing-hero .orbit{
-  animation:connect-orbit-3d 18s linear infinite!important
- }
-}
-@media(max-width:680px){
- html[data-theme] .motion-level-picker{gap:6px}
- html[data-theme] .motion-level-option{padding:9px 7px;min-height:72px}
- html[data-theme] .motion-level-option small{font-size:9px!important}
- html[data-theme] .premium-checkout{display:flex!important;flex-direction:column!important}
- html[data-theme] .stories-shell{padding:12px!important}
- html[data-theme] .hero-art{max-width:100%}
-}
-
-/* Product demo and focused temporary calls: occupy the available viewport. */
-html[data-theme] .hero-showcase{
- display:flex!important;align-items:center!important;justify-content:center!important;
- background:transparent!important;min-width:0!important;min-height:0!important;
- border:0!important;box-shadow:none!important;transform-style:preserve-3d
-}
-html[data-theme] .hero-showcase img{
- display:block;width:min(100%,680px)!important;max-width:100%!important;
- height:auto!important;aspect-ratio:760/600;object-fit:contain;border-radius:29px;
- box-shadow:0 28px 65px rgba(82,66,144,.17)!important
-}
-html[data-theme] .landing-product-demo{
- padding:clamp(45px,6vw,82px) 0!important;
- background:linear-gradient(180deg,var(--ui-bg),var(--ui-panel-alt))!important
-}
+html[data-theme] .hero-art.hero-showcase img{width:100%;height:auto;max-width:100%;display:block;border-radius:30px;object-fit:contain}
+html[data-theme] .hero-copy{position:relative;z-index:2}
+html[data-theme] .hero-kicker{background:var(--ui-accent-soft)!important;color:var(--ui-text)!important;border:1px solid var(--ui-line)!important}
+html[data-theme] .hero-cta .ui-btn{min-height:48px!important;border-radius:14px!important}
+html[data-theme] .landing-product-demo{background:var(--ui-panel-alt)!important}
 html[data-theme] .landing-demo-heading{
- display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:end;
- margin-bottom:24px
+ display:flex;align-items:end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:22px
 }
 html[data-theme] .landing-demo-heading h2{
- font:850 clamp(31px,4.4vw,51px)/1.08 'Plus Jakarta Sans',sans-serif;
- letter-spacing:-.065em;margin:10px 0 0;color:var(--ui-text)!important
+ font:800 clamp(30px,4vw,50px)/1.1 'Plus Jakarta Sans',sans-serif!important;
+ letter-spacing:-.06em;color:var(--ui-text)!important;margin:0
 }
-html[data-theme] .landing-demo-heading h2 em{
- color:var(--ui-accent)!important;font-family:'Instrument Serif',serif;font-weight:500
+html[data-theme] .landing-demo-heading p{max-width:400px;line-height:1.7;color:var(--ui-muted)!important;font-size:13px}
+html[data-theme] .landing-demo-grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px
 }
-html[data-theme] .landing-demo-heading p{font-size:12px;line-height:1.7;color:var(--ui-muted)!important;max-width:440px}
-html[data-theme] .landing-demo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 html[data-theme] .landing-demo-tile{
- min-width:0;overflow:hidden;border-radius:21px;border:1px solid var(--ui-line);
- background:var(--ui-panel);box-shadow:0 14px 40px rgba(75,63,147,.06);
- transition:transform .22s,box-shadow .22s
+ min-width:0;overflow:hidden;background:var(--ui-panel)!important;
+ border:1px solid var(--ui-line)!important;border-radius:25px;
+ box-shadow:var(--ui-card-shadow);transition:transform .32s ease,box-shadow .32s ease
 }
-html[data-theme] .landing-demo-art{padding:clamp(12px,2vw,22px);background:var(--ui-panel-alt)!important}
-html[data-theme] .landing-demo-art img{display:block;max-height:355px;object-fit:contain;width:100%;border-radius:14px}
-html[data-theme] .landing-demo-copy{display:grid;gap:9px;padding:20px 23px 24px}
-html[data-theme] .landing-demo-copy>span{color:var(--ui-accent)!important;font-size:10px;font-weight:800;letter-spacing:.1em}
-html[data-theme] .landing-demo-copy h3{font:800 20px 'Plus Jakarta Sans',sans-serif;color:var(--ui-text)!important;letter-spacing:-.035em;margin:0}
-html[data-theme] .landing-demo-copy p{color:var(--ui-muted)!important;font-size:12px;margin:0;line-height:1.65}
-html[data-theme] .landing-demo-copy button{justify-self:start;border:0;background:none;color:var(--ui-accent);font-size:12px;font-weight:800;cursor:pointer;padding:5px 0}
-html[data-theme] #view-content:has(.encounter-page)>.app-heading,
-html[data-theme] #view-content:has(.pair-card)>.app-heading{display:none!important}
-html[data-theme] #view-content:has(.encounter-page),html[data-theme] #view-content:has(.pair-card){
- max-width:100%!important;min-width:0!important
+html[data-theme] .landing-demo-tile:hover{transform:translateY(-6px);box-shadow:0 26px 60px rgba(67,42,122,.16)}
+html[data-theme] .landing-demo-art{aspect-ratio:1.49;overflow:hidden;background:var(--ui-panel-alt)}
+html[data-theme] .landing-demo-art img{width:100%;height:100%;object-fit:cover;display:block}
+html[data-theme] .landing-demo-copy{padding:19px 23px 25px}
+html[data-theme] .landing-demo-copy>span{font-size:10px;font-weight:850;letter-spacing:.15em;color:var(--ui-accent)!important}
+html[data-theme] .landing-demo-copy h3{font-size:20px;letter-spacing:-.04em;color:var(--ui-text)!important;margin:9px 0}
+html[data-theme] .landing-demo-copy p{font-size:12px;line-height:1.6;color:var(--ui-muted)!important}
+html[data-theme] .landing-demo-copy button{
+ cursor:pointer;min-height:43px;border:0;background:var(--ui-accent)!important;
+ color:var(--ui-accent-on)!important;border-radius:12px;font-weight:800;padding:10px 15px
 }
-html[data-theme] .encounter-page{gap:7px!important;width:100%!important;max-width:100%!important}
-html[data-theme] .encounter-page-head{
- padding:7px!important;gap:7px!important;margin:0!important
+/* Premium has a product-specific atmosphere without old mustard, yellow or black walls. */
+html[data-theme] .premium-checkout{gap:16px!important;align-items:stretch}
+html[data-theme] .premium-pitch{
+ background:linear-gradient(135deg,rgba(107,80,220,.14),rgba(238,134,188,.11)),var(--ui-panel)!important;
+ border:1px solid var(--ui-line)!important;min-height:0!important;
+ border-radius:24px!important;box-shadow:var(--ui-card-shadow)!important
 }
-html[data-theme] .encounter-page-head h2{font-size:17px!important;color:var(--ui-text)!important;margin:0!important}
-html[data-theme] .encounter-page-head p{display:none!important}
-html[data-theme] .encounter-page-head .encounter-eyebrow{font-size:9px!important;color:var(--ui-muted)!important}
-html[data-theme] .encounter-minimize,.encounter-chat-toggle{
- display:inline-flex;align-items:center;justify-content:center;gap:6px;
- padding:9px 12px!important;border-radius:11px!important;
- color:var(--ui-text)!important;background:var(--ui-panel-alt)!important;
- border:1px solid var(--ui-line)!important;min-height:38px;cursor:pointer;
- font-size:11px;font-weight:800
+html[data-theme] .premium-pitch::after{color:var(--ui-accent-soft)!important;opacity:.32}
+html[data-theme] .premium-pitch :is(h3,h3 em){color:var(--ui-text)!important}
+html[data-theme] .premium-pitch h3 em{color:var(--ui-accent)!important}
+html[data-theme] .premium-label{
+ background:var(--ui-accent-soft)!important;color:var(--ui-accent)!important;
+ border:1px solid var(--ui-accent-shadow)!important
 }
-html[data-theme] .encounter-workspace{
- min-width:0!important;width:100%!important;
- grid-template-columns:minmax(0,1.55fr) minmax(260px,.8fr)!important;
- gap:10px!important
+html[data-theme] .premium-pitch :is(p,.premium-perks>div){color:var(--ui-muted)!important}
+html[data-theme] .premium-perks svg{color:var(--ui-accent)!important}
+html[data-theme] .premium-checkout-card{border:1px solid var(--ui-line)!important;border-radius:24px!important}
+html[data-theme] .premium-checkout-card :is(h3,.premium-checkout-card>span){color:var(--ui-text)!important}
+html[data-theme] .premium-checkout-card :is(p,small){color:var(--ui-muted)!important}
+html[data-theme] .premium-checkout-card .premium-confirmed{
+ background:var(--ui-accent-soft)!important;color:var(--ui-text)!important
 }
-html[data-theme] .encounter-stage,.encounter-conversation{
- min-width:0!important;border-color:var(--ui-line)!important
+html[data-theme] .premium-checkout-card .ui-btn{border-radius:13px!important}
+html[data-theme] .premium-checkout-card .ui-btn.btn-dark{color:var(--ui-accent-on)!important;background:var(--ui-accent)!important}
+html[data-theme] .web-payment-status{max-width:100%;overflow-wrap:anywhere}
+html[data-theme] .web-checkout-embed{width:100%;min-width:0;max-width:100%;overflow:hidden}
+html[data-theme] .web-checkout-embed[hidden]{display:none!important}
+/* Compact story rail with media as the content, not a giant empty panel. */
+html[data-theme] .stories-shell{
+ margin:0 0 17px!important;padding:13px 15px!important;
+ border-radius:19px!important;overflow:hidden!important
 }
-html[data-theme] .encounter-stage .video-frame.video-remote{
- height:clamp(350px,calc(100dvh - 235px),880px)!important;max-height:88dvh!important
+html[data-theme] .stories-head{margin:0 0 9px!important;align-items:center}
+html[data-theme] .stories-head h3{font-size:15px!important;letter-spacing:-.02em}
+html[data-theme] .stories-kicker{display:none!important}
+html[data-theme] .stories-head button{min-height:37px!important;padding:8px 13px!important;font-size:11px}
+html[data-theme] .stories-strip{gap:7px!important;padding:4px 0 6px!important}
+html[data-theme] .story-tile{min-width:74px!important;max-width:82px!important;gap:6px!important}
+html[data-theme] .story-ring{
+ width:61px!important;height:61px!important;overflow:hidden;
+ border:2px solid var(--ui-accent)!important;
+ background:var(--ui-accent-soft)!important;color:var(--ui-text)!important;
+ box-shadow:0 0 0 3px var(--ui-accent-faint),inset 0 0 0 3px var(--ui-panel)!important
 }
-html[data-theme] .encounter-conversation{
- display:flex!important;flex-direction:column!important;
- min-height:0!important;overflow:hidden!important
+html[data-theme] .story-ring img{display:block;width:100%;height:100%;object-fit:cover;border-radius:50%}
+html[data-theme] .story-add .story-ring{border-style:dashed!important}
+html[data-theme] .story-tile strong{font-size:10px!important;color:var(--ui-text)!important}
+/* Fullscreen temporary encounters: camera/chat own viewport when active. */
+html[data-theme] .encounter-active-screen{min-height:min(760px,calc(100dvh - 155px));display:flex;flex-direction:column}
+html[data-theme] .encounter-active-screen .pair-card{flex:1;min-height:0}
+html[data-theme] .encounter-active-screen .pair-messages{
+ min-height:260px;max-height:calc(100dvh - 290px);overflow-y:auto;overscroll-behavior:contain
 }
-html[data-theme] .encounter-conversation .encounter-chat-heading{
- display:flex!important;align-items:center!important;justify-content:space-between!important;
- gap:8px!important;padding:10px 12px!important;flex:none
+html[data-theme] .encounter-active-screen .live-video-panel{
+ flex:1;display:flex;flex-direction:column;
+ min-height:clamp(380px,calc(100dvh - 195px),850px);
+ background:#101426!important;padding:12px!important;border-radius:22px!important
 }
-html[data-theme] .encounter-conversation .pair-messages{
- flex:1 1 auto!important;min-height:140px!important;max-height:calc(100dvh - 280px)!important;
- overflow:auto!important
+html[data-theme] .encounter-active-screen .live-video-grid{
+ flex:1;min-height:0;grid-template-columns:minmax(0,1fr) minmax(140px,23%)!important
 }
-html[data-theme] .encounter-conversation .encounter-chat-composer{flex:none!important}
-html[data-theme] .encounter-page.is-chat-min .encounter-workspace{
- grid-template-columns:minmax(0,1fr) 180px!important
+html[data-theme] .encounter-active-screen .video-remote{
+ min-height:260px;max-height:calc(100dvh - 300px)
 }
-html[data-theme] .encounter-page.is-chat-min .encounter-conversation .pair-messages,
-html[data-theme] .encounter-page.is-chat-min .encounter-conversation .encounter-chat-composer,
-html[data-theme] .encounter-page.is-chat-min .encounter-conversation .chat-origin-bar{
- display:none!important
+html[data-theme] .encounter-active-screen .video-remote video{width:100%;height:100%;object-fit:cover}
+html[data-theme] .encounter-active-screen .live-video-bottom{margin-top:auto}
+@media(max-width:720px){
+ html[data-theme] .landing-demo-grid{grid-template-columns:1fr}
+ html[data-theme] .hero-art.hero-showcase{max-width:min(92vw,570px);margin-inline:auto}
+ html[data-theme] .encounter-active-screen{min-height:calc(100dvh - 110px)}
+ html[data-theme] .encounter-active-screen .live-video-panel{min-height:calc(100dvh - 145px)!important;border-radius:0!important}
+ html[data-theme] .encounter-active-screen .live-video-grid{position:relative;display:block!important;min-height:48dvh}
+ html[data-theme] .encounter-active-screen .video-remote{position:absolute;inset:0;max-height:none;min-height:0;width:100%;height:100%}
+ html[data-theme] .encounter-active-screen .video-self{position:absolute;top:9px;right:9px;width:min(32vw,145px);height:min(40vw,175px);z-index:3}
+ html[data-theme] .encounter-active-screen .pair-messages{max-height:calc(100dvh - 235px)}
 }
-html[data-theme] .encounter-page.is-chat-min .encounter-conversation{align-self:start}
-html[data-theme] .pair-card{min-height:min(70dvh,760px)!important;display:flex!important;flex-direction:column!important}
-html[data-theme] .pair-card .pair-messages{flex:1;min-height:220px;max-height:65dvh;overflow:auto!important}
-@media(max-width:760px){
- html[data-theme] .landing-demo-heading{grid-template-columns:1fr}
- html[data-theme] .landing-demo-grid{grid-template-columns:1fr!important}
- html[data-theme] .encounter-workspace,.encounter-page.is-chat-min .encounter-workspace{
-  grid-template-columns:minmax(0,1fr)!important;gap:8px!important
- }
- html[data-theme] .encounter-stage .video-frame.video-remote{
-  height:clamp(260px,calc(100dvh - 290px),690px)!important
- }
- html[data-theme] .encounter-page.is-chat-min .video-frame.video-remote{
-  height:clamp(300px,calc(100dvh - 215px),760px)!important
- }
- html[data-theme] .encounter-conversation{
-  min-height:0!important;max-height:40dvh!important
- }
- html[data-theme] .encounter-page.is-chat-min .encounter-conversation{
-  max-height:64px!important
- }
- html[data-theme] .encounter-conversation .pair-messages{
-  min-height:90px!important;max-height:25dvh!important
- }
- html[data-theme] .encounter-page-actions{gap:5px!important}
- html[data-theme] .encounter-minimize span{display:none}
- html[data-theme] .pair-card{min-height:calc(100dvh - 145px)!important}
- html[data-theme] .pair-card .pair-messages{max-height:calc(100dvh - 300px)!important}
-}
-
-/* Media attachments inside live text/video encounters. Real uploads, never a fake action. */
-html[data-theme] .enc-media-toolbar{
- display:flex;gap:7px;align-items:center;flex-wrap:wrap;
- padding:7px 11px;background:var(--ui-panel)!important;border-top:1px solid var(--ui-line)!important
-}
-html[data-theme] .enc-media-toolbar button{
- display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:36px;
- padding:8px 12px;border-radius:10px;font-size:11px;font-weight:750;
- background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;
- border:1px solid var(--ui-line)!important;cursor:pointer
-}
-html[data-theme] .enc-media-toolbar [data-chat-media-record][aria-pressed=true]{
- border-color:#d95382!important;background:#f9dce9!important;color:#94335c!important
-}
-html[data-theme] #encMediaStatus{
- min-height:0;max-width:100%;font-size:10px;color:var(--ui-muted)!important;
- overflow-wrap:anywhere;flex:1
-}
-html[data-theme] .enc-media-gallery{
- display:flex;flex-direction:column;gap:8px;min-width:0;
- margin:10px 0;padding:10px;border:1px solid var(--ui-line)!important;
- border-radius:13px;background:var(--ui-panel-alt)!important
-}
-html[data-theme] .enc-media-gallery[hidden]{display:none!important}
-html[data-theme] .enc-media-gallery h4{margin:0;font-size:12px;color:var(--ui-text)!important}
-html[data-theme] .enc-media-list{
- display:flex;gap:9px;align-items:flex-start;overflow-x:auto;padding:2px 0 5px;max-width:100%
-}
-html[data-theme] .enc-media-item{
- flex:0 0 160px;max-width:180px;min-width:0;display:flex;flex-direction:column;
- border:1px solid var(--ui-line);border-radius:12px;overflow:hidden;
- background:var(--ui-panel);color:var(--ui-text)
-}
-html[data-theme] .enc-media-item img,
-html[data-theme] .enc-media-item video{
- display:block;width:100%;aspect-ratio:4/3;object-fit:contain;background:#181826
-}
-html[data-theme] .enc-media-item audio{max-width:100%;height:46px}
-html[data-theme] .enc-media-item-meta{
- display:flex;justify-content:space-between;align-items:center;gap:5px;
- padding:6px 7px;font-size:9px;color:var(--ui-muted);overflow-wrap:anywhere
-}
-html[data-theme] .enc-media-item-meta button{
- border:0;background:transparent;color:var(--ui-danger);font-size:10px;cursor:pointer;padding:3px
-}
-html[data-theme] .encounter-page.is-chat-min .enc-media-toolbar,
-html[data-theme] .encounter-page.is-chat-min .enc-media-gallery{display:none!important}
+@keyframes entre-hero-levitate{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-13px) rotate(1deg)}}
+@media(prefers-reduced-motion:reduce){html[data-theme] .hero-art.hero-showcase{animation:none}}
