@@ -188,21 +188,15 @@ function webPaymentStatusMarkup(){
 }
 function premiumView(){
  const active=data.premium?.active,enabled=data.premium?.checkout_enabled&&price()&&!data.checkoutBusy;
- return heading('ASSINATURAS','Uma experiência <em>mais completa.</em>','Gerencie seu plano e confira os benefícios.')+
- '<section class="premium-checkout"><div class="premium-pitch"><span class="premium-label">✦ PLANO PREMIUM</span><h3>Mais liberdade para<br><em>se conectar.</em></h3><p>Recursos extras dentro da experiência, sem perder o foco nas conversas reais.</p>'+
- '<div class="premium-perks"><div>'+ico('check',19)+' <span>Filtro Premium de gênero no Ao Vivo</span></div>'+
- '<div>'+ico('star',19)+' <span>Selo de destaque no perfil</span></div>'+
- '<div>'+ico('chat',19)+' <span>Atendimento prioritário pelo WhatsApp</span></div></div></div>'+
- '<div class="premium-checkout-card"><span>ACESSO POR 30 DIAS · PAGAMENTO ÚNICO</span><h3>'+(price()||'Valor a definir')+'</h3>'+
- '<p>'+(price()?'Pague uma vez pelo navegador com Pix ou cartão. Acesso válido por 30 dias, sem renovação automática nesta opção.':'Defina o preço no painel administrativo para habilitar o checkout.')+'</p>'+
- (active?'<div class="premium-confirmed">'+ico('check',19)+' Sua assinatura está ativa.</div>'+
-  '<button type="button" class="ui-btn btn-dark premium-whatsapp" data-action="premiumWhatsapp">'+ico('chat',18)+' WhatsApp prioritário</button>'+
-  (data.premium.paid_until?'<small>Válida até '+new Date(data.premium.paid_until).toLocaleDateString('pt-BR')+'</small>':''):
-  '<button type="button" class="ui-btn btn-dark premium-buy" data-action="premiumCheckout" '+(enabled?'':'disabled')+'>'+ico('shield',17)+' '+(data.checkoutBusy?'Abrindo pagamento…':'Pagar aqui com Pix ou cartão')+'</button>')+
- '<div class="web-payment-status" id="webPaymentStatus" role="status">'+webPaymentStatusMarkup()+'</div>'+
- '<div class="web-checkout-embed" '+(data.webCheckoutOpen&&!active?'':'hidden')+'><div id="connectPaymentBrick" aria-label="Pagamento seguro com Pix ou cartão"></div></div>'+
- '<button type="button" class="ui-btn btn-outline" data-action="premiumVerify" '+(data.webChecking?'disabled':'')+'>'+ico('refresh',17)+' '+(data.webChecking?'Verificando…':'Já paguei · verificar pagamento')+'</button>'+
- '<small>Seus dados de cartão são tratados nos componentes seguros do Mercado Pago. O acesso só é liberado após confirmação na API do provedor.</small></div></section>'+(window.entreRecurring?.view?.()||'');
+ const rows=items=>'<ul class="cp-plan-list">'+items.map(v=>'<li>'+ico('check',17)+'<span>'+v+'</span></li>').join('')+'</ul>';
+ return '<section class="cp-plan-page"><div class="cp-plan-heading"><h2>Escolha seu plano</h2><p>Dois planos. A mesma comunidade.</p></div><div class="cp-plan-grid">'+
+ '<article class="cp-plan"><span class="cp-plan-eyebrow">NORMAL</span><h3>Gratuito</h3><div class="cp-plan-price">R$ 0</div><p>Conheça pessoas e participe da comunidade.</p>'+rows(['Encontros por texto e vídeo','Conversas, posts, stories, salas e lives','Banner de perfil com foto','Temas claro, escuro e cor personalizada'])+
+ '<div class="cp-plan-state">'+(active?'Incluído no Premium':ico('check',17)+' Seu plano atual')+'</div></article>'+
+ '<article class="cp-plan cp-plan-paid"><span class="cp-plan-eyebrow">'+ico('crown',18)+' PREMIUM</span><h3>Mais possibilidades</h3><div class="cp-plan-price">'+(price()||'Valor a definir')+'<small> / 30 dias</small></div><p>Todos os recursos do Normal, mais:</p>'+rows(['Banner animado em GIF','Filtro de gênero no Ao vivo','Selo de destaque no perfil','Atendimento prioritário pelo WhatsApp'])+
+ (active?'<div class="cp-plan-state">'+ico('check',17)+' Premium ativo'+(data.premium.paid_until?' · até '+new Date(data.premium.paid_until).toLocaleDateString('pt-BR'):'')+'</div><button type="button" class="ui-btn btn-dark" data-action="premiumWhatsapp">'+ico('chat',17)+' WhatsApp prioritário</button>':'<button type="button" class="ui-btn btn-dark premium-buy" data-action="premiumCheckout" '+(enabled?'':'disabled')+'>'+ico('shield',17)+' '+(data.checkoutBusy?'Abrindo pagamento…':'Assinar Premium')+'</button>')+
+ '<details class="cp-plan-recurring" '+(active?'open':'')+'><summary>Opções de renovação mensal</summary>'+(window.entreRecurring?.view?.()||'<p>Renovação indisponível.</p>')+'</details>'+
+ '<div class="web-payment-status" id="webPaymentStatus" role="status">'+webPaymentStatusMarkup()+'</div><div class="web-checkout-embed" '+(data.webCheckoutOpen&&!active?'':'hidden')+'><div id="connectPaymentBrick" aria-label="Pagamento seguro com Pix ou cartão"></div></div>'+
+ '<button type="button" class="cp-plan-verify" data-action="premiumVerify" '+(data.webChecking?'disabled':'')+'>'+ico('refresh',15)+' '+(data.webChecking?'Verificando…':'Já paguei · verificar pagamento')+'</button><small class="cp-plan-footnote">Pagamento seguro pelo Mercado Pago. A opção de 30 dias não renova automaticamente.</small></article></div></section>';
 }
 async function openPremiumWhatsapp(){
  if(!data.premium?.active)throw Error('O atendimento prioritário exige Premium ativo.');

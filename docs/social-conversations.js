@@ -42,11 +42,14 @@ function conversationsView(){
 }
 function profileModal(){
  const p=d.socialProfile;if(!p)return '';
- return '<div class="modal-backdrop" id="modalBackdrop"><div class="modal-card social-profile-modal" role="dialog" aria-modal="true" aria-labelledby="socialProfileTitle">'+
- '<div class="social-profile-person">'+avatar(p,'large')+'<div><h2 id="socialProfileTitle">'+esc(p.display_name)+'</h2><span class="person-handle">@'+esc(p.username||'')+'</span><small>'+esc(p.age||'')+(p.age?' anos · ':'')+esc(genders[p.gender]||'')+'</small></div></div>'+
- '<p>'+esc(p.bio||'Esta pessoa ainda não escreveu uma apresentação.')+'</p>'+
- '<div class="modal-actions"><button class="ui-btn btn-outline btn-sm" data-action="closemodal">Fechar</button><button type="button" class="ui-btn btn-outline btn-sm" data-action="copyUsernameLink" data-username="'+esc(p.username||'')+'">Copiar link</button>'+ 
- '<button class="ui-btn btn-dark btn-sm" data-action="socialFollow" data-id="'+esc(p.id)+'">Solicitar para seguir</button></div></div></div>';
+ const handle=esc(p.username||'');
+ return '<div class="modal-backdrop" id="modalBackdrop"><div class="modal-card social-profile-modal cp-visitor" role="dialog" aria-modal="true" aria-labelledby="socialProfileTitle">'+
+ '<div class="cp-visitor-top"><strong>Perfil</strong><button type="button" class="cp-icon-button" data-action="closemodal" aria-label="Fechar perfil">'+ico('close',20)+'</button></div>'+
+ '<div class="cp-banner" data-cp-handle="'+handle+'" aria-label="Banner do perfil"></div><div class="cp-visitor-body"><div class="cp-visitor-avatar">'+avatar(p,'large')+'</div><div class="cp-person-title"><h2 id="socialProfileTitle">'+esc(p.display_name||'Pessoa do CONNECT')+'</h2>'+ (window.entreExtras?.badge?.(p)||'')+'</div>'+
+ '<span class="person-handle">'+(handle?'@'+handle:'')+'</span><small class="cp-person-meta">'+esc(p.age||'')+(p.age?' anos · ':'')+esc(genders[p.gender]||'')+'</small>'+
+ '<div class="cp-bio"><strong>Sobre</strong><p>'+esc(p.bio||'Esta pessoa ainda não escreveu uma apresentação.')+'</p></div>'+
+ '<div class="cp-visitor-actions"><button type="button" class="ui-btn btn-dark" data-action="socialChat" data-id="'+esc(p.id)+'">'+ico('chat',17)+' Conversar</button><button type="button" class="ui-btn btn-outline" data-action="socialFollow" data-id="'+esc(p.id)+'">'+ico('user',17)+' Seguir</button></div>'+
+ (handle?'<button type="button" class="cp-share-link" data-action="copyUsernameLink" data-username="'+handle+'">'+ico('link',17)+' Compartilhar perfil</button>':'')+'</div></div></div>';
 }
 Object.assign(api,{conversationsView,conversationRow:row,conversationMenu,profileModal});
 })();

@@ -33,6 +33,7 @@
   if(!res.ok)throw Error(res.status===404?"Este perfil não está disponível.":"Não foi possível abrir este perfil agora.");
   const data=await res.json(),p=data?.profile;
   if(!p||p.username!==handle)throw Error("Este perfil não está disponível.");
+  window.connectBanners?.paint?.(pick("shareBanner"),p.banner);
   name.textContent=String(p.display_name||"Pessoa do CONNECT").slice(0,90);tag.textContent="@"+p.username;bio.textContent=String(p.bio||"Esta pessoa ainda não escreveu uma apresentação.").slice(0,900);
   avatar.setAttribute("aria-label","Foto de "+(p.display_name||"perfil"));
   avatar.textContent=initials(p.display_name);
