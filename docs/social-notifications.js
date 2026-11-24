@@ -18,7 +18,7 @@ function notificationsView(){
  '<article class="notification-entry '+(n.read_at?'':'is-unread')+'">'+
  '<button type="button" class="notification-item" data-action="notificationOpen" data-id="'+Number(n.id)+'" data-pair="'+esc(n.pair_id||'')+'" data-bulletin="'+Number(n.bulletin_id||0)+'">'+
  '<span class="notification-icon">'+ico(n.kind==='message'?'chat':n.kind==='matched'?'heart':n.kind==='poll'||n.kind==='bulletin'?'megaphone':n.kind==='account_suspended'||n.kind==='account_restored'?'shield':'bell',18)+'</span>'+
- '<span class="notification-copy"><strong>'+esc(summary(n))+'</strong><small>'+new Date(n.created_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+'</small></span>'+
+ '<span class="notification-copy"><strong>'+(n.actor_id&&n.actor_name&&summary(n).includes(n.actor_name)?(()=>{const label=summary(n),at=label.indexOf(n.actor_name);return esc(label.slice(0,at))+profileName(n.actor_id,n.actor_name)+esc(label.slice(at+n.actor_name.length))})():esc(summary(n)))+'</strong><small>'+new Date(n.created_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+'</small></span>'+
  ico('chevron',16)+'</button>'+
  '<button type="button" class="notification-dismiss" aria-label="Remover notificação" title="Remover notificação" data-action="notificationsDismiss" data-id="'+Number(n.id)+'">'+ico('close',16)+'</button></article>').join('')+'</div>':
  '<div class="social-empty"><h3>Nenhuma notificação por enquanto.</h3><p>As notificações ficam disponíveis por até 24 horas.</p></div>')+
