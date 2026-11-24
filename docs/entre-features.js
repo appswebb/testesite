@@ -39,8 +39,8 @@ async function loadPosts(more=false){
 
 function commentCard(c){
  const own=c.author_id===state.session?.user?.id;
- return '<article class="full-comment" data-comment-id="'+Number(c.id)+'"><span class="comment-initial">'+esc(initials(c.name))+'</span>'+
- '<div class="full-comment-content"><div class="full-comment-top"><strong>'+esc(c.name||'Pessoa')+
+ return '<article class="full-comment" data-comment-id="'+Number(c.id)+'"><span class="comment-initial"'+profileTarget(c.author_id)+ '>'+esc(initials(c.name))+'</span>'+
+ '<div class="full-comment-content"><div class="full-comment-top"><strong>'+profileName(c.author_id,c.name)+
  (c.premium?' <span class="verified-mark">'+ico('check',11)+'</span>':'')+
  '</strong><small>'+new Date(c.created_at).toLocaleDateString('pt-BR')+(c.edited_at?' · editado':'')+'</small></div>'+
  '<p>'+esc(c.body)+'</p><div class="full-comment-buttons">'+
@@ -90,14 +90,14 @@ async function loadCommentPage(more=false){
 }
 
 function postsView(){
- return '<section class="posts-shell"><div class="posts-stream">'+(window.entreStories?.markup?.()||'')+'<section class="cn-feed-composer"><div class="cn-compose-heading">'+avatar(state.profile)+'<div><strong>Criar</strong><small>Compartilhe com a comunidade</small></div></div><form id="postCreateForm" class="post-compose cn-inline-post">'+
+ return '<section class="posts-shell"><div class="posts-stream">'+'<section class="cn-feed-composer"><div class="cn-compose-heading">'+avatar(state.profile)+'<div><strong>Criar</strong><small>Compartilhe com a comunidade</small></div></div><form id="postCreateForm" class="post-compose cn-inline-post">'+
  '<textarea name="body" minlength="3" maxlength="900" placeholder="O que você quer publicar?"></textarea>'+ (window.entreMedia?.composeMarkup?.()||'')+
  '<div class="post-compose-footer"><button type="submit" class="ui-btn btn-dark btn-sm">Publicar post '+ico('arrow',15)+'</button></div></form></section>'+
  (data.posts.length?data.posts.map(p=>{
   const person={id:p.author_id,display_name:p.author_name,avatar_path:p.author_avatar,avatar_uploaded_at:p.author_avatar_uploaded_at};
   const own=p.author_id===state.session?.user?.id;
   return '<article class="post-card '+(p.premium?'premium-surface':'')+'"><div class="post-card-head">'+avatar(person)+
-  '<div class="post-author"><strong>'+esc(p.author_name||'Pessoa')+badge(person)+'</strong><small>'+new Date(p.created_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+'</small></div>'+
+  '<div class="post-author"><strong>'+profileName(p.author_id,p.author_name)+badge(person)+'</strong><small>'+new Date(p.created_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+'</small></div>'+
   (own?'<button type="button" class="post-remove" data-action="postDelete" data-id="'+Number(p.id)+'" aria-label="Apagar meu post">'+ico('trash',16)+'</button>':'')+'</div>'+
   (p.body?'<p class="post-body">'+esc(p.body)+'</p>':'')+(window.entreMedia?.postMarkup?.(p)||'')+'<div class="post-interactions"><button type="button" class="'+(p.liked?'liked':'')+'" data-action="postLike" data-id="'+Number(p.id)+'">'+ico('heart',17)+' '+Number(p.likes||0)+' curtidas</button><span>'+ico('chat',15)+' '+(p.comments?.length||0)+' comentários recentes</span></div>'+
   '<button type="button" class="post-comments-launch" data-action="postCommentsOpen" data-id="'+Number(p.id)+'">'+ico('chat',18)+' <span>Ver comentários e participar</span>'+ico('arrow',16)+'</button></article>';
@@ -190,7 +190,7 @@ function premiumView(){
  const active=data.premium?.active,enabled=data.premium?.checkout_enabled&&price()&&!data.checkoutBusy;
  const rows=items=>'<ul class="cp-plan-list">'+items.map(v=>'<li>'+ico('check',17)+'<span>'+v+'</span></li>').join('')+'</ul>';
  return '<section class="cp-plan-page"><div class="cp-plan-heading"><h2>Escolha seu plano</h2><p>Dois planos. A mesma comunidade.</p></div><div class="cp-plan-grid">'+
- '<article class="cp-plan"><span class="cp-plan-eyebrow">NORMAL</span><h3>Gratuito</h3><div class="cp-plan-price">R$ 0</div><p>Conheça pessoas e participe da comunidade.</p>'+rows(['Encontros por texto e vídeo','Conversas, posts, stories, salas e lives','Banner de perfil com foto','Temas claro, escuro e cor personalizada'])+
+ '<article class="cp-plan"><span class="cp-plan-eyebrow">NORMAL</span><h3>Gratuito</h3><div class="cp-plan-price">R$ 0</div><p>Conheça pessoas e participe da comunidade.</p>'+rows(['Encontros por texto e vídeo','Conversas, posts, salas e lives','Banner de perfil com foto','Temas claro, escuro e cor personalizada'])+
  '<div class="cp-plan-state">'+(active?'Incluído no Premium':ico('check',17)+' Seu plano atual')+'</div></article>'+
  '<article class="cp-plan cp-plan-paid"><span class="cp-plan-eyebrow">'+ico('crown',18)+' PREMIUM</span><h3>Mais possibilidades</h3><div class="cp-plan-price">'+(window.entreRecurring?.price?.()||'Valor a definir')+'<small> / mês</small></div><p>Todos os recursos do Normal, mais:</p>'+rows(['Banner animado em GIF','Filtro de gênero no Ao vivo','Selo de destaque no perfil','Atendimento prioritário pelo WhatsApp'])+
  (active?'<div class="cp-plan-state">'+ico('check',17)+' Premium ativo'+(data.premium.paid_until?' · até '+new Date(data.premium.paid_until).toLocaleDateString('pt-BR'):'')+'</div><button type="button" class="ui-btn btn-outline" data-action="premiumWhatsapp">'+ico('chat',17)+' WhatsApp prioritário</button>':'')+
@@ -390,7 +390,7 @@ async function submitSupport(form){
  try{window.location.assign(redirect)}catch(_){/* The explicit link remains visible for browsers that block automatic handoff. */}
 }
 async function enter(view){
- if(view==='posts')await Promise.allSettled([loadPosts(),window.entreStories?.refresh?.()]);
+ if(view==='posts')await loadPosts();
  if(view==='premium'){await refreshPremium();await window.entreRecurring?.loadStatus?.();renderView();}
  if(view==='support'){await Promise.all([loadSupport(),refreshPremium()]);renderView();}
 }
