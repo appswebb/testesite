@@ -96,8 +96,8 @@ function card(l){
  '<div class="live-visual-gradient" aria-hidden="true"></div>'+
  '</div><div class="live-visual-details"><strong>'+esc(l.title)+'</strong>'+
  '<span class="live-visual-byline">'+
- (avatar?'<img src="'+esc(avatar)+'" alt="" loading="lazy">':'<b aria-hidden="true">'+hostInitial+'</b>')+
- '<span>'+esc(l.host_name||'Pessoa')+(l.guest_name?' + '+esc(l.guest_name):'')+'</span></span>'+
+ (avatar?'<img'+profileTarget(l.host_id,l.host_username)+' src="'+esc(avatar)+'" alt="" loading="lazy">':'<b'+profileTarget(l.host_id,l.host_username)+'>'+hostInitial+'</b>')+
+ '<span>'+profileName(l.host_id,l.host_name,l.host_username)+(l.guest_name?' + '+profileName(l.guest_id,l.guest_name,l.guest_username):'')+'</span></span>'+
  (region?'<small>'+ico('compass',13)+' '+esc(region)+'</small>':'')+
  '<span class="live-visual-watch">'+(host?'Minha live':guest?'Entrar como convidado':'Assistir')+' '+ico('arrow',15)+'</span>'+
  '</div></button></article>';
@@ -106,7 +106,7 @@ function viewer(){
  if(!s.active)return '';
  const l=s.active,role=s.localRole||'viewer',publisher=role==='host'||role==='guest';
  const source=s.rows.find(x=>x.id===l.id)||l;
- return '<section class="camera-live-stage"><header class="camera-live-stage-head"><div><span class="camera-live-pill">● AO VIVO · '+(publisher?'CÂMERA':'ASSISTINDO')+'</span><h3>'+esc(source.title||'Live')+'</h3><p>'+esc(source.host_name||'Pessoa')+(source.guest_name?' · com '+esc(source.guest_name):'')+'</p></div><button type="button" data-live-action="leave" class="camera-live-back">'+ico('close',18)+' Sair</button></header>'+
+ return '<section class="camera-live-stage"><header class="camera-live-stage-head"><div><span class="camera-live-pill">● AO VIVO · '+(publisher?'CÂMERA':'ASSISTINDO')+'</span><h3>'+esc(source.title||'Live')+'</h3><p>'+profileName(source.host_id,source.host_name,source.host_username)+(source.guest_name?' · com '+profileName(source.guest_id,source.guest_name,source.guest_username):'')+'</p></div><button type="button" data-live-action="leave" class="camera-live-back">'+ico('close',18)+' Sair</button></header>'+
  '<div class="camera-live-grid" id="cameraLiveVideos"><div class="camera-live-wait"><span>✳</span><p>'+(s.joining?'Conectando ao vídeo…':'Aguardando a câmera do apresentador…')+'</p></div></div>'+
  '<div class="camera-live-tools">'+(publisher?'<button type="button" data-live-action="mic" class="'+(s.mic?'':'muted')+'">'+ico('mic',17)+' '+(s.mic?'Microfone':'Microfone desligado')+'</button><button type="button" data-live-action="camera" class="'+(s.camera?'':'muted')+'">'+ico('camera',17)+' '+(s.camera?'Câmera':'Câmera desligada')+'</button>':'')+
  (role==='host'&&source.guest_requested_by&&!source.guest_id?'<div class="camera-live-invite"><strong>Alguém quer participar da transmissão</strong><button type="button" data-live-action="approve">Aceitar</button><button type="button" data-live-action="reject">Recusar</button></div>':'')+
