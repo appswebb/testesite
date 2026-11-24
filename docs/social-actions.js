@@ -2,7 +2,7 @@
 (function(){
 const api=window.entreSocial;
 let profileSequence=0,returnFocus=null;
-async function openPerson(id,handle=''){
+async function openPerson(id,handle='',name=''){
  if(!state.session?.user||!state.profile||maintenanceIsActive()||state.suspension)return;
  if(window.entreSocial?.requiredPoll?.()&&!activeEncounter()){toast('Primeiro, registre seu voto na enquete oficial.',true);return;}
  const uid=state.session.user.id;
@@ -12,11 +12,13 @@ async function openPerson(id,handle=''){
   let person=null;
   if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id||'')){
    const {data,error}=await db.from('entre_profiles').select('id,username,display_name,age,bio,gender,avatar_path,avatar_uploaded_at').eq('id',id).maybeSingle();
-   if(error)throw error;person=data;
-  }else if(/^[a-z][a-z0-9_]{2,19}$/i.test(handle)){
-   const rows=await api.rpc('entre_user_search',{_query:handle.toLowerCase()});
-   person=(Array.isArray(rows)?rows:[]).find(p=>p.username===handle.toLowerCase());
+   if(!error)person=data;
   }
+  if(!person&&/^[a-z][a-z0-9_]{2,19}$/i.test(handle)){
+   const rows=await api.rpc('entre_user_search',{_query:handle.toLowerCase()});
+   person=(Array.isArray(rows)?rows:[]).find(p=>p.username===handle.toLowerCase()&&(!id||p.id===id));
+  }
+  if(!person&&id&&name.trim().length>=2){const rows=await api.rpc('entre_user_search',{_query:name.trim().slice(0,40)});person=(Array.isArray(rows)?rows:[]).find(p=>p.id===id);}
   if(request!==profileSequence||state.session?.user?.id!==uid)return;
   if(!person){toast('O perfil não está disponível.',true);return;}
   await Promise.allSettled([signAvatar(person),window.entreExtras?.loadBadges?.([person])]);
@@ -33,19 +35,20 @@ function target(event){
  const el=event.target.closest?.('[data-cp-user],[data-avatar-id]');
  if(!el||el.closest('.cp-visitor,.pi-avatar-wrap,.cn-account-trigger,.cn-side-profile,.cn-account-head,.cn-dock,.auth-shell,.avatar-uploader,.crop-dialog'))return null;
  const id=el.dataset.cpUser||el.dataset.avatarId||'',handle=el.dataset.cpHandle||'';
- return id||handle?{el,id,handle}:null;
+ const name=el.classList.contains('cp-person-link')?el.textContent.trim():el.querySelector('img')?.alt?.replace(/^Foto de /,'')||'';
+ return id||handle?{el,id,handle,name}:null;
 }
 document.addEventListener('click',event=>{
  const p=target(event);if(!p)return;
- event.preventDefault();event.stopImmediatePropagation();void openPerson(p.id,p.handle);
+ event.preventDefault();event.stopImmediatePropagation();void openPerson(p.id,p.handle,p.name);
 },true);
 document.addEventListener('keydown',event=>{
  if(!['Enter',' '].includes(event.key)||event.repeat)return;
  const p=target(event);if(!p||p.el!==event.target)return;
- event.preventDefault();event.stopImmediatePropagation();void openPerson(p.id,p.handle);
+ event.preventDefault();event.stopImmediatePropagation();void openPerson(p.id,p.handle,p.name);
 },true);
 function decorate(){
- document.querySelectorAll('#app [data-cp-user],#app [data-avatar-id]').forEach(el=>{
+ document.querySelectorAll('#app [data-cp-user],#app [data-avatar-id],#commentsOverlay [data-cp-user]').forEach(el=>{
   if(!target({target:el}))return;
   el.classList.add('cp-profile-target');
   if(!el.closest('button,a,[role=button]')){el.tabIndex=0;el.setAttribute('role','link');el.setAttribute('aria-label','Abrir perfil'+(el.classList.contains('cp-person-link')?' de '+el.textContent.trim():''));}
