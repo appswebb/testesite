@@ -1,0 +1,19 @@
+/* CONNECT feedback: shared by app and administrative console. */
+html[data-theme] #toast{
+ position:fixed!important;inset: max(12px,env(safe-area-inset-top,0px)) auto auto 50%!important;
+ transform:translate(-50%,-8px)!important;display:flex!important;align-items:center!important;gap:10px!important;
+ width:max-content!important;max-width:min(400px,calc(100vw - 24px))!important;min-width:0!important;
+ box-sizing:border-box!important;margin:0!important;padding:11px 14px!important;
+ background:var(--ui-panel,#fff)!important;color:var(--ui-text,#171717)!important;
+ border:1px solid var(--ui-line,#dedee2)!important;border-radius:14px!important;
+ font:600 13px/1.45 Inter,system-ui,sans-serif!important;text-align:left!important;
+ box-shadow:0 8px 28px #0002!important;z-index:120000!important;opacity:0!important;visibility:hidden!important;
+ pointer-events:none!important;transition:opacity .18s ease,transform .18s ease,visibility .18s!important
+}
+html[data-theme] #toast.show{opacity:1!important;visibility:visible!important;transform:translate(-50%,0)!important}
+html[data-theme] #toast .cp-notice-icon{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border:1px solid var(--ui-line);border-radius:50%;background:var(--ui-panel-alt);color:var(--ui-text)}
+html[data-theme] #toast .cp-notice-icon svg{width:17px;height:17px}
+html[data-theme] #toast .cp-notice-text{min-width:0;overflow-wrap:anywhere}
+html[data-theme] #toast.is-error .cp-notice-icon,html[data-theme] #toast.error .cp-notice-icon{color:var(--ui-danger,#b83243)}
+html[data-theme] :is(.form-success,#form-success,.success-message,.success-box){background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important;box-shadow:none!important;border-radius:12px!important}
+@media(prefers-reduced-motion:reduce){html[data-theme] #toast{transition:none!important}}
