@@ -969,13 +969,13 @@ function maintenanceView(){
  '<div class="cp-maint-content"><span class="cp-service-label"><span class="cp-maint-dot"></span><span id="maintenance-state-label">'+(preview?'PRÉVIA DA TELA':known?'ATUALIZAÇÃO EM ANDAMENTO':'VERIFICANDO STATUS')+'</span></span>'+
  '<h1 id="maintenance-title">'+title+'</h1><p id="maintenance-message">'+message+'</p>'+
  '<div class="cp-service-status cp-maint-status" role="status" aria-live="polite"><span class="cp-maint-status-icon">'+ico('refresh',19)+'</span><div><strong id="maintenance-status-heading">Verificação automática</strong><small id="maintenance-status-text">Assim que o acesso for liberado, você voltará automaticamente.</small></div><span class="cp-maint-live-indicator" aria-hidden="true"><i></i><i></i><i></i></span></div>'+
- '<div class="cp-maint-actions"><button type="button" data-action="maintenanceRefresh" class="ui-btn btn-dark cp-service-btn">'+ico('refresh',17)+' <span>Verificar agora</span></button><span id="maintenance-last-check" class="cp-maint-last">'+(preview?'Modo de prévia':'Aguardando verificação')+'</span></div></div></section>'+
+ '<div class="cp-maint-actions"><button type="button" data-action="maintenanceRefresh" class="ui-btn btn-dark cp-service-btn">'+ico('refresh',17)+' <span>Verificar agora</span></button><span id="maintenance-last-check" class="cp-maint-last">'+(preview?'Modo de prévia':'Aguardando verificação')+'</span>'+(preview?'<a class="cp-service-link" href="./">Sair da prévia</a>':'')+'</div></div></section>'+
  '<footer class="cp-maint-footer"><span>CONNECT · Até logo.</span><a class="cp-service-link" href="./privacidade.html">Privacidade</a></footer></main>';
 }
 function paintMaintenanceStatus(status,manual=false){
  const root=document.getElementById('maintenance-screen');if(!root)return;
  const btn=root.querySelector('[data-action="maintenanceRefresh"]'),label=document.getElementById('maintenance-state-label'),head=document.getElementById('maintenance-status-heading'),line=document.getElementById('maintenance-status-text'),last=document.getElementById('maintenance-last-check');
- if(btn){btn.disabled=status==='checking'||status==='released';btn.setAttribute('aria-busy',String(status==='checking'));const span=btn.querySelector('span');if(span)span.textContent=status==='checking'?'Verificando…':'Verificar agora';}
+ if(btn){btn.disabled=status==='checking'||status==='released';btn.setAttribute('aria-busy',String(status==='checking'));const span=btn.querySelector('span');if(span)span.textContent=status==='checking'?'Verificando…':maintenanceIsPreview()?'Verificar e sair':'Verificar agora';}
  if(status==='checking'){root.dataset.check='checking';if(manual&&line)line.textContent='Consultando o status da plataforma…';return;}
  root.dataset.check=status;
  if(status==='released'){if(label)label.textContent='ATUALIZAÇÃO LIBERADA';if(head)head.textContent='Tudo pronto';if(line)line.textContent='Abrindo o CONNECT automaticamente…';return;}
@@ -985,57 +985,90 @@ function paintMaintenanceStatus(status,manual=false){
  if(line)line.textContent=maintenanceIsPreview()?'Esta é uma prévia da tela de atualização.':manual?'A atualização continua ativa. O acesso será liberado automaticamente.':'Assim que o acesso for liberado, você voltará automaticamente.';
  if(last)last.textContent='Verificado às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 }
-let maintenancePolling=false;
-async function maintenanceCheck(manual=false){
- if(maintenancePolling)return;
- maintenancePolling=true;
- paintMaintenanceStatus('checking',manual);
+let maintenancePolling=false,maintenanceQueued=false,maintenanceTimer=0,maintenanceLeaving=false,maintenanceInitial=null,maintenanceManualQueued=false;
+function normalizeMaintenancePreview(settings){
+ if(settings?.maintenance_enabled===true&&maintenanceIsPreview()){
+  const target=new URL(location.href);target.searchParams.delete('maintenance_preview');
+  history.replaceState(history.state,'',target.href);
+ }
+}
+function leaveMaintenance(){
+ if(maintenanceLeaving)return;
+ maintenanceLeaving=true;clearTimeout(maintenanceTimer);
+ paintMaintenanceStatus('released');
+ const target=new URL(location.href);
+ target.searchParams.delete('maintenance_preview');
+ target.searchParams.set('released',String(Date.now()));
+ location.replace(target.href);
+}
+async function readMaintenanceSettings(){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),5000);
  try{
-  const previous=maintenanceIsActive();
-  const response=await db.rpc('entre_public_settings');
+  const request=db.rpc('entre_public_settings');
+  const response=await (typeof request.abortSignal==='function'?request.abortSignal(controller.signal):request);
   if(response.error)throw response.error;
-  if(!response.data)throw Error('Status indisponível');
-  const before=state.siteSettings;
-  state.siteSettings=response.data;
-  const active=maintenanceIsActive();
-  if(state.session&&!active)await checkSuspension();
-  if(!active&&!state.suspension)considerPublicAnnouncement(response.data);
-  if(previous&&!active&&!maintenanceIsPreview()){
-   paintMaintenanceStatus('released');
-   const target=new URL(window.location.href);
-   target.searchParams.delete('maintenance_preview');
-   target.searchParams.set('released',new Date(response.data.release_at||Date.now()).getTime().toString());
-   setTimeout(()=>window.location.replace(target.href),800);
-   return;
+  if(typeof response.data?.maintenance_enabled!=='boolean')throw Error('Status indisponível');
+  return response.data;
+ }finally{clearTimeout(timer);}
+}
+function scheduleMaintenanceCheck(){
+ clearTimeout(maintenanceTimer);if(maintenanceLeaving||document.hidden)return;
+ maintenanceTimer=setTimeout(()=>void maintenanceCheck(false),document.getElementById('maintenance-screen')?2000:15000);
+}
+async function maintenanceCheck(manual=false){
+ if(maintenanceLeaving)return;
+ if(maintenancePolling||maintenanceInitial){maintenanceQueued=true;maintenanceManualQueued=maintenanceManualQueued||manual;return;}
+ maintenancePolling=true;paintMaintenanceStatus('checking',manual);
+ try{
+  const previous=maintenanceIsActive(),before=state.siteSettings;
+  const settings=await readMaintenanceSettings();
+  state.siteSettings=settings;normalizeMaintenancePreview(settings);
+  const screen=document.getElementById('maintenance-screen');
+  if(settings.maintenance_enabled===false&&screen&&(!maintenanceIsPreview()||manual)){
+   leaveMaintenance();return;
   }
+  const active=maintenanceIsActive();
   if(active&&!previous){
    window.entreVideo?.cleanup?.();state.searching=false;clearSearchTimer();
-   if(state.channel){db.removeChannel(state.channel);state.channel=null;}
+   if(state.channel){void db.removeChannel(state.channel);state.channel=null;}
    state.pair=null;state.peer=null;state.modal=null;
    render();paintMaintenanceStatus('active');
   }else if(active){
    const title=document.getElementById('maintenance-title'),msg=document.getElementById('maintenance-message');
-   if(title)title.textContent=response.data.maintenance_title||'Tem coisa boa chegando.';
-   if(msg)msg.textContent=response.data.maintenance_message||'Uma nova versão está chegando.';
+   if(title)title.textContent=settings.maintenance_title||'Tem coisa boa chegando.';
+   if(msg)msg.textContent=settings.maintenance_message||'Uma nova versão está chegando.';
    paintMaintenanceStatus('active',manual);
-  }else if(before?.maintenance_enabled!==response.data.maintenance_enabled){render();}else if(state.view==='avisos'&&before?.announcement_version!==response.data.announcement_version){renderView();}
- }catch(err){
-  paintMaintenanceStatus('error',manual);
-  console.warn('Maintenance status check failed',err);
- }finally{maintenancePolling=false;}
+  }else{
+   if(state.session)await checkSuspension();
+   if(!state.suspension)considerPublicAnnouncement(settings);
+   if(state.view==='avisos'&&before?.announcement_version!==settings.announcement_version)renderView();
+  }
+ }catch(err){paintMaintenanceStatus('error',manual);console.warn('Maintenance status check failed',err);}
+ finally{
+  maintenancePolling=false;
+  if(maintenanceQueued&&!maintenanceLeaving){const manualNext=maintenanceManualQueued;maintenanceQueued=false;maintenanceManualQueued=false;clearTimeout(maintenanceTimer);maintenanceTimer=setTimeout(()=>void maintenanceCheck(manualNext),50);}
+  else scheduleMaintenanceCheck();
+ }
 }
-
-async function loadSiteSettings(){try{const {data,error}=await db.rpc('entre_public_settings');if(!error&&data)state.siteSettings=data}catch(e){console.warn('Public settings unavailable')}}
+async function loadSiteSettings(){
+ maintenanceInitial=readMaintenanceSettings();
+ try{state.siteSettings=await maintenanceInitial;normalizeMaintenancePreview(state.siteSettings);}
+ catch(e){console.warn('Public settings unavailable');}
+ finally{maintenanceInitial=null;}
+}
 async function boot(){
  const recovery=window.entreEmailAuth.isRecovery();
  state.signup=null;sessionStorage.removeItem('entre.pendingProfile');applyMotion();
  try{
   await loadSiteSettings();
-  setInterval(()=>{if(!document.hidden)void maintenanceCheck(false)},15000);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(maintenanceTimer);else void maintenanceCheck(false);});
+  window.addEventListener('online',()=>void maintenanceCheck(false));
+  window.addEventListener('pageshow',e=>{if(e.persisted)void maintenanceCheck(false);});
   if(maintenanceIsActive()){
-   render();
+   render();scheduleMaintenanceCheck();
    if(!recovery)return;
   }
+  scheduleMaintenanceCheck();
   const {data,error}=await db.auth.getSession();if(error)throw error;
   if(data.session){
    // Previously removed Google accounts may still have tokens on this device.

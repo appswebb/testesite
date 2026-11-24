@@ -50,3 +50,5 @@ body:not(.motion-off) #maintenance-screen .cp-maint-live-indicator i{animation:c
 @media(max-height:530px) and (orientation:landscape){html[data-theme] #app #maintenance-screen.cp-maint-refined{padding:10px 18px;gap:10px}#app #maintenance-screen.cp-maint-refined .cp-maint-layout{grid-template-columns:minmax(0,.7fr) minmax(0,1fr);padding:14px!important;gap:20px}#app #maintenance-screen.cp-maint-refined .cp-maint-art{max-height:240px;min-height:130px;aspect-ratio:1.05;height:auto}#app #maintenance-screen.cp-maint-refined h1{font-size:27px!important}#app #maintenance-screen.cp-maint-refined .cp-maint-content{gap:7px}}
 @media(prefers-reduced-motion:reduce){body:not(.motion-force) #maintenance-screen *,body:not(.motion-force) #maintenance-screen *:before,body:not(.motion-force) #maintenance-screen *:after{animation:none!important;transition:none!important}}
 body.motion-off #maintenance-screen *{animation:none!important;transition:none!important}
+
+#app #maintenance-screen.cp-maint-refined .cp-maint-actions .cp-service-link{font-size:12px;color:var(--cm-muted);text-decoration:underline;text-underline-offset:3px}
