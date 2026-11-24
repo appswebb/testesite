@@ -102,6 +102,32 @@ function card(l){
  '<span class="live-visual-watch">'+(host?'Minha live':guest?'Entrar como convidado':'Assistir')+' '+ico('arrow',15)+'</span>'+
  '</div></button></article>';
 }
+const interaction={comments:[],hearts:0,comments_enabled:true,draft:'',timer:null,busy:false,ready:false,error:false};
+const liveNumber=n=>Number(n||0).toLocaleString('pt-BR');
+function liveMessages(){
+ return interaction.comments.length?interaction.comments.map(c=>'<div class="connect-live-comment"><span><b>'+esc(c.name)+'</b> '+esc(c.body)+'</span>'+(c.can_delete?'<button type="button" data-live-action="comment-delete" data-id="'+esc(c.id)+'" aria-label="Excluir comentário">×</button>':'')+'</div>').join(''):'<p class="connect-live-hint">'+(interaction.error?'Interações temporariamente indisponíveis.':interaction.ready?'Seja a primeira pessoa a comentar.':'Carregando comentários…')+'</p>';
+}
+function liveSocial(){
+ return '<section class="connect-live-social" aria-label="Interações da live"><div class="connect-live-meta"><span id="connectLivePeople">'+liveNumber(s.room?1+s.room.remoteParticipants.size:0)+' conectados</span><span id="connectLiveHearts">♥ '+liveNumber(interaction.hearts)+'</span><span id="connectLiveClock"></span></div><div id="connectLiveMessages" class="connect-live-messages" role="log" aria-label="Comentários">'+liveMessages()+'</div><form id="connectLiveCommentForm"><input aria-label="Comentar na live" name="comment" maxlength="250" autocomplete="off" placeholder="'+(interaction.comments_enabled?'Comentar…':'Comentários desativados')+'" value="'+esc(interaction.draft)+'" '+(!interaction.comments_enabled?'disabled':'')+'><button type="submit" aria-label="Enviar comentário" '+(!interaction.comments_enabled?'disabled':'')+'>Enviar</button><button type="button" class="connect-live-heart" data-live-action="heart" aria-label="Curtir live">♥</button></form>'+(s.localRole==='host'?'<button type="button" class="connect-live-moderate" data-live-action="comments-toggle">'+(interaction.comments_enabled?'Pausar comentários':'Liberar comentários')+'</button>':'')+(s.localRole==='viewer'&&s.rows.some(x=>x.id!==s.active?.id)?'<button type="button" class="connect-live-next" data-live-action="next">Próxima live →</button>':'')+'</section>';
+}
+function paintInteractions(){
+ const list=document.getElementById('connectLiveMessages');
+ if(list){const nearBottom=list.scrollHeight-list.scrollTop-list.clientHeight<48;const html=liveMessages();if(list.innerHTML!==html){list.innerHTML=html;if(nearBottom)list.scrollTop=list.scrollHeight;}}
+ const hearts=document.getElementById('connectLiveHearts');if(hearts)hearts.textContent='♥ '+liveNumber(interaction.hearts);
+ const people=document.getElementById('connectLivePeople');if(people)people.textContent=liveNumber(s.room?1+s.room.remoteParticipants.size:0)+' conectados';
+ const clock=document.getElementById('connectLiveClock');if(clock&&s.active?.started_at){const sec=Math.max(0,Math.floor((Date.now()-Date.parse(s.active.started_at))/1000));if(Number.isFinite(sec))clock.textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');}
+ const form=document.getElementById('connectLiveCommentForm');if(form){const input=form.elements.namedItem('comment');input.disabled=!interaction.comments_enabled;input.placeholder=interaction.comments_enabled?'Comentar…':'Comentários desativados';form.querySelector('[type=submit]').disabled=!interaction.comments_enabled;}
+ const moderate=document.querySelector('[data-live-action="comments-toggle"]');if(moderate)moderate.textContent=interaction.comments_enabled?'Pausar comentários':'Liberar comentários';
+}
+async function interact(type='read',body=null,id=null){
+ const live=s.active?.id;if(!live||interaction.busy)return false;
+ interaction.busy=true;
+ try{const {data,error}=await db.rpc('connect_live_interact',{_live:live,_action:type,_body:body,_comment:id});if(error)throw error;if(s.active?.id!==live)return false;interaction.comments=Array.isArray(data?.comments)?data.comments:[];interaction.hearts=data?.hearts||0;interaction.comments_enabled=data?.comments_enabled!==false;interaction.ready=true;interaction.error=false;paintInteractions();return true;}
+ catch(error){if(s.active?.id===live){interaction.error=true;paintInteractions();if(type!=='read')toast(infoError(error),true);}return false;}
+ finally{interaction.busy=false;}
+}
+function stopInteractions(){clearInterval(interaction.timer);interaction.timer=null;interaction.comments=[];interaction.hearts=0;interaction.comments_enabled=true;interaction.draft='';interaction.ready=false;interaction.error=false;}
+function startInteractions(){clearInterval(interaction.timer);void interact();interaction.timer=setInterval(()=>{if(s.active&&!document.hidden){paintInteractions();void interact();}},3000);}
 function viewer(){
  if(!s.active)return '';
  const l=s.active,role=s.localRole||'viewer',publisher=role==='host'||role==='guest';
@@ -112,7 +138,7 @@ function viewer(){
  (role==='host'&&source.guest_requested_by&&!source.guest_id?'<div class="camera-live-invite"><strong>Alguém quer participar da transmissão</strong><button type="button" data-live-action="approve">Aceitar</button><button type="button" data-live-action="reject">Recusar</button></div>':'')+
  (role==='viewer'&&!source.guest_id?'<button type="button" data-live-action="request" '+(source.requested?'disabled':'')+'>'+ico('users',17)+' '+(source.requested?'Pedido enviado':'Pedir para entrar com câmera')+'</button>':'')+
  (role==='host'?'<button type="button" class="camera-live-danger" data-live-action="end">Encerrar live</button>':'')+'</div>'+
- '<p class="camera-live-security">Só apresentador e convidado compartilham câmera e microfone.</p></section>';
+ liveSocial()+'<p class="camera-live-security">Só apresentador e convidado compartilham câmera e microfone.</p></section>';
 }
 function discoveryResults(){
  const rows=filtered();
@@ -184,7 +210,7 @@ async function refresh(paint=true){
 }
 function attach(participant,track,unique){
  const root=document.getElementById('cameraLiveVideos');if(!root||!track)return;
- const id=unique||participant.identity+'-'+track.kind;
+ const id=participant.identity;
  let frame=root.querySelector('[data-live-track="'+id+'"]');
  if(!frame){
   frame=document.createElement('div');frame.className='camera-live-video';frame.dataset.liveTrack=id;
@@ -192,7 +218,7 @@ function attach(participant,track,unique){
   root.querySelector('.camera-live-wait')?.remove();
   root.appendChild(frame);
  }
- frame.querySelector('.camera-live-video-name').textContent=participant.name||'Pessoa';
+ frame.querySelector('.camera-live-video-name').textContent=participant.identity===s.active?.host_id?(s.active.host_name||'Anfitrião'):participant.identity===s.active?.guest_id?(s.active.guest_name||'Convidado'):(participant.name||'Pessoa');
  const tag=track.kind==='video'?'video':'audio';
  const existing=frame.querySelector(tag);
  // Polling or re-rendering must not attach a second audio element to the same
@@ -228,15 +254,16 @@ async function join(id){
   room.on(lk.RoomEvent.TrackSubscribed,(track,publication,participant)=>{if(s.room===room)attach(participant,track);});
   room.on(lk.RoomEvent.TrackUnsubscribed,(track,publication,participant)=>{
    track.detach().forEach(el=>el.remove());
-   document.querySelectorAll('[data-live-track="'+participant.identity+'-'+track.kind+'"]').forEach(x=>x.remove());
+   const frame=document.querySelector('[data-live-track="'+participant.identity+'"]');if(frame&&!frame.querySelector('video,audio'))frame.remove();
   });
   room.on(lk.RoomEvent.ParticipantDisconnected,participant=>{
-   document.querySelectorAll('[data-live-track^="'+participant.identity+'-"]').forEach(el=>el.remove());
+   document.querySelectorAll('[data-live-track="'+participant.identity+'"]').forEach(el=>el.remove());paintInteractions();
   });
+  room.on(lk.RoomEvent.ParticipantConnected,paintInteractions);
   room.on(lk.RoomEvent.Disconnected,()=>{if(s.room===room){void leave(false);toast('Conexão da live encerrada.',false,'end');}});
   await room.connect(data.url,data.token,{autoSubscribe:true});
   if(data.role==='host'||data.role==='guest')await room.localParticipant.enableCameraAndMicrophone();window.connectSound?.play?.('live');
-  if(state.view==='lives'){renderView();attachAll();}
+  if(state.view==='lives'){renderView();attachAll();}startInteractions();
  }catch(e){
   const msg=e?.message||'Falha ao conectar à live.';
   await disconnect();s.active=null;s.localRole=null;
@@ -245,7 +272,7 @@ async function join(id){
  }finally{s.joining=false;}
 }
 async function disconnect(){
- const r=s.room;s.room=null;
+ stopInteractions();const r=s.room;s.room=null;
  if(r){try{r.removeAllListeners();await r.disconnect();}catch(e){}}
 }
 async function leave(remote=true){
@@ -284,6 +311,10 @@ async function start(form){
  }finally{if(btn?.isConnected)btn.disabled=false;}
 }
 async function action(type,button){
+ if(type==='heart'){await interact('heart');return;}
+ if(type==='comment-delete'){if(confirm('Excluir este comentário?'))await interact('delete',null,button.dataset.id);return;}
+ if(type==='comments-toggle'){await interact(interaction.comments_enabled?'close':'open');return;}
+ if(type==='next'&&s.localRole==='viewer'){const i=s.rows.findIndex(x=>x.id===s.active?.id);const next=s.rows[(i+1)%s.rows.length];if(next&&next.id!==s.active?.id)await join(next.id);return;}
  if(type==='refresh'){await refresh();return;}
  if(type==='create'){s.showCreate=!s.showCreate;if(!s.showCreate)clearPreview();if(state.view==='lives'){renderView();if(s.showCreate)document.getElementById('cameraLiveTitle')?.focus();}return;}
  if(type==='region'){s.showRegion=!s.showRegion;if(state.view==='lives')renderView();return;}
@@ -328,6 +359,8 @@ document.addEventListener('click',event=>{
  const button=event.target.closest('[data-live-action]');if(!button)return;
  void action(button.dataset.liveAction,button).catch(e=>toast(infoError(e),true));
 });
+document.addEventListener('input',event=>{if(event.target?.closest?.('#connectLiveCommentForm'))interaction.draft=event.target.value;});
+document.addEventListener('submit',async event=>{if(event.target?.id!=='connectLiveCommentForm')return;event.preventDefault();const input=event.target.elements.namedItem('comment'),value=input.value.trim();if(!value||interaction.busy)return;const live=s.active?.id;if(await interact('comment',value)&&live===s.active?.id){if(interaction.draft.trim()===value)interaction.draft='';if(input.isConnected&&input.value.trim()===value)input.value='';}});
 function beginPolling(){
  if(s.timer)clearInterval(s.timer);
  s.timer=setInterval(()=>{if(state.view==='lives'&&!document.hidden)void refresh(!s.active);},8000);
