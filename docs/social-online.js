@@ -3,8 +3,8 @@
 (function(){
 const api=window.entreSocial,s=api.data;
 function personCard(p){
- const follow=p.follow_status,allowed=p.allow_requests||follow==='accepted'||p.follower_status==='accepted';
- return '<article class="online-person '+(window.entreExtras?.isPremium?.(p.id)?'premium-surface':'')+'"><div class="online-person-head"><span class="person-online-indicator"></span> ONLINE AGORA</div>'+
+ const recent=Date.now()-new Date(p.last_seen).getTime()>90000;const follow=p.follow_status,allowed=p.allow_requests||follow==='accepted'||p.follower_status==='accepted';
+ return '<article class="online-person '+(window.entreExtras?.isPremium?.(p.id)?'premium-surface':'')+'"><div class="online-person-head"><span class="person-online-indicator '+(recent?'is-reconnecting':'')+'"></span> '+(recent?'ATIVO RECENTEMENTE':'ONLINE AGORA')+'</div>'+
  '<div class="online-person-content">'+avatar(p,'large')+'<div><h3>'+profileName(p.id,p.display_name,p.username)+(window.entreExtras?.badge?.(p)||'')+', '+(Number(p.age)>0?Number(p.age):'')+'</h3><small>'+esc(genders[p.gender]||'Pessoa')+'</small><small class="person-handle">@'+esc(p.username||'')+'</small></div></div>'+
  '<p class="online-person-bio">'+esc(p.bio||'Sem biografia.')+'</p>'+
  '<div class="online-person-actions">'+(window.connectRelationships?.followButton?.(p.id,follow)||'')+
@@ -19,10 +19,10 @@ function inbox(){
 }
 function onlineView(){
  const v=Boolean(s.presence.visible),d=Boolean(s.presence.allow_requests);
- return '<div class="cn-online-top"><span><i class="cn-online-dot"></i> Pessoas online</span><details class="cn-online-filter" '+(s.onlineFilterOpen?'open':'')+'><summary>'+ico('sliders',18)+' Filtros</summary><div class="cn-online-filter-panel"><div class="online-controls"><div><strong>Meu perfil na lista</strong></div><button class="social-switch '+(v?'is-on':'')+'" type="button" role="switch" aria-checked="'+v+'" data-action="onlineVisibility">'+(v?'Visível':'Invisível')+'</button></div><div class="online-controls"><div><strong>Conversas de desconhecidos</strong></div><button class="social-switch '+(d?'is-on':'')+'" type="button" role="switch" aria-checked="'+d+'" data-action="onlineDirect">'+(d?'Liberadas':'Bloqueadas')+'</button></div></div></details></div>'+
+ return '<div class="cn-online-top"><span><i class="cn-online-dot"></i> Pessoas online <strong class="cp-online-total" data-connect-online-count>—</strong></span><details class="cn-online-filter" '+(s.onlineFilterOpen?'open':'')+'><summary>'+ico('sliders',18)+' Filtros</summary><div class="cn-online-filter-panel"><div class="online-controls"><div><strong>Meu perfil na lista</strong></div><button class="social-switch '+(v?'is-on':'')+'" type="button" role="switch" aria-checked="'+v+'" data-action="onlineVisibility">'+(v?'Visível':'Invisível')+'</button></div><div class="online-controls"><div><strong>Conversas de desconhecidos</strong></div><button class="social-switch '+(d?'is-on':'')+'" type="button" role="switch" aria-checked="'+d+'" data-action="onlineDirect">'+(d?'Liberadas':'Bloqueadas')+'</button></div></div></details></div>'+
  inbox()+
  (s.online.length?'<div class="online-card-grid">'+s.online.map(personCard).join('')+'</div>':
- '<div class="social-empty">'+ico('users',30)+'<h3>'+(s.onlineError?'Não foi possível carregar os perfis.':s.loaded?'Ainda não há perfis visíveis.':'Carregando pessoas…')+'</h3><p>A lista mostra apenas perfis visíveis e ativos.</p><button type="button" class="ui-btn btn-dark btn-sm" data-action="nav" data-view="connect">Encontrar alguém ao vivo</button></div>')+
+ '<div class="social-empty">'+ico('users',30)+'<h3>'+(s.onlineError?'Não foi possível carregar os perfis.':s.loaded?'Ainda não há perfis visíveis.':'Carregando pessoas…')+'</h3><p>A lista mostra perfis visíveis ativos ou em reconexão recente.</p><button type="button" class="ui-btn btn-dark btn-sm" data-action="nav" data-view="connect">Encontrar alguém ao vivo</button></div>')+
  (s.hasMore?'<div class="social-more"><button class="ui-btn btn-outline" data-action="onlineMore">Carregar mais 12 pessoas</button></div>':'')+
  (s.offset>0?'<div class="social-more"><button class="ui-btn btn-quiet" data-action="onlineRestart">Voltar ao início</button></div>':'')+
  '<div id="onlineScrollAnchor" aria-hidden="true"></div>';
