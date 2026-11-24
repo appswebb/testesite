@@ -31,20 +31,19 @@ test('filters, thumbnail uploads and start are wired to database with limited si
  assert.match(js,/cacheControl:'300'/);
  const html=read('index.html');
  assert.match(html,/live-explore.css/);
- assert.match(html,/camera-lives.js\\?v=20261123-visual-gallery-v1/);
+ assert.ok(html.includes('camera-lives.js?v=20261123-visual-gallery-v1'));
  const css=read('live-explore.css');
  assert.match(css,/live-visual-grid/);
  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(css,/var\(--ui-accent\)/);
  assert.match(css,/live-cover-preview/);
 });
-test('private cover bucket and RPC keep real row-level restrictions',()=>{
+test('private cover bucket and RPC keep row-level restrictions',()=>{
  const sql=readFileSync(new URL('../supabase/migrations/20261123235500_visual_live_discovery_covers_categories.sql',import.meta.url),'utf8');
- assert.match(sql,/public\\.entre_live_start_visual/);
- assert.match(sql,/auth\\.uid\\(\\)/);
- assert.match(sql,/storage\\.objects/);
- assert.match(sql,/l\\.status='active' and l\\.expires_at>now\\(\\)/);
- assert.match(sql,/not exists\\(select 1 from public\\.entre_blocks/);
- assert.match(sql,/bucket_id='entre-live-covers'/);
- assert.match(sql,/public=false/);
+ for(const marker of [
+  'public.entre_live_start_visual','auth.uid()','storage.objects',
+  "l.status='active' and l.expires_at>now()",
+  'not exists(select 1 from public.entre_blocks',
+  "bucket_id='entre-live-covers'",'public=false'
+ ])assert.ok(sql.includes(marker),'Migration missing '+marker);
 });
