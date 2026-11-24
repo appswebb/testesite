@@ -90,7 +90,7 @@ async function loadCommentPage(more=false){
 }
 
 function postsView(){
- return heading('UMA COMUNIDADE DE VERDADE','Feed <em>da comunidade.</em>','Compartilhe ideias, conheça pontos de vista e converse com respeito. Publicações são públicas para usuários conectados.')+(window.entreStories?.markup?.()||'')+
+ return (window.entreStories?.markup?.()||'')+heading('COMUNIDADE','Feed <em>social.</em>','')+
  '<section class="posts-shell"><div class="posts-stream"><form id="postCreateForm" class="post-compose"><div class="post-compose-top">'+avatar(state.profile)+'<div><strong>O que você quer compartilhar?</strong><small>Seu espaço para começar uma conversa.</small></div>'+badge(state.profile)+'</div>'+
  '<textarea name="body" minlength="3" maxlength="900" placeholder="Uma ideia, uma pergunta ou uma legenda para sua foto ou vídeo…"></textarea>'+ (window.entreMedia?.composeMarkup?.()||'')+
  '<div class="post-compose-footer"><small>Texto, foto ou vídeo · respeite os outros.</small><button type="submit" class="ui-btn btn-dark btn-sm">Publicar '+ico('arrow',15)+'</button></div></form>'+

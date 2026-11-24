@@ -186,3 +186,22 @@ html[data-theme] .encounter-active-screen .live-video-bottom{margin-top:auto}
 }
 @keyframes entre-hero-levitate{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-13px) rotate(1deg)}}
 @media(prefers-reduced-motion:reduce){html[data-theme] .hero-art.hero-showcase{animation:none}}
+
+html[data-theme] .encounter-text-fullscreen.pair-card{
+ display:flex!important;flex-direction:column!important;min-height:calc(100dvh - 160px)!important;
+ max-height:calc(100dvh - 140px)!important;overflow:hidden!important;border-radius:19px!important
+}
+html[data-theme] .encounter-text-fullscreen .pair-messages{
+ flex:1 1 auto!important;min-height:110px!important;max-height:none!important;overflow-y:auto!important
+}
+html[data-theme] .encounter-text-fullscreen .chat-form{flex:0 0 auto!important}
+html[data-theme] .encounter-text-fullscreen .pair-topbar{flex:0 0 auto!important}
+html[data-theme] .encounter-text-fullscreen .decision-bar{flex:0 0 auto!important}
+@media(max-width:650px){
+ html[data-theme] .encounter-text-fullscreen.pair-card{
+  min-height:calc(100dvh - 110px)!important;max-height:calc(100dvh - 102px)!important;
+  border-radius:12px!important
+ }
+ html[data-theme] .encounter-text-fullscreen .pair-topbar{padding:9px!important;flex-wrap:wrap}
+ html[data-theme] .encounter-text-fullscreen .pair-messages{padding:12px!important}
+}

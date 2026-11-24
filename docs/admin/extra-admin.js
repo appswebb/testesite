@@ -3,9 +3,9 @@
 'use strict';
 function premiumPage(config,escape,icon){
  const price=config?.price_cents==null?'':String((Number(config.price_cents)/100).toFixed(2));
- return '<section class="form-card"><h2 class="section-heading">Plano Premium de 30 dias</h2>'+
+ return '<section class="form-card"><h2 class="section-heading">Premium · 30 dias</h2>'+
  '<p class="section-desc">Configure o pagamento Premium de 30 dias, feito pelo navegador com Pix ou cartão. Esta modalidade não renova automaticamente. Confira as Edge Functions e webhooks antes de liberar.</p>'+
- '<form id="premium-config-form" class="extra-admin-form"><div class="field"><label for="premium-price">Preço mensal em R$</label>'+
+ '<form id="premium-config-form" class="extra-admin-form"><div class="field"><label for="premium-price">Valor por 30 dias (R$)</label>'+
  '<input id="premium-price" type="number" name="price" step="0.01" min="1" max="10000" value="'+escape(price)+'" placeholder="Ex.: 19,90" required></div>'+
  '<label class="extra-admin-toggle"><input type="checkbox" name="enabled" '+(config?.enabled?'checked':'')+'><span>Habilitar compra Premium pela web</span></label>'+
  '<div class="admin-note">Antes de habilitar, configure <code>MERCADOPAGO_ACCESS_TOKEN</code> e <code>MERCADOPAGO_WEBHOOK_SECRET</code>, além de <code>MERCADOPAGO_PUBLIC_KEY</code>, no Supabase. Publique também <code>entre-premium-web</code> e <code>entre-premium-payment-webhook</code>. Sem isso, não ocorre cobrança nem desbloqueio do selo.</div>'+
