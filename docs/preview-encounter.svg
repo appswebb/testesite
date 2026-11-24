@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 600" role="img" aria-labelledby="t d">
+<title id="t">Demonstração ilustrativa de um encontro por vídeo</title><desc id="d">Tela de chamada entre duas pessoas, chat e cronômetro de cinco minutos.</desc>
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#D9D4FF"/><stop offset=".53" stop-color="#FBE6F4"/><stop offset="1" stop-color="#CAE0FF"/></linearGradient>
+<linearGradient id="screen" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2C294D"/><stop offset="1" stop-color="#524778"/></linearGradient>
+<linearGradient id="person1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#DD86B7"/><stop offset="1" stop-color="#FBC2BA"/></linearGradient>
+<linearGradient id="person2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#80A4EE"/><stop offset="1" stop-color="#C2B8FD"/></linearGradient>
+<filter id="shadow"><feDropShadow dx="0" dy="20" stdDeviation="20" flood-color="#453A88" flood-opacity=".20"/></filter>
+</defs>
+<rect width="760" height="600" rx="44" fill="url(#bg)"/>
+<circle cx="680" cy="90" r="100" fill="#FFF" opacity=".24"/><circle cx="120" cy="490" r="150" fill="#B8ACFD" opacity=".35"/>
+<g transform="translate(140 27)" filter="url(#shadow)">
+<rect x="0" y="0" width="400" height="548" rx="36" fill="#fff"/>
+<rect x="16" y="16" width="368" height="516" rx="27" fill="url(#screen)"/>
+<rect x="150" y="25" width="99" height="24" rx="12" fill="#1B1B31"/>
+<text x="32" y="80" fill="#E7E3FF" font-family="Arial,sans-serif" font-size="16" font-weight="bold">ENCONTRO AO VIVO</text>
+<text x="295" y="80" fill="#E7E3FF" font-family="Arial,sans-serif" font-size="16">04:38</text>
+<rect x="32" y="104" width="336" height="322" rx="22" fill="url(#person1)"/>
+<path d="M34 385Q200 250 365 385V425H34Z" fill="#9D618F" opacity=".78"/>
+<ellipse cx="200" cy="262" rx="70" ry="88" fill="#F6BEA5"/>
+<path d="M129 253Q105 139 194 139Q288 131 273 255L258 216Q225 199 172 215L149 260Z" fill="#332A46"/>
+<ellipse cx="178" cy="264" rx="5" ry="4" fill="#382A43"/><ellipse cx="223" cy="264" rx="5" ry="4" fill="#382A43"/>
+<path d="M178 296Q200 315 225 295" fill="none" stroke="#AB667B" stroke-width="4" stroke-linecap="round"/>
+<g transform="translate(247 325)"><rect width="107" height="87" rx="18" fill="url(#person2)" stroke="#fff" stroke-width="3"/>
+<circle cx="54" cy="33" r="25" fill="#F1C09C"/><path d="M27 32Q32 1 54 6Q78 4 81 35Q58 14 27 32" fill="#393453"/><path d="M10 90Q15 56 54 56Q96 56 99 90" fill="#5876BA"/></g>
+<rect x="32" y="446" width="336" height="61" rx="18" fill="#FFFFFF" opacity=".14"/>
+<circle cx="95" cy="476" r="21" fill="#FFF" opacity=".18"/><circle cx="202" cy="476" r="21" fill="#FFF" opacity=".18"/><circle cx="304" cy="476" r="21" fill="#E36C8A"/>
+<path d="M88 473v8m14-13v18M195 469v15m10-15v15M297 469l14 14m0-14-14 14" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+</g>
+<g filter="url(#shadow)" transform="translate(19 168)"><rect width="195" height="86" rx="22" fill="#fff"/><circle cx="33" cy="31" r="15" fill="#D8CDFF"/><path d="M27 32h12m-6-6v12" stroke="#6358BB" stroke-width="3"/><text x="58" y="31" fill="#25223F" font-size="14" font-family="Arial" font-weight="bold">Começou um papo!</text><text x="58" y="53" fill="#6C688C" font-size="12" font-family="Arial">5 minutos pra vocês.</text></g>
+<g filter="url(#shadow)" transform="translate(504 348)"><rect width="233" height="105" rx="22" fill="#fff"/><text x="21" y="31" fill="#6F629A" font-size="12" font-family="Arial" font-weight="bold">CHAT DO ENCONTRO</text><rect x="18" y="43" width="146" height="37" rx="15" fill="#EAE7FF"/><text x="33" y="67" fill="#4F437E" font-size="13" font-family="Arial">Oi! Tudo bem? ✨</text></g>
+<text x="25" y="569" font-size="10" font-family="Arial" fill="#5A4D7E" opacity=".9">Prévia ilustrativa · sem pessoas reais ou chamadas ativas</text>
+</svg>
