@@ -51,5 +51,20 @@ function profileModal(){
  '<div class="cp-visitor-actions"><button type="button" class="ui-btn btn-dark" data-action="socialChat" data-id="'+esc(p.id)+'">'+ico('chat',17)+' Conversar</button>'+ (window.connectRelationships?.followButton?.(p.id,p.follow_status)||'')+'</div>'+
  (handle?'<button type="button" class="cp-share-link" data-action="copyUsernameLink" data-username="'+handle+'">'+ico('link',17)+' Compartilhar perfil</button>':'')+'</div></div></div>';
 }
+
+let conversationDialog=null;
+function closeConversationMenu(){if(conversationDialog){const el=conversationDialog;conversationDialog=null;if(el.open)el.close();el.remove();}}
+document.addEventListener('click',e=>{
+ const trigger=e.target.closest?.('.conversation-menu>summary');
+ if(trigger){e.preventDefault();e.stopPropagation();closeConversationMenu();const panel=trigger.parentElement.querySelector('.conversation-menu-panel');if(!panel)return;
+ const dialog=document.createElement('dialog');dialog.className='cp-conversation-dialog';dialog.setAttribute('aria-label','Opções da conversa');
+ dialog.innerHTML='<header><strong>Opções da conversa</strong><button type="button" class="cp-dialog-close" aria-label="Fechar">×</button></header>'+panel.innerHTML;
+ conversationDialog=dialog;document.body.append(dialog);
+ dialog.addEventListener('close',()=>{if(conversationDialog===dialog){conversationDialog=null;dialog.remove();if(trigger.isConnected)trigger.focus();}});
+ dialog.addEventListener('click',event=>{if(event.target.closest('.cp-dialog-close')||event.target===dialog)closeConversationMenu();else if(event.target.closest('[data-action]'))queueMicrotask(closeConversationMenu);});
+ dialog.addEventListener('change',event=>{if(event.target.matches('[data-social-folder]'))queueMicrotask(closeConversationMenu)});
+ dialog.showModal();return;}
+},true);
+
 Object.assign(api,{conversationsView,conversationRow:row,conversationMenu,profileModal});
 })();
