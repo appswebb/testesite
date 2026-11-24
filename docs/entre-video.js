@@ -67,11 +67,11 @@ async function start(pair){
  if(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection){status('Este navegador não permite videochamadas.');return;}
  const room={pairId:pair.id,remote:new MediaStream(),local:null,pc:null,channel:null,queue:[],status:'Solicitando acesso à câmera e ao microfone…',ready:false,interval:null};
  session=room;attach();
- try{room.local=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true},video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30,max:30}}});}
+ try{room.local=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true},video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30,max:60}}});}
  catch(error){room.status='Câmera ou microfone bloqueados. Verifique as permissões do navegador e toque em Tentar câmera novamente.';status(room.status);return;}
  if(session!==room||!activePair(state.pair)){room.local.getTracks().forEach(t=>t.stop());return;}
  const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});
- room.pc=pc;room.local.getTracks().forEach(t=>{const sender=pc.addTrack(t,room.local);if(t.kind==='video'){const p=sender.getParameters();if(p.encodings?.length){p.encodings[0].maxBitrate=4000000;void sender.setParameters(p).catch(()=>{});}}});room.announceCamera=()=>send({type:'camera-state',enabled:room.local.getVideoTracks().some(t=>t.enabled)});
+ room.pc=pc;room.local.getTracks().forEach(t=>{const sender=pc.addTrack(t,room.local);if(t.kind==='video'){const p=sender.getParameters();if(p.encodings?.length){p.encodings[0].maxBitrate=6000000;void sender.setParameters(p).catch(()=>{});}}});room.announceCamera=()=>send({type:'camera-state',enabled:room.local.getVideoTracks().some(t=>t.enabled)});
  pc.ontrack=ev=>{if(session!==room)return;const streams=ev.streams||[];if(streams[0])room.remote=streams[0];else room.remote.addTrack(ev.track);room.status='Videochamada conectada.';ev.track.onmute=ev.track.onunmute=ev.track.onended=()=>attach();attach();void room.announceCamera?.();};
  pc.onicecandidate=ev=>{if(ev.candidate&&room.ready)void send({type:'ice',candidate:ev.candidate.toJSON()});};
  pc.onconnectionstatechange=()=>{
