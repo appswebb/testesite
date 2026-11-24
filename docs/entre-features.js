@@ -193,11 +193,15 @@ function premiumView(){
  '<article class="cp-plan"><span class="cp-plan-eyebrow">NORMAL</span><h3>Gratuito</h3><div class="cp-plan-price">R$ 0</div><p>Conheça pessoas e participe da comunidade.</p>'+rows(['Encontros por texto e vídeo','Conversas, posts, stories, salas e lives','Banner de perfil com foto','Temas claro, escuro e cor personalizada'])+
  '<div class="cp-plan-state">'+(active?'Incluído no Premium':ico('check',17)+' Seu plano atual')+'</div></article>'+
  '<article class="cp-plan cp-plan-paid"><span class="cp-plan-eyebrow">'+ico('crown',18)+' PREMIUM</span><h3>Mais possibilidades</h3><div class="cp-plan-price">'+(window.entreRecurring?.price?.()||'Valor a definir')+'<small> / mês</small></div><p>Todos os recursos do Normal, mais:</p>'+rows(['Banner animado em GIF','Filtro de gênero no Ao vivo','Selo de destaque no perfil','Atendimento prioritário pelo WhatsApp'])+
- (active?'<div class="cp-plan-state">'+ico('check',17)+' Premium ativo'+(data.premium.paid_until?' · até '+new Date(data.premium.paid_until).toLocaleDateString('pt-BR'):'')+'</div><button type="button" class="ui-btn btn-outline" data-action="nav" data-view="support">'+ico('chat',17)+' WhatsApp prioritário</button>':'')+
+ (active?'<div class="cp-plan-state">'+ico('check',17)+' Premium ativo'+(data.premium.paid_until?' · até '+new Date(data.premium.paid_until).toLocaleDateString('pt-BR'):'')+'</div><button type="button" class="ui-btn btn-outline" data-action="premiumWhatsapp">'+ico('chat',17)+' WhatsApp prioritário</button>':'')+
  (window.entreRecurring?.view?.()||'<p>Carregando assinatura mensal…</p>')+
  '<small class="cp-plan-footnote">Cobrança mensal automática no cartão. Cancele a renovação quando quiser.</small></article></div></section>';
 }
-async function openPremiumWhatsapp(){if(!data.premium?.active)throw Error('O atendimento prioritário exige Premium ativo.');const url=await call('entre_premium_whatsapp');whatsappLink(url,{body:''});document.querySelector('[data-view="support"][data-action="nav"]')?.click();if(state.view!=='support'){const btn=document.createElement('button');btn.dataset.action='nav';btn.dataset.view='support';btn.hidden=true;document.body.append(btn);btn.click();btn.remove();}}
+async function openPremiumWhatsapp(){
+ if(!data.premium?.active)throw Error('O atendimento prioritário exige Premium ativo.');
+ const url=await call('entre_premium_whatsapp');whatsappLink(url,{body:''});
+ supportPreferredUser=state.session?.user?.id||null;nav('support');
+}
 async function loadMercadoPagoSDK(){
  if(window.MercadoPago)return;
  if(!data.mpScriptPromise)data.mpScriptPromise=new Promise((resolve,reject)=>{
@@ -292,7 +296,7 @@ setInterval(()=>{if(state.view==='premium'&&document.visibilityState==='visible'
 const SUPPORT_EMAIL='connectapp.w@gmail.com';
 const supportCategories={bug:'Erro no aplicativo',account:'Conta e acesso',payment:'Pagamento ou assinatura',security:'Segurança e privacidade',other:'Outro assunto'};
 const supportProviders={default:'Aplicativo de e-mail padrão',gmail:'Gmail (web)',outlook:'Outlook (web)'};
-let supportHandoff=null;
+let supportHandoff=null,supportPreferredUser=null;
 function supportMessage({id,category,subject,description,name,handle,channel,files=0}){
  const premium=channel==='whatsapp';
  const title='[CONNECT'+(premium?' PREMIUM':'')+'] #'+id+' · '+subject.replace(/[\r\n]+/g,' ');
@@ -326,12 +330,12 @@ function whatsappLink(base,message){
  return base.split('?')[0]+'?text='+encodeURIComponent(message.body);
 }
 function supportView(){
- const active=data.premium?.active===true, handoff=supportHandoff?.uid===state.session?.user?.id?supportHandoff:null;
+ const active=data.premium?.active===true, preferWhatsapp=active&&supportPreferredUser===state.session?.user?.id, handoff=supportHandoff?.uid===state.session?.user?.id&&(supportHandoff.channel!=='whatsapp'||active)?supportHandoff:null;
  return '<section class="csup-page"><header class="csup-intro"><h2>Como podemos ajudar?</h2><p>Escolha o canal, descreva o problema e envie a mensagem pelo aplicativo de sua preferência.</p></header>'+
  '<form id="supportTicketForm" class="csup-form">'+
  '<fieldset class="csup-channels"><legend>Canal de atendimento</legend>'+
- '<label class="csup-channel"><input type="radio" name="channel" value="email" checked><span class="csup-channel-icon">'+ico('mail',23)+'</span><span class="csup-channel-copy"><strong>E-mail</strong><small>Disponível para todas as contas</small></span><span class="csup-tag">Normal</span></label>'+
- '<label class="csup-channel '+(!active?'csup-locked':'')+'"><input type="radio" name="channel" value="whatsapp" '+(!active?'disabled':'')+'><span class="csup-channel-icon">'+ico('chat',23)+'</span><span class="csup-channel-copy"><strong>WhatsApp</strong><small>'+(active?'Atendimento direto e prioritário':'Exclusivo para assinantes ativos')+'</small></span><span class="csup-tag">Premium '+ico(active?'check':'lock',12)+'</span></label>'+
+ '<label class="csup-channel"><input type="radio" name="channel" value="email" '+(!preferWhatsapp?'checked':'')+'><span class="csup-channel-icon">'+ico('mail',23)+'</span><span class="csup-channel-copy"><strong>E-mail</strong><small>Disponível para todas as contas</small></span><span class="csup-tag">Normal</span></label>'+
+ '<label class="csup-channel '+(!active?'csup-locked':'')+'"><input type="radio" name="channel" value="whatsapp" '+(!active?'disabled':preferWhatsapp?'checked':'')+'><span class="csup-channel-icon">'+ico('chat',23)+'</span><span class="csup-channel-copy"><strong>WhatsApp</strong><small>'+(active?'Atendimento direto e prioritário':'Exclusivo para assinantes ativos')+'</small></span><span class="csup-tag">Premium '+ico(active?'check':'lock',12)+'</span></label>'+
  (!active?'<button type="button" class="csup-upgrade" data-action="nav" data-view="premium">Conhecer Premium '+ico('arrow',15)+'</button>':'')+'</fieldset>'+
  '<div class="csup-fields"><h3>Sobre o seu problema</h3>'+
  '<div class="field"><label for="supportCategory">Categoria</label><select name="category" id="supportCategory" required>'+Object.entries(supportCategories).map(([v,label])=>'<option value="'+v+'">'+label+'</option>').join('')+'</select></div>'+
@@ -349,7 +353,7 @@ async function loadSupport(){try{const rows=await call('entre_my_support_tickets
 async function submitSupport(form){
  if(data.supportBusy)return;
  const uid=state.session?.user?.id;if(!uid)throw Error('Entre na sua conta.');
- const channel=form.elements.channel.value,provider=form.elements.provider.value;
+ const channel=form.elements.channel.value,provider=form.elements.provider.value;supportPreferredUser=null;
  if(!['email','whatsapp'].includes(channel))throw Error('Escolha o canal de atendimento.');
  const category=form.elements.category.value,subject=form.elements.subject.value.trim(),description=form.elements.description.value.trim();
  if(!Object.hasOwn(supportCategories,category)||subject.length<5||subject.length>120||description.length<20||description.length>3000)throw Error('Confira o assunto e a descrição.');
