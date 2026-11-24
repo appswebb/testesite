@@ -55,7 +55,7 @@ const avatar=(person,size='')=>{
   return '<span class="avatar '+esc(size)+extra+'"'+attrs+'><img loading="eager" decoding="async" referrerpolicy="no-referrer" data-avatar-path="'+esc(person.avatar_path)+'" src="'+esc(url.url)+'" alt="Foto de '+esc(person?.display_name||'perfil')+'">'+mark+'</span>';
  return '<span class="avatar '+esc(size)+extra+'"'+attrs+' style="background:'+colorFor(person?.id)+'">'+esc(initials(person?.display_name))+mark+'</span>';
 };
-const brand=()=>`<a href="#" class="brand" data-action="logo" aria-label="entre. início"><span class="brand-glyph"><i></i><i></i></span><span>entre<span class="dot">.</span></span></a>`;
+const brand=()=>`<a href="#" class="brand" data-action="logo" aria-label="Connect início"><span class="brand-glyph"><i></i><i></i></span><span>Connect</span></a>`;
 const fmtTime=date=>new Date(date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 const fmtDate=date=>new Date(date).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
 let toastTimer;
@@ -134,7 +134,7 @@ function landing(){const scrollWords=Array(2).fill('<span>UMA CONVERSA DE CADA V
 </div></section>
 <section class="manifesto" id="experiencia"><div class="wrap manifesto-inner"><h2>Conexões de verdade não começam com um <em>algoritmo perfeito.</em><br>Começam com coragem.</h2><div class="caption"><strong>O que torna isso diferente</strong><p>Você escolhe como se conectar: encontro privado de cinco minutos, salas regionais, Feed da comunidade ou lives com câmera. Tudo no mesmo lugar.</p><button class="ui-btn btn-coral" data-action="signup">Quero experimentar ${ico('arrow',18)}</button></div></div></section>
 <section class="section-pad" id="manifesto"><div class="wrap" style="text-align:center;max-width:840px"><span class="eyebrow">UM CONVITE SIMPLES</span><h2 class="section-title">E se os próximos <i>5 minutos</i><br>mudassem alguma coisa?</h2><p style="color:var(--mute);font-size:15px;line-height:1.8;margin:20px auto 30px">Uma nova pessoa, uma história inesperada, uma conversa que pode continuar — mas só se os dois quiserem.</p><button class="ui-btn btn-dark" data-action="signup">Criar minha conta ${ico('arrow',18)}</button></div></section></main>
-<footer class="home-footer"><div class="wrap footer-row">${brand()}<small>Feito para conversas que importam. © 2026 entre.</small><small>Experiência para maiores de 18 anos. <a href="./instalar.html">Instalar</a> · <a href="./dados.html">Retenção</a> · <a href="./privacidade.html">Privacidade</a> · <a href="./termos.html">Termos</a></small></div></footer>`}
+<footer class="home-footer"><div class="wrap footer-row">${brand()}<small>Feito para conversas que importam. © 2026 CONNECT</small><small>Experiência para maiores de 18 anos. <a href="./instalar.html">Instalar</a> · <a href="./dados.html">Retenção</a> · <a href="./privacidade.html">Privacidade</a> · <a href="./termos.html">Termos</a></small></div></footer>`}
 
 // All original uploads are downscaled and stripped of metadata in the browser.
 // Only a small 160px WebP is ever sent to Supabase (maximum 40 KiB).
