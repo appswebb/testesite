@@ -128,13 +128,13 @@ async function upload(file){
 let voiceChannel=null,voicePair=null,voiceOwner=null,voiceSequence=0,remoteUntil=0,signalQueue=Promise.resolve(),lastVoiceMarkup='';
 const visiblePair=()=>canSend()&&['chat','connect'].includes(state.view)&&document.getElementById('cpVoiceState')?current():null;
 function signal(pair,uid,active){
- signalQueue=signalQueue.catch(()=>{}).then(async()=>{if(owner()!==uid)return;const {error}=await db.rpc('entre_voice_recording',{_pair:pair,_active:active});if(error)console.warn('Voice activity unavailable',error.message);});
+ signalQueue=signalQueue.catch(()=>{}).then(async()=>{if(owner()!==uid||(active&&(!mem.recording||mem.recording.pair!==pair)))return;const {error}=await db.rpc('entre_voice_recording',{_pair:pair,_active:active});if(error)console.warn('Voice activity unavailable',error.message);});
 }
 function clearDraft(){if(mem.draft?.url)URL.revokeObjectURL(mem.draft.url);mem.draft=null;}
 function paintVoice(){
  const root=document.getElementById('cpVoiceState'),button=document.querySelector('[data-chat-media-record]');if(!root)return;
  const rec=mem.recording?.pair===current()?mem.recording:null,draft=mem.draft?.pair===current()?mem.draft:null;
- if(button){button.setAttribute('aria-pressed',String(!!rec));button.disabled=!!draft||mem.requesting;const label=button.querySelector('span');if(label)label.textContent=rec?'Parar gravação':'Gravar áudio';}
+ if(button){const pressed=String(!!rec),disabled=!!draft||mem.requesting,label=button.querySelector('span'),text=rec?'Parar gravação':'Gravar áudio';if(button.getAttribute('aria-pressed')!==pressed)button.setAttribute('aria-pressed',pressed);if(button.disabled!==disabled)button.disabled=disabled;if(label&&label.textContent!==text)label.textContent=text;}
  const remote=voicePair===current()&&remoteUntil>Date.now();
  const elapsed=rec?Math.min(30,Math.floor((Date.now()-rec.started)/1000)):0;
  const markup=(rec?'<div class="cp-voice-line"><i></i><strong>Gravando áudio</strong><time>0:'+String(elapsed).padStart(2,'0')+'</time><button type="button" data-voice-cancel>Cancelar</button></div>':'')+(draft?'<div class="cp-voice-draft"><audio controls preload="metadata" src="'+esc(draft.url)+'"></audio><button type="button" data-voice-discard>Descartar</button><button type="button" data-voice-send>Enviar áudio</button></div>':'')+(remote?'<div class="cp-voice-remote" role="status"><i></i> A outra pessoa está gravando um áudio…</div>':'');
