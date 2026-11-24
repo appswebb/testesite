@@ -330,64 +330,21 @@ function whatsappLink(base,message){
  return base.split('?')[0]+'?text='+encodeURIComponent(message.body);
 }
 function supportView(){
- const active=data.premium?.active===true, preferWhatsapp=active&&supportPreferredUser===state.session?.user?.id, handoff=supportHandoff?.uid===state.session?.user?.id&&(supportHandoff.channel!=='whatsapp'||active)?supportHandoff:null;
- return '<section class="csup-page"><header class="csup-intro"><h2>Como podemos ajudar?</h2><p>Escolha o canal, descreva o problema e envie a mensagem pelo aplicativo de sua preferência.</p></header>'+
- '<form id="supportTicketForm" class="csup-form">'+
- '<fieldset class="csup-channels"><legend>Canal de atendimento</legend>'+
- '<label class="csup-channel"><input type="radio" name="channel" value="email" '+(!preferWhatsapp?'checked':'')+'><span class="csup-channel-icon">'+ico('mail',23)+'</span><span class="csup-channel-copy"><strong>E-mail</strong><small>Disponível para todas as contas</small></span><span class="csup-tag">Normal</span></label>'+
- '<label class="csup-channel '+(!active?'csup-locked':'')+'"><input type="radio" name="channel" value="whatsapp" '+(!active?'disabled':preferWhatsapp?'checked':'')+'><span class="csup-channel-icon">'+ico('chat',23)+'</span><span class="csup-channel-copy"><strong>WhatsApp</strong><small>'+(active?'Atendimento direto e prioritário':'Exclusivo para assinantes ativos')+'</small></span><span class="csup-tag">Premium '+ico(active?'check':'lock',12)+'</span></label>'+
- (!active?'<button type="button" class="csup-upgrade" data-action="nav" data-view="premium">Conhecer Premium '+ico('arrow',15)+'</button>':'')+'</fieldset>'+
- '<div class="csup-fields"><h3>Sobre o seu problema</h3>'+
- '<div class="field"><label for="supportCategory">Categoria</label><select name="category" id="supportCategory" required>'+Object.entries(supportCategories).map(([v,label])=>'<option value="'+v+'">'+label+'</option>').join('')+'</select></div>'+
- '<div class="field"><label for="supportSubject">Assunto</label><input type="text" name="subject" id="supportSubject" minlength="5" maxlength="120" placeholder="Resuma o problema" required></div>'+
- '<div class="field"><label for="supportDescription">Descreva o que aconteceu</label><textarea name="description" id="supportDescription" minlength="20" maxlength="3000" rows="5" required placeholder="Conte o que aconteceu e como podemos ajudar."></textarea></div>'+
- '<div class="field"><label for="supportProof">Anexos (opcionais)</label><input type="file" name="proof" id="supportProof" accept="image/png,image/jpeg,image/webp,application/pdf" multiple><small>Até 3 imagens ou PDFs de 5 MB. Os anexos ficam no protocolo privado; não são anexados automaticamente ao e-mail ou WhatsApp.</small></div>'+
- '<div class="field csup-email-choice"><label for="supportProvider">Abrir e-mail com</label><select id="supportProvider" name="provider">'+Object.entries(supportProviders).map(([v,label])=>'<option value="'+v+'">'+label+'</option>').join('')+'</select><small>Destino: '+SUPPORT_EMAIL+'</small></div>'+
- '<p class="csup-privacy">'+ico('lock',15)+' Não inclua senhas, documentos nem dados bancários.</p>'+
- '<button type="submit" class="ui-btn btn-dark csup-submit" '+(data.supportBusy?'disabled':'')+'><span class="csup-email-label">Abrir e-mail preenchido</span><span class="csup-whatsapp-label">Abrir WhatsApp preenchido</span>'+ico('arrow',18)+'</button>'+
- '<p class="csup-note">Você revisa e envia a mensagem no aplicativo escolhido. O CONNECT não envia a mensagem automaticamente.</p></div></form>'+
- (handoff?'<section class="csup-ready" role="status"><h3>Protocolo #'+esc(handoff.id)+' registrado</h3><p>Se o aplicativo não abriu, use o botão abaixo. A mensagem ainda precisa ser enviada por você.</p><a class="ui-btn btn-dark" href="'+esc(handoff.url)+'" rel="noopener noreferrer">Abrir '+(handoff.channel==='whatsapp'?'WhatsApp':'e-mail')+' '+ico('arrow',17)+'</a><label for="supportPreparedMessage">Mensagem preparada</label><textarea id="supportPreparedMessage" readonly rows="5">'+esc(handoff.message.title+'\n\n'+handoff.message.body)+'</textarea></section>':'')+
- (data.support.length?'<section class="csup-history"><h3>Meus protocolos</h3>'+data.support.map(t=>'<article><strong>#'+Number(t.id)+' · '+esc(t.subject)+'</strong><small>'+esc(t.status)+' · '+new Date(t.created_at).toLocaleDateString('pt-BR')+(t.email_status==='sent'?' · E-mail enviado pelo sistema':' · Registrado no CONNECT')+'</small></article>').join('')+'</section>':'')+'</section>';
+ return '<section class="csup-page"><header class="csup-intro"><h2>Como podemos ajudar?</h2><p>Envie seu relato diretamente à equipe CONNECT. Acompanhe as respostas pelo protocolo.</p></header><form id="supportTicketForm" class="csup-form"><div class="csup-fields"><h3>Novo chamado</h3><div class="field"><label for="supportCategory">Categoria</label><select name="category" id="supportCategory">'+Object.entries(supportCategories).map(([v,label])=>'<option value="'+v+'">'+label+'</option>').join('')+'</select></div><div class="field"><label for="supportSubject">Assunto</label><input name="subject" id="supportSubject" minlength="5" maxlength="120" required placeholder="Resuma o problema"></div><div class="field"><label for="supportDescription">Descrição</label><textarea name="description" id="supportDescription" minlength="20" maxlength="3000" required rows="5" placeholder="Como podemos ajudar?"></textarea></div><div class="field"><label for="supportProof">Provas (opcionais)</label><input name="proof" id="supportProof" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" multiple><small>Até 3 arquivos de 5 MB. Enviados ao painel em armazenamento privado.</small></div><p class="csup-privacy">'+ico('lock',15)+' Não inclua senhas ou dados bancários.</p><button class="ui-btn btn-dark csup-submit" type="submit" '+(data.supportBusy?'disabled':'')+'>Enviar chamado '+ico('arrow',18)+'</button></div></form><section class="csup-history"><h3>Meus protocolos</h3><div id="cpSupportHistory">'+supportHistory()+'</div></section></section>';
 }
-async function loadSupport(){try{const rows=await call('entre_my_support_tickets');data.support=Array.isArray(rows)?rows:[];}catch(e){console.warn('Support',e);}}
+function supportHistory(){const labels={submitted:'Aguardando resposta',reviewing:'Em atendimento',resolved:'Resolvido'};return data.support.length?data.support.map(t=>'<article><strong>#'+Number(t.id)+' · '+esc(t.subject)+'</strong><small>'+esc(labels[t.status]||t.status)+'</small><button class="ui-btn btn-outline" type="button" data-support-thread="'+Number(t.id)+'">Abrir protocolo</button></article>').join(''):'<p class="csup-note">Nenhum protocolo ainda.</p>';}
+async function loadSupport(){try{const rows=await call('entre_my_support_tickets');data.support=Array.isArray(rows)?rows:[];const root=document.getElementById('cpSupportHistory');if(root&&root.innerHTML!==supportHistory())root.innerHTML=supportHistory();}catch(e){console.warn('Support',e);}}
 async function submitSupport(form){
- if(data.supportBusy)return;
- const uid=state.session?.user?.id;if(!uid)throw Error('Entre na sua conta.');
- const channel=form.elements.channel.value,provider=form.elements.provider.value;supportPreferredUser=null;
- if(!['email','whatsapp'].includes(channel))throw Error('Escolha o canal de atendimento.');
- const category=form.elements.category.value,subject=form.elements.subject.value.trim(),description=form.elements.description.value.trim();
+ if(data.supportBusy)return;const uid=state.session?.user?.id;if(!uid)throw Error('Entre na sua conta.');
+ const category=form.elements.category.value,subject=form.elements.subject.value.trim(),description=form.elements.description.value.trim(),files=[...(form.elements.proof?.files||[])];
  if(!Object.hasOwn(supportCategories,category)||subject.length<5||subject.length>120||description.length<20||description.length>3000)throw Error('Confira o assunto e a descrição.');
- const files=[...(form.elements.proof?.files||[])];
- if(files.length>3)throw Error('Anexe no máximo 3 arquivos.');
- for(const file of files)if(file.size>5242880||!['image/png','image/jpeg','image/webp','application/pdf'].includes(file.type))throw Error('Use imagem ou PDF de até 5 MB.');
- const name=state.profile?.display_name,handle=state.profile?.username;
- data.supportBusy=true;const button=form.querySelector('[type=submit]');if(button)button.disabled=true;
- let redirect=null;
- try{
-  // The existing server RPC is the authority; the disabled radio is not the security boundary.
-  let wa=null;
-  if(channel==='whatsapp'){wa=await call('entre_premium_whatsapp');whatsappLink(wa,{body:''});}
-  if(state.session?.user?.id!==uid)throw Error('Sua sessão mudou. Tente novamente.');
-  const id=await call('entre_support_create',{_category:category==='payment'?'other':category,_subject:subject,_description:description});
-  const paths=[];
-  for(const file of files){
-   const ext={'image/png':'png','image/jpeg':'jpg','image/webp':'webp','application/pdf':'pdf'}[file.type];
-   const path=uid+'/'+id+'/'+crypto.randomUUID()+'.'+ext;
-   const response=await db.storage.from('entre-support-evidence').upload(path,file,{contentType:file.type,upsert:false});
-   if(response.error)throw response.error;paths.push(path);
-  }
-  await call('entre_support_submit',{_ticket:Number(id),_paths:paths});
-  if(state.session?.user?.id!==uid)return;
-  const message=supportMessage({id,category,subject,description,name,handle,channel,files:files.length});
-  if(channel==='whatsapp')wa=await call('entre_premium_whatsapp');
-  if(state.session?.user?.id!==uid)return;
-  const url=channel==='whatsapp'?whatsappLink(wa,message):emailLink(provider,message);
-  supportHandoff={uid,id,channel,url,message};redirect=url;
-  await loadSupport();
- }finally{data.supportBusy=false;if(button?.isConnected)button.disabled=false;}
- if(state.session?.user?.id!==uid||state.view!=='support'||!redirect)return;
- renderView();toast('Protocolo registrado. Revise e envie a mensagem.',false,'success');
- try{window.location.assign(redirect)}catch(_){/* The explicit link remains visible for browsers that block automatic handoff. */}
+ if(files.length>3||files.some(f=>f.size>5242880||!['image/png','image/jpeg','image/webp','application/pdf'].includes(f.type)))throw Error('Até 3 imagens ou PDFs de 5 MB.');
+ data.supportBusy=true;const button=form.querySelector('[type=submit]');if(button)button.disabled=true;const paths=[];let submitted=false;
+ try{const id=await call('entre_support_create',{_category:category==='payment'?'other':category,_subject:subject,_description:description});
+ for(const file of files){if(state.session?.user?.id!==uid)throw Error('Sessão alterada.');const ext={'image/png':'png','image/jpeg':'jpg','image/webp':'webp','application/pdf':'pdf'}[file.type];const path=uid+'/'+id+'/'+crypto.randomUUID()+'.'+ext;const r=await db.storage.from('entre-support-evidence').upload(path,file,{contentType:file.type,upsert:false});if(r.error)throw r.error;paths.push(path);}
+ await call('entre_support_submit',{_ticket:Number(id),_paths:paths});submitted=true;
+ if(state.session?.user?.id===uid){form.reset();await loadSupport();toast('Protocolo #'+id+' enviado à equipe.');}
+ }catch(e){if(!submitted&&paths.length&&state.session?.user?.id===uid)await db.storage.from('entre-support-evidence').remove(paths).catch(()=>{});throw e;}finally{data.supportBusy=false;if(button?.isConnected)button.disabled=false;}
 }
 async function enter(view){
  if(view==='posts')await loadPosts();
