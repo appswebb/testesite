@@ -12,12 +12,13 @@ let settings={...defaultSettings};
 const user={id:'0d6a946d-e827-4b87-b1be-b719ac6e2776',email:'l.demelo2004@gmail.com',app_metadata:{provider:'google',providers:['google']}};
 const fixture=()=>{
 window.__mockedSettings={
- matchmaking_enabled:true,reporting_enabled:true,announcement:new URLSearchParams(location.search).has('announcement_test')?'Aviso importante da comunidade.':'',announcement_version:new URLSearchParams(location.search).has('announcement_test')?77:0,announcement_sent_at:new URLSearchParams(location.search).has('announcement_test')?new Date().toISOString():null,maintenance_enabled:new URLSearchParams(location.search).has('maintenance_test'),
+ matchmaking_enabled:true,reporting_enabled:true,announcement:new URLSearchParams(location.search).has('announcement_test')?'Aviso importante da comunidade.':'',announcement_version:new URLSearchParams(location.search).has('announcement_test')?77:0,announcement_sent_at:new URLSearchParams(location.search).has('announcement_test')?new Date().toISOString():null,maintenance_enabled:new URLSearchParams(location.search).has('maintenance_test')&&!new URLSearchParams(location.search).has('released'),
  maintenance_title:'Tem coisa boa chegando.',maintenance_message:'Estamos preparando uma nova versão do entre.',
  release_at:new Date().toISOString()
 };
 const user={id:'0d6a946d-e827-4b87-b1be-b719ac6e2776',email:'l.demelo2004@gmail.com',app_metadata:{provider:'google',providers:['google']}};
 window.supabase={createClient(){return {
+channel(){return {on(){return this;},subscribe(cb){if(cb)queueMicrotask(()=>cb('SUBSCRIBED'));return this;}};},removeChannel:async()=>({}),
 auth:{getSession:async()=>({data:{session:{user}}}),getUser:async()=>({data:{user}}),signOut:async()=>({error:null}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})},
 rpc:async(name,params)=>{
 const s=window.__mockedSettings;
@@ -108,8 +109,8 @@ await maintenancePage.goto(host+'/?maintenance_test=1',{waitUntil:'domcontentloa
 await maintenancePage.locator('#maintenance-screen').waitFor({timeout:15000});
 assert.equal(await maintenancePage.locator('.landing-hero').count(),0,'Authenticated admin bypassed maintenance');
 await maintenancePage.evaluate(()=>{window.__mockedSettings.maintenance_enabled=false});
-await maintenancePage.click('[data-action="maintenanceRefresh"]');
-await maintenancePage.waitForURL(/released=/,{timeout:15000});
+await maintenancePage.waitForURL(/released=/,{timeout:10000});
+await maintenancePage.locator('#maintenance-screen').waitFor({state:'detached',timeout:15000});
 await maintenancePage.close();
 total+=2;console.log('PASS logged-in admin blocked during maintenance and release reload');
 

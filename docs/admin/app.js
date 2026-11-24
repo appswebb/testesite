@@ -217,23 +217,26 @@ function renderView(){
 }
 let adminLoadEpoch=0;
 async function load(view,background=false){
- const epoch=++adminLoadEpoch;if(!background){state.loading=true;renderView();}
+ const epoch=++adminLoadEpoch,owner=state.user?.id;const patch={};
+ const valid=()=>epoch===adminLoadEpoch&&state.user?.id===owner&&state.verified;
+ if(!background){state.loading=true;renderView();}
  try{
   if(view==="overview"||view==="settings"||view==="updates"||!state.overview){
-   state.overview=await rpc("entre_admin_overview");state.settings=state.overview.settings||state.settings;
-    if(view==="overview")state.appeals=await rpc("entre_admin_appeals");
+   patch.overview=await rpc("entre_admin_overview");if(!valid())return;patch.settings=patch.overview?.settings||state.settings;
+   if(view==="overview")patch.appeals=await rpc("entre_admin_appeals");
   }
-  if(view==="users")state.users=await rpc("entre_admin_users",{_query:state.search,_limit:perPage,_offset:state.userPage*perPage});
-  if(view==="appeals")state.appeals=await rpc("entre_admin_appeals");
-  if(view==="reports"){var results=await Promise.all([rpc("entre_admin_reports",{_status:state.reportStatus,_limit:100}),rpc('entre_admin_comment_reports')]);state.reports=results[0];state.commentReports=results[1]||[];}
-  if(view==="pairs")state.pairs=await rpc("entre_admin_pairs",{_limit:60});
-   if(view==="bulletins")state.bulletins=await rpc("entre_admin_bulletins");
-  if(view==="support")state.supportTickets=await rpc("entre_admin_support_tickets");
-  if(view==="premium"){state.premiumConfig=await rpc("entre_admin_premium_settings");state.recurringConfig=null;}
-  if(view==="security"){state.appeals=await rpc("entre_admin_appeals");state.privacyRequests=await rpc("entre_admin_privacy_requests");}
-  state.refreshAt=new Date();lastLoad=Date.now();
- }catch(err){if(!background)toast(errorText(err),true);else console.warn(errorText(err));}
- finally{if(epoch===adminLoadEpoch){state.loading=false;if(state.view===view){if(background&&view==='bulletins'){const wrapper=document.createElement('div');wrapper.innerHTML=window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico});const list=wrapper.querySelector('.bulletin-admin-list'),old=document.querySelector('.bulletin-admin-list');if(list&&old)old.replaceWith(list);else renderView();}else if(!background||!adminEditing())renderView();}}}
+  if(!valid())return;
+  if(view==="users")patch.users=await rpc("entre_admin_users",{_query:state.search,_limit:perPage,_offset:state.userPage*perPage});
+  if(view==="appeals")patch.appeals=await rpc("entre_admin_appeals");
+  if(view==="reports"){const results=await Promise.all([rpc("entre_admin_reports",{_status:state.reportStatus,_limit:100}),rpc('entre_admin_comment_reports')]);patch.reports=results[0];patch.commentReports=results[1]||[];}
+  if(view==="pairs")patch.pairs=await rpc("entre_admin_pairs",{_limit:60});
+  if(view==="bulletins")patch.bulletins=await rpc("entre_admin_bulletins");
+  if(view==="support")patch.supportTickets=await rpc("entre_admin_support_tickets");
+  if(view==="premium"){patch.premiumConfig=await rpc("entre_admin_premium_settings");patch.recurringConfig=null;}
+  if(view==="security"){const results=await Promise.all([rpc("entre_admin_appeals"),rpc("entre_admin_privacy_requests")]);patch.appeals=results[0];patch.privacyRequests=results[1];}
+  if(!valid())return;Object.assign(state,patch);state.refreshAt=new Date();lastLoad=Date.now();
+ }catch(err){if(valid()){if(!background)toast(errorText(err),true);else console.warn(errorText(err));}}
+ finally{if(valid()){state.loading=false;if(state.view===view){if(background&&view==='bulletins'){const wrapper=document.createElement('div');wrapper.innerHTML=window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico});const list=wrapper.querySelector('.bulletin-admin-list'),old=document.querySelector('.bulletin-admin-list');if(list&&old)old.replaceWith(list);else if(!adminEditing())renderView();}else if(!background||!adminEditing())renderView();}}}
 }
 async function navigate(view){if(!sections.some(function(s){return s[0]===view;}))return;state.moreOpen=false;state.view=view;renderView();await load(view);}
 function modal(content){document.getElementById("modal-root").innerHTML='<div class="modal-back" id="modal-back"><div class="modal" role="dialog" aria-modal="true" aria-label="Ação administrativa">'+content+'</div></div>';var el=document.querySelector(".modal input,.modal textarea,.modal select");if(el)el.focus();}

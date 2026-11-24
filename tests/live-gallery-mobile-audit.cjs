@@ -21,7 +21,7 @@ const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAA
     'var state={view:"lives",session:{user:{id:"mock-user"}}};',
     'var esc=v=>String(v??"").replace(/[&<>"]/g,"");',
     "var ico=()=>'<svg aria-hidden=\"true\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"8\"/></svg>';",
-    'var toast=()=>{}; var infoError=e=>String(e?.message||e);',
+    'var toast=()=>{}; var infoError=e=>String(e?.message||e); var profileTarget=()=>""; var profileName=(id,name)=>esc(name);',
     'var mockRows='+JSON.stringify(testData)+',mockImage='+JSON.stringify(png)+';',
     'var db={rpc:async name=>name==="entre_lives_list"?{data:mockRows,error:null}:{data:null,error:null},storage:{from:()=>({createSignedUrls:async paths=>({data:paths.map(()=>({signedUrl:mockImage})),error:null})})}};',
     'var renderView=()=>{document.getElementById("view-content").innerHTML=window.entreLives.view()};'
