@@ -5,7 +5,7 @@ const api=window.entreSocial,s=api.data;
 function personCard(p){
  const follow=p.follow_status,allowed=p.allow_requests||follow==='accepted'||p.follower_status==='accepted';
  return '<article class="online-person '+(window.entreExtras?.isPremium?.(p.id)?'premium-surface':'')+'"><div class="online-person-head"><span class="person-online-indicator"></span> ONLINE AGORA</div>'+
- '<div class="online-person-content">'+avatar(p,'large')+'<div><h3>'+esc(p.display_name)+(window.entreExtras?.badge?.(p)||'')+', '+(Number(p.age)>0?Number(p.age):'')+'</h3><small>'+esc(genders[p.gender]||'Pessoa')+'</small><small class="person-handle">@'+esc(p.username||'')+'</small></div></div>'+
+ '<div class="online-person-content">'+avatar(p,'large')+'<div><h3>'+profileName(p.id,p.display_name,p.username)+(window.entreExtras?.badge?.(p)||'')+', '+(Number(p.age)>0?Number(p.age):'')+'</h3><small>'+esc(genders[p.gender]||'Pessoa')+'</small><small class="person-handle">@'+esc(p.username||'')+'</small></div></div>'+
  '<p class="online-person-bio">'+esc(p.bio||'Sem biografia.')+'</p>'+
  '<div class="online-person-actions"><button type="button" class="ui-btn btn-outline btn-sm" data-action="profileOpen" data-id="'+esc(p.id)+'">Ver perfil</button><button type="button" class="ui-btn btn-outline btn-sm" data-action="socialFollow" data-id="'+esc(p.id)+'"'+(follow==='pending'||follow==='accepted'?' disabled':'')+'>'+
  (follow==='accepted'?'✓ Seguindo':follow==='pending'?'Pedido enviado':'+ Seguir')+'</button>'+
@@ -14,8 +14,8 @@ function personCard(p){
 }
 function inbox(){
  if(!s.follows.length&&!s.chats.length)return '';
- let rows=s.follows.map(f=>'<article class="inbox-item"><div><strong>'+esc(f.display_name)+'</strong><p>Quer seguir você. Aceitar libera a conversa.</p></div><div><button class="ui-btn btn-dark btn-sm" data-action="followAccept" data-id="'+esc(f.sender)+'">Aceitar</button><button class="ui-btn btn-quiet btn-sm" data-action="followDecline" data-id="'+esc(f.sender)+'">Recusar</button></div></article>').join('');
- rows+=s.chats.map(f=>'<article class="inbox-item"><div><strong>'+esc(f.display_name)+'</strong><p>Quer iniciar uma conversa.</p></div><div><button class="ui-btn btn-dark btn-sm" data-action="chatAccept" data-id="'+Number(f.id)+'">Aceitar</button><button class="ui-btn btn-quiet btn-sm" data-action="chatDecline" data-id="'+Number(f.id)+'">Recusar</button></div></article>').join('');
+ let rows=s.follows.map(f=>'<article class="inbox-item"><div><strong>'+profileName(f.sender,f.display_name)+'</strong><p>Quer seguir você. Aceitar libera a conversa.</p></div><div><button class="ui-btn btn-dark btn-sm" data-action="followAccept" data-id="'+esc(f.sender)+'">Aceitar</button><button class="ui-btn btn-quiet btn-sm" data-action="followDecline" data-id="'+esc(f.sender)+'">Recusar</button></div></article>').join('');
+ rows+=s.chats.map(f=>'<article class="inbox-item"><div><strong>'+profileName(f.sender,f.display_name)+'</strong><p>Quer iniciar uma conversa.</p></div><div><button class="ui-btn btn-dark btn-sm" data-action="chatAccept" data-id="'+Number(f.id)+'">Aceitar</button><button class="ui-btn btn-quiet btn-sm" data-action="chatDecline" data-id="'+Number(f.id)+'">Recusar</button></div></article>').join('');
  return '<section class="social-inbox"><div class="online-section-title"><h3>Solicitações recebidas</h3><span class="social-inbox-counter">'+(s.follows.length+s.chats.length)+'</span></div>'+rows+'</section>';
 }
 function onlineView(){
