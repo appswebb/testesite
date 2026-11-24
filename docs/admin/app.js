@@ -386,7 +386,7 @@ async function boot(){
   var allowed=await rpc("entre_admin_check");
   if(allowed!==true){gate(true);return;}
   state.verified=true;shell();await load("overview");
- db.channel("admin-support-replies").on("postgres_changes",{event:"INSERT",schema:"public",table:"entre_support_replies"},async p=>{if(!state.verified||state.view!=="support")return;try{if(state.modal?.type==="support-thread")await refreshSupportThread(Number(state.modal.data.id));else if(!state.loading&&!state.busy)await load("support");}catch(err){console.warn(errorText(err));}}).subscribe();
+ db.channel("admin-support-replies").on("postgres_changes",{event:"UPDATE",schema:"public",table:"entre_support_tickets"},async p=>{if(state.verified&&state.view==="support"&&!state.modal&&!state.loading&&!state.busy&&p.new?.status!=="draft")try{await load("support");}catch(err){console.warn(errorText(err));}}).on("postgres_changes",{event:"INSERT",schema:"public",table:"entre_support_replies"},async p=>{if(!state.verified||state.view!=="support")return;try{if(state.modal?.type==="support-thread")await refreshSupportThread(Number(state.modal.data.id));else if(!state.loading&&!state.busy)await load("support");}catch(err){console.warn(errorText(err));}}).subscribe();
   db.auth.onAuthStateChange(function(ev){if(ev==="SIGNED_OUT"){state.user=null;state.verified=false;gate(false);}});
   setInterval(function(){if(state.verified&&document.visibilityState==="visible"&&["overview","support"].includes(state.view)&&!state.modal&&!state.busy&&!state.loading&&Date.now()-lastLoad>28000){load(state.view);}},30000);
  }catch(err){console.error("entre admin boot",err);gate(false);toast(errorText(err),true);}
