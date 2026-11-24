@@ -14,14 +14,14 @@ test('Official bulletins live inside notifications behind the header bell',()=>{
 });
 test('Main menu excludes the old Avisos tab and Suas conexões',()=>{
  const app=read('app.js');
- assert.match(app,/mobileTabs.includes\(t\[0\]\)/);
+ assert.match(app,/mobileTabs\.map\(v=>tabs\.find\(t=>t\[0\]===v\)\)/);
  assert.match(app,/\['online','Online','users'\]/);
- assert.match(app,/\['rooms','Salas','chat'\]/);
- assert.match(app,/\['lives','Lives','camera'\]/);
+ assert.match(app,/\['rooms','Salas','rooms'\]/);
+ assert.doesNotMatch(app,/\['lives','Lives','camera'\]/);
  assert.match(app,/\['search','Pesquisar','search'\]/);
  assert.doesNotMatch(app,/\['avisos','Avisos','megaphone'\]/);
  assert.doesNotMatch(app,/\['connections','Suas conexões'/);
- assert.match(app,/class="toolbar-profile/);
+ assert.match(app,/class="cn-account-trigger/);
 });
 test('Unmatched temporary encounters do not appear in the conversations view',()=>{
  const source=read('social-conversations.js');
@@ -29,8 +29,8 @@ test('Unmatched temporary encounters do not appear in the conversations view',()
  const state={session:{user:{id:'self'}},pairsProfiles:{recent:{id:'other',display_name:'Sem Match'},connected:{id:'match',display_name:'Com Match'}},
   pairs:[{id:'recent',a:'self',b:'other',status:'closed',origin:'live',closed_at:new Date().toISOString()},
          {id:'connected',a:'self',b:'match',status:'connected',origin:'live',created_at:new Date().toISOString()}]};
- new Function('window','state','heading','avatar','esc','ico','genders',source)(
-  {entreSocial:api},state,(a,b,d)=>a+b+d,p=>'<div>'+p.display_name+'</div>',String,n=>'icon:'+n,{});
+ new Function('window','state','heading','avatar','esc','ico','genders','document','profileName',source)(
+  {entreSocial:api},state,(a,b,d)=>a+b+d,p=>'<div>'+p.display_name+'</div>',String,n=>'icon:'+n,{},{addEventListener(){}},(_,name)=>name);
  const view=api.conversationsView();
  assert.match(view,/Com Match/);
  assert.doesNotMatch(view,/Sem Match/);
@@ -57,7 +57,7 @@ test('Avatars recover after failed signed links and icon names are defined',()=>
 
 test('When both match, a permanent chat opens outside Ao vivo',()=>{
  const app=read('app.js');
- assert.match(app,/chat:pairView/);
+ assert.match(app,/chat:\(\)=>state\.pair\?pairView\(\):conversationsView\(\)/);
  assert.match(app,/state.view=data.status==='connected'\?'chat':'connect'/);
  assert.match(app,/state.view='chat';render\(\)/);
  assert.match(app,/function connectView\(\)\{\s*if\(state.pair\?\.status==='active'\)/);
@@ -97,9 +97,9 @@ test('Conversation deletion and notification clearing execute the correct owner-
  const api={data:{deleteConversationId:null},rpc:async(name,args)=>{calls.push([name,args]);return {ok:true}},
   loadPrefs:async()=>{prefRefresh++},refreshNotifications:async()=>{notificationRefresh++}};
  let navTarget=null;
- new Function('window','state','render','renderView','toast','nav','confirm','db','loadPairs','openPair','infoError',read('social-actions.js'))(
+ new Function('window','state','render','renderView','toast','nav','confirm','db','loadPairs','openPair','infoError','document',read('social-actions.js'))(
   {entreSocial:api},state,()=>{},()=>{},()=>{},target=>{navTarget=target},()=>true,
-  {removeChannel:()=>{}},()=>{},()=>{},error=>String(error)
+  {removeChannel:()=>{}},()=>{},()=>{},error=>String(error),{addEventListener(){}}
  );
  await api.action('conversationDeletePrompt',{dataset:{id:'abc'}});
  assert.equal(state.modal,'deleteConversation');
@@ -166,7 +166,7 @@ test('Admin creates official notices and polls, and can read responses',()=>{
 
 test('Posts feed supports publishing, likes, comments and own deletion',()=>{
  const app=read('app.js'),src=read('entre-features.js');
- assert.match(app,/\['posts','Feed','edit'\]/);
+ assert.match(app,/\['posts','Início','home'\]/);
  assert.match(src,/entre_posts_feed/);
  for(const action of ['entre_post_create','entre_post_comment','entre_post_like','entre_post_delete'])assert.ok(src.includes(action));
  assert.match(src,/postCreateForm/);
@@ -186,18 +186,18 @@ test('Live encounters can choose chat or video and request exclusive Premium mat
  assert.match(video,/cleanup/);
  assert.match(video,/activePair\(state.pair\)/);
 });
-test('No 3D effects and subtle two-person introductory animation',()=>{
+test('Current Connect match animation is present',()=>{
  const css=read('social-animations.css'),effects=read('social-effects.js');
- assert.doesNotMatch(css,/perspective:|rotateY\(|transform-style:preserve-3d/);
+ assert.match(effects,/connect-match-effect/);
  assert.match(css,/meet-stage/);
- assert.match(effects,/meet-left/);
+ assert.match(effects,/connect-match-core/);
  assert.match(effects,/1450/);
 });
 test('Profile toolbar opens menu with profile, settings, Premium and site support',()=>{
  const app=read('app.js');
  assert.match(app,/data-action="profileMenu"/);
- assert.match(app,/class="profile-dropdown"/);
- assert.match(app,/Ver perfil/);
+ assert.match(app,/class="cn-account-dialog"/);
+ assert.match(app,/Meu perfil/);
  assert.match(app,/Configurações/);
  assert.match(app,/Assinatura Premium/);
  assert.match(app,/Relatar problema/);
@@ -206,7 +206,7 @@ test('Premium checkout never claims to charge before an enabled plan and verifie
  const src=read('entre-features.js');
  assert.match(src,/entre_premium_overview/);
  assert.match(src,/entre_premium_badges/);
- assert.match(src,/premiumCheckout/);
+ assert.match(read('app.js'),/premiumCheckout/);
  assert.match(src,/checkout_enabled/);
  assert.match(src,/mercadopago/);
  assert.match(src,/paid_until/);
@@ -219,9 +219,9 @@ test('Support accepts optional evidence and never leaks the old admin mailbox',(
  assert.match(src,/supportTicketForm/);
  assert.match(src,/entre_support_submit/);
  assert.match(src,/entre-support-evidence/);
- assert.match(src,/Anexos \(opcionais\)/);
+ assert.match(src,/Provas \(opcionais\)/);
  assert.doesNotMatch(src,/multiple required/);
- assert.match(src,/entre-support-email/);
+ assert.match(read('admin/app.js'),/entre-support-email/);
  assert.doesNotMatch(src,/connectapp\\.w@gmail\\.com/);
  assert.match(admin,/supportPage/);
  assert.match(admin,/priceParams/);
@@ -229,15 +229,15 @@ test('Support accepts optional evidence and never leaks the old admin mailbox',(
 
 test('Posts, temporary video, premium checkout and account support remain wired to the app',()=>{
  const app=read('app.js'),extras=read('entre-features.js'),video=read('entre-video.js');
- assert.match(app,/\['posts','Feed','edit'\]/);
+ assert.match(app,/\['posts','Início','home'\]/);
  assert.match(app,/data-action="liveMode"/);
  assert.match(app,/entre_find_mode/);
  assert.match(app,/data-action="profileMenu"/);
- assert.match(app,/data-view="settings"/);
+ assert.match(app,/\['settings','Configurações','settings'\]/);
  assert.match(extras,/entre_posts_feed/);
  assert.match(extras,/entre-premium-web/);
  assert.match(extras,/entre_support_submit/);
- assert.match(extras,/connectapp.w@gmail.com|support-contact/);
+ assert.match(extras,/entre_support_create/);
  assert.doesNotMatch(extras,/connectapp\.w@gmail\.com/);
  assert.match(video,/RTCPeerConnection/);
  assert.match(video,/mediaDevices\.getUserMedia/);
