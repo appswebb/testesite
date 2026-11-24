@@ -1,0 +1,1 @@
+alter table public.entre_support_replies add column email_sent_at timestamptz;
