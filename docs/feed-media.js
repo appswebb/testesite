@@ -119,7 +119,7 @@ async function publish(body){
    const {error}=await db.rpc('entre_post_create_media',{_body:text,_media_path:path,_media_type:kind});
    if(error)throw error;
   }catch(error){await db.storage.from(bucket).remove([path]).catch(()=>{});throw error;}
-  clearMedia();toast(kind==='image'?'Foto publicada no Feed.':'Vídeo publicado no Feed.');
+  clearMedia();toast(kind==='image'?'Foto publicada no Feed.':'Vídeo publicado no Feed.',false,'publish');
  }finally{media.posting=false;}
 }
 async function removePostMedia(p){if(p?.media_path&&p.author_id===state.session?.user?.id){await db.storage.from(bucket).remove([p.media_path]).catch(()=>{});media.urls.delete(p.media_path);}}

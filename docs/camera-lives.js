@@ -163,7 +163,7 @@ async function refresh(paint=true){
   await hydrateImages(s.rows);
   if(s.active){
    const found=s.rows.find(x=>x.id===s.active.id);
-   if(!found){await leave(false);toast('A transmissão foi encerrada.');}
+   if(!found){await leave(false);toast('A transmissão foi encerrada.',false,'end');}
    else{
     const oldRole=s.localRole;
     const updated=found.guest_requested_by!==s.active.guest_requested_by||found.guest_id!==s.active.guest_id||found.requested!==s.active.requested;
@@ -233,9 +233,9 @@ async function join(id){
   room.on(lk.RoomEvent.ParticipantDisconnected,participant=>{
    document.querySelectorAll('[data-live-track^="'+participant.identity+'-"]').forEach(el=>el.remove());
   });
-  room.on(lk.RoomEvent.Disconnected,()=>{if(s.room===room){void leave(false);toast('Conexão da live encerrada.');}});
+  room.on(lk.RoomEvent.Disconnected,()=>{if(s.room===room){void leave(false);toast('Conexão da live encerrada.',false,'end');}});
   await room.connect(data.url,data.token,{autoSubscribe:true});
-  if(data.role==='host'||data.role==='guest')await room.localParticipant.enableCameraAndMicrophone();
+  if(data.role==='host'||data.role==='guest')await room.localParticipant.enableCameraAndMicrophone();window.connectSound?.play?.('live');
   if(state.view==='lives'){renderView();attachAll();}
  }catch(e){
   const msg=e?.message||'Falha ao conectar à live.';
@@ -252,8 +252,8 @@ async function leave(remote=true){
  const id=s.active?.id,role=s.localRole;
  await disconnect();s.active=null;s.localRole=null;
  if(remote&&id&&(role==='host'||role==='guest')){
-  const {error}=await db.rpc('entre_live_exit',{_live:id});if(error)toast(infoError(error),true);
- }
+  const {error}=await db.rpc('entre_live_exit',{_live:id});if(error)toast(infoError(error),true);else window.connectSound?.play?.('end');
+ }else if(remote&&id){window.connectSound?.play?.('end');}
  if(state.view==='lives')renderView();
 }
 async function start(form){
@@ -293,7 +293,7 @@ async function action(type,button){
  if(type==='leave'){if(s.localRole==='host'&&!confirm('Sair agora encerrará sua transmissão. Encerrar a live?'))return;await leave();await refresh();return;}
  if(type==='end'){if(confirm('Encerrar sua live agora?')){await leave();await refresh();}return;}
  if(type==='request'){
-  const {error}=await db.rpc('entre_live_request_guest',{_live:s.active?.id});if(error)throw error;toast('Pedido enviado. Aguarde o apresentador.');await refresh();return;
+  const {error}=await db.rpc('entre_live_request_guest',{_live:s.active?.id});if(error)throw error;toast('Pedido enviado. Aguarde o apresentador.',false,'success');await refresh();return;
  }
  if(type==='approve'||type==='reject'){
   const {error}=await db.rpc('entre_live_review_guest',{_live:s.active?.id,_approve:type==='approve'});

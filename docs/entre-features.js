@@ -116,7 +116,7 @@ async function postAction(a,btn){
  if(a==='postDelete'){
   if(!confirm('Apagar esta publicação e seus comentários?'))return true;
   const oldPost=data.posts.find(p=>Number(p.id)===id);
-  await call('entre_post_delete',{_post:id});await window.entreMedia?.removePostMedia?.(oldPost);await loadPosts();toast('Post apagado.');return true;
+  await call('entre_post_delete',{_post:id});await window.entreMedia?.removePostMedia?.(oldPost);await loadPosts();toast('Post apagado.',false,'delete');return true;
  }
  if(a==='postCommentEdit'||a==='postCommentReport'||a==='postCommentCancel'){
   const card=btn.closest('[data-comment-id]');if(!card)return true;
@@ -131,9 +131,9 @@ async function postAction(a,btn){
  }
  if(a==='postCommentDelete'){
   if(!confirm('Apagar este comentário definitivamente?'))return true;
-  await call('entre_post_comment_delete',{_comment:id});await loadCommentPage();await loadPosts();toast('Comentário apagado.');return true;
+  await call('entre_post_comment_delete',{_comment:id});await loadCommentPage();await loadPosts();toast('Comentário apagado.',false,'delete');return true;
  }
- if(a==='postLike'){await call('entre_post_like',{_post:id});await loadPosts();return true;}
+ if(a==='postLike'){await call('entre_post_like',{_post:id});window.connectSound?.play?.('like');await loadPosts();return true;}
  return false;
 }
 async function postForm(form){
@@ -143,12 +143,12 @@ async function postForm(form){
    await window.entreMedia.publish(body||'');await loadPosts();return true;
   }
   if(!body||body.length<3||body.length>900)throw Error('Post precisa ter de 3 a 900 caracteres.');
-  await call('entre_post_create',{_body:body});await loadPosts();toast('Seu post foi publicado.');return true;
+  await call('entre_post_create',{_body:body});await loadPosts();toast('Seu post foi publicado.',false,'publish');return true;
  }
  if(form.classList.contains('post-comment-edit-form')){
   if(!body||body.length<2||body.length>420)throw Error('Comentário precisa ter de 2 a 420 caracteres.');
   await call('entre_post_comment_edit',{_comment:Number(form.dataset.comment),_body:body});
-  await loadCommentPage();await loadPosts();toast('Comentário atualizado.');return true;
+  await loadCommentPage();await loadPosts();toast('Comentário atualizado.',false,'success');return true;
  }
  if(form.classList.contains('post-comment-report-form')){
   await call('entre_post_comment_report',{_comment:Number(form.dataset.comment),_reason:form.elements.reason.value,_details:form.elements.details.value.trim()});
@@ -157,7 +157,7 @@ async function postForm(form){
  if(form.classList.contains('post-comment-form')){
   if(!body||body.length<2||body.length>420)throw Error('Comentário precisa ter de 2 a 420 caracteres.');
   await call('entre_post_comment',{_post:Number(form.dataset.post),_body:body});
-  await loadCommentPage();await loadPosts();toast('Comentário publicado.');document.getElementById('commentDialogInput')?.focus();return true;
+  await loadCommentPage();await loadPosts();toast('Comentário publicado.',false,'send');document.getElementById('commentDialogInput')?.focus();return true;
  }
  return false;
 }
@@ -247,7 +247,7 @@ async function renderWebBrick(){
      data.webPayment=result;
      if(result.status==='approved'){
       await refreshPremium();data.webCheckoutOpen=false;await unmountPaymentBrick();renderView();
-      toast('Pagamento aprovado! Seu Premium foi liberado.');
+      toast('Pagamento aprovado! Seu Premium foi liberado.',false,'success');
      }else if(result.status==='pending'||result.status==='in_process'){
       data.webStatusText='Aguardando confirmação';refreshWebStatus();
       document.getElementById('webPaymentStatus')?.scrollIntoView({behavior:'smooth',block:'center'});
@@ -283,12 +283,12 @@ async function verifyPremium(){
     data.webPayment={...data.webPayment,...status};
     if(status.status==='approved'){
      await refreshPremium();data.webCheckoutOpen=false;await unmountPaymentBrick();renderView();
-     toast('Pagamento confirmado. Premium ativo!');return;
+     toast('Pagamento confirmado. Premium ativo!',false,'success');return;
     }
    }
   }
   await refreshPremium();
-  if(data.premium?.active){data.webCheckoutOpen=false;await unmountPaymentBrick();renderView();toast('Premium confirmado!');}
+  if(data.premium?.active){data.webCheckoutOpen=false;await unmountPaymentBrick();renderView();toast('Premium confirmado!',false,'success');}
   else{refreshWebStatus();toast('Pagamento ainda não foi confirmado.');}
  }finally{data.webChecking=false;refreshWebStatus();}
 }

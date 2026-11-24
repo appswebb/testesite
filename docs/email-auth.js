@@ -99,7 +99,7 @@
     passwordStrength(password,fieldValue('password_confirm'));
     const {data,error}=await db.auth.signUp({email,password,options:{emailRedirectTo:redirectUrl()}});
     if(error)throw error;
-    if(data?.session){await acceptSession(data.session);return;}
+    if(data?.session){await acceptSession(data.session);window.connectSound?.play?.('login');return;}
     showFormMessage('Cadastro solicitado. Se a conta puder ser criada, você receberá um e-mail de confirmação. Confira também o spam.',true);
     const card=form.closest('.auth-card');if(card){card.classList.add('cx-confirmation');const box=document.getElementById('form-success');if(box){box.setAttribute('tabindex','-1');box.focus();}const next=document.createElement('button');next.type='button';next.className='ui-btn btn-outline cx-confirm-login';next.dataset.action='login';next.textContent='Já confirmei meu e-mail';if(!card.querySelector('.cx-confirm-login'))form.after(next);}
     return;

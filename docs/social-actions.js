@@ -33,7 +33,7 @@ async function action(type,btn){
  if(type==='followAccept'||type==='followDecline'){
   const r=await call('entre_follow_respond',{_follower:id,_accept:type==='followAccept'});
   await api.refreshInbox();
-  if(r?.pair_id){await loadPairs();toast('Solicitação aceita. Já podem conversar!');}else toast('Solicitação recusada.');
+  if(r?.pair_id){await loadPairs();toast('Solicitação aceita. Já podem conversar!',false,'match');}else toast('Solicitação recusada.',false,'end');
   renderView();return true;
  }
  if(type==='chatAccept'||type==='chatDecline'){
@@ -57,7 +57,7 @@ async function action(type,btn){
    if(state.channel){db.removeChannel(state.channel);state.channel=null;}
   }
   nav('conversations');
-  toast('Conversa apagada apenas da sua conta.');
+  toast('Conversa apagada apenas da sua conta.',false,'delete');
   return true;
  }
  if(type==='conversationPin'||type==='conversationUnpin'||type==='conversationArchive'||type==='conversationRestore'){
@@ -71,12 +71,12 @@ async function action(type,btn){
  if(type==='notificationsDismiss'){
   await call('entre_notifications_clear',{_id:Number(id)});
   await api.refreshNotifications();
-  toast('Notificação removida.');return true;
+  toast('Notificação removida.',false,'delete');return true;
  }
  if(type==='notificationsClear'){
   if(!confirm('Limpar todas as notificações? Elas não poderão ser recuperadas.'))return true;
   await call('entre_notifications_clear');
-  await api.refreshNotifications();toast('Notificações limpas.');return true;
+  await api.refreshNotifications();toast('Notificações limpas.',false,'delete');return true;
  }
  if(type==='notificationsRead'){await call('entre_notifications_read');await api.refreshNotifications();renderView();return true;}
  if(type==='notificationsMore'){await api.refreshNotifications(api.data.notifications.at(-1)?.id||null);renderView();return true;}

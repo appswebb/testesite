@@ -117,7 +117,7 @@ async function upload(file){
   if(uploadError)throw uploadError;
   const {error:saveError}=await db.rpc('entre_chat_media_add',{_pair:pair,_path:path,_kind:item.kind});
   if(saveError)throw saveError;
-  success=true;status('Enviado com sucesso.');await refresh(true);
+  success=true;window.connectSound?.play?.('send');status('Enviado com sucesso.');await refresh(true);
  }catch(err){
   if(path&&!success)await db.storage.from(bucket).remove([path]).catch(()=>{});
   status(errorText(err));throw err;

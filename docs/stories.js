@@ -127,7 +127,7 @@ async function publish(form){
   const {error:createError}=await db.rpc('entre_story_create',{_path:path,_type:item.kind,_caption:String(form.elements.namedItem('caption')?.value||'').trim()});
   if(createError)throw createError;
   created=true;close();await refresh(true,true);
-  toast('Story publicado com sucesso.');
+  toast('Story publicado com sucesso.',false,'publish');
  }catch(e){
   if(path&&!created)await db.storage.from(bucket).remove([path]).catch(()=>{});
   if(errorBox&&errorBox.isConnected){errorBox.hidden=false;errorBox.textContent=failText(e);}
@@ -140,7 +140,7 @@ async function remove(){
  const {data:removed,error}=await db.rpc('entre_story_delete',{_id:row.id});
  if(error||removed!==true)throw error||Error('Este story não pôde ser excluído.');
  await db.storage.from(bucket).remove([row.media_path]).catch(()=>{});
- data.urls.delete(row.media_path);close();await refresh(true,true);toast('Story excluído.');
+ data.urls.delete(row.media_path);close();await refresh(true,true);toast('Story excluído.',false,'delete');
 }
 document.addEventListener('change',event=>{
  if(event.target?.id!=='storyMediaInput')return;

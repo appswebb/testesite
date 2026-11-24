@@ -128,7 +128,7 @@ async function send(form){
  try{
   const {error}=await db.rpc('entre_room_send',{_room:s.room,_body:body});
   if(error)throw error;
-  input.value='';s.expiresCooldown=Date.now()+5000;
+  input.value='';window.connectSound?.play?.('send');s.expiresCooldown=Date.now()+5000;
   await load();
  }catch(e){toast(infoError(e),true);if(/5 segundos/.test(e.message||''))s.expiresCooldown=Date.now()+5000;}
  finally{s.busy=false;if(btn?.isConnected)btn.disabled=false;paint();}
