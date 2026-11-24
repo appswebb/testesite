@@ -586,3 +586,22 @@ html[data-theme] #app .cp-visitor-footer{flex:none!important;padding:10px 14px 1
 html[data-theme] #app .cp-visitor-footer :is(.ui-btn,.cp-share-link){min-height:42px!important;padding:8px!important;border-radius:11px!important;box-shadow:none!important;font-size:12px!important}
 html[data-theme] #app .cp-visitor-footer .cp-share-link{margin:7px 0 0!important}
 @media(max-width:600px){html[data-theme] body>.cp-match-filter-sheet{inset:auto 8px max(8px,env(safe-area-inset-bottom,0px))!important;width:calc(100vw - 16px)!important;height:min(660px,calc(100dvh - 16px - env(safe-area-inset-bottom,0px)))!important;max-height:calc(100dvh - 16px - env(safe-area-inset-bottom,0px))!important}}
+
+
+/* Center only the approved online card's identity block. */
+html[data-theme] #app .online-person .online-person-content{
+ flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:10px!important;text-align:center!important;
+}
+html[data-theme] #app .online-person .cp-online-identity{
+ display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;min-width:0!important;gap:3px!important;margin:0!important;text-align:center!important;
+}
+html[data-theme] #app .online-person .cp-online-identity h3{
+ width:100%;text-align:center!important;margin:0!important;line-height:1.25!important;overflow-wrap:anywhere;
+}
+html[data-theme] #app .online-person .cp-online-identity .person-handle{
+ display:block!important;margin:0!important;color:var(--ui-muted)!important;font-size:12px!important;font-weight:600!important;line-height:1.35!important;text-align:center!important;overflow-wrap:anywhere;
+}
+html[data-theme] #app .online-person .cp-online-identity .cp-online-gender{
+ display:block!important;margin:2px 0 0!important;color:var(--ui-muted)!important;font-size:11px!important;line-height:1.35!important;text-align:center!important;font-weight:500!important;
+}
