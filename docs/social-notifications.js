@@ -5,6 +5,14 @@ function summary(n){
  const p=n.actor_name||'Uma pessoa';
  return ({follow:p+' quer seguir você.',follow_accepted:p+' aceitou seu pedido.',chat_request:p+' quer conversar com você.',chat_accepted:p+' aceitou conversar.',message:'Nova mensagem de '+p+'.',matched:'Um encontro começou!',ended:'Um encontro terminou.',retention:'A conversa está perto de 10 dias sem mensagens. O texto poderá expirar.',account_suspended:'Sua conta foi suspensa pela moderação. Verifique o motivo e o recurso disponível.',account_restored:'Sua conta foi reativada. Você já pode voltar a usar o CONNECT.',system:'Novidades da plataforma.',bulletin:'Novo aviso oficial da administração.',poll:'Nova enquete oficial: seu voto é obrigatório.',bulletin_reply:p+' respondeu a um aviso oficial.'})[n.kind]||'Você tem uma novidade.';
 }
+function notificationEntry(n){
+ const following=n.kind==='follow'||n.kind==='follow_accepted';
+ const title=({follow:'Nova solicitação de seguir',follow_accepted:'Solicitação aceita'})[n.kind]||summary(n);
+ const pending=n.kind==='follow'&&api.data.follows?.some(f=>f.sender===n.actor_id);
+ const actor=n.actor_name||'Uma pessoa';
+ const label=following?'<strong>'+esc(actor)+'</strong><span class="notification-message">'+(n.kind==='follow'?'quer seguir você.':'aceitou sua solicitação para seguir.')+'</span>':'<strong>'+esc(title)+'</strong>';
+ return '<article class="notification-entry cn-notice-entry '+(n.read_at?'':'is-unread')+(following?' cn-notice-follow':'')+'"><div class="cn-notice-main"><button type="button" class="notification-item" data-action="notificationOpen" data-id="'+Number(n.id)+'" data-pair="'+esc(n.pair_id||'')+'" data-bulletin="'+Number(n.bulletin_id||0)+'"><span class="notification-icon">'+(following?'<span class="cn-notice-initial">'+esc(actor.trim().slice(0,1).toUpperCase()||'?')+'</span><span class="cn-notice-mini">'+ico('users',12)+'</span>':ico(n.kind==='message'?'chat':n.kind==='matched'?'heart':n.kind==='poll'||n.kind==='bulletin'?'megaphone':n.kind==='account_suspended'||n.kind==='account_restored'?'shield':'bell',18))+'</span><span class="notification-copy">'+(following?'<span class="cn-notice-label">'+esc(title)+'</span>':'')+label+'<small>'+esc(new Date(n.created_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}))+'</small></span></button><button type="button" class="notification-dismiss" aria-label="Remover notificação" data-action="notificationsDismiss" data-id="'+Number(n.id)+'">'+ico('close',16)+'</button></div>'+(pending?'<div class="cn-notice-actions"><button type="button" class="ui-btn btn-dark btn-sm" data-action="followAccept" data-id="'+esc(n.actor_id)+'">'+ico('check',15)+' Aceitar</button><button type="button" class="ui-btn btn-outline btn-sm" data-action="followDecline" data-id="'+esc(n.actor_id)+'">Recusar</button></div>':n.kind==='follow'?'<div class="cn-notice-actions"><button type="button" class="ui-btn btn-outline btn-sm" data-action="nav" data-view="online">Ver solicitações '+ico('chevron',14)+'</button></div>':'')+'</article>';
+}
 function notificationsView(){
  const d=api.data,hasItems=d.notifications.length>0,official=d.notificationTab==='bulletins';
  const tabs='<div class="cn-notification-tabs" role="group" aria-label="Tipo de notificação"><button type="button" data-action="notificationTab" data-value="personal" aria-pressed="'+!official+'">Notificações</button><button type="button" data-action="notificationTab" data-value="bulletins" aria-pressed="'+official+'">Avisos</button></div>';
@@ -14,13 +22,7 @@ function notificationsView(){
  '<div><button type="button" class="ui-btn btn-outline btn-sm" data-action="notificationsRead"'+(!d.unread?' disabled':'')+'>Marcar como lidas</button>'+
  '<button type="button" class="ui-btn btn-quiet btn-sm notification-clear-all" data-action="notificationsClear"'+(!hasItems?' disabled':'')+'>Limpar tudo</button>'+
  ('Notification'in window&&Notification.permission!=='granted'?'<button type="button" class="ui-btn btn-quiet btn-sm" data-action="notificationsPermission">Ativar avisos no navegador</button>':'')+'</div></div>'+
- (hasItems?'<div class="notification-list">'+d.notifications.map(n=>
- '<article class="notification-entry '+(n.read_at?'':'is-unread')+'">'+
- '<button type="button" class="notification-item" data-action="notificationOpen" data-id="'+Number(n.id)+'" data-pair="'+esc(n.pair_id||'')+'" data-bulletin="'+Number(n.bulletin_id||0)+'">'+
- '<span class="notification-icon">'+ico(n.kind==='message'?'chat':n.kind==='matched'?'heart':n.kind==='poll'||n.kind==='bulletin'?'megaphone':n.kind==='account_suspended'||n.kind==='account_restored'?'shield':'bell',18)+'</span>'+
- '<span class="notification-copy"><strong>'+(n.actor_id&&n.actor_name&&summary(n).includes(n.actor_name)?(()=>{const label=summary(n),at=label.indexOf(n.actor_name);return esc(label.slice(0,at))+profileName(n.actor_id,n.actor_name)+esc(label.slice(at+n.actor_name.length))})():esc(summary(n)))+'</strong><small>'+new Date(n.created_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+'</small></span>'+
- ico('chevron',16)+'</button>'+
- '<button type="button" class="notification-dismiss" aria-label="Remover notificação" title="Remover notificação" data-action="notificationsDismiss" data-id="'+Number(n.id)+'">'+ico('close',16)+'</button></article>').join('')+'</div>':
+ (hasItems?'<div class="notification-list">'+d.notifications.map(notificationEntry).join('')+'</div>':
  '<div class="social-empty"><h3>Nenhuma notificação por enquanto.</h3><p>As notificações ficam disponíveis por até 24 horas.</p></div>')+
  (d.notiMore?'<div class="social-more"><button type="button" class="ui-btn btn-outline" data-action="notificationsMore">Carregar mais 15</button></div>':'')+
  '<p class="retention-small">Limpar notificações não apaga mensagens nem cancela solicitações de seguir.</p>';
