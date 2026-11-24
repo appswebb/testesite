@@ -3,16 +3,16 @@
 :root{
  --ui-bg:#ffffff;--ui-panel:#ffffff;--ui-panel-alt:#f7f9f9;
  --ui-text:#15191a;--ui-muted:#727a80;--ui-line:#e8ebed;
- --ui-accent:#111111;--ui-accent-on:#ffffff;--ui-accent-soft:rgb(17 17 17 / .13);
- --ui-accent-faint:rgb(17 17 17 / .07);--ui-accent-shadow:rgb(17 17 17 / .24);
+ --ui-accent:#000000;--ui-accent-on:#ffffff;--ui-accent-soft:rgb(0 0 0 / .13);
+ --ui-accent-faint:rgb(0 0 0 / .07);--ui-accent-shadow:rgb(0 0 0 / .24);
  --ui-danger:#bc3c4d;--ui-theme-surface:#ffffff;
  color-scheme:light;
 }
 html[data-theme="dark"]{
- --ui-bg:#101114;--ui-panel:#191c21;--ui-panel-alt:#24282f;
- --ui-text:#f7f8fa;--ui-muted:#a6adb8;--ui-line:#373c45;
- --ui-danger:#ff9baf;--ui-theme-surface:#191c21;
- --ui-accent:#f5f6f8;--ui-accent-on:#101114;--ui-accent-soft:rgb(245 246 248 / .13);
+ --ui-bg:#101012;--ui-panel:#1A1B1E;--ui-panel-alt:#25262A;
+ --ui-text:#F5F5F5;--ui-muted:#B5B6BD;--ui-line:#37383E;
+ --ui-danger:#ff9baf;--ui-theme-surface:#1A1B1E;
+ --ui-accent:#F5F5F5;--ui-accent-on:#101012;--ui-accent-soft:rgb(245 246 248 / .13);
  --ui-accent-faint:rgb(245 246 248 / .07);--ui-accent-shadow:rgb(245 246 248 / .24);
  color-scheme:dark;
 }
@@ -308,9 +308,9 @@ html[data-theme="dark"] .maintenance-screen{background:var(--ui-bg)!important;co
 .appearance-mini i{width:14px;height:100%;border-radius:4px;opacity:.85}
 .appearance-mini b{width:52%;height:6px;border-radius:99px}
 .appearance-mini.light{background:#fff;border:1px solid #d8d8d8}
-.appearance-mini.light i{background:#ebeeee}.appearance-mini.light b{background:#111111}
-.appearance-mini.dark{background:#17191d;border:1px solid #42464d}
-.appearance-mini.dark i{background:#343942}.appearance-mini.dark b{background:#F5F6F8}
+.appearance-mini.light i{background:#ebeeee}.appearance-mini.light b{background:#000000}
+.appearance-mini.dark{background:#101012;border:1px solid #37383E}
+.appearance-mini.dark i{background:#25262A}.appearance-mini.dark b{background:#F5F6F8}
 .appearance-mini.custom{background:linear-gradient(120deg,#f4cee6,#e3dbfb,#d0d8fb)}
 .appearance-mini.custom i{background:#875ac3}.appearance-mini.custom b{background:var(--ui-accent)}
 .appearance-custom-settings{box-sizing:border-box;min-width:0;max-width:100%;padding:16px;margin-top:13px;background:var(--ui-panel-alt)!important;
