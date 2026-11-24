@@ -2,7 +2,7 @@
 (()=>{
  'use strict';
  const SITE_KEY='0x4AAAAAAGRXhO7YaQ_j10mr';
- const selector='#authForm[data-form="login"],#authForm[data-form="signup"],#authForm[data-form="forgot"],#admin-login-form';
+ const selector='#authForm[data-form="login"],#authForm[data-form="signup"],#authForm[data-form="forgot"],#admin-login-form,#deleteEmailForm';
  let current=null,loading=null;
  const markup=()=>'<div class="connect-turnstile"><div data-connect-turnstile-widget></div><div class="connect-turnstile-status"><span role="status" aria-live="polite" data-connect-turnstile-status>Preparando verificação de segurança…</span><button type="button" data-connect-turnstile-retry hidden>Repetir</button></div></div>';
  function status(c,message,retry=false){if(current!==c||!c.form.isConnected)return;if(c.status.textContent!==message)c.status.textContent=message;c.retry.hidden=!retry;}
