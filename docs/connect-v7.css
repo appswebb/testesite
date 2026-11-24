@@ -269,3 +269,6 @@ html[data-theme] #app .rooms-empty .cn-room-empty-icon{display:grid!important;pl
 }
 @media(max-width:480px){html[data-theme] #app .connect-app-screen .live-app-card.cn-unified-match{padding:13px!important}html[data-theme] #app .cn-unified-match .cn-match-art{height:clamp(145px,24dvh,200px)}}
 @media(max-height:480px) and (max-width:900px){html[data-theme] #app .cn-view[data-section="rooms"] .rooms-static-shell{min-height:0!important}html[data-theme] #app .cn-view[data-section="rooms"] .rooms-static-shell .rooms-discussion{min-height:110px!important;max-height:45dvh!important}html[data-theme] #app .cn-main:has(>.cn-view[data-section="rooms"]){padding-bottom:calc(75px + env(safe-area-inset-bottom,0px))!important}html[data-theme] #app .cn-unified-match .cn-match-art{height:115px}}
+
+/* The new asset already includes a smooth, transparent perimeter. No secondary clipping. */
+html[data-theme] #app .cn-public-v7 .cn-art-fade img[src*="connect-hero-fade.avif"]{mask-image:none!important;-webkit-mask-image:none!important;mask-composite:add!important;-webkit-mask-composite:source-over!important}
