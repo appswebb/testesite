@@ -11,14 +11,11 @@ async function openPerson(id,handle='',name=''){
  try{
   let person=null;
   if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id||'')){
-   const {data,error}=await db.from('entre_profiles').select('id,username,display_name,age,bio,gender,avatar_path,avatar_uploaded_at').eq('id',id).maybeSingle();
-   if(!error)person=data;
-  }
-  if(!person&&/^[a-z][a-z0-9_]{2,19}$/i.test(handle)){
+   person=await api.rpc('entre_profile_for_member',{_target:id});
+  }else if(/^[a-z][a-z0-9_]{2,19}$/i.test(handle)){
    const rows=await api.rpc('entre_user_search',{_query:handle.toLowerCase()});
-   person=(Array.isArray(rows)?rows:[]).find(p=>p.username===handle.toLowerCase()&&(!id||p.id===id));
+   person=(Array.isArray(rows)?rows:[]).find(p=>p.username===handle.toLowerCase());
   }
-  if(!person&&id&&name.trim().length>=2){const rows=await api.rpc('entre_user_search',{_query:name.trim().slice(0,40)});person=(Array.isArray(rows)?rows:[]).find(p=>p.id===id);}
   if(request!==profileSequence||state.session?.user?.id!==uid)return;
   if(!person){toast('O perfil não está disponível.',true);return;}
   await Promise.allSettled([signAvatar(person),window.entreExtras?.loadBadges?.([person])]);
