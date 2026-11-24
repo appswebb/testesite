@@ -60,6 +60,7 @@ const avatar=(person,size='')=>{
   return '<span class="avatar '+esc(size)+extra+'"'+attrs+'><img loading="eager" decoding="async" referrerpolicy="no-referrer" data-avatar-path="'+esc(person.avatar_path)+'" src="'+esc(url.url)+'" alt="Foto de '+esc(person?.display_name||'perfil')+'">'+mark+'</span>';
  return '<span class="avatar '+esc(size)+extra+'"'+attrs+' style="background:'+colorFor(person?.id)+'">'+esc(initials(person?.display_name))+mark+'</span>';
 };
+try{localStorage.removeItem('connect.menu.appearance');}catch(_){}
 const brand=()=>`<a href="#" class="cn-brand" data-action="logo" aria-label="CONNECT início"><img src="./connect-glass.svg?v=showcase-v17" alt="" width="49" height="26"><span>CONNECT</span></a>`;
 const fmtTime=date=>new Date(date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 const fmtDate=date=>new Date(date).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
@@ -554,7 +555,7 @@ async function saveInlineAvatar(blob,uid){
  }catch(e){if(uploaded&&!committed)await db.storage.from(AVATAR_BUCKET).remove([path]);throw e}
  finally{inlineProfileBusy=false}
 }
-function appearanceView(){return '<section class="cx-appearance-page"><header class="cx-appearance-intro"><span>SEU CONNECT</span><h2>Personalize sua experiência</h2><p>Escolha as cores e os efeitos visuais do aplicativo.</p></header>'+(window.entreTheme?.renderControls?.()||'')+(window.connectMenuStyle?.controls?.()||'')+'</section>';}
+function appearanceView(){return '<section class="cx-appearance-page"><header class="cx-appearance-intro"><span>SEU CONNECT</span><h2>Personalize sua experiência</h2><p>Escolha o tema e a cor de destaque do aplicativo.</p></header>'+(window.entreTheme?.renderControls?.()||'')+'</section>';}
 function settingsView(){return heading('VOCÊ NO CONTROLE','Configurações<em>.</em>','Gerencie sua experiência, privacidade e conta.')+
  
  '<div class="settings-card"><h3>Experiência</h3>'+
