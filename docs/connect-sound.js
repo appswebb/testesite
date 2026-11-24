@@ -2,10 +2,10 @@
 (()=>{
 'use strict';
 if(window.connectSound)return;
-const KEY='connect.uiSounds';
-let enabled=true,context=null,activeVoices=0,gesture=null,dragUntil=0;
+const KEY='connect.uiSounds',VOLUME='connect.uiSoundsVolume';
+let enabled=true,context=null,activeVoices=0,gesture=null,dragUntil=0,level=80;
 const last=new Map();
-try{enabled=localStorage.getItem(KEY)!=='off'}catch(_){}
+try{enabled=localStorage.getItem(KEY)!=='off';const raw=localStorage.getItem(VOLUME);if(raw!==null&&Number.isFinite(Number(raw)))level=Math.max(20,Math.min(100,Number(raw)));}catch(_){}
 const selector=[
  'button','a[href]','summary','input:not([type=hidden])','select','textarea',
  '[role=button]','[role=tab]','[role=switch]','[role=menuitem]','[role=checkbox]','[role=radio]',
@@ -64,7 +64,7 @@ function voice(kind){
   osc.frequency.setValueAtTime(start,at);
   osc.frequency.exponentialRampToValueAtTime(end,at+duration);
   gain.gain.setValueAtTime(.0001,at);
-  gain.gain.exponentialRampToValueAtTime(volume,at+.005);
+  gain.gain.exponentialRampToValueAtTime(Math.max(.001,volume*(.5+level/100)),at+.005);
   gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
   osc.connect(gain);gain.connect(context.destination);activeVoices++;
   osc.onended=()=>{activeVoices=Math.max(0,activeVoices-1);try{osc.disconnect();gain.disconnect()}catch(_){}};
@@ -84,6 +84,7 @@ function sync(){
  document.querySelectorAll('[data-connect-sound-toggle]').forEach(b=>{
   b.setAttribute('aria-checked',String(enabled));b.textContent=enabled?'Ativado':'Desativado';
  });
+ document.querySelectorAll('[data-connect-sound-volume]').forEach(x=>x.value=level);document.querySelectorAll('[data-connect-volume-label]').forEach(x=>x.textContent=level+'%');
 }
 function set(value){
  enabled=Boolean(value);
@@ -91,7 +92,7 @@ function set(value){
  sync();
 }
 function markup(){
- return '<div class="setting-row"><div><strong>Sons de interação</strong><p>Sons diferentes para navegação, mensagens, conexões e confirmações.</p></div><button type="button" class="ui-btn btn-outline btn-sm" role="switch" aria-label="Sons de interação" aria-checked="'+enabled+'" data-connect-sound-toggle>'+ (enabled?'Ativado':'Desativado')+'</button></div>';
+ return '<div class="setting-row"><div><strong>Sons de interação</strong><p>Sons diferentes para navegação, mensagens, conexões e confirmações.</p></div><button type="button" class="ui-btn btn-outline btn-sm" role="switch" aria-label="Sons de interação" aria-checked="'+enabled+'" data-connect-sound-toggle>'+ (enabled?'Ativado':'Desativado')+'</button></div><div class="setting-row sound-volume-row"><div><strong>Volume dos efeitos</strong><p data-connect-volume-label>'+level+'%</p></div><input type="range" data-connect-sound-volume aria-label="Volume dos sons" min="20" max="100" value="'+level+'"><button type="button" class="ui-btn btn-outline btn-sm" data-connect-sound-test>Testar</button></div>';
 }
 document.addEventListener('pointerdown',e=>{
  if(e.isPrimary===false)return;
@@ -111,6 +112,7 @@ document.addEventListener('click',e=>{
  if(!e.isTrusted)return;
  const el=element(e);
  if(!el||disabled(el)||(e.detail!==0&&Date.now()<dragUntil))return;
+ if(el.hasAttribute('data-connect-sound-test')){synth('found',true);return;}
  if(el.hasAttribute('data-connect-sound-toggle')){
   set(!enabled);
   if(enabled)synth('select',true);
@@ -121,6 +123,7 @@ document.addEventListener('click',e=>{
  if(el.tagName==='LABEL'&&el.control)return;
  synth(clickKind(el),true);
 },true);
-window.addEventListener('storage',e=>{if(e.key===KEY){enabled=e.newValue!=='off';sync();}});
+document.addEventListener('input',e=>{if(!e.target.matches?.('[data-connect-sound-volume]'))return;level=Math.max(20,Math.min(100,Number(e.target.value)||80));try{localStorage.setItem(VOLUME,String(level));}catch(_){}sync();});
+window.addEventListener('storage',e=>{if(e.key===KEY){enabled=e.newValue!=='off';sync();}if(e.key===VOLUME){level=Math.max(20,Math.min(100,Number(e.newValue)||80));sync();}});
 window.connectSound={markup,set,isEnabled:()=>enabled,play:kind=>synth(kind)};
 })();
