@@ -1,0 +1,39 @@
+/* CONNECT checkout — dedicated responsive payment experience */
+#app .cc-checkout{max-width:1120px;margin:0 auto;padding:8px 0 36px;color:var(--ui-text)}
+#app .cc-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:20px;font-size:12px}
+#app .cc-head span,#app .cc-back{display:flex;align-items:center;gap:8px;color:inherit}
+#app .cc-back,#app .cc-help{background:none;border:0;padding:9px 0;font:inherit;color:inherit;cursor:pointer;font-weight:650;text-align:left}
+#app .cc-back svg{transform:rotate(180deg)}
+#app .cc-grid{display:grid;grid-template-columns:minmax(0,.87fr) minmax(0,1fr);gap:18px;align-items:start}
+#app .cc-summary{min-width:0;background:radial-gradient(ellipse at 92% 0%,#424047 0%,transparent 50%),linear-gradient(150deg,#242326,#111113 75%);color:#f7f6fa;border-radius:24px;padding:26px;box-shadow:0 14px 40px #0002;position:sticky;top:90px;overflow:hidden}
+#app .cc-brand{display:flex;align-items:center;gap:13px;font-size:10px;letter-spacing:.16em;font-weight:700}
+#app .cc-brand img{object-fit:contain}
+#app .cc-summary-main{margin:28px 0 24px}#app .cc-summary-main>small,#app .cc-step{font-weight:750;letter-spacing:.14em;font-size:10px;opacity:.7}
+#app .cc-summary h2{font-size:clamp(30px,4vw,46px);line-height:1.07;letter-spacing:-.045em;margin:12px 0;font-weight:740;color:inherit}
+#app .cc-summary p{font-size:13px;line-height:1.6;color:#d6d4da;margin:0}
+#app .cc-price{font-size:clamp(35px,4vw,48px);line-height:1.15;margin-top:22px;font-weight:720;letter-spacing:-.05em}#app .cc-price small{font-size:13px;font-weight:500;letter-spacing:0;color:#d6d4da}
+#app .cc-summary ul{display:grid;gap:12px;list-style:none;padding:18px 0;border-top:1px solid #ffffff22;margin:0}
+#app .cc-summary li{display:flex;gap:10px;align-items:center;font-size:13px}#app .cc-summary li svg{flex:none;opacity:.8}
+#app .cc-total{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #fff2;padding-top:17px;margin-bottom:9px;font-size:14px}#app .cc-total strong{font-size:19px}
+#app .cc-payment{min-width:0;padding:26px;background:var(--ui-panel);border:1px solid var(--ui-border,#8884);border-radius:24px;box-shadow:0 12px 34px #0001}
+#app .cc-payment h2{font-size:clamp(24px,3vw,32px);letter-spacing:-.035em;line-height:1.12;margin:9px 0}
+#app .cc-payment>p{font-size:13px;line-height:1.6;margin:0 0 20px;opacity:.8}
+#app .cc-methods{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+#app .cc-methods button{display:flex;align-items:center;gap:11px;border:1px solid var(--ui-border,#8885);border-radius:15px;padding:14px;color:var(--ui-text);background:var(--ui-bg);font:inherit;font-weight:650;text-align:left;min-height:58px}
+#app .cc-methods button[aria-pressed=true]{border-color:currentColor;box-shadow:inset 0 0 0 1px currentColor}
+#app .cc-methods button small{display:block;font-size:11px;opacity:.65;font-weight:400}
+#app .cc-payment .cp-pix-choice{border:0;padding:0;margin-top:18px}
+#app .cc-pay-method-head{display:flex;gap:10px;align-items:flex-start;margin:2px 0 8px}#app .cc-pay-method-head p{font-size:12px;opacity:.75;margin-top:3px}
+#app .cc-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#app .cc-pay-button{display:flex;justify-content:center;gap:10px;align-items:center;width:100%;border:0;border-radius:13px;padding:14px;font:inherit;font-size:14px;font-weight:700;min-height:48px;cursor:pointer;background:#252428;color:#fff}
+html[data-theme="dark"] #app .cc-pay-button{background:#f3f2f5;color:#161619}
+#app .cc-pay-button:disabled{opacity:.6;cursor:wait}
+#app .cc-security{display:flex;align-items:center;gap:12px;border-top:1px solid var(--ui-border,#8885);padding-top:18px;margin-top:22px}
+#app .cc-security strong,#app .cc-security small{display:block;font-size:12px}#app .cc-security small{opacity:.7;line-height:1.5;margin-top:4px}
+#app .cc-help{font-size:12px;display:flex;gap:5px;margin-top:12px}
+#app .cc-loading{padding:20px 0;font-size:13px}
+#app .cc-payment #webPaymentStatus:not(:empty){margin-top:14px;padding:14px;border:1px solid var(--ui-border,#8885);border-radius:14px;overflow-wrap:anywhere}
+#app .cc-payment textarea{max-width:100%;box-sizing:border-box}
+#app .cn-main:has([data-section="checkout"])~.cn-dock{display:none!important}
+@media(max-width:760px){#app .cc-grid{grid-template-columns:minmax(0,1fr);gap:12px}#app .cc-summary{position:static;padding:18px;border-radius:19px}#app .cc-summary-main{margin:13px 0}#app .cc-summary h2{font-size:27px;margin:8px 0}#app .cc-price{font-size:32px;margin-top:14px}#app .cc-summary ul{grid-template-columns:1fr 1fr;gap:9px;padding:12px 0}#app .cc-summary li{font-size:11px}#app .cc-payment{padding:17px;border-radius:19px}#app .cc-head{margin-bottom:10px}#app .cc-summary .cc-note{font-size:11px}#app .cc-brand img{width:45px;height:30px}}
+@media(max-width:360px){#app .cc-fields,#app .cc-summary ul{grid-template-columns:1fr}#app .cc-methods button{padding:10px}}
