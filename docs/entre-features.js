@@ -4,18 +4,19 @@
 const mod={};
 const data={posts:[],postLoading:false,postBefore:null,postMore:false,premium:null,premiumIds:new Set(),support:[],supportBusy:false,checkoutBusy:false,premiumChecking:false,expandedPostComments:new Set(),webCheckoutOpen:false,webConfig:null,webPayment:null,webBusy:false,webStatusText:'',webError:'',webChecking:false,commentsPost:null,commentsRows:[],commentsHasMore:false,commentsBusy:false,commentsError:''};
 const call=async(name,params)=>{const r=await db.rpc(name,params||{});if(r.error)throw r.error;return r.data;};
-const premium=id=>Boolean(id&&(data.premiumIds.has(id)||(id===state.session?.user?.id&&data.premium?.active===true)));
+const premium=id=>Boolean(id&&(id===state.session?.user?.id?(data.premiumOwner===id&&data.premium?.active===true&&Date.parse(data.premium.paid_until)>Date.now()):data.premiumIds.has(id)));
 const badge=p=>premium(p?.id)?'<span class="verified-mark" title="Assinante CONNECT Premium" aria-label="Perfil verificado Premium">'+ico('check',12)+'</span>':'';
+let premiumRefreshSeq=0;
 async function refreshPremium(){
- if(!state.session?.user)return;
+ const uid=state.session?.user?.id;if(!uid){data.premium=null;data.premiumOwner=null;return;}
+ const seq=++premiumRefreshSeq;
+ if(data.premiumOwner!==uid){data.premium=null;data.premiumOwner=uid;data.premiumIds.clear();}
  try{
-  const uid=state.session.user.id;const r=await call('entre_premium_overview');
-  if(state.session?.user?.id!==uid)return;
-  data.premium=r||{active:false};
-
-  if(data.premium.active)data.premiumIds.add(state.session.user.id);
-  else data.premiumIds.delete(state.session.user.id);
- }catch(e){console.warn('Premium unavailable',e);data.premium={active:false,checkout_enabled:false};}
+  const r=await call('entre_premium_overview');
+  if(state.session?.user?.id!==uid||seq!==premiumRefreshSeq)return;
+  data.premium=r||{active:false};data.premiumOwner=uid;
+  if(premium(uid))data.premiumIds.add(uid);else data.premiumIds.delete(uid);
+ }catch(e){if(state.session?.user?.id!==uid||seq!==premiumRefreshSeq)return;console.warn('Premium unavailable',e);data.premium={active:false,checkout_enabled:false};data.premiumIds.delete(uid);}
 }
 async function loadBadges(profiles){
  const ids=[...new Set((profiles||[]).map(p=>p?.id).filter(Boolean))].slice(0,120);
@@ -34,8 +35,8 @@ async function loadPosts(more=false){
   data.postBefore=data.posts[data.posts.length-1]?.id||null;
   await Promise.allSettled(data.posts.filter(p=>p.author_avatar).map(p=>signAvatar({id:p.author_id,display_name:p.author_name,avatar_path:p.author_avatar,avatar_uploaded_at:p.author_avatar_uploaded_at})));
   await window.entreMedia?.signPosts?.(data.posts);
-  const ids=data.posts.filter(p=>p.premium).map(p=>p.author_id);
-  for(const id of ids)data.premiumIds.add(id);
+  if(state.session?.user?.id!==uid)return;
+  for(const p of data.posts){if(p.premium)data.premiumIds.add(p.author_id);else data.premiumIds.delete(p.author_id);}
   feedLoaded=true;
  }catch(e){feedError=infoError(e);toast(feedError,true);}finally{data.postLoading=false;if(state.session?.user?.id===uid&&state.view==='posts')renderView();}
 }
@@ -206,7 +207,7 @@ const price=()=>Number.isInteger(data.premium?.price_cents)&&data.premium.price_
  ?(data.premium.price_cents/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):null;
 const purchaseWhatsapp=()=> 'https://wa.me/5518988234267?text='+encodeURIComponent('Olá! Quero contratar o CONNECT Premium. Vou informar o e-mail cadastrado para a liberação.');
 function premiumView(onboarding=false){
- const active=data.premium?.active===true, cost=price()||'Valor a consultar';
+ const active=premium(state.session?.user?.id), cost=price()||'Valor a consultar';
  const rows=items=>'<ul class="cp-plan-list">'+items.map(v=>'<li>'+ico('check',17)+'<span>'+v+'</span></li>').join('')+'</ul>';
  const normal=onboarding?['50 encontros por dia','Conversas, posts e salas','Banner com foto','Temas personalizados']:['50 encontros encontrados por dia em texto e vídeo','Conversas, posts e salas','Banner de perfil com foto','Temas claro, escuro e cor personalizada'];
  const premiumItems=onboarding?['Encontros ilimitados','Banner animado GIF','Filtro de gênero','Selo Premium']:['Encontros ilimitados por texto e vídeo','Banner animado em GIF','Filtro de gênero no Ao vivo','Selo de destaque no perfil'];
@@ -227,7 +228,7 @@ async function verifyPremium(){
  data.premiumChecking=true;const uid=state.session.user.id;
  try{await refreshPremium();if(state.session?.user?.id!==uid)return;
  if(data.premium?.active&&typeof onboardingPlanPending==='function'&&onboardingPlanPending()){await finishOnboarding(null);return;}
- if(typeof renderView==='function')renderView();if(typeof toast==='function')toast(data.premium?.active?'Seu Premium está ativo.':'O Premium ainda não foi liberado.');
+ if(typeof onboardingPlanPending==='function'&&onboardingPlanPending()&&typeof render==='function')render();else if(typeof renderView==='function')renderView();if(typeof toast==='function')toast(data.premium?.active?'Seu Premium está ativo.':'O Premium ainda não foi liberado.');
  }finally{data.premiumChecking=false;}
 }
 async function copyPix(){return;}
