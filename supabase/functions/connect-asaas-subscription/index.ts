@@ -80,8 +80,9 @@ Deno.serve(async req=>{
   if(action!=="start"||body.consent!==true||!uuid(body.request_id))return reply({error:"invalid_consent_or_request"},400);
   const [ban,maintenance]=await Promise.all([auth.rpc("entre_is_banned"),auth.rpc("entre_maintenance_active")]);if(ban.error||maintenance.error||ban.data===true||maintenance.data===true)return reply({error:"account_unavailable"},403);
   if(row&&good.includes(row.status)){row=await reconcile(e,db,row);if(good.includes(row.status))return reply(view(row));}
-  const {data:settings,error:se}=await db.from("entre_premium_settings").select("monthly_price_cents,enabled").eq("id",1).single();
+  const {data:settings,error:se}=await db.from("entre_premium_settings").select("monthly_price_cents,enabled,asaas_recurring_enabled").eq("id",1).single();
   const cents=Number(settings?.monthly_price_cents);if(se||!settings?.enabled||!Number.isInteger(cents)||cents<100||cents>1000000)return reply({error:"settings_unavailable"},503);
+  if(settings.asaas_recurring_enabled!==true)return reply({error:"recurring_provider_unavailable"},503);
   if(Number(body.amount_cents)!==cents)return reply({error:"price_changed"},409);
   const {data:ok,error:ie}=await db.rpc("connect_asaas_recurring_reserve",{_id:body.request_id,_user:user.id,_cents:cents});if(ie||ok!==true)return reply({error:"pending_or_duplicate"},409);
   const ref=recRef({id:body.request_id});
