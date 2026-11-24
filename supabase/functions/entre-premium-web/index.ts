@@ -10,6 +10,7 @@ const err = (error:string,status=400) => {console.warn("connect-payment-error",e
 const PAYMENT_API="https://api.mercadopago.com/v1/payments";
 const validUUID=(v:unknown)=>typeof v==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 const validMethod=(v:unknown)=>typeof v==="string"&&/^[a-z0-9_]{2,36}$/.test(v);
+const statusDetail=(p:any)=>typeof p?.status_detail==='string'&&/^[a-z0-9_]{1,80}$/.test(p.status_detail)?p.status_detail:null;
 const idNum=(v:unknown)=>typeof v==="number"||typeof v==="string"?/^[0-9]{5,20}$/.test(String(v)):false;
 
 Deno.serve(async(req:Request)=>{
@@ -72,16 +73,18 @@ Deno.serve(async(req:Request)=>{
    await service.from("entre_premium_web_payments").update({
       status:safeStatus,paid_until:paidUntil,updated_at:new Date().toISOString(),provider_payment_id:paymentId
    }).eq("id",record.id).eq("user_id",user!.id);
-   return {status:safeStatus,paid_until:paidUntil};
+   const qr=payment.payment_method_id==="pix"&&safeStatus==="pending"?payment.point_of_interaction?.transaction_data:null;
+   return {status:safeStatus,paid_until:paidUntil,status_detail:statusDetail(payment),pix_code:typeof qr?.qr_code==="string"&&qr.qr_code.length<3000?qr.qr_code:null,pix_qr_base64:typeof qr?.qr_code_base64==="string"&&/^[a-zA-Z0-9+/=]+$/.test(qr.qr_code_base64)&&qr.qr_code_base64.length<120000?qr.qr_code_base64:null};
   }
 
   if(action==="status"){
-   const {data:record}=await service.from("entre_premium_web_payments").select("id,user_id,amount_cents,status,provider_payment_id,method,created_at,paid_until")
+   const {data:record,error:recordError}=await service.from("entre_premium_web_payments").select("id,user_id,amount_cents,status,provider_payment_id,method,created_at,paid_until")
     .eq("user_id",user.id).order("created_at",{ascending:false}).limit(1).maybeSingle();
+   if(recordError)return err("payment_status_unavailable",503);
    if(!record)return json({status:"none"});
-   if(record.provider_payment_id&&(record.status==="pending"||record.status==="in_process"||record.status==="creating")){
+   if(record.provider_payment_id&&(record.status==="pending"||record.status==="in_process"||record.status==="creating"||record.status==="rejected"||record.status==="cancelled")){
     const check=await verifiedPayment(String(record.provider_payment_id),record);
-    return json({status:check.status,payment_id:record.provider_payment_id,paid_until:check.paid_until||record.paid_until});
+    return json({...check,status:check.status==="unverified"&&["rejected","cancelled"].includes(record.status)?record.status:check.status,payment_id:record.provider_payment_id,paid_until:check.paid_until||record.paid_until});
    }
    return json({status:record.status,payment_id:record.provider_payment_id,paid_until:record.paid_until});
   }
@@ -142,6 +145,6 @@ Deno.serve(async(req:Request)=>{
   const code=isPix&&typeof qr.qr_code==="string"&&qr.qr_code.length<3000?qr.qr_code:null;
   const image=isPix&&typeof qr.qr_code_base64==="string"&&/^[a-zA-Z0-9+/=]+$/.test(qr.qr_code_base64)&&qr.qr_code_base64.length<120000?qr.qr_code_base64:null;
   return json({status:check.status==="unverified"?"pending":check.status,payment_id:paymentId,
-   pix_code:code,pix_qr_base64:image,paid_until:check.paid_until||null});
+   status_detail:check.status_detail||statusDetail(payment),pix_code:check.status==='pending'?code:null,pix_qr_base64:check.status==='pending'?image:null,paid_until:check.paid_until||null});
  }catch(error){console.error("premium-web-payment",String(error));return err("web_payment_failed",500);}
 });
