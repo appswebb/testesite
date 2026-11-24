@@ -34,7 +34,7 @@ function showForegroundNotice(){
  if(!foreground()){bannerQueue=[];return;}
  if(bannerTimer||!bannerQueue.length)return;
  const n=bannerQueue.shift(),el=document.createElement('aside');el.id='connectForegroundNotice';el.className='connect-foreground-notice';el.setAttribute('role','status');
- const official=n.kind==='poll'||n.kind==='bulletin';
+ const official=n.kind==='poll'||n.kind==='bulletin';el.dataset.official=String(official);el.dataset.notificationId=String(n.id);
  el.innerHTML='<span class="connect-fg-icon">'+ico(official?'megaphone':'bell',19)+'</span><button type="button" class="connect-fg-copy"><strong>'+esc(n.kind==='poll'?'Nova enquete':n.kind==='bulletin'?'Novo aviso':'Notificação')+'</strong><small>'+esc(window.entreSocial?.summary?.(n)||'Você tem uma novidade.')+'</small></button><button type="button" class="connect-fg-close" aria-label="Fechar aviso">'+ico('close',16)+'</button>';
  const done=()=>{clearTimeout(bannerTimer);bannerTimer=0;el.remove();showForegroundNotice();};
  el.querySelector('.connect-fg-close').onclick=done;
@@ -57,7 +57,7 @@ async function refreshNotifications(before=null){
   if(state.session?.user?.id!==user)return;
   const rows=Array.isArray(r?.rows)?r.rows:[];
   const previous=data.notifications[0]?.id||0;if(before)data.notifications=data.notifications.concat(rows).slice(-45);else data.notifications=rows;
-  if(!before)foregroundNotifications(rows,user);
+  if(!before){const ids=new Set(rows.map(n=>n.id));bannerQueue=bannerQueue.filter(n=>!['bulletin','poll'].includes(n.kind)||ids.has(n.id));const banner=document.getElementById('connectForegroundNotice');if(banner?.dataset.official==='true'&&!ids.has(Number(banner.dataset.notificationId))){clearTimeout(bannerTimer);bannerTimer=0;banner.remove();showForegroundNotice();}foregroundNotifications(rows,user);}
   data.unread=Math.max(0,Math.min(99,Number(r?.unread)||0));data.notiMore=Boolean(r?.has_more);
   document.querySelectorAll('.toolbar-bell .social-unread').forEach(badge=>{badge.textContent=data.unread?String(data.unread):'';});
   if(state.view==='notifications'&&!['bulletins','polls'].includes(data.notificationTab))renderView();

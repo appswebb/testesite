@@ -7,21 +7,25 @@ const safeOptions=b=>Array.isArray(b?.options)?b.options:[];
 const active=b=>b&&new Date(b.expires_at).getTime()>Date.now();
 const pending=()=>active(d.pendingPoll)?d.pendingPoll:null;
 const fmt=iso=>{const date=new Date(iso);return Number.isNaN(date.getTime())?'':date.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});};
-async function refreshBulletins(silent=false){
- if(d.bulletinBusy||!state.session?.user||!state.profile||maintenanceIsActive()||state.suspension)return;
- d.bulletinBusy=true;
+let bulletinQueued=false,bulletinForce=false;
+async function refreshBulletins(silent=false,force=false){
+ if(d.bulletinBusy){bulletinQueued=true;bulletinForce=bulletinForce||force;return;}
+ if(!state.session?.user||!state.profile||maintenanceIsActive()||state.suspension)return;
+ d.bulletinBusy=true;const user=state.session.user.id;
  try{
   const response=await api.rpc('entre_bulletins_feed'),next=Array.isArray(response?.items)?response.items:[];
+  if(state.session?.user?.id!==user)return;
+  const removed=d.bulletins.some(old=>!next.some(b=>b.id===old.id));
   const signature=JSON.stringify(next.map(x=>[x.id,x.my_vote,x.my_reply,x.votes_total]));
   d.bulletins=next;d.pendingPoll=null;
   d.bulletinSignature=signature;d.bulletinError='';d.bulletinLoaded=true;
-  if((state.view==='avisos'||(state.view==='notifications'&&['bulletins','polls'].includes(d.notificationTab)))&&!silent&&!document.activeElement?.closest?.('.bulletin-reply-form,.poll-choices'))renderView();
+  if((state.view==='avisos'||(state.view==='notifications'&&['bulletins','polls'].includes(d.notificationTab)))&&!silent&&(removed||!document.activeElement?.closest?.('.bulletin-reply-form,.poll-choices')))renderView();
  }catch(e){
   d.bulletinError='Não foi possível atualizar os avisos. Tente novamente.';
   d.bulletinLoaded=true;
   console.warn('Bulletins',e);
   if((state.view==='avisos'||(state.view==='notifications'&&['bulletins','polls'].includes(d.notificationTab)))&&!silent)renderView();
- }finally{d.bulletinBusy=false;}
+ }finally{d.bulletinBusy=false;if(bulletinQueued){const nextForce=bulletinForce;bulletinQueued=false;bulletinForce=false;void refreshBulletins(false,nextForce);}}
 }
 function voteResults(b){
  const counts=Array.isArray(b.votes_by_option)?b.votes_by_option:[],total=Number(b.votes_total)||0;

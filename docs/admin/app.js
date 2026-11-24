@@ -289,6 +289,11 @@ document.addEventListener("click",async function(ev){
  var a=n.dataset.action;
  if(a==="admin-more"){state.moreOpen=!state.moreOpen;var m=document.getElementById("adminMoreMenu");if(m)m.hidden=!state.moreOpen;var t=document.querySelector(".admin-more-button");if(t)t.setAttribute("aria-expanded",String(state.moreOpen));return;}
  if(a==="close-modal"){closeModal();return;}
+ if(a==="delete-bulletin"){
+  if(!state.verified||state.busy||n.disabled)return;const id=Number(n.dataset.id),item=state.bulletins.find(b=>Number(b.id)===id);if(!item)return;
+  if(!window.confirm("Excluir "+(item.kind==="poll"?"a enquete":"o aviso")+" “"+item.title+"”? A publicação, as notificações e as respostas ou votos serão removidos para todos."))return;
+  state.busy=true;n.disabled=true;try{const result=await rpc("entre_admin_delete_bulletin",{_id:id});if(result?.deleted!==true&&result?.status!=="not_found")throw Error("Exclusão não confirmada.");state.bulletins=state.bulletins.filter(b=>Number(b.id)!==id);toast(result.deleted?"Publicação excluída.":"Publicação já indisponível.");await load("bulletins");}catch(err){toast(errorText(err),true);}finally{state.busy=false;if(n.isConnected)n.disabled=false;}return;
+ }
  if(a==="refresh"){await load(state.view);toast("Dados atualizados.");return;}
  if(a==="supportEmailReply"){if(!state.verified||n.disabled)return;n.disabled=true;try{var result=await db.functions.invoke("entre-support-email",{body:{reply_id:Number(n.dataset.id)}});if(result.error){let reason="Envio indisponível. Verifique a configuração de e-mail.";try{reason=(await result.error.context.json()).error||reason;}catch(_){}throw Error(reason);}if(result.data?.status!=="sent")throw Error("Envio não confirmado.");toast(result.data.already_sent?"E-mail já enviado.":"E-mail aceito pelo provedor.");}catch(err){toast(errorText(err),true);}finally{n.disabled=false;}return;}
  if(a==="supportThread"){try{await openSupportThread(Number(n.dataset.id));}catch(err){toast(errorText(err),true);}return;}

@@ -35,7 +35,8 @@ async function ping(force=false){
 }
 async function refreshPairsList(){if(!member()||pairsLoading||!pairsDirty||state.view!=='conversations'||document.querySelector('.cp-conversation-dialog[open]'))return;pairsLoading=true;pairsDirty=false;const user=uid();try{await loadPairs();if(uid()===user&&state.view==='conversations'&&!document.querySelector('.cp-conversation-dialog[open]'))renderView();}catch(e){pairsDirty=true;}finally{pairsLoading=false}}
 function refreshFeed(){if(!feedDirty||!member()||state.view!=='posts'||document.hidden||state.modal||document.querySelector('#commentsOverlay,.post-compose textarea:focus,.post-compose input:focus')||document.querySelector('#postCreateForm textarea')?.value.trim()||window.scrollY>180||window.entreExtras?.data?.postLoading)return;feedDirty=false;void window.entreExtras?.loadPosts?.();}
-function communityEvent(payload){if(payload.new?.kind==='rooms'){clearTimeout(roomTimer);roomTimer=setTimeout(()=>void window.entreRooms?.refresh?.(),150)}else if(payload.new?.kind==='feed'){feedDirty=true;refreshFeed()}}
+function communityEvent(payload){if(payload.new?.kind==='rooms'){clearTimeout(roomTimer);roomTimer=setTimeout(()=>void window.entreRooms?.refresh?.(),150)}else if(payload.new?.kind==='feed'){feedDirty=true;refreshFeed()}else if(payload.new?.kind==='bulletins'){void refreshOfficial()}}
+async function refreshOfficial(){if(!member())return;await Promise.allSettled([api().refreshNotifications(),api().refreshBulletins?.(false,true)]);}
 function pairEvent(){pairsDirty=true;activity();void refreshPairsList()}
 function activity(){clearTimeout(activityTimer);activityTimer=setTimeout(()=>{if(!member())return;void api().refreshNotifications();void window.connectRelationships?.tick?.();if(state.view==='online')void api().refreshInbox();},120)}
 function subscribe(){
@@ -62,7 +63,7 @@ async function resume(){
  if(!ready()||resuming||!navigator.onLine)return;
  resuming=true;const user=uid();
  try{subscribe();await Promise.allSettled([ping(true),refreshCount()]);if(!member()||uid()!==user)return;
- await Promise.allSettled([api().refreshNotifications(),window.connectRelationships?.tick?.(),refreshOnline()]);
+ await Promise.allSettled([api().refreshNotifications(),api().refreshBulletins?.(false,true),window.connectRelationships?.tick?.(),refreshOnline()]);
  if(state.view==='rooms')void window.entreRooms?.refresh?.();if(state.view==='posts'){feedDirty=true;refreshFeed();}
  if(state.pair?.id&&['chat','connect'].includes(state.view)){await refreshPair();if(state.pair?.id){await loadMessages();refreshEncounterMessages();}}
  }catch(e){console.warn('Reconnect sync',e?.message)}finally{resuming=false}
