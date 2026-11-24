@@ -193,16 +193,11 @@ function premiumView(){
  '<article class="cp-plan"><span class="cp-plan-eyebrow">NORMAL</span><h3>Gratuito</h3><div class="cp-plan-price">R$ 0</div><p>Conheça pessoas e participe da comunidade.</p>'+rows(['Encontros por texto e vídeo','Conversas, posts, stories, salas e lives','Banner de perfil com foto','Temas claro, escuro e cor personalizada'])+
  '<div class="cp-plan-state">'+(active?'Incluído no Premium':ico('check',17)+' Seu plano atual')+'</div></article>'+
  '<article class="cp-plan cp-plan-paid"><span class="cp-plan-eyebrow">'+ico('crown',18)+' PREMIUM</span><h3>Mais possibilidades</h3><div class="cp-plan-price">'+(window.entreRecurring?.price?.()||'Valor a definir')+'<small> / mês</small></div><p>Todos os recursos do Normal, mais:</p>'+rows(['Banner animado em GIF','Filtro de gênero no Ao vivo','Selo de destaque no perfil','Atendimento prioritário pelo WhatsApp'])+
- (active?'<div class="cp-plan-state">'+ico('check',17)+' Premium ativo'+(data.premium.paid_until?' · até '+new Date(data.premium.paid_until).toLocaleDateString('pt-BR'):'')+'</div><button type="button" class="ui-btn btn-outline" data-action="premiumWhatsapp">'+ico('chat',17)+' WhatsApp prioritário</button>':'')+
+ (active?'<div class="cp-plan-state">'+ico('check',17)+' Premium ativo'+(data.premium.paid_until?' · até '+new Date(data.premium.paid_until).toLocaleDateString('pt-BR'):'')+'</div><button type="button" class="ui-btn btn-outline" data-action="nav" data-view="support">'+ico('chat',17)+' WhatsApp prioritário</button>':'')+
  (window.entreRecurring?.view?.()||'<p>Carregando assinatura mensal…</p>')+
  '<small class="cp-plan-footnote">Cobrança mensal automática no cartão. Cancele a renovação quando quiser.</small></article></div></section>';
 }
-async function openPremiumWhatsapp(){
- if(!data.premium?.active)throw Error('O atendimento prioritário exige Premium ativo.');
- const url=await call('entre_premium_whatsapp');
- if(typeof url!=='string'||!/^https:\/\/wa\.me\/[0-9]{10,15}(?:\?|$)/.test(url))throw Error('Link de suporte não disponível.');
- window.location.assign(url);
-}
+async function openPremiumWhatsapp(){if(!data.premium?.active)throw Error('O atendimento prioritário exige Premium ativo.');const url=await call('entre_premium_whatsapp');whatsappLink(url,{body:''});document.querySelector('[data-view="support"][data-action="nav"]')?.click();if(state.view!=='support'){const btn=document.createElement('button');btn.dataset.action='nav';btn.dataset.view='support';btn.hidden=true;document.body.append(btn);btn.click();btn.remove();}}
 async function loadMercadoPagoSDK(){
  if(window.MercadoPago)return;
  if(!data.mpScriptPromise)data.mpScriptPromise=new Promise((resolve,reject)=>{
@@ -294,47 +289,101 @@ async function copyPix(){
 setInterval(()=>{if(state.view==='premium'&&document.visibilityState==='visible'&&
  data.webPayment?.payment_id&&['pending','in_process'].includes(data.webPayment.status)&&!data.webChecking)
  void verifyPremium().catch(e=>console.warn('Payment verification',e));},12000);
+const SUPPORT_EMAIL='connectapp.w@gmail.com';
+const supportCategories={bug:'Erro no aplicativo',account:'Conta e acesso',payment:'Pagamento ou assinatura',security:'Segurança e privacidade',other:'Outro assunto'};
+const supportProviders={default:'Aplicativo de e-mail padrão',gmail:'Gmail (web)',outlook:'Outlook (web)'};
+let supportHandoff=null;
+function supportMessage({id,category,subject,description,name,handle,channel,files=0}){
+ const premium=channel==='whatsapp';
+ const title='[CONNECT'+(premium?' PREMIUM':'')+'] #'+id+' · '+subject.replace(/[\r\n]+/g,' ');
+ const body=[
+ premium?'Olá, equipe CONNECT! Sou assinante Premium e preciso de atendimento.':'Olá, equipe CONNECT! Preciso de ajuda com o aplicativo.',
+ '',
+ 'CHAMADO DE SUPORTE'+(premium?' PREMIUM':''),
+ 'Protocolo: #'+id,
+ 'Nome: '+(name||'Pessoa do CONNECT'),
+ 'Perfil: '+(handle?'@'+handle:'Não informado'),
+ 'Categoria: '+(supportCategories[category]||supportCategories.other),
+ 'Assunto: '+subject,
+ '',
+ 'DESCRIÇÃO',
+ description,
+ '',
+ files?'Anexos: '+files+' arquivo(s) registrados no protocolo privado.':'Anexos: nenhum.',
+ '',
+ 'Obrigado pela atenção!'
+ ].join('\n');
+ return {title,body};
+}
+function emailLink(provider,message){
+ const e=encodeURIComponent(SUPPORT_EMAIL),subject=encodeURIComponent(message.title),body=encodeURIComponent(message.body);
+ if(provider==='gmail')return 'https://mail.google.com/mail/?view=cm&fs=1&to='+e+'&su='+subject+'&body='+body;
+ if(provider==='outlook')return 'https://outlook.live.com/mail/0/deeplink/compose?to='+e+'&subject='+subject+'&body='+body;
+ return 'mailto:'+SUPPORT_EMAIL+'?subject='+subject+'&body='+body;
+}
+function whatsappLink(base,message){
+ if(typeof base!=='string'||!/^https:\/\/wa\.me\/[0-9]{10,15}(?:\?|$)/.test(base))throw Error('WhatsApp de suporte indisponível.');
+ return base.split('?')[0]+'?text='+encodeURIComponent(message.body);
+}
 function supportView(){
- return heading('CUIDAR DO CONNECT','Central de <em>suporte.</em>','Envie um relato à equipe. Anexos são opcionais.')+
- '<div class="support-access"><div class="support-access-card"><span>SUPORTE PADRÃO</span><h3>Problemas com o site, conta ou pagamento</h3><p>Envie um protocolo para a equipe. O envio para o e-mail de suporte ocorre quando a integração está configurada.</p><a href="#supportTicketForm" class="ui-btn btn-outline">Abrir chamado</a></div><div class="support-access-card premium"><span>SUPORTE PREMIUM</span><h3>WhatsApp direto e prioritário</h3><p>Exclusivo para assinantes com pagamento confirmado.</p>'+(data.premium?.active?'<button type="button" class="ui-btn btn-dark" data-action="premiumWhatsapp">Abrir WhatsApp Premium</button>':'<button type="button" class="ui-btn btn-outline" data-action="nav" data-view="premium">Conhecer Premium</button>')+'</div></div>'+ 
-  '<div class="support-layout"><form class="support-ticket-form" id="supportTicketForm">'+ 
- '<div class="field"><label for="supportCategory">O que aconteceu?</label><select name="category" id="supportCategory" required><option value="bug">Erro no site ou aplicativo</option><option value="account">Problema na conta</option><option value="other">Pagamento ou assinatura</option><option value="security">Segurança e privacidade</option><option value="other">Outra dificuldade</option></select></div>'+
- '<div class="field"><label for="supportSubject">Assunto</label><input type="text" name="subject" id="supportSubject" minlength="5" maxlength="120" placeholder="Descreva o problema em poucas palavras" required></div>'+
- '<div class="field"><label for="supportDescription">O que aconteceu? Explique os detalhes.</label><textarea name="description" id="supportDescription" minlength="20" maxlength="3000" rows="6" required placeholder="Conte o que tentou fazer, o que apareceu e quando aconteceu."></textarea></div>'+
- '<div class="field"><label for="supportProof">Anexos (opcionais)</label><input type="file" name="proof" id="supportProof" accept="image/png,image/jpeg,image/webp,application/pdf" multiple><small>Se quiser, anexe até 3 imagens ou PDF (5 MB cada). Não envie senhas, documentos nem dados bancários.</small></div>'+
- '<button class="ui-btn btn-dark" type="submit" '+(data.supportBusy?'disabled':'')+'>Enviar relato '+ico('send',17)+'</button>'+
- '<p class="support-security">'+ico('lock',14)+' As provas ficam em armazenamento privado, acessíveis à equipe autorizada.</p></form>'+
- '<aside class="support-contact"><span class="premium-label">CENTRAL DE SUPORTE</span><h3>Estamos aqui para ouvir.</h3><p>Seu relato é salvo com um número de protocolo. Envio por e-mail será confirmado apenas quando a integração estiver configurada.</p><strong>Contato da equipe</strong><span>Atendimento por protocolo dentro do aplicativo. O e-mail separado de suporte será configurado pelo administrador.</span>'+
- (data.premium?.active?'<button type="button" class="ui-btn btn-outline" data-action="premiumWhatsapp">WhatsApp Premium '+ico('arrow',16)+'</button>':
- '<button type="button" class="ui-btn btn-outline btn-sm" data-action="nav" data-view="premium">Conhecer suporte Premium</button>')+'</aside></div>'+
- (data.support.length?'<section class="support-history"><h3>Meus protocolos</h3>'+data.support.map(t=>'<div><strong>#'+Number(t.id)+' · '+esc(t.subject)+'</strong><small>'+esc(t.status)+' · '+new Date(t.created_at).toLocaleDateString('pt-BR')+(t.email_status==='sent'?' · E-mail enviado':' · Recebido no sistema')+'</small></div>').join('')+'</section>':'');
+ const active=data.premium?.active===true, handoff=supportHandoff?.uid===state.session?.user?.id?supportHandoff:null;
+ return '<section class="csup-page"><header class="csup-intro"><h2>Como podemos ajudar?</h2><p>Escolha o canal, descreva o problema e envie a mensagem pelo aplicativo de sua preferência.</p></header>'+
+ '<form id="supportTicketForm" class="csup-form">'+
+ '<fieldset class="csup-channels"><legend>Canal de atendimento</legend>'+
+ '<label class="csup-channel"><input type="radio" name="channel" value="email" checked><span class="csup-channel-icon">'+ico('mail',23)+'</span><span class="csup-channel-copy"><strong>E-mail</strong><small>Disponível para todas as contas</small></span><span class="csup-tag">Normal</span></label>'+
+ '<label class="csup-channel '+(!active?'csup-locked':'')+'"><input type="radio" name="channel" value="whatsapp" '+(!active?'disabled':'')+'><span class="csup-channel-icon">'+ico('chat',23)+'</span><span class="csup-channel-copy"><strong>WhatsApp</strong><small>'+(active?'Atendimento direto e prioritário':'Exclusivo para assinantes ativos')+'</small></span><span class="csup-tag">Premium '+ico(active?'check':'lock',12)+'</span></label>'+
+ (!active?'<button type="button" class="csup-upgrade" data-action="nav" data-view="premium">Conhecer Premium '+ico('arrow',15)+'</button>':'')+'</fieldset>'+
+ '<div class="csup-fields"><h3>Sobre o seu problema</h3>'+
+ '<div class="field"><label for="supportCategory">Categoria</label><select name="category" id="supportCategory" required>'+Object.entries(supportCategories).map(([v,label])=>'<option value="'+v+'">'+label+'</option>').join('')+'</select></div>'+
+ '<div class="field"><label for="supportSubject">Assunto</label><input type="text" name="subject" id="supportSubject" minlength="5" maxlength="120" placeholder="Resuma o problema" required></div>'+
+ '<div class="field"><label for="supportDescription">Descreva o que aconteceu</label><textarea name="description" id="supportDescription" minlength="20" maxlength="3000" rows="5" required placeholder="Conte o que aconteceu e como podemos ajudar."></textarea></div>'+
+ '<div class="field"><label for="supportProof">Anexos (opcionais)</label><input type="file" name="proof" id="supportProof" accept="image/png,image/jpeg,image/webp,application/pdf" multiple><small>Até 3 imagens ou PDFs de 5 MB. Os anexos ficam no protocolo privado; não são anexados automaticamente ao e-mail ou WhatsApp.</small></div>'+
+ '<div class="field csup-email-choice"><label for="supportProvider">Abrir e-mail com</label><select id="supportProvider" name="provider">'+Object.entries(supportProviders).map(([v,label])=>'<option value="'+v+'">'+label+'</option>').join('')+'</select><small>Destino: '+SUPPORT_EMAIL+'</small></div>'+
+ '<p class="csup-privacy">'+ico('lock',15)+' Não inclua senhas, documentos nem dados bancários.</p>'+
+ '<button type="submit" class="ui-btn btn-dark csup-submit" '+(data.supportBusy?'disabled':'')+'><span class="csup-email-label">Abrir e-mail preenchido</span><span class="csup-whatsapp-label">Abrir WhatsApp preenchido</span>'+ico('arrow',18)+'</button>'+
+ '<p class="csup-note">Você revisa e envia a mensagem no aplicativo escolhido. O CONNECT não envia a mensagem automaticamente.</p></div></form>'+
+ (handoff?'<section class="csup-ready" role="status"><h3>Protocolo #'+esc(handoff.id)+' registrado</h3><p>Se o aplicativo não abriu, use o botão abaixo. A mensagem ainda precisa ser enviada por você.</p><a class="ui-btn btn-dark" href="'+esc(handoff.url)+'" rel="noopener noreferrer">Abrir '+(handoff.channel==='whatsapp'?'WhatsApp':'e-mail')+' '+ico('arrow',17)+'</a><label for="supportPreparedMessage">Mensagem preparada</label><textarea id="supportPreparedMessage" readonly rows="5">'+esc(handoff.message.title+'\n\n'+handoff.message.body)+'</textarea></section>':'')+
+ (data.support.length?'<section class="csup-history"><h3>Meus protocolos</h3>'+data.support.map(t=>'<article><strong>#'+Number(t.id)+' · '+esc(t.subject)+'</strong><small>'+esc(t.status)+' · '+new Date(t.created_at).toLocaleDateString('pt-BR')+(t.email_status==='sent'?' · E-mail enviado pelo sistema':' · Registrado no CONNECT')+'</small></article>').join('')+'</section>':'')+'</section>';
 }
 async function loadSupport(){try{const rows=await call('entre_my_support_tickets');data.support=Array.isArray(rows)?rows:[];}catch(e){console.warn('Support',e);}}
 async function submitSupport(form){
  if(data.supportBusy)return;
+ const uid=state.session?.user?.id;if(!uid)throw Error('Entre na sua conta.');
+ const channel=form.elements.channel.value,provider=form.elements.provider.value;
+ if(!['email','whatsapp'].includes(channel))throw Error('Escolha o canal de atendimento.');
+ const category=form.elements.category.value,subject=form.elements.subject.value.trim(),description=form.elements.description.value.trim();
+ if(!Object.hasOwn(supportCategories,category)||subject.length<5||subject.length>120||description.length<20||description.length>3000)throw Error('Confira o assunto e a descrição.');
  const files=[...(form.elements.proof?.files||[])];
  if(files.length>3)throw Error('Anexe no máximo 3 arquivos.');
  for(const file of files)if(file.size>5242880||!['image/png','image/jpeg','image/webp','application/pdf'].includes(file.type))throw Error('Use imagem ou PDF de até 5 MB.');
+ const name=state.profile?.display_name,handle=state.profile?.username;
  data.supportBusy=true;const button=form.querySelector('[type=submit]');if(button)button.disabled=true;
+ let redirect=null;
  try{
-  const id=await call('entre_support_create',{_category:form.elements.category.value,_subject:form.elements.subject.value,_description:form.elements.description.value});
+  // The existing server RPC is the authority; the disabled radio is not the security boundary.
+  let wa=null;
+  if(channel==='whatsapp'){wa=await call('entre_premium_whatsapp');whatsappLink(wa,{body:''});}
+  if(state.session?.user?.id!==uid)throw Error('Sua sessão mudou. Tente novamente.');
+  const id=await call('entre_support_create',{_category:category==='payment'?'other':category,_subject:subject,_description:description});
   const paths=[];
   for(const file of files){
    const ext={'image/png':'png','image/jpeg':'jpg','image/webp':'webp','application/pdf':'pdf'}[file.type];
-   const path=state.session.user.id+'/'+id+'/'+crypto.randomUUID()+'.'+ext;
+   const path=uid+'/'+id+'/'+crypto.randomUUID()+'.'+ext;
    const response=await db.storage.from('entre-support-evidence').upload(path,file,{contentType:file.type,upsert:false});
-   if(response.error)throw response.error;
-   paths.push(path);
+   if(response.error)throw response.error;paths.push(path);
   }
   await call('entre_support_submit',{_ticket:Number(id),_paths:paths});
-  let sent=false;
-  try{
-   const {data:mail,error}=await db.functions.invoke('entre-support-email',{body:{ticket_id:Number(id)}});
-   if(!error&&mail?.email_status==='sent')sent=true;
-  }catch(e){console.warn('Email pending',e);}
-  await loadSupport();renderView();
-  toast('Protocolo #'+id+' registrado'+(files.length?' com '+files.length+' anexo(s)':' sem anexos')+'. '+(sent?'E-mail enviado.':'A equipe pode consultar seu chamado no painel.'));
+  if(state.session?.user?.id!==uid)return;
+  const message=supportMessage({id,category,subject,description,name,handle,channel,files:files.length});
+  if(channel==='whatsapp')wa=await call('entre_premium_whatsapp');
+  if(state.session?.user?.id!==uid)return;
+  const url=channel==='whatsapp'?whatsappLink(wa,message):emailLink(provider,message);
+  supportHandoff={uid,id,channel,url,message};redirect=url;
+  await loadSupport();
  }finally{data.supportBusy=false;if(button?.isConnected)button.disabled=false;}
+ if(state.session?.user?.id!==uid||state.view!=='support'||!redirect)return;
+ renderView();toast('Protocolo registrado. Revise e envie a mensagem.',false,'success');
+ try{window.location.assign(redirect)}catch(_){/* The explicit link remains visible for browsers that block automatic handoff. */}
 }
 async function enter(view){
  if(view==='posts')await Promise.allSettled([loadPosts(),window.entreStories?.refresh?.()]);
