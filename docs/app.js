@@ -479,12 +479,7 @@ function connectView(){
   '<h3 class="connect-mode-label">Como quer conversar?</h3>'+
   '<div class="live-modes"><button type="button" data-action="liveMode" data-value="chat" aria-pressed="'+(mode==='chat')+'" class="live-mode '+(mode==='chat'?'selected':'')+'" '+(waiting?'disabled':'')+'>'+ico('chat',24)+'<span><strong>Texto</strong><small>Sem câmera</small></span>'+(mode==='chat'?ico('check',20):'')+'</button>'+
   '<button type="button" data-action="liveMode" data-value="video" aria-pressed="'+(mode==='video')+'" class="live-mode '+(mode==='video'?'selected':'')+'" '+(waiting?'disabled':'')+'>'+ico('camera',24)+'<span><strong>Vídeo</strong><small>Com câmera</small></span>'+(mode==='video'?ico('check',20):'')+'</button></div>'+
-  '<button type="button" class="live-filter-trigger" data-action="liveFiltersOpen" aria-expanded="'+String(state.liveFiltersOpen)+'" aria-haspopup="dialog" aria-controls="liveFilterSheet">'+ico('sliders',18)+' <span><strong>Filtros</strong> <small>'+esc(preference)+' · '+esc(area)+'</small></span>'+ico('chevron',18)+'</button>'+ 
-  (state.liveFiltersOpen?'<details class="live-app-filters" id="liveFilterSheet" '+(state.liveFiltersOpen?'open':'')+' role="dialog" aria-modal="true" aria-label="Filtros de encontros"><summary data-action="liveFiltersClose">'+ico('settings',18)+' <span><strong>Filtros</strong></span>'+ico('close',18)+'</summary>'+
-  '<div class="live-app-filter-body"><div class="filter-bar"><h3>Encontrar</h3><div class="filters">'+filters+'</div>'+
-  (!isPremium?'<p class="premium-filter-hint">Filtro de gênero: Premium.</p>':'')+'</div>'+
-  (window.entreGeo?.compactPanel?.(waiting)||window.entreGeo?.panel?.(waiting)||'')+'</div>'+
-  '<div class="live-filter-footer"><button type="button" class="live-filter-find" data-action="liveFiltersClose">Aplicar filtros '+ico('check',17)+'</button></div></details>':'')+
+  '<section class="cp-live-inline" aria-label="Filtros de encontro"><div class="filter-bar"><h3>Encontrar</h3><div class="filters">'+filters+'</div>'+(!isPremium?'<p class="premium-filter-hint">Filtro de gênero: Premium.</p>':'')+'</div>'+(window.entreGeo?.compactPanel?.(waiting)||window.entreGeo?.panel?.(waiting)||'')+'</section>'+ 
   '<button type="button" class="live-app-find" data-action="'+(waiting?'cancelsearch':'startsearch')+'">'+ico(waiting?'close':'bolt',19)+' '+(waiting?'Cancelar busca':'Encontrar alguém')+'</button>'+
   (waiting?'<div class="live-app-progress" role="status"><span class="live-dot"></span> Buscando alguém por '+(mode==='video'?'vídeo':'texto')+'…</div>':'')+
   '<p class="sr-only">As buscas de chat e vídeo usam filas separadas. É possível encerrar um encontro a qualquer momento.</p>'+
