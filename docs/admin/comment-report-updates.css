@@ -80,7 +80,7 @@
 .admin-delete-confirm input,.admin-delete-confirm textarea{width:100%;min-width:0;padding:12px;border-radius:11px;border:1px solid #dadada;background:#fffefa;color:#424242;font:inherit;font-size:12px;resize:vertical}
 .admin-delete-confirm textarea{min-height:72px}
 .admin-delete-confirm .modal-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:11px}
-.admin-delete-confirm .modal-actions button{flex:1;min-height:45px;white-space:normal}
+.admin-delete-confirm .modal-actions button{flex:0 1 auto;min-height:44px;white-space:normal}
 .recurring-admin-config{margin-top:20px;background:#fcfcfc;border:1px solid #e1e1e1}
 .recurring-admin-config h2{color:#474747}
 .recurring-admin-config .extra-admin-toggle{display:flex;gap:10px;padding:15px;border:1px solid #e5e5e5;border-radius:14px;background:#f4f4f4;margin:16px 0}
@@ -88,4 +88,4 @@
 .recurring-admin-config .extra-admin-toggle span{font-size:13px;color:#4e4e4e;font-weight:850}
 .recurring-admin-config .admin-note{font-size:12px;line-height:1.7;margin-bottom:16px;overflow-wrap:anywhere}
 .recurring-admin-config .admin-note code{font-size:11px;white-space:normal;overflow-wrap:anywhere}
-@media(max-width:760px){.admin-user-actions{width:100%;justify-content:stretch}.admin-user-actions .small-btn{flex:1;min-width:0}.admin-delete-confirm .modal-actions{flex-direction:column}}
+@media(max-width:760px){.admin-user-actions{width:100%;justify-content:stretch}.admin-user-actions .small-btn{flex:1;min-width:0}.admin-delete-confirm .modal-actions{flex-direction:row}}
