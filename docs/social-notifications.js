@@ -21,7 +21,7 @@ function notificationsView(){
  '<div class="notification-controls"><strong>'+d.unread+' não lidas</strong>'+
  '<div><button type="button" class="ui-btn btn-outline btn-sm" data-action="notificationsRead"'+(!d.unread?' disabled':'')+'>Marcar como lidas</button>'+
  '<button type="button" class="ui-btn btn-quiet btn-sm notification-clear-all" data-action="notificationsClear"'+(!hasItems?' disabled':'')+'>Limpar tudo</button>'+
- ('Notification'in window&&Notification.permission!=='granted'?'<button type="button" class="ui-btn btn-quiet btn-sm" data-action="notificationsPermission">Ativar avisos no navegador</button>':'')+'</div></div>'+
+'</div></div>'+
  (hasItems?'<div class="notification-list">'+personal.map(notificationEntry).join('')+'</div>':
  '<div class="social-empty"><h3>Nenhuma notificação por enquanto.</h3><p>As notificações ficam disponíveis por até 24 horas.</p></div>')+
  (d.notiMore?'<div class="social-more"><button type="button" class="ui-btn btn-outline" data-action="notificationsMore">Carregar mais 15</button></div>':'')+

@@ -78,5 +78,5 @@ async function init(){
  document.addEventListener('change',async e=>{const select=e.target.closest('[data-social-folder]');if(!select)return;try{await updateConversation(select.dataset.socialFolder,{_folder:select.value});toast('Conversa movida.');renderView();}catch(error){toast(infoError(error),true);}});
 }
 async function enter(view){if(!state.session?.user||!state.profile)return;if(view==='online')await Promise.allSettled([loadOnline(true),refreshInbox()]);if(view==='notifications')await Promise.allSettled([refreshNotifications(),window.entreSocial?.refreshBulletins?.(true)]);if(view==='conversations')await loadPrefs();if(view==='avisos')await window.entreSocial?.refreshBulletins?.(true);renderView();}
-return{data,rpc,pref,isHidden,init,enter,loadOnline,loadPrefs,refreshInbox,refreshNotifications,updateConversation,isArchived:id=>Boolean(data.prefs[id]?.archived_at)};
+return{data,rpc,pref,isHidden,init,enter,loadOnline,loadPrefs,refreshInbox,refreshNotifications,resetForeground,updateConversation,isArchived:id=>Boolean(data.prefs[id]?.archived_at)};
 })();

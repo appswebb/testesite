@@ -17,7 +17,7 @@ test('Main menu excludes the old Avisos tab and Suas conexões',()=>{
  assert.match(app,/mobileTabs\.map\(v=>tabs\.find\(t=>t\[0\]===v\)\)/);
  assert.match(app,/\['online','Online','users'\]/);
  assert.match(app,/\['rooms','Salas','rooms'\]/);
- assert.doesNotMatch(app,/\['lives','Lives','camera'\]/);
+ assert.match(app,/PUBLIC_LIVES_ENABLED=false/);
  assert.match(app,/\['search','Pesquisar','search'\]/);
  assert.doesNotMatch(app,/\['avisos','Avisos','megaphone'\]/);
  assert.doesNotMatch(app,/\['connections','Suas conexões'/);
@@ -115,30 +115,37 @@ test('Conversation deletion and notification clearing execute the correct owner-
  assert.equal(notificationRefresh,2);
 });
 
-test('Mandatory polls block site and release after one confirmed vote',async()=>{
+test('Optional polls never block the app and vote inside their own card',async()=>{
  const code=read('social-bulletins.js'),future=new Date(Date.now()+3600000).toISOString();
- const poll={id:44,title:'Enquete de teste',kind:'poll',body:'Vote para continuar',options:['Sim','Não'],expires_at:future};
- const called=[],viewState={session:{user:{id:'member'}},profile:{id:'member'},pair:null,suspension:null,view:'home'};
- let renders=0,notification='',chosen=true;
+ const poll={id:44,title:'Enquete de teste',kind:'poll',body:'Sua opinião',options:['Sim','Não'],expires_at:future};
+ const called=[],viewState={session:{user:{id:'member'}},profile:{id:'member'},pair:null,suspension:null,view:'notifications'};
+ let renders=0,notification='';
  const api={data:{},rpc:async(name,args)=>{
   called.push([name,args]);
   if(name==='entre_bulletin_vote')return {status:'voted',option:0};
-  if(name==='entre_bulletins_feed')return {required_poll:null,items:[{...poll,my_vote:0,votes_total:1,votes_by_option:[1,0]}]};
+  if(name==='entre_bulletins_feed')return {required_poll:poll,items:[{...poll,my_vote:0,votes_total:1,votes_by_option:[1,0]}]};
  }};
- const doc={querySelector:sel=>sel==='input[name="required-poll-choice"]:checked'&&chosen?{value:'0'}:null,
-  getElementById:()=>({textContent:''}),activeElement:null};
+ const doc={activeElement:null};
  new Function('window','state','heading','ico','esc','document','maintenanceIsActive','render','renderView','toast','infoError',code)(
-  {entreSocial:api},viewState,(a,b,d)=>a+b+d,name=>name,String,doc,()=>false,()=>renders++,()=>{},s=>notification=s,e=>e.message
+  {entreSocial:api},viewState,(a,b,d)=>a+b+d,name=>name,String,doc,()=>false,()=>{throw Error('Full render should not be required');},()=>renders++,s=>notification=s,e=>e.message
  );
- api.data.pendingPoll=poll;
- assert.match(api.pollGateView(),/VOTO OBRIGATÓRIO/);
- assert.match(api.pollGateView(),/Confirmar meu voto/);
- await api.bulletinAction('bulletinVote',{dataset:{id:'44'},disabled:false,innerHTML:'Votar',textContent:''});
- assert.equal(api.requiredPoll(),null);
- assert.equal(api.pollGateView(),'');
+ api.data.pendingPoll=poll;api.data.bulletinLoaded=true;api.data.bulletins=[poll];
+ assert.equal(api.requiredPoll(),null);assert.equal(api.pollGateView(),'');
+ assert.match(api.bulletinsView('poll'),/Confirmar voto/);
+ assert.doesNotMatch(api.bulletinsView('notice'),/Enquete de teste/);
+ await api.bulletinAction('bulletinVote',{dataset:{id:'44'},disabled:false,innerHTML:'Votar',textContent:'',closest:()=>({querySelector:()=>({value:'0'})})});
+ assert.equal(api.requiredPoll(),null);assert.equal(api.pollGateView(),'');
  assert.deepEqual(called[0],['entre_bulletin_vote',{_bulletin:44,_option:0}]);
- assert.match(notification,/Voto registrado/);
- assert.ok(renders>0);
+ assert.match(notification,/Voto registrado/);assert.ok(renders>0);
+});
+test('Three independent tabs and foreground banners do not interrupt navigation',()=>{
+ const app=read('app.js'),core=read('social-core.js'),notifications=read('social-notifications.js');
+ assert.doesNotMatch(app,/requiredPoll|pollGateView/);
+ for(const name of ['Notificações','Avisos','Enquetes'])assert.ok(notifications.includes(name));
+ assert.match(core,/!document.hidden&&navigator.onLine/);
+ assert.match(core,/Date.parse\(n.created_at\)>=foregroundSince/);
+ assert.match(core,/setTimeout\(done,5000\)/);
+ assert.doesNotMatch(core,/new Notification\(/);
 });
 test('Official posts have response forms and polls offer results after voting',()=>{
  const code=read('social-bulletins.js');
@@ -148,10 +155,10 @@ test('Official posts have response forms and polls offer results after voting',(
   {id:1,kind:'notice',title:'Aviso',body:'Responda',expires_at:now,created_at:new Date().toISOString(),my_reply:null},
   {id:2,kind:'poll',title:'Pergunta',body:'Voto salvo',options:['Sim','Não'],my_vote:1,votes_total:3,votes_by_option:[1,2],expires_at:now,created_at:new Date().toISOString()}
  ];
- const html=api.bulletinsView();
+ const html=api.bulletinsView('notice'),polls=api.bulletinsView('poll');
  assert.match(html,/data-action="bulletinReply"/);
- assert.match(html,/Voto registrado/);
- assert.match(html,/3 voto\(s\)/);
+ assert.match(polls,/Voto registrado/);
+ assert.match(polls,/3 voto\(s\)/);
 });
 test('Admin creates official notices and polls, and can read responses',()=>{
  const admin=read('admin/app.js'),editor=read('admin/bulletins.js');
@@ -159,7 +166,7 @@ test('Admin creates official notices and polls, and can read responses',()=>{
  assert.match(admin,/entre_admin_bulletins/);
  assert.match(admin,/\["bulletins","Avisos","message-circle"\]/);
  assert.match(editor,/Respostas/);
- assert.match(editor,/Enquete obrigatória/);
+ assert.match(editor,/Enquete opcional/);
  assert.match(editor,/Voto único|voto/i);
  assert.doesNotMatch(admin,/data-action="send-announcement"/);
 });
