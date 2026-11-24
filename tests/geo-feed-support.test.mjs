@@ -8,7 +8,8 @@ const app=read('app.js'),features=read('entre-features.js'),geo=read('entre-loca
 test('Feed is first in navigation and becomes the initial authenticated section',()=>{
  assert.match(app,/const tabs=\[\['posts','Feed','edit'\]/);
  assert.match(app,/const state=\{mode:'landing',view:'posts'/);
- assert.match(features,/Feed <em>da comunidade/);
+ assert.match(features,/Feed <em>social/);
+ assert.ok(features.indexOf('entreStories?.markup')<features.indexOf('Feed <em>social'),'Stories should precede the feed header');
 });
 test('administrator menu shortcut is conditional and settings is not repeated inside profile',()=>{
  assert.match(app,/state\.isAdmin\?'<a role="menuitem" class="profile-menu-admin"/);
