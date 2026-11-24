@@ -117,7 +117,7 @@ async function detectRoomRegion(){
   await cities(s.state);
   if(!s.filterOpen||epoch!==s.filterEpoch||s.state!==region.state)return;
   const match=s.cities.find(n=>clean(n)===clean(region.city));
-  if(match){s.city=match;filterCities();if(status)status.textContent='Localização detectada. Escolha a sala do estado ou da cidade.';}
+  if(match){s.city=match;roomChange('c:'+s.state.toLowerCase()+':'+clean(match));toast('Sala da sua cidade selecionada.');}
   else if(status)status.textContent='Estado detectado. Selecione sua cidade na lista.';
  }catch(error){if(status?.isConnected)status.textContent=error?.code===1?'Permissão de localização negada. Escolha manualmente.':error?.message||'Não foi possível detectar sua localização.';}
  finally{s.detecting=false;if(btn?.isConnected)btn.disabled=false;}
