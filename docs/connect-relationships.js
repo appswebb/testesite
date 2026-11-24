@@ -9,8 +9,8 @@ const rpc=(name,args={})=>api.rpc(name,args);
 const total=()=>Object.values(unread).reduce((a,b)=>a+(Number(b)||0),0);
 const fmt=n=>n>99?'99+':String(n||'');
 function paintUnread(){
- document.querySelectorAll('[data-chat-unread]').forEach(el=>{const n=Number(unread[el.dataset.chatUnread]||0);el.hidden=!n;el.textContent=fmt(n)});
- document.querySelectorAll('[data-chat-unread-total]').forEach(el=>{const n=total();el.hidden=!n;el.textContent=fmt(n)});
+ document.querySelectorAll('[data-chat-unread]').forEach(el=>{const n=Number(unread[el.dataset.chatUnread]||0);el.hidden=!n;if(el.textContent!==fmt(n))el.textContent=fmt(n)});
+ document.querySelectorAll('[data-chat-unread-total]').forEach(el=>{const n=total();el.hidden=!n;if(el.textContent!==fmt(n))el.textContent=fmt(n)});
 }
 async function markRead(){
  if(!uid()||document.hidden||state.view!=='chat'||state.pair?.status!=='connected'||state.modal)return;
@@ -48,9 +48,9 @@ async function loadList(kind,more=false){
  }catch(error){if(seq===generation&&modal)body.textContent='Não foi possível carregar. Tente novamente.';}
 }
 async function refreshRelationships(id,status){
- for(const p of [...api.data.online,...(api.data.peopleResults||[])])if(p.id===id)p.follow_status=status;
- if(api.data.socialProfile?.id===id)api.data.socialProfile.follow_status=status;
- document.querySelectorAll('[data-cp-follow]').forEach(b=>{if(b.dataset.cpFollow===id){b.dataset.cpFollowStatus=status||'';b.textContent=status==='accepted'?'Seguindo':status==='pending'?'Cancelar pedido':'Seguir';b.disabled=false;}});
+ for(const p of [...api.data.online,...(api.data.peopleResults||[])])if(p.id===id&&status!==null)p.follow_status=status;
+ if(api.data.socialProfile?.id===id&&status!==null)api.data.socialProfile.follow_status=status;
+ document.querySelectorAll('[data-cp-follow]').forEach(b=>{if(b.dataset.cpFollow===id&&status!==null){b.dataset.cpFollowStatus=status||'';b.textContent=status==='accepted'?'Seguindo':status==='pending'?'Cancelar pedido':'Seguir';b.disabled=false;}});
  document.querySelectorAll('[data-cp-stats]').forEach(el=>{delete el.dataset.loading;void fillStats(el)});
  await api.refreshInbox();if(modal)await loadList(currentKind);void tick();
 }
