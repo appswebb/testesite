@@ -1,0 +1,72 @@
+/* CONNECT identity layer v1 — extends the existing app without replacing its business logic. */
+:root {
+  --connect-violet: #7545f7; --connect-coral: #fa7c78; --connect-lime: #c6f27c;
+  --connect-deep: #19152b; --connect-ink: #211b36; --connect-paper: #fcfaff;
+  --canvas: #f8f6fd; --canvas2: #f0ebfa; --paper: #ffffff; --ink: #211b36;
+  --ink2: #38304c; --mute: #716a81; --line: rgba(64,42,108,.12);
+  --coral: #8654ff; --coral-hi: #7443f4; --lime: #d8f5a8; --violet: #d9c9ff;
+  --good: #218767; --bad: #c44564; --shade: 0 25px 65px rgba(65,40,125,.09);
+  --font: 'DM Sans', system-ui, sans-serif; --display: 'Space Grotesk', system-ui, sans-serif;
+  color-scheme: light;
+}
+html {background:var(--canvas)}
+body { background: var(--canvas); color:var(--ink); }
+button, a, [role="button"] {touch-action: manipulation;}
+.brand {font-family:var(--display);font-size:27px;letter-spacing:-.065em;font-weight:800;gap:10px;}
+.brand .dot {display:none}
+.brand-glyph {background: url('./connect-symbol.svg') center / contain no-repeat; width:34px;height:34px}
+.brand-glyph i {display:none!important}
+.brand-glyph i+i {display:none!important}
+.startup .brand-glyph {width:46px;height:46px}
+.landing-hero {background: radial-gradient(ellipse 55% 75% at 83% 48%,rgba(231,197,255,.75) 0%,transparent 70%),radial-gradient(ellipse 45% 50% at 63% 75%,rgba(255,198,190,.4) 0%,transparent 75%),var(--canvas)}
+.hero-title em,.section-title i,.auth-visual h2 em,.manifesto h2 em {color:var(--connect-violet)}
+.hero-kicker {background:#f0e9ff;border-color:#e3d6ff;color:#6136bd}
+.btn-dark,.nav-item.active {background:linear-gradient(115deg,#6136e9,#9056f5);color:#fff;box-shadow:0 12px 28px rgba(97,54,233,.18)}
+.btn-dark:hover,.nav-item.active:hover {background:linear-gradient(115deg,#5229d4,#8150ed)}
+.btn-coral {background:linear-gradient(120deg,#8050fc,#b57bff);color:#fff}
+.btn-coral:hover {background:linear-gradient(120deg,#7040ef,#a366f2)}
+.ui-btn:focus-visible,.nav-item:focus-visible {outline-color:#7545f7}
+.sidebar {background:var(--paper);border-right:1px solid var(--line)}
+.nav-item {color:#655c78}
+.nav-item:hover {background:#f2edff;color:#3a285a}
+.home-footer,.manifesto {background:#211734;color:#fff}
+.manifesto::after {box-shadow:0 0 0 80px #9c65ff0b,0 0 0 160px #9c65ff08}
+.hero-art:before {background:linear-gradient(135deg,#e7d8ff,#ffe3d9);border-color:#e5d2fb;box-shadow:0 0 0 34px #e7d8ff60,0 0 0 70px #f5d5ef43}
+.hero-time {background:var(--connect-deep)}
+.hero-match-note {background:#d9f5a5;border-color:#bce883;color:#283a21}
+.ticker {background:#f0e9fa}
+.ticker-track b,.dot {color:#8050fc}
+.pill,.step-card,.portrait {border-color:var(--line)}
+.step-card {background:#f7f3ff}
+.step-card:nth-child(1) .step-icon {background:#e7dcff;color:#6943db}
+.step-card:nth-child(2) .step-icon {background:#ffe0d8;color:#c45f68}
+.step-card:nth-child(3) .step-icon {background:#e6f4c4;color:#487b32}
+.auth-visual {background:radial-gradient(circle at 78% 25%,#48318a,#211734 70%)}
+.auth-main {background:var(--canvas)}
+.field input:focus,.field select:focus,.field textarea:focus {border-color:#966bff;box-shadow:0 0 0 4px #966bff1e}
+:where(.ui-btn,.nav-item) {transition-duration:.22s}
+@media(max-width:700px) {
+  .wrap {width:min(100% - 32px,1280px)}
+  .landing-hero {padding-top:115px;padding-bottom:65px;min-height:auto}
+  .hero-title {font-size:clamp(45px,12vw,74px);line-height:1.02;letter-spacing:-.07em}
+  .home-bar {height:76px}
+  .hero-art {min-height:350px;height:390px}
+  .hero-time {top:26px;left:12px}
+  .hero-match-note {right:8px;bottom:30px}
+  .step-card {min-height:unset}
+}
+@media(prefers-reduced-motion:reduce) {
+  .landing-hero *, .hero-art *, .ticker-track {animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
+:root[data-connect-theme="dark"],body[data-connect-theme="dark"] {
+  --canvas:#171322; --canvas2:#231d32; --paper:#221b31; --ink:#f7f2ff;
+  --ink2:#ddd4ee; --mute:#b8accb; --line:rgba(215,195,255,.15);
+  --shade:0 26px 70px rgba(0,0,0,.2);color-scheme:dark;
+}
+:root[data-connect-theme="dark"] .sidebar,body[data-connect-theme="dark"] .sidebar {background:var(--paper)}
+:root[data-connect-theme="dark"] .landing-hero,body[data-connect-theme="dark"] .landing-hero {
+ background:radial-gradient(ellipse at 80% 35%,#372156,transparent 60%),var(--canvas)
+}
+:root[data-connect-theme="dark"] .step-card,body[data-connect-theme="dark"] .step-card {background:#2b223d}
+:root[data-connect-theme="dark"] .how-section,body[data-connect-theme="dark"] .how-section {background:var(--paper)}
+:root[data-connect-theme="dark"] .home-bar nav a,body[data-connect-theme="dark"] .home-bar nav a {color:#c7bade}
