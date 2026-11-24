@@ -185,7 +185,7 @@ function webPaymentStatusMarkup(){
  const p=data.webPayment||{},status=String(p.status||'');
  if(data.webError)return '<p class="web-pay-error">'+esc(data.webError)+'</p>';
  if(status==='approved')return '<div class="web-pay-success">'+ico('check',20)+' Pagamento aprovado. Premium liberado.</div>';
- if(status==='rejected'||status==='cancelled')return '<p class="web-pay-error">O Mercado Pago não aprovou a última cobrança. Você pode tentar novamente. Nenhum Premium foi liberado.</p>';
+ if(status==='rejected'||status==='cancelled')return '<div class="web-pay-error"><strong>Pagamento não aprovado</strong><p>O Mercado Pago recusou ou cancelou a cobrança. Nenhum Premium foi liberado.</p>'+(p.status_detail?'<small>Motivo informado: '+esc(p.status_detail)+'</small>':'')+(p.payment_id?'<small> · Referência: '+esc(String(p.payment_id))+'</small>':'')+'</div>';
  if(['pending','in_process','creating','unverified'].includes(status)){
   return '<div class="web-pay-pending"><strong>'+ico('clock',18)+' Aguardando confirmação do pagamento</strong>'+
    '<p>O site confere o pagamento com o Mercado Pago. Assim que for aprovado, o Premium é ativado.</p>'+(!p.pix_code&&!p.pix_qr_base64?'<p>O código Pix não está disponível nesta sessão. Verifique a cobrança antes de tentar outra.</p>':'')+
@@ -207,6 +207,7 @@ function premiumView(){
  '<small class="cp-plan-footnote">O pagamento único não gera cobranças automáticas.</small></article></div></section>';
 }
 function checkoutView(){
+ if(data.checkoutOwner!==state.session?.user?.id){data.webPayment=null;data.webCheckoutOpen=false;data.webError='';}
  const pending=['pending','in_process','creating','unverified'].includes(data.webPayment?.status);
  const active=data.premium?.active===true;
  const ready=data.webCheckoutOpen&&!data.checkoutBusy;
@@ -253,7 +254,8 @@ async function submitPix(form){
  data.webPayment=result;form.reset();
  if(result.status==='approved'){await refreshPremium();data.webCheckoutOpen=false;await unmountPaymentBrick();renderView();toast('Pagamento aprovado!');return;}
  if(result.status==='pending'||result.status==='in_process'){data.webStatusText='Aguardando pagamento';if(!result.pix_code&&!result.pix_qr_base64)data.webError='Pagamento criado, mas o código Pix não foi retornado. Não gere outra cobrança; contate o suporte.';}
- else data.webError='O Mercado Pago recusou este Pix. Nenhum código válido foi gerado.';
+ else if(result.status==='rejected'||result.status==='cancelled')data.webError='';
+ else data.webError='Não foi possível confirmar o estado da cobrança. Verifique o pagamento.';
  renderView();document.getElementById('webPaymentStatus')?.scrollIntoView({block:'center'});
  }catch(error){data.webError=String(error.message||error);refreshWebStatus();toast(data.webError,true);}
  finally{data.webBusy=false;if(button.isConnected)button.disabled=false;}
@@ -284,7 +286,7 @@ async function renderWebBrick(){
       data.webStatusText='Aguardando confirmação';refreshWebStatus();
       document.getElementById('webPaymentStatus')?.scrollIntoView({behavior:'smooth',block:'center'});
      }else{
-      data.webError='Pagamento recusado ou cancelado. Tente novamente.';refreshWebStatus();
+      data.webError='';refreshWebStatus();
      }
     }catch(error){data.webError=String(error.message||error);refreshWebStatus();throw error;}
     finally{data.webBusy=false;}
@@ -295,6 +297,8 @@ async function renderWebBrick(){
 async function leavePremium(){data.webCheckoutOpen=false;data.webError='';await unmountPaymentBrick();}
 async function checkout(){
  if(state.view!=='checkout'){nav('checkout');return;}
+ const uid=state.session?.user?.id;if(!uid)return;
+ if(data.checkoutOwner!==uid){data.webPayment=null;data.webConfig=null;data.webCheckoutOpen=false;data.checkoutOwner=uid;}
  if(data.checkoutBusy||data.webBusy)return;
  if(data.premium?.active){renderView();return;}
  if(!data.premium?.checkout_enabled||!price()){toast('A administração precisa habilitar as cobranças.',true);return;}
@@ -303,8 +307,8 @@ async function checkout(){
   const {data:config,error}=await db.functions.invoke('entre-premium-web',{body:{action:'config'}});
   if(error)throw Error('Não foi possível conectar ao checkout. Verifique sua sessão e tente novamente.');
   if(!config?.enabled||!config?.public_key)throw Error(config?.message||'O checkout não está habilitado com credenciais de produção.');
-  if(state.view!=='checkout')return;data.webConfig=config;data.webCheckoutOpen=true;data.webStatusText='';data.checkoutMethod='pix';
-  const current=await db.functions.invoke('entre-premium-web',{body:{action:'status'}});if(state.view!=='checkout')return;if(!current.error&&current.data?.status&&current.data.status!=='none'){const previous=data.webPayment;data.webPayment={...(previous?.payment_id===current.data.payment_id?previous:{}),...current.data};}else if(current.error){data.webError='Não foi possível verificar compras anteriores. Tente novamente.';data.webCheckoutOpen=false;}
+  if(state.view!=='checkout'||state.session?.user?.id!==uid)return;data.webConfig=config;data.webCheckoutOpen=true;data.webStatusText='';data.checkoutMethod='pix';
+  const current=await db.functions.invoke('entre-premium-web',{body:{action:'status'}});if(state.view!=='checkout'||state.session?.user?.id!==uid)return;if(!current.error&&current.data?.status&&current.data.status!=='none'){const previous=data.webPayment;data.webPayment={...(previous?.payment_id===current.data.payment_id?previous:{}),...current.data};}else if(!current.error&&current.data?.status==='none'){data.webPayment=null;}else if(current.error){data.webError='Não foi possível verificar compras anteriores. Tente novamente.';data.webCheckoutOpen=false;}
   data.checkoutBusy=false;renderView();
  }catch(error){data.webError=infoError(error);data.webCheckoutOpen=false;renderView();toast(data.webError,true);}
  finally{data.checkoutBusy=false;if(state.view==='checkout'&&!data.webCheckoutOpen)renderView();}
@@ -313,10 +317,12 @@ async function verifyPremium(){
  if(data.webChecking)return;
  data.webChecking=true;data.webError='';refreshWebStatus();
  try{
-  if(data.webPayment?.payment_id){
+  if(state.session?.user){
+   const uid=state.session.user.id;
    const {data:status,error}=await db.functions.invoke('entre-premium-web',{body:{action:'status'}});
+   if(state.session?.user?.id!==uid||state.view!=='checkout')return;
    if(!error&&status&&!status.error){
-    data.webPayment={...data.webPayment,...status};
+    data.webPayment={...(data.webPayment?.payment_id===status.payment_id?data.webPayment:{}),...status};
     if(status.status==='approved'){
      await refreshPremium();data.webCheckoutOpen=false;await unmountPaymentBrick();renderView();
      toast('Pagamento confirmado. Premium ativo!',false,'success');return;
@@ -335,7 +341,7 @@ async function copyPix(){
  catch(e){const el=document.getElementById('webPixCode');el?.select();toast('Selecione e copie o código Pix.');}
 }
 setInterval(()=>{if(state.view==='checkout'&&document.visibilityState==='visible'&&
- data.webPayment?.payment_id&&['pending','in_process'].includes(data.webPayment.status)&&!data.webChecking)
+ ['pending','in_process','creating','unverified'].includes(data.webPayment?.status)&&!data.webChecking)
  void verifyPremium().catch(e=>console.warn('Payment verification',e));},12000);
 const supportCategories={bug:'Erro no aplicativo',account:'Conta e acesso',payment:'Pagamento ou assinatura',security:'Segurança e privacidade',other:'Outro assunto'};
 function whatsappLink(base,message){
