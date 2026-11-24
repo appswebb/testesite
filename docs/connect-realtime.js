@@ -1,7 +1,7 @@
 /* Realtime presence, account activity, and recovery after a mobile browser pause. */
 (()=>{
 'use strict';
-let pairsDirty=false,pairsLoading=false;let publicChannel=null,accountChannel=null,account=null,count=null,countAt=0,started=false,pinging=false,counting=false,onlineBusy=false,onlineQueued=false,activityTimer=0,presenceTimer=0,resuming=false,lastPing=0,lastResume=0;
+let feedDirty=false,roomTimer=0;let pairsDirty=false,pairsLoading=false;let publicChannel=null,accountChannel=null,account=null,count=null,countAt=0,started=false,pinging=false,counting=false,onlineBusy=false,onlineQueued=false,activityTimer=0,presenceTimer=0,resuming=false,lastPing=0,lastResume=0;
 const ready=()=>typeof db!=='undefined'&&typeof state!=='undefined';
 const uid=()=>ready()?state.session?.user?.id:null;
 const member=()=>uid()&&state.profile&&!state.suspension&&!maintenanceIsActive();
@@ -34,6 +34,8 @@ async function ping(force=false){
  catch(e){console.warn('Presence heartbeat unavailable',e?.message)}finally{pinging=false}
 }
 async function refreshPairsList(){if(!member()||pairsLoading||!pairsDirty||state.view!=='conversations'||document.querySelector('.cp-conversation-dialog[open]'))return;pairsLoading=true;pairsDirty=false;const user=uid();try{await loadPairs();if(uid()===user&&state.view==='conversations'&&!document.querySelector('.cp-conversation-dialog[open]'))renderView();}catch(e){pairsDirty=true;}finally{pairsLoading=false}}
+function refreshFeed(){if(!feedDirty||!member()||state.view!=='posts'||document.hidden||state.modal||document.querySelector('#commentsOverlay,.post-compose textarea:focus,.post-compose input:focus')||document.querySelector('#postCreateForm textarea')?.value.trim()||window.scrollY>180||window.entreExtras?.data?.postLoading)return;feedDirty=false;void window.entreExtras?.loadPosts?.();}
+function communityEvent(payload){if(payload.new?.kind==='rooms'){clearTimeout(roomTimer);roomTimer=setTimeout(()=>void window.entreRooms?.refresh?.(),150)}else if(payload.new?.kind==='feed'){feedDirty=true;refreshFeed()}}
 function pairEvent(){pairsDirty=true;activity();void refreshPairsList()}
 function activity(){clearTimeout(activityTimer);activityTimer=setTimeout(()=>{if(!member())return;void api().refreshNotifications();void window.connectRelationships?.tick?.();if(state.view==='online')void api().refreshInbox();},120)}
 function subscribe(){
@@ -45,6 +47,7 @@ function subscribe(){
  account=user;lastPing=0;pairsDirty=false;
  if(!user)return;
  accountChannel=db.channel('connect-account-'+user)
+ .on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_community_signal'},communityEvent)
  .on('postgres_changes',{event:'INSERT',schema:'public',table:'entre_notifications',filter:'user_id=eq.'+user},activity)
  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_notifications',filter:'user_id=eq.'+user},activity)
  .on('postgres_changes',{event:'INSERT',schema:'public',table:'entre_messages'},activity)
@@ -59,13 +62,14 @@ async function resume(){
  resuming=true;const user=uid();
  try{subscribe();await Promise.allSettled([ping(true),refreshCount()]);if(!member()||uid()!==user)return;
  await Promise.allSettled([api().refreshNotifications(),window.connectRelationships?.tick?.(),refreshOnline()]);
+ if(state.view==='rooms')void window.entreRooms?.refresh?.();if(state.view==='posts'){feedDirty=true;refreshFeed();}
  if(state.pair?.id&&['chat','connect'].includes(state.view)){await refreshPair();if(state.pair?.id){await loadMessages();refreshEncounterMessages();}}
  }catch(e){console.warn('Reconnect sync',e?.message)}finally{resuming=false}
 }
 function onResume(){if(document.hidden||Date.now()-lastResume<1000)return;lastResume=Date.now();void resume()}
 function start(){if(started)return;started=true;
  const root=document.getElementById('app');if(root)new MutationObserver(paint).observe(root,{childList:true,subtree:true});
- setInterval(()=>{if(!ready())return;subscribe();void ping();if(!document.hidden){void refreshCount();void refreshOnline();void refreshPairsList()}paint()},15000);
+ setInterval(()=>{if(!ready())return;subscribe();void ping();if(!document.hidden){void refreshCount();void refreshOnline();void refreshPairsList();refreshFeed()}paint()},15000);
  document.addEventListener('visibilitychange',()=>{if(document.hidden)void ping(true);else onResume()});
  window.addEventListener('focus',onResume);window.addEventListener('pageshow',onResume);window.addEventListener('online',onResume);
  const boot=setInterval(()=>{if(ready()){clearInterval(boot);void resume()}},200);
