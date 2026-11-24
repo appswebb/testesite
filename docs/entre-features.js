@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 const mod={};
-const data={posts:[],postLoading:false,postBefore:null,postMore:false,premium:null,premiumIds:new Set(),support:[],supportBusy:false,checkoutBusy:false,premiumChecking:false,expandedPostComments:new Set(),webCheckoutOpen:false,webConfig:null,webPayment:null,webBusy:false,webStatusText:'',webError:'',webChecking:false,webBrick:null,commentsPost:null,commentsRows:[],commentsHasMore:false,commentsBusy:false,commentsError:''};
+const data={posts:[],postLoading:false,postBefore:null,postMore:false,premium:null,premiumIds:new Set(),support:[],supportBusy:false,checkoutBusy:false,premiumChecking:false,expandedPostComments:new Set(),webCheckoutOpen:false,webConfig:null,webPayment:null,webBusy:false,webStatusText:'',webError:'',webChecking:false,commentsPost:null,commentsRows:[],commentsHasMore:false,commentsBusy:false,commentsError:''};
 const call=async(name,params)=>{const r=await db.rpc(name,params||{});if(r.error)throw r.error;return r.data;};
 const premium=id=>Boolean(id&&(data.premiumIds.has(id)||(id===state.session?.user?.id&&data.premium?.active===true)));
 const badge=p=>premium(p?.id)?'<span class="verified-mark" title="Assinante CONNECT Premium" aria-label="Perfil verificado Premium">'+ico('check',12)+'</span>':'';
@@ -181,19 +181,16 @@ document.addEventListener('keydown',event=>{
 });
 const price=()=>Number.isInteger(data.premium?.price_cents)&&data.premium.price_cents>0
  ?(data.premium.price_cents/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):null;
+const terminalPayment=['CONFIRMED','RECEIVED','REFUNDED','REFUND_REQUESTED','REFUND_IN_PROGRESS','PARTIALLY_REFUNDED','CHARGEBACK_REQUESTED','CHARGEBACK_DISPUTE','AWAITING_CHARGEBACK_REVERSAL','DELETED','ERROR','RECEIVED_IN_CASH','none'];
+const paymentPending=status=>Boolean(status&&!terminalPayment.includes(status));
+function invoiceLink(value){try{const u=new URL(value);if(u.protocol==='https:'&&['asaas.com','www.asaas.com'].includes(u.hostname)&&!u.username&&!u.password)return '<a class="cc-pay-button" target="_blank" rel="noopener noreferrer" href="'+esc(u.href)+'">Pagar cartão no Asaas '+ico('arrow',18)+'</a>';}catch(_){}return '';}
 function webPaymentStatusMarkup(){
- const p=data.webPayment||{},status=String(p.status||'');
- if(data.webError)return '<p class="web-pay-error">'+esc(data.webError)+'</p>';
- if(status==='approved')return '<div class="web-pay-success">'+ico('check',20)+' Pagamento aprovado. Premium liberado.</div>';
- if(status==='rejected'||status==='cancelled')return '<div class="web-pay-error"><strong>Pagamento não aprovado</strong><p>O Mercado Pago recusou ou cancelou a cobrança. Nenhum Premium foi liberado.</p>'+(p.status_detail?'<small>Motivo informado: '+esc(p.status_detail)+'</small>':'')+(p.payment_id?'<small> · Referência: '+esc(String(p.payment_id))+'</small>':'')+'</div>';
- if(['pending','in_process','creating','unverified'].includes(status)){
-  return '<div class="web-pay-pending"><strong>'+ico('clock',18)+' Aguardando confirmação do pagamento</strong>'+
-   '<p>O site confere o pagamento com o Mercado Pago. Assim que for aprovado, o Premium é ativado.</p>'+(!p.pix_code&&!p.pix_qr_base64?'<p>O código Pix não está disponível nesta sessão. Verifique a cobrança antes de tentar outra.</p>':'')+
-   (p.pix_qr_base64?'<img class="web-pix-qr" alt="Código QR para Pix" src="data:image/png;base64,'+esc(p.pix_qr_base64)+'">':'')+
-   (p.pix_code?'<label for="webPixCode">Pix Copia e Cola</label><textarea id="webPixCode" readonly>'+esc(p.pix_code)+'</textarea><button type="button" class="ui-btn btn-outline" data-action="premiumCopyPix">Copiar código Pix</button>':'')+
-   '<button type="button" class="ui-btn btn-outline" data-action="premiumVerify">'+ico('refresh',17)+' Verificar pagamento</button></div>';
- }
- return data.webStatusText?'<p>'+esc(data.webStatusText)+'</p>':'';
+ const p=data.webPayment||{},status=p.status||'';
+ const error=data.webError?'<p role="alert" class="web-pay-error">'+esc(data.webError)+'</p>':'';
+ if(['CONFIRMED','RECEIVED'].includes(status))return error+'<div class="web-pay-success">'+ico('check',20)+' Pagamento confirmado pelo Asaas. Consulte seu Premium.</div>';
+ if(paymentPending(status))return error+'<div class="web-pay-pending"><strong>'+ico('clock',18)+' '+(status==='OVERDUE'?'Cobrança vencida':'Aguardando confirmação')+'</strong><p>Confirme o pagamento pelo Asaas. Não gere outra cobrança enquanto esta estiver em andamento.</p>'+ (p.pix_qr_base64&&/^[a-zA-Z0-9+/=]+$/.test(p.pix_qr_base64)?'<img class="web-pix-qr" alt="QR Code Pix" src="data:image/png;base64,'+esc(p.pix_qr_base64)+'">':'')+(p.pix_code?'<label for="webPixCode">Pix Copia e Cola</label><textarea id="webPixCode" readonly>'+esc(p.pix_code)+'</textarea><button type="button" class="ui-btn btn-outline" data-action="premiumCopyPix">Copiar código Pix</button>':'')+invoiceLink(p.invoice_url)+(p.qr_unavailable?'<p>QR Code ainda indisponível. Verifique novamente.</p>':'')+'<button type="button" class="ui-btn btn-outline" data-action="premiumVerify">'+ico('refresh',17)+' Verificar pagamento</button></div>';
+ if(status&&status!=='none')return error+'<p class="web-pay-error">Última cobrança: '+esc(status)+'. Nenhum novo acesso foi liberado.</p>';
+ return error+(data.webStatusText?'<p>'+esc(data.webStatusText)+'</p>':'');
 }
 function premiumView(){
  const active=data.premium?.active,enabled=data.premium?.checkout_enabled&&price()&&!data.checkoutBusy;
@@ -203,136 +200,56 @@ function premiumView(){
  '<div class="cp-plan-state">'+(active?'Incluído no Premium':ico('check',17)+' Seu plano atual')+'</div></article>'+
  '<article class="cp-plan cp-plan-paid"><span class="cp-plan-eyebrow">'+ico('crown',18)+' PREMIUM</span><h3>Mais possibilidades</h3><div class="cp-plan-price">'+(price()||'Valor a definir')+'<small> / mês</small></div><p>Todos os recursos do Normal, mais:</p>'+rows(['Banner animado em GIF','Filtro de gênero no Ao vivo','Selo de destaque no perfil','Atendimento prioritário pelo WhatsApp'])+
  (active?'<div class="cp-plan-state">'+ico('check',17)+' Premium ativo'+(data.premium.paid_until?' · até '+new Date(data.premium.paid_until).toLocaleDateString('pt-BR'):'')+'</div><button type="button" class="ui-btn btn-outline" data-action="premiumWhatsapp">'+ico('chat',17)+' WhatsApp prioritário</button>':'')+
- (!active?'<div class="cp-plan-purchase"><strong>Premium por 30 dias</strong><p>Pagamento único por Pix ou cartão, sem renovação automática.</p><button type="button" class="ui-btn btn-dark" data-action="premiumCheckout" '+(!enabled?'disabled':'')+'>'+(data.checkoutBusy?'Carregando…':'Comprar Premium')+'</button></div>':'')+ (window.entreRecurring?.view?.()||'')+(window.connectAsaasTest?.markup?.()||'')+
+ (!active?'<div class="cp-plan-purchase"><strong>Premium por 30 dias</strong><p>Pagamento único por Pix ou cartão, sem renovação automática.</p><button type="button" class="ui-btn btn-dark" data-action="premiumCheckout" '+(!enabled?'disabled':'')+'>'+(data.checkoutBusy?'Carregando…':'Comprar Premium')+'</button></div>':'')+ 
  '<small class="cp-plan-footnote">O pagamento único não gera cobranças automáticas.</small></article></div></section>';
 }
 function checkoutView(){
  if(data.checkoutOwner!==state.session?.user?.id){data.webPayment=null;data.webCheckoutOpen=false;data.webError='';}
- const pending=['pending','in_process','creating','unverified'].includes(data.webPayment?.status);
+ const pending=paymentPending(data.webPayment?.status);
  const active=data.premium?.active===true;
  const ready=data.webCheckoutOpen&&!data.checkoutBusy;
  const method=data.checkoutMethod||'pix';
- const form='<div class="cp-pix-choice"><div class="cc-pay-method-head">'+ico('lock',20)+'<div><strong>Pagamento instantâneo</strong><p>Informe os dados reais do titular para gerar o Pix.</p></div></div><form id="connectPixForm"><div class="cc-fields"><label>Nome<input name="first_name" required maxlength="80" autocomplete="given-name" placeholder="Nome"></label><label>Sobrenome<input name="last_name" required maxlength="80" autocomplete="family-name" placeholder="Sobrenome"></label></div><label>Documento<select name="document_type"><option value="CPF">CPF</option><option value="CNPJ">CNPJ</option></select></label><label>Número do documento<input name="document_number" required inputmode="numeric" maxlength="18" autocomplete="off" placeholder="Somente números"></label><button class="cc-pay-button" type="submit">Gerar Pix de '+esc(price()||'')+' '+ico('arrow',18)+'</button></form></div>';
+ const form='<div class="cp-pix-choice"><div class="cc-pay-method-head">'+ico('lock',20)+'<div><strong>'+ (method==='pix'?'Pagamento instantâneo':'Cartão de crédito')+'</strong><p>'+ (method==='pix'?'Informe os dados do titular para gerar o Pix.':'Informe os dados do titular para abrir a fatura segura do Asaas.')+'</p></div></div><form id="connectPixForm"><div class="cc-fields"><label>Nome<input name="first_name" required maxlength="80" autocomplete="given-name" placeholder="Nome"></label><label>Sobrenome<input name="last_name" required maxlength="80" autocomplete="family-name" placeholder="Sobrenome"></label></div><label>Documento<select name="document_type"><option value="CPF">CPF</option><option value="CNPJ">CNPJ</option></select></label><label>Número do documento<input name="document_number" required inputmode="numeric" maxlength="18" autocomplete="off" placeholder="Somente números"></label><button class="cc-pay-button" type="submit">'+(method==='pix'?'Gerar Pix de ':'Continuar para cartão · ')+esc(price()||'')+' '+ico('arrow',18)+'</button></form></div>';
  return '<section class="cc-checkout"><header class="cc-head"><button type="button" data-action="nav" data-view="premium" class="cc-back">'+ico('chevron',17)+' Voltar aos planos</button><span>'+ico('lock',16)+' Ambiente seguro</span></header><div class="cc-grid"><aside class="cc-summary"><div class="cc-brand"><img src="./connect-glass.svg" alt="" width="66" height="44"><span>CONNECT / PREMIUM</span></div><div class="cc-summary-main"><small>MEMBRESIA · 30 DIAS</small><h2>Conexões sem limites.</h2><p>Mais possibilidades para viver a comunidade do seu jeito.</p><div class="cc-price">'+esc(price()||'—')+'<small> / 30 dias</small></div></div><ul><li>'+ico('check',18)+' Filtros exclusivos no Ao vivo</li><li>'+ico('check',18)+' Banner animado no perfil</li><li>'+ico('check',18)+' Selo de destaque Premium</li><li>'+ico('check',18)+' WhatsApp prioritário</li></ul><div class="cc-total"><span>Total a pagar</span><strong>'+esc(price()||'—')+'</strong></div><p class="cc-note">Pagamento único. Sem renovação automática.</p></aside><main class="cc-payment"><span class="cc-step">01 / PAGAMENTO</span><h2>Finalize sua compra.</h2><p>Escolha como deseja pagar. Seu acesso será liberado após a confirmação.</p>'+
- (active?'<div class="web-pay-success">'+ico('check',20)+' Seu Premium está ativo.</div><button type="button" class="cc-pay-button" data-action="nav" data-view="premium">Ver minha assinatura</button>':!ready?'<div class="cc-loading">'+(data.checkoutBusy?'Preparando pagamento seguro…':esc(data.webError||'Checkout indisponível.'))+'</div>'+(!data.checkoutBusy?'<button type="button" class="cc-pay-button" data-action="premiumCheckout">Tentar novamente</button>':''):'<div class="cc-methods" role="group" aria-label="Forma de pagamento"><button type="button" data-checkout-method="pix" aria-pressed="'+(method==='pix')+'" '+(pending?'disabled':'')+'>'+ico('bolt',22)+'<span>Pix<small>À vista</small></span></button><button type="button" data-checkout-method="card" aria-pressed="'+(method==='card')+'" '+(pending?'disabled':'')+'>'+ico('lock',22)+'<span>Cartão<small>Crédito</small></span></button></div>'+(!pending?(method==='pix'?form:'<div id="connectPaymentBrick"></div>'):'')+'<div id="webPaymentStatus" aria-live="polite">'+webPaymentStatusMarkup()+'</div>')+
- '<div class="cc-security">'+ico('shield',20)+'<div><strong>Processado pelo Mercado Pago</strong><small>O CONNECT não recebe os dados completos do seu cartão.</small></div></div><button type="button" class="cc-help" data-action="nav" data-view="support">Precisa de ajuda? Fale com o suporte '+ico('arrow',15)+'</button></main></div></section>';
+ (active?'<div class="web-pay-success">'+ico('check',20)+' Seu Premium está ativo.</div><button type="button" class="cc-pay-button" data-action="nav" data-view="premium">Ver minha assinatura</button>':!ready?'<div class="cc-loading">'+(data.checkoutBusy?'Preparando pagamento seguro…':esc(data.webError||'Checkout indisponível.'))+'</div>'+(!data.checkoutBusy?'<button type="button" class="cc-pay-button" data-action="premiumCheckout">Tentar novamente</button>':''):'<div class="cc-methods" role="group" aria-label="Forma de pagamento"><button type="button" data-checkout-method="pix" aria-pressed="'+(method==='pix')+'" '+(pending?'disabled':'')+'>'+ico('bolt',22)+'<span>Pix<small>À vista</small></span></button><button type="button" data-checkout-method="card" aria-pressed="'+(method==='card')+'" '+(pending?'disabled':'')+'>'+ico('lock',22)+'<span>Cartão<small>Crédito</small></span></button></div>'+(!pending?form:'')+'<div id="webPaymentStatus" aria-live="polite">'+webPaymentStatusMarkup()+'</div>')+
+ '<div class="cc-security">'+ico('shield',20)+'<div><strong>Processado pelo Asaas</strong><small>Os dados do cartão são preenchidos diretamente no Asaas.</small></div></div><button type="button" class="cc-help" data-action="nav" data-view="support">Precisa de ajuda? Fale com o suporte '+ico('arrow',15)+'</button></main></div></section>';
 }
-document.addEventListener('click',async e=>{const b=e.target.closest?.('[data-checkout-method]');if(!b||b.disabled||state.view!=='checkout'||data.webBusy)return;const method=b.dataset.checkoutMethod;if(!['pix','card'].includes(method)||method===data.checkoutMethod)return;await unmountPaymentBrick();data.checkoutMethod=method;data.webError='';renderView();if(method==='card'){try{await renderWebBrick();}catch(_){const el=document.getElementById('connectPaymentBrick');if(el)el.textContent='Cartão indisponível. Você pode tentar Pix.';}}});
+document.addEventListener('click',e=>{const b=e.target.closest?.('[data-checkout-method]');if(!b||b.disabled||state.view!=='checkout'||data.webBusy||paymentPending(data.webPayment?.status))return;const method=b.dataset.checkoutMethod;if(!['pix','card'].includes(method)||method===data.checkoutMethod)return;data.checkoutMethod=method;data.webError='';renderView();});
 async function openPremiumWhatsapp(){
  if(!data.premium?.active)throw Error('O atendimento prioritário exige Premium ativo.');
  const url=await call('entre_premium_whatsapp');location.assign(whatsappLink(url,{body:'Olá! Sou assinante Premium do CONNECT e gostaria de atendimento.'}));
 }
-async function loadMercadoPagoSDK(){
- if(window.MercadoPago)return;
- if(!data.mpScriptPromise)data.mpScriptPromise=new Promise((resolve,reject)=>{
-  const script=document.createElement('script');script.src='https://sdk.mercadopago.com/js/v2';script.async=true;
-  script.onload=resolve;script.onerror=()=>{data.mpScriptPromise=null;script.remove();reject(Error('Não foi possível carregar o formulário de pagamento.'));};document.head.appendChild(script);
- });
- await data.mpScriptPromise;
- if(!window.MercadoPago)throw Error('Formulário de pagamento indisponível.');
-}
-function refreshWebStatus(){
- const area=document.getElementById('webPaymentStatus');
- if(area)area.innerHTML=webPaymentStatusMarkup();
-}
-async function unmountPaymentBrick(){
- const brick=data.webBrick;data.webBrick=null;
- if(brick?.unmount)try{await brick.unmount();}catch(e){console.warn('Payment Brick cleanup',e);}
-}
-const payErrors={buyer_identification_required:'Confira o CPF ou CNPJ informado.',buyer_name_required:'Informe nome e sobrenome.',invalid_payment_method:'Meio de pagamento inválido.',invalid_payment_form:'Formulário incompleto.',invalid_payment_request:'Solicitação inválida. Tente novamente.',invalid_card_token:'Confira os dados do cartão.',payment_already_pending_or_unavailable:'Já existe um pagamento em andamento ou o plano está indisponível. Verifique o pagamento antes de tentar novamente.',payment_reservation_failed:'Não foi possível registrar a compra. Tente novamente mais tarde.',provider_credentials_rejected:'O Mercado Pago recusou as credenciais da loja.',payment_rejected_by_provider:'O Mercado Pago não aceitou a solicitação. Confira os dados ou contate o suporte.',web_checkout_not_configured:'Checkout indisponível. Confira as credenciais de produção.',login_required:'Entre novamente na sua conta.'};
-async function paymentResult(response){let result=response.data;if(response.error){try{result=await response.error.context?.json?.()||result;}catch(_){}}
- if(response.error||!result||result.error){const code=result?.error;const message=payErrors[code]||'Não foi possível gerar o pagamento. Tente novamente.';throw Error(message+(code&&/^[a-z_]+$/.test(code)?' ('+code+')':''));}return result;}
+function refreshWebStatus(){const el=document.getElementById('webPaymentStatus');if(el)el.innerHTML=webPaymentStatusMarkup();}
+async function unmountPaymentBrick(){}
+const asaasErrors={production_configuration_missing:'Configuração Asaas de produção incompleta.',asaas_http_401:'A chave de produção não foi aceita pelo Asaas.',asaas_http_403:'Asaas recusou a operação. Verifique a conta e as permissões.',asaas_http_400:'Asaas não aceitou os dados da cobrança. Confira nome e documento.',invalid_buyer_data:'Confira os dados do titular.',customer_document_mismatch:'O documento não corresponde ao titular já cadastrado. Contate o suporte.',pending_or_duplicate:'Já existe uma cobrança em andamento ou o Premium está ativo.',account_unavailable:'Conta indisponível para compras.',unauthorized:'Entre novamente na sua conta.'};
+async function asaasCall(body){const r=await db.functions.invoke('connect-asaas-pay',{body});let result=r.data;if(r.error){try{result=await r.error.context?.json?.()||result;}catch(_){}}if(r.error||!result||result.error){const code=result?.error;throw Error(asaasErrors[code]||('Falha no pagamento'+(code&&/^[a-z0-9_]+$/.test(code)?' ('+code+')':'.')));}return result;}
 async function submitPix(form){
- if(data.webBusy||!data.webCheckoutOpen)return;
- if(data.webPayment?.payment_id&&['pending','in_process'].includes(data.webPayment.status)){refreshWebStatus();toast('Já existe um Pix pendente. Use o código abaixo.');return;}
- const fields=new FormData(form),type=String(fields.get('document_type')),number=String(fields.get('document_number')).replace(/\D/g,'');
- const first=String(fields.get('first_name')).trim(),last=String(fields.get('last_name')).trim();
+ if(data.webBusy||!data.webCheckoutOpen||paymentPending(data.webPayment?.status))return;
+ const fields=new FormData(form),type=String(fields.get('document_type')),number=String(fields.get('document_number')).replace(/\D/g,''),first=String(fields.get('first_name')).trim(),last=String(fields.get('last_name')).trim();
  if(!first||!last||!((type==='CPF'&&number.length===11)||(type==='CNPJ'&&number.length===14))){data.webError='Confira nome, sobrenome e número do documento.';refreshWebStatus();return;}
- const button=form.querySelector('button[type=submit]'),uid=state.session?.user?.id;data.webBusy=true;button.disabled=true;data.webError='';data.webStatusText='Gerando Pix…';refreshWebStatus();
- try{const result=await paymentResult(await db.functions.invoke('entre-premium-web',{body:{action:'pay',request_id:crypto.randomUUID(),form_data:{payment_method_id:'pix',payer:{first_name:first,last_name:last,identification:{type,number}}}}}));
+ const button=form.querySelector('button[type=submit]'),uid=state.session?.user?.id;data.webBusy=true;button.disabled=true;data.webError='';data.webStatusText='Criando cobrança no Asaas…';refreshWebStatus();
+ try{const p=await asaasCall({action:'pay',request_id:crypto.randomUUID(),name:first+' '+last,cpf_cnpj:number,method:data.checkoutMethod==='card'?'CREDIT_CARD':'PIX'});
  if(state.session?.user?.id!==uid||state.view!=='checkout')return;
- data.webPayment=result;form.reset();
- if(result.status==='approved'){await refreshPremium();data.webCheckoutOpen=false;await unmountPaymentBrick();renderView();toast('Pagamento aprovado!');return;}
- if(result.status==='pending'||result.status==='in_process'){data.webStatusText='Aguardando pagamento';if(!result.pix_code&&!result.pix_qr_base64)data.webError='Pagamento criado, mas o código Pix não foi retornado. Não gere outra cobrança; contate o suporte.';}
- else if(result.status==='rejected'||result.status==='cancelled')data.webError='';
- else data.webError='Não foi possível confirmar o estado da cobrança. Verifique o pagamento.';
- renderView();document.getElementById('webPaymentStatus')?.scrollIntoView({block:'center'});
- }catch(error){data.webError=String(error.message||error);refreshWebStatus();toast(data.webError,true);}
+ data.webPayment=p;data.webStatusText='';form.reset();if(['CONFIRMED','RECEIVED'].includes(p.status))await refreshPremium();
+ renderView();
+ }catch(e){if(state.session?.user?.id===uid&&state.view==='checkout'){data.webError=e.message;data.webStatusText='';refreshWebStatus();}}
  finally{data.webBusy=false;if(button.isConnected)button.disabled=false;}
 }
 document.addEventListener('submit',e=>{if(e.target?.id!=='connectPixForm')return;e.preventDefault();e.stopImmediatePropagation();void submitPix(e.target);},true);
-async function renderWebBrick(){
- if(!data.webCheckoutOpen||!data.webConfig?.public_key||!document.getElementById('connectPaymentBrick'))return;
- await unmountPaymentBrick();
- await loadMercadoPagoSDK();
- const mp=new window.MercadoPago(data.webConfig.public_key,{locale:'pt-BR'});
- const builder=mp.bricks();
- data.webBrick=await builder.create('payment','connectPaymentBrick',{
-  initialization:{amount:Number(data.webConfig.price_cents)/100,payer:{email:state.session?.user?.email||''}},
-  customization:{paymentMethods:{creditCard:'all'}},
-  callbacks:{
-   onReady:()=>{refreshWebStatus();},
-   onError:(error)=>{console.warn('Payment Brick',error);data.webError='Não foi possível carregar o pagamento. Atualize e tente novamente.';refreshWebStatus();},
-   onSubmit:async({formData})=>{
-    if(data.webBusy||data.webPayment?.payment_id&&['pending','in_process'].includes(data.webPayment.status))throw Error('Já existe um pagamento em andamento.');
-    data.webBusy=true;data.webError='';data.webStatusText='Processando seu pagamento de forma segura…';refreshWebStatus();
-    try{
-     const result=await paymentResult(await db.functions.invoke('entre-premium-web',{body:{action:'pay',request_id:crypto.randomUUID(),form_data:formData}}));
-     data.webPayment=result;
-     if(result.status==='approved'){
-      await refreshPremium();data.webCheckoutOpen=false;await unmountPaymentBrick();renderView();
-      toast('Pagamento aprovado! Seu Premium foi liberado.',false,'success');
-     }else if(result.status==='pending'||result.status==='in_process'){
-      data.webStatusText='Aguardando confirmação';refreshWebStatus();
-      document.getElementById('webPaymentStatus')?.scrollIntoView({behavior:'smooth',block:'center'});
-     }else{
-      data.webError='';refreshWebStatus();
-     }
-    }catch(error){data.webError=String(error.message||error);refreshWebStatus();throw error;}
-    finally{data.webBusy=false;}
-   }
-  }
- });
-}
-async function leavePremium(){data.webCheckoutOpen=false;data.webError='';await unmountPaymentBrick();}
+async function leavePremium(){data.webCheckoutOpen=false;data.webError='';}
 async function checkout(){
- if(state.view!=='checkout'){nav('checkout');return;}
- const uid=state.session?.user?.id;if(!uid)return;
+ if(state.view!=='checkout'){nav('checkout');return;}const uid=state.session?.user?.id;if(!uid||data.checkoutBusy||data.webBusy)return;
  if(data.checkoutOwner!==uid){data.webPayment=null;data.webConfig=null;data.webCheckoutOpen=false;data.checkoutOwner=uid;}
- if(data.checkoutBusy||data.webBusy)return;
- if(data.premium?.active){renderView();return;}
- if(!data.premium?.checkout_enabled||!price()){toast('A administração precisa habilitar as cobranças.',true);return;}
- data.checkoutBusy=true;data.webError='';renderView();
- try{
-  const {data:config,error}=await db.functions.invoke('entre-premium-web',{body:{action:'config'}});
-  if(error)throw Error('Não foi possível conectar ao checkout. Verifique sua sessão e tente novamente.');
-  if(!config?.enabled||!config?.public_key)throw Error(config?.message||'O checkout não está habilitado com credenciais de produção.');
-  if(state.view!=='checkout'||state.session?.user?.id!==uid)return;data.webConfig=config;data.webCheckoutOpen=true;data.webStatusText='';data.checkoutMethod='pix';
-  const current=await db.functions.invoke('entre-premium-web',{body:{action:'status'}});if(state.view!=='checkout'||state.session?.user?.id!==uid)return;if(!current.error&&current.data?.status&&current.data.status!=='none'){const previous=data.webPayment;data.webPayment={...(previous?.payment_id===current.data.payment_id?previous:{}),...current.data};}else if(!current.error&&current.data?.status==='none'){data.webPayment=null;}else if(current.error){data.webError='Não foi possível verificar compras anteriores. Tente novamente.';data.webCheckoutOpen=false;}
-  data.checkoutBusy=false;renderView();
- }catch(error){data.webError=infoError(error);data.webCheckoutOpen=false;renderView();toast(data.webError,true);}
- finally{data.checkoutBusy=false;if(state.view==='checkout'&&!data.webCheckoutOpen)renderView();}
+ if(data.premium?.active){renderView();return;}data.checkoutBusy=true;data.webError='';renderView();
+ try{const config=await asaasCall({action:'config'});if(!config.enabled||config.environment!=='production')throw Error('Compras indisponíveis no momento.');
+ const p=await asaasCall({action:'status'});if(state.session?.user?.id!==uid||state.view!=='checkout')return;
+ data.webConfig=config;data.webPayment=p.status==='none'?null:p;data.checkoutMethod=p.method==='CREDIT_CARD'?'card':'pix';data.webCheckoutOpen=true;
+ }catch(e){data.webError=e.message;data.webCheckoutOpen=false;}
+ finally{data.checkoutBusy=false;if(state.session?.user?.id===uid&&state.view==='checkout')renderView();}
 }
-async function verifyPremium(){
- if(data.webChecking)return;
- data.webChecking=true;data.webError='';refreshWebStatus();
- try{
-  if(state.session?.user){
-   const uid=state.session.user.id;
-   const {data:status,error}=await db.functions.invoke('entre-premium-web',{body:{action:'status'}});
-   if(state.session?.user?.id!==uid||state.view!=='checkout')return;
-   if(!error&&status&&!status.error){
-    data.webPayment={...(data.webPayment?.payment_id===status.payment_id?data.webPayment:{}),...status};
-    if(status.status==='approved'){
-     await refreshPremium();data.webCheckoutOpen=false;await unmountPaymentBrick();renderView();
-     toast('Pagamento confirmado. Premium ativo!',false,'success');return;
-    }
-   }
-  }
-  await refreshPremium();
-  if(data.premium?.active){data.webCheckoutOpen=false;await unmountPaymentBrick();renderView();toast('Premium confirmado!',false,'success');}
-  else{refreshWebStatus();if(['rejected','cancelled'].includes(data.webPayment?.status))renderView();}
- }finally{data.webChecking=false;refreshWebStatus();}
+async function verifyPremium(){if(data.webChecking||data.webBusy||!state.session?.user)return;const uid=state.session.user.id;data.webChecking=true;
+ try{const p=await asaasCall({action:'status'});if(state.session?.user?.id!==uid||state.view!=='checkout')return;const old=data.webPayment?.status;data.webPayment=p;data.webError='';await refreshPremium();if(old!==p.status||data.premium?.active)renderView();else refreshWebStatus();}
+ catch(e){if(state.session?.user?.id===uid&&state.view==='checkout'){data.webError=e.message;refreshWebStatus();}}finally{data.webChecking=false;}
 }
 async function copyPix(){
  const code=data.webPayment?.pix_code;
@@ -341,7 +258,7 @@ async function copyPix(){
  catch(e){const el=document.getElementById('webPixCode');el?.select();toast('Selecione e copie o código Pix.');}
 }
 setInterval(()=>{if(state.view==='checkout'&&document.visibilityState==='visible'&&
- ['pending','in_process','creating','unverified'].includes(data.webPayment?.status)&&!data.webChecking)
+ paymentPending(data.webPayment?.status)&&!data.webChecking)
  void verifyPremium().catch(e=>console.warn('Payment verification',e));},12000);
 const supportCategories={bug:'Erro no aplicativo',account:'Conta e acesso',payment:'Pagamento ou assinatura',security:'Segurança e privacidade',other:'Outro assunto'};
 function whatsappLink(base,message){
@@ -371,7 +288,7 @@ async function submitSupport(form){
 }
 async function enter(view){
  if(view==='posts')await loadPosts();
- if(view==='premium'){await refreshPremium();await window.entreRecurring?.loadStatus?.();if(state.view==='premium'&&!data.webCheckoutOpen)renderView();}
+ if(view==='premium'){await refreshPremium();if(state.view==='premium'&&!data.webCheckoutOpen)renderView();}
  if(view==='checkout'){await refreshPremium();if(state.view==='checkout')await checkout();}
  if(view==='support'){await refreshPremium();if(state.view==='support')renderView();}
  if(view==='protocols'){data.support=[];await loadSupport();}
