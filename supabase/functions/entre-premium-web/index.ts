@@ -6,7 +6,7 @@ const json = (value: unknown, status=200) => new Response(JSON.stringify(value),
  "Access-Control-Allow-Origin":ORIGIN,"Access-Control-Allow-Headers":"authorization,apikey,content-type,x-client-info",
  "Access-Control-Allow-Methods":"POST,OPTIONS"
 }});
-const err = (error:string,status=400) => json({error},status);
+const err = (error:string,status=400) => {console.warn("connect-payment-error",error,status);return json({error},status);};
 const PAYMENT_API="https://api.mercadopago.com/v1/payments";
 const validUUID=(v:unknown)=>typeof v==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 const validMethod=(v:unknown)=>typeof v==="string"&&/^[a-z0-9_]{2,36}$/.test(v);
@@ -99,7 +99,9 @@ Deno.serve(async(req:Request)=>{
   const identification=payer.identification||{};
   const type=String(identification.type||"").toUpperCase();
   const number=String(identification.number||"").replace(/\D/g,"");
-  if(!["CPF","CNPJ"].includes(type)||![11,14].includes(number.length))return err("buyer_identification_required");
+  if(!((type==="CPF"&&number.length===11)||(type==="CNPJ"&&number.length===14)))return err("buyer_identification_required");
+  const firstName=String(payer.first_name||"").trim().slice(0,80),lastName=String(payer.last_name||"").trim().slice(0,80);
+  if(isPix&&(!firstName||!lastName))return err("buyer_name_required");
   const tokenCard=String(form.token||"");
   if(!isPix&&(!/^[A-Za-z0-9_-]{5,256}$/.test(tokenCard)||Number(form.installments||1)!==1))
     return err("invalid_card_token");
@@ -112,6 +114,7 @@ Deno.serve(async(req:Request)=>{
    notification_url:apiUrl+"/functions/v1/entre-premium-payment-webhook",
    payer:{email:user.email,identification:{type,number}}
   };
+  if(isPix){payload.payer.first_name=firstName;payload.payer.last_name=lastName;payload.date_of_expiration=new Date(Date.now()+30*60000).toISOString();}
   if(!isPix){
    payload.token=tokenCard;payload.installments=1;
    if(form.issuer_id&&/^[0-9]+$/.test(String(form.issuer_id)))payload.issuer_id=Number(form.issuer_id);
@@ -124,7 +127,9 @@ Deno.serve(async(req:Request)=>{
   const payment=await result.json().catch(()=>({}));
   if(!result.ok||!idNum(payment.id)){
    if(result.status>=400&&result.status<500&&result.status!==429&&result.status!==408)await service.from("entre_premium_web_payments").update({status:"error",updated_at:new Date().toISOString()}).eq("id",requestId);
-   return err("payment_rejected_by_provider",502);
+   const causes=Array.isArray(payment.cause)?payment.cause.map((x:any)=>String(x.code||"")).filter((x:string)=>/^[0-9]{1,8}$/.test(x)).slice(0,8):[];
+   console.warn("connect-payment-provider",result.status,causes.join(","));
+   return json({error:result.status===401||result.status===403?"provider_credentials_rejected":"payment_rejected_by_provider",provider_status:result.status,provider_codes:causes},502);
   }
   const paymentId=String(payment.id);
   await service.from("entre_premium_web_payments").update({
