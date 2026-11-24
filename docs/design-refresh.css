@@ -329,3 +329,51 @@ html[data-theme] .pair-card .pair-messages{flex:1;min-height:220px;max-height:65
  html[data-theme] .pair-card{min-height:calc(100dvh - 145px)!important}
  html[data-theme] .pair-card .pair-messages{max-height:calc(100dvh - 300px)!important}
 }
+
+/* Media attachments inside live text/video encounters. Real uploads, never a fake action. */
+html[data-theme] .enc-media-toolbar{
+ display:flex;gap:7px;align-items:center;flex-wrap:wrap;
+ padding:7px 11px;background:var(--ui-panel)!important;border-top:1px solid var(--ui-line)!important
+}
+html[data-theme] .enc-media-toolbar button{
+ display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:36px;
+ padding:8px 12px;border-radius:10px;font-size:11px;font-weight:750;
+ background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;
+ border:1px solid var(--ui-line)!important;cursor:pointer
+}
+html[data-theme] .enc-media-toolbar [data-chat-media-record][aria-pressed=true]{
+ border-color:#d95382!important;background:#f9dce9!important;color:#94335c!important
+}
+html[data-theme] #encMediaStatus{
+ min-height:0;max-width:100%;font-size:10px;color:var(--ui-muted)!important;
+ overflow-wrap:anywhere;flex:1
+}
+html[data-theme] .enc-media-gallery{
+ display:flex;flex-direction:column;gap:8px;min-width:0;
+ margin:10px 0;padding:10px;border:1px solid var(--ui-line)!important;
+ border-radius:13px;background:var(--ui-panel-alt)!important
+}
+html[data-theme] .enc-media-gallery[hidden]{display:none!important}
+html[data-theme] .enc-media-gallery h4{margin:0;font-size:12px;color:var(--ui-text)!important}
+html[data-theme] .enc-media-list{
+ display:flex;gap:9px;align-items:flex-start;overflow-x:auto;padding:2px 0 5px;max-width:100%
+}
+html[data-theme] .enc-media-item{
+ flex:0 0 160px;max-width:180px;min-width:0;display:flex;flex-direction:column;
+ border:1px solid var(--ui-line);border-radius:12px;overflow:hidden;
+ background:var(--ui-panel);color:var(--ui-text)
+}
+html[data-theme] .enc-media-item img,
+html[data-theme] .enc-media-item video{
+ display:block;width:100%;aspect-ratio:4/3;object-fit:contain;background:#181826
+}
+html[data-theme] .enc-media-item audio{max-width:100%;height:46px}
+html[data-theme] .enc-media-item-meta{
+ display:flex;justify-content:space-between;align-items:center;gap:5px;
+ padding:6px 7px;font-size:9px;color:var(--ui-muted);overflow-wrap:anywhere
+}
+html[data-theme] .enc-media-item-meta button{
+ border:0;background:transparent;color:var(--ui-danger);font-size:10px;cursor:pointer;padding:3px
+}
+html[data-theme] .encounter-page.is-chat-min .enc-media-toolbar,
+html[data-theme] .encounter-page.is-chat-min .enc-media-gallery{display:none!important}
