@@ -19,7 +19,17 @@ const image=(id,priority=false)=>id==='hero'?'<div class="cl-phone-pair">'+phone
 let raf=0;
 const watched=new WeakSet();
 const resize=typeof ResizeObserver==='function'?new ResizeObserver(entries=>entries.forEach(({target})=>scale(target))):null;
-function scale(el){if(!el.isConnected)return;const frame=el.querySelector('.cl-demo-frame');if(frame)frame.style.transform='scale('+(el.clientWidth/390)+')';}
+function syncDemo(frame){
+ try{
+  const doc=frame.contentDocument,root=doc?.documentElement;
+  if(!root||!doc.querySelector('#app'))return;
+  const sheet=doc.querySelector('link[href*="connect-demo-neutral.css"]');
+  if(sheet&&!sheet.href.includes('neutral-v4'))sheet.setAttribute('href','./connect-demo-neutral.css?v=20261124-neutral-v4');
+  root.dataset.theme=document.documentElement.dataset.theme==='dark'?'dark':'light';
+ }catch(_){/* frame not ready */}
+}
+function scale(el){if(!el.isConnected)return;const frame=el.querySelector('.cl-demo-frame');if(frame){frame.style.transform='scale('+(el.clientWidth/390)+')';syncDemo(frame);if(!frame.dataset.themeSynced){frame.dataset.themeSynced='1';frame.addEventListener('load',()=>syncDemo(frame));}}}
+window.addEventListener('entre:themechange',schedule);
 function layout(){raf=0;document.querySelectorAll('.cl-phone-screen').forEach(el=>{if(!watched.has(el)){watched.add(el);resize?.observe(el)}scale(el)})}
 function schedule(){if(!raf)raf=requestAnimationFrame(layout)}
 document.addEventListener('DOMContentLoaded',()=>{const app=document.getElementById('app');if(app)new MutationObserver(schedule).observe(app,{childList:true,subtree:true});schedule()},{once:true});
