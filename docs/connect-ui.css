@@ -9,7 +9,7 @@ html[data-theme] :is(.app-heading h2,.page-title,.auth-card h1,.section-heading,
 html[data-theme] :is(.app-heading h2 em,.page-title em,.auth-card h1 em,.share-intro h1 em,.info-hero h1 em){font:inherit!important;letter-spacing:inherit!important}
 html[data-theme] .cn-brand{display:inline-flex;align-items:center;gap:8px;flex:none;white-space:nowrap;text-decoration:none;color:var(--ui-text);font:850 19px/1 var(--cn-font);letter-spacing:-.055em}
 .cn-brand img{display:block;width:49px;height:26px;object-fit:contain}
-.cn-public-header .cn-brand,.cn-footer .cn-brand,.auth-visual .cn-brand{color:#fff}
+html[data-theme] :is(.cn-public-header,.cn-footer,.auth-visual) .cn-brand{color:#fff!important}
 .cn-public-header,.cn-landing,.cn-footer{background:#191329;color:#faf6ff;font-family:Inter,system-ui,sans-serif}
 .cn-wrap{width:min(1200px,calc(100% - 80px));margin-inline:auto}
 .cn-public-bar{display:flex;justify-content:space-between;align-items:center;min-height:80px;gap:16px}.cn-public-bar nav{display:flex;gap:20px;color:#d5c6e7;font-size:13px}.cn-public-header .brand,.cn-footer .brand{color:#fff!important}
@@ -173,3 +173,12 @@ html[data-theme] :is(.cn-nav-link,.cn-menu-item,.cn-primary,.cn-outline,.cn-icon
 html[data-motion-level="high"] .cn-art img{animation:cn-float 7s ease-in-out infinite}
 @keyframes cn-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 @media(prefers-reduced-motion:reduce){html[data-motion-level="high"] .cn-art img{animation:none!important}}
+
+/* Public information pages use the same visual identity. */
+html[data-theme] .info-brand{display:inline-flex;align-items:center;gap:9px;font-family:var(--cn-font);font-size:19px;font-weight:850;letter-spacing:-.055em;color:var(--ui-text)}
+.info-brand img{width:49px;height:26px;object-fit:contain;display:block}
+html[data-theme] .info-page{background:var(--ui-bg);color:var(--ui-text);font-family:var(--cn-font)}
+html[data-theme] .info-page :is(h1,h2,h3){font-family:var(--cn-font);letter-spacing:-.04em}
+html[data-theme] .info-page .info-hero{background:radial-gradient(ellipse at 86% 10%,#713bc32b,transparent 55%),var(--ui-bg)}
+html[data-theme] .info-page :is(.info-card,.info-header){background:var(--ui-panel);border-color:var(--ui-line)}
+html[data-theme] .info-page .info-button.coral{background:var(--cn-grad);color:var(--cn-ink)}
