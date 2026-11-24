@@ -3,7 +3,7 @@
 'use strict';
 const items=[
  ['meet','bolt','Ao vivo','Cinco minutos para conhecer alguém.','Escolha texto ou vídeo, defina a região e suas preferências. Se os dois aceitarem continuar, a conversa vira uma conexão salva.','Texto ou vídeo','5 minutos','Aceite mútuo'],
- ['feed','home','Início','Compartilhe momentos.','Crie posts com texto, foto ou vídeo, curta e comente publicações e publique stories disponíveis por até 24 horas.','Publicações','Stories','Fotos e vídeos'],
+ ['feed','home','Início','Compartilhe momentos.','Crie posts com texto, foto ou vídeo, curta e comente publicações.','Publicações','Comentários','Fotos e vídeos'],
  ['chat','chat','Conversas','Continue de onde parou.','Organize suas conversas permanentes, fixe, arquive e envie mensagens, fotos, vídeos ou áudios.','Mídias','Organização','Mensagens de voz'],
  ['rooms','rooms','Salas','Do Brasil à sua cidade.','Converse em grupo na sala global ou em salas por estado e cidade. As mensagens das salas ficam disponíveis por 24 horas.','Brasil','Estado','Cidade'],
  ['lives','camera','Lives','Compartilhe o momento ao vivo.','Explore transmissões por categoria ou região, inicie sua live e aprove pedidos de convidados para participar.','Transmissões','Categorias','Convidados'],
@@ -13,7 +13,7 @@ const items=[
 ];
 let ico;
 const I=(n,s=18)=>ico(n,s);
-const artLabels={meet:'Ao vivo: escolha de texto ou vídeo',feed:'Início: publicações e stories',chat:'Conversas: organização de contatos',rooms:'Salas: conversa regional',lives:'Lives: busca de transmissões',online:'Online: perfis e solicitações',notes:'Notificações e avisos',settings:'Configurações: temas, animações e sons'};
+const artLabels={meet:'Ao vivo: escolha de texto ou vídeo',feed:'Início: publicações e comentários',chat:'Conversas: organização de contatos',rooms:'Salas: conversa regional',lives:'Lives: busca de transmissões',online:'Online: perfis e solicitações',notes:'Notificações e avisos',settings:'Configurações: temas, animações e sons'};
 const phone=(id,priority=false)=>'<div class="cl-phone" role="img" aria-label="'+artLabels[id]+' — demonstração com dados fictícios"><div class="cl-phone-screen"><iframe class="cl-demo-frame" src="./demo-'+id+'.html?v=20" title="'+artLabels[id]+'" width="390" height="760" sandbox="allow-same-origin" tabindex="-1" aria-hidden="true" '+(priority?'loading="eager"':'loading="lazy"')+'></iframe></div></div>';
 const image=(id,priority=false)=>id==='hero'?'<div class="cl-phone-pair">'+phone('feed',true)+phone('meet',true)+'</div>':phone(id,priority);
 let raf=0;
