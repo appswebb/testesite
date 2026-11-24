@@ -22,6 +22,7 @@ Deno.serve(async(req:Request)=>{
   const serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
   const anonKey=Deno.env.get("SUPABASE_ANON_KEY")||"";
   const access=Deno.env.get("MERCADOPAGO_ACCESS_TOKEN")||"";
+  const webhookSecret=Deno.env.get("MERCADOPAGO_WEBHOOK_SECRET")||"";
   const publicKey=Deno.env.get("MERCADOPAGO_PUBLIC_KEY")||Deno.env.get("MERCADOPAGO_WEB_PUBLIC_KEY")||"";
   if(!apiUrl||!serviceKey||!anonKey)return err("supabase_configuration_missing",503);
   const client=createClient(apiUrl,anonKey,{auth:{persistSession:false}});
@@ -35,10 +36,10 @@ Deno.serve(async(req:Request)=>{
   if(settingError)return err("settings_unavailable",503);
   const cents=Number(settings?.monthly_price_cents||0);
   const enabled=settings?.enabled===true&&Number.isSafeInteger(cents)&&cents>=100&&cents<=1000000;
-  if(action==="config")return json({enabled:enabled&&Boolean(access&&publicKey),price_cents:cents,
-   public_key:enabled&&access&&publicKey?publicKey:null,mode:"one_time_30_days",
-   message:!access||!publicKey?"As chaves Mercado Pago para o checkout web precisam ser configuradas no Supabase.":null});
-  if(!access||!enabled)return err("web_checkout_not_configured",503);
+  if(action==="config")return json({enabled:enabled&&Boolean(access&&publicKey&&webhookSecret),price_cents:cents,
+   public_key:enabled&&access&&publicKey&&webhookSecret?publicKey:null,mode:"one_time_30_days",
+   message:!access||!publicKey||!webhookSecret?"As chaves Mercado Pago para o checkout web precisam ser configuradas no Supabase.":null});
+  if(!access||!enabled||!webhookSecret)return err("web_checkout_not_configured",503);
 
   async function verifiedPayment(paymentId:string, record:any){
    if(!idNum(paymentId))return {status:"unverified"};
@@ -107,7 +108,7 @@ Deno.serve(async(req:Request)=>{
   });
   if(insertError)return err("payment_request_already_registered",409);
   const payload:any={
-   transaction_amount:cents/100,description:"entre. Premium - 30 dias",
+   transaction_amount:cents/100,description:"CONNECT Premium - 30 dias",
    payment_method_id:method,external_reference:"connect-premium:"+user.id+":"+requestId,
    notification_url:apiUrl+"/functions/v1/entre-premium-payment-webhook",
    payer:{email:user.email,identification:{type,number}}
