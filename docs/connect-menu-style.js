@@ -1,0 +1,9 @@
+(()=>{'use strict';
+const root=document.documentElement,styles=['none','glow','fire','water'],defaults={effect:'glow',color:'#8d8dff'};
+let pref={...defaults};try{const p=JSON.parse(localStorage.getItem('connect.menu.appearance')||'null');if(p&&styles.includes(p.effect)&&/^#[0-9a-f]{6}$/i.test(p.color))pref=p;}catch{}
+function apply(){root.dataset.cnMenuEffect=pref.effect;root.style.setProperty('--cn-menu-effect-color',pref.color);try{localStorage.setItem('connect.menu.appearance',JSON.stringify(pref));}catch{}}
+function controls(){return '<section class="settings-card cn-menu-style"><h3>Estilo do menu</h3><p>Personalize a borda animada do menu da conta e da navegação.</p><div class="cn-menu-preview"><span>CONNECT</span><strong>Seu menu, seu estilo.</strong></div><div class="cn-effect-options" role="group" aria-label="Efeito do menu">'+styles.map((v,i)=>'<button type="button" data-menu-effect="'+v+'" aria-pressed="'+(pref.effect===v)+'">'+['Sem efeito','Aura','Fogo','Água'][i]+'</button>').join('')+'</div><label class="cn-menu-color">Cor do efeito <input type="color" data-menu-effect-color value="'+pref.color+'" aria-label="Cor do menu"></label><small>Preferência salva neste dispositivo. Respeita a redução de movimento.</small></section>';}
+document.addEventListener('click',e=>{const b=e.target.closest?.('[data-menu-effect]');if(!b||!styles.includes(b.dataset.menuEffect))return;pref.effect=b.dataset.menuEffect;apply();document.querySelectorAll('[data-menu-effect]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.menuEffect===pref.effect)));});
+document.addEventListener('input',e=>{if(e.target.matches?.('[data-menu-effect-color]')&&/^#[0-9a-f]{6}$/i.test(e.target.value)){pref.color=e.target.value;apply();}});
+window.connectMenuStyle={controls};apply();
+})();
