@@ -3,7 +3,7 @@
 'use strict';
 const s={term:'',people:[],posts:[],busy:false,error:'',pending:0,convoTerm:'',convoPeople:[],convoBusy:false};
 const clean=q=>String(q||'').trim().slice(0,60);
-const personList=(people,small=false)=>people.length?people.map(p=>'<article class="global-result"><div class="global-result-avatar">'+avatar(p)+'</div><div class="global-result-info"><strong>'+esc(p.display_name)+'</strong><small>@'+esc(p.username||'')+(p.is_online?' · online':'')+'</small></div><button type="button" data-site-search="profile" data-username="'+esc(p.username||'')+'">Perfil '+ico('arrow',14)+'</button></article>').join(''):
+const personList=(people,small=false)=>people.length?people.map(p=>'<article class="global-result"><div class="global-result-avatar">'+avatar(p)+'</div><div class="global-result-info"><strong>'+profileName(p.id,p.display_name,p.username)+'</strong><small>@'+esc(p.username||'')+(p.is_online?' · online':'')+'</small></div><button type="button" data-site-search="profile" data-username="'+esc(p.username||'')+'">Perfil '+ico('arrow',14)+'</button></article>').join(''):
  '<p class="global-search-empty">'+(s.busy?'Buscando pessoas…':'Nenhum perfil encontrado.')+'</p>';
 function view(){
  return heading('PESQUISA','Pesquisar','Pesquise pessoas, publicações, salas e lives.')+
@@ -16,7 +16,7 @@ function results(){
  return (s.error?'<p class="global-search-error" role="alert">'+esc(s.error)+'</p>':'')+
  '<section class="global-search-section"><h3>Pessoas <span>'+s.people.length+'</span></h3>'+personList(s.people)+'</section>'+
  '<section class="global-search-section"><h3>Publicações <span>'+s.posts.length+'</span></h3>'+
- (s.posts.length?s.posts.map(p=>'<article class="search-post-hit"><div><strong>'+esc(p.display_name||'Pessoa')+'</strong><small> @'+esc(p.username||'')+'</small></div><p>'+esc(p.body||'Publicação com mídia')+'</p><button type="button" data-site-search="open" data-target="posts">Abrir Feed '+ico('arrow',14)+'</button></article>').join(''):
+ (s.posts.length?s.posts.map(p=>'<article class="search-post-hit"><div><strong>'+profileName(p.author_id,p.display_name,p.username)+'</strong><small> @'+esc(p.username||'')+'</small></div><p>'+esc(p.body||'Publicação com mídia')+'</p><button type="button" data-site-search="open" data-target="posts">Abrir Feed '+ico('arrow',14)+'</button></article>').join(''):
  '<p class="global-search-empty">'+(s.busy?'Buscando publicações…':'Nenhuma publicação correspondente.')+'</p>')+'</section>';
 }
 function update(id,html){const el=document.getElementById(id);if(el)el.innerHTML=html;}
