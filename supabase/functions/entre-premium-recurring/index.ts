@@ -20,10 +20,10 @@ Deno.serve(async(req:Request)=>{
   const request=await req.json().catch(()=>({})),action=String(request.action||"status");
   const {data:row,error:readError}=await service.from("entre_premium_recurring").select("*").eq("user_id",user.id).order("created_at",{ascending:false}).limit(1).maybeSingle();
   if(readError)return reply({error:"account_status_unavailable"},503);
-  if(action==="config")return reply({enabled:cfg.enabled&&cfg.recurring_enabled&&Boolean(access&&pub),public_key:pub||null,
+  if(action==="config")return reply({enabled:false,public_key:pub||null,
    price_cents:cfg.monthly_price_cents,message:!access||!pub?"Mercado Pago ainda não configurado para cartão recorrente.":!cfg.recurring_enabled?"Recorrência aguardando ativação no painel.":null});
   if(!access)return reply({error:"mercadopago_unavailable"},503);
-  if(action==="start"){
+  if(action==="start"){return reply({error:"provider_retired"},410);
    if(!cfg.enabled||!cfg.recurring_enabled||!pub)return reply({error:"recurring_not_enabled"},403);
    const token=String(request.card_token_id||"").trim(),requestId=String(request.request_id||"");
    if(!/^[0-9a-f-]{36}$/i.test(requestId)||token.length<10||token.length>1024)return reply({error:"invalid_card_token"},400);
