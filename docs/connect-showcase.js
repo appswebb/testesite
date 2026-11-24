@@ -6,7 +6,6 @@ const items=[
  ['feed','home','Início','Compartilhe momentos.','Crie posts com texto, foto ou vídeo, curta e comente publicações.','Publicações','Comentários','Fotos e vídeos'],
  ['chat','chat','Conversas','Continue de onde parou.','Organize suas conversas permanentes, fixe, arquive e envie mensagens, fotos, vídeos ou áudios.','Mídias','Organização','Mensagens de voz'],
  ['rooms','rooms','Salas','Do Brasil à sua cidade.','Converse em grupo na sala global ou em salas por estado e cidade. As mensagens das salas ficam disponíveis por 24 horas.','Brasil','Estado','Cidade'],
- ['lives','camera','Lives','Compartilhe o momento ao vivo.','Explore transmissões por categoria ou região, inicie sua live e aprove pedidos de convidados para participar.','Transmissões','Categorias','Convidados'],
  ['online','users','Online','Conheça novas pessoas.','Veja quem está online e escolheu aparecer. Controle a visibilidade do seu perfil e as solicitações de desconhecidos.','Presença','Perfis','Solicitações'],
  ['notes','bell','Notificações','Acompanhe o que importa.','Veja atividades da conta em Notificações e comunicados e enquetes oficiais em Avisos.','Atividade','Avisos','Enquetes'],
  ['settings','settings','Configurações','O CONNECT do seu jeito.','Escolha modo claro ou escuro, personalize a cor e ajuste a intensidade dos efeitos. Gerencie sua conta e privacidade.','Tema','Cor','Animações']
