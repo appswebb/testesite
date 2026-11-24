@@ -39,17 +39,18 @@ Deno.serve(async(req:Request)=>{
   if(settingError)return err("settings_unavailable",503);
   const cents=Number(settings?.monthly_price_cents||0);
   const enabled=settings?.enabled===true&&Number.isSafeInteger(cents)&&cents>=100&&cents<=1000000;
-  if(action==="config")return json({enabled:enabled&&Boolean(access&&publicKey&&webhookSecret),price_cents:cents,
-   public_key:enabled&&access&&publicKey&&webhookSecret?publicKey:null,mode:"one_time_30_days",
-   message:!access||!publicKey||!webhookSecret?"As chaves Mercado Pago para o checkout web precisam ser configuradas no Supabase.":null});
-  if(!access||!enabled||!webhookSecret)return err("web_checkout_not_configured",503);
+  const productionKeys=access.startsWith("APP_USR-")&&publicKey.startsWith("APP_USR-");
+  if(action==="config")return json({enabled:enabled&&productionKeys&&Boolean(webhookSecret),price_cents:cents,
+   public_key:enabled&&productionKeys&&webhookSecret?publicKey:null,mode:"one_time_30_days",
+   message:!productionKeys||!webhookSecret?"As chaves Mercado Pago para o checkout web precisam ser configuradas no Supabase.":null});
+  if(!productionKeys||!enabled||!webhookSecret)return err("web_checkout_not_configured",503);
 
   async function verifiedPayment(paymentId:string, record:any){
    if(!idNum(paymentId))return {status:"unverified"};
    const res=await fetch(PAYMENT_API+"/"+encodeURIComponent(paymentId),{headers:{"Authorization":"Bearer "+access}});
    if(!res.ok)return {status:"unverified"};
    const payment=await res.json().catch(()=>null);
-   if(!payment||String(payment.id)!==paymentId||String(payment.external_reference)!=="connect-premium:"+user!.id+":"+record.id||
+   if(!payment||payment.live_mode!==true||String(payment.id)!==paymentId||String(payment.external_reference)!=="connect-premium:"+user!.id+":"+record.id||
       payment.currency_id!=="BRL"||Math.round(Number(payment.transaction_amount)*100)!==record.amount_cents)
     return {status:"unverified"};
    const status=String(payment.status||"pending");
