@@ -75,6 +75,11 @@ on:
       - 'tests/admin-mobile-audit.cjs'
       - 'tests/avatar-mobile-audit.cjs'
       - 'tests/action-first.test.mjs'
+      - 'tests/vivid-refresh.test.mjs'
+      - 'docs/chat-media.js'
+      - 'docs/design-refresh.css'
+      - 'docs/admin/admin-refined.css'
+      - 'docs/share-refined.css'
       - 'tests/social-ui-regression.test.mjs'
       - '.github/workflows/entre-mobile-ui.yml'
   workflow_dispatch:
@@ -123,6 +128,7 @@ jobs:
           node --test tests/community-hub.test.mjs
           node --test tests/legacy-green-audit.test.mjs
           node --test tests/action-first.test.mjs
+          node --test tests/vivid-refresh.test.mjs
           node --test tests/live-gallery.test.mjs
           node tests/live-gallery-mobile-audit.cjs
           node --test tests/room-live-filters.test.mjs

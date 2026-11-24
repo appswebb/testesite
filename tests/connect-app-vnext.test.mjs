@@ -20,7 +20,10 @@ test('profiles menu keeps data rules; settings do not duplicate core actions',()
  const s=read('docs/app.js'),settings=s.slice(s.indexOf('function settingsView(){'),s.indexOf('function reportDialog(){'));
  assert.match(s,/role="menuitem" href="\.\/dados\.html"/);
  for(const text of ['Quem você procura','Painel administrativo','Sair da conta'])assert.doesNotMatch(settings,new RegExp(text));
- assert.match(settings,/motionForce/);
+ assert.match(settings,/motionLevel/);
+ assert.match(settings,/Leve/);
+ assert.match(settings,/Média/);
+ assert.match(settings,/Máxima/);
 });
 test('comment threads are bounded, expandable, and owner scoped',()=>{
  const js=read('docs/entre-features.js'),css=read('docs/functional-updates.css');

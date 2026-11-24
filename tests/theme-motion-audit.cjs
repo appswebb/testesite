@@ -3,7 +3,7 @@ const {readFileSync}=require('node:fs');
 const {resolve}=require('node:path');
 const assert=require('node:assert/strict');
 const docs=path=>readFileSync(resolve(__dirname,'../docs',path),'utf8');
-const stylePaths=['styles.css','motion.css','mobile.css','features.css','social.css','social-online.css','entre-features.css','encounter-ui.css','entre-location.css','functional-updates.css','interface-polish.css','live-experience.css','experience-hub.css','once-ui.css','once-public.css','once-maintenance.css','theme.css','once-source-fidelity.css','once-source-components.css','color-consistency.css'];
+const stylePaths=['styles.css','motion.css','mobile.css','features.css','social.css','social-online.css','entre-features.css','encounter-ui.css','entre-location.css','functional-updates.css','interface-polish.css','live-experience.css','experience-hub.css','once-ui.css','once-public.css','once-maintenance.css','theme.css','once-source-fidelity.css','once-source-components.css','color-consistency.css','design-refresh.css'];
 const head='<meta name="viewport" content="width=device-width,initial-scale=1">';
 const fixture='<div id="app"><div class="app-shell"><aside class="sidebar"><div class="sidebar-top"><a class="brand"><span class="brand-glyph"><i></i><i></i></span>entre.</a></div><nav class="nav-stack"><button class="nav-item active">Feed</button></nav></aside><main class="app-main"><header class="app-toolbar"><h1>entre.</h1><button class="toolbar-bell" aria-label="Notificações">◉</button></header><div id="view-content"><div class="app-heading"><h2>Configurações.</h2></div><div id="themePanel"></div><section class="settings-card"><h3>Preferências</h3><div class="setting-row"><strong>Experiência</strong><button class="ui-btn btn-dark">Salvar alterações</button></div></section><section class="post-card"><strong>Post no Feed</strong><p>Olá mundo</p></section></div></main><nav class="mobile-nav"><button class="active" title="Feed"><svg width="23" height="23"></svg></button><button title="Ao vivo"><svg width="23" height="23"></svg></button><button title="Conversas"><svg width="23" height="23"></svg></button></nav></div></div>';
 (async()=>{
@@ -47,10 +47,10 @@ const fixture='<div id="app"><div class="app-shell"><aside class="sidebar"><div 
     hasThemeCSS:[...document.styleSheets].some(sheet=>(sheet.href||'').includes('theme.css')),
     computedRootBg:getComputedStyle(document.documentElement).backgroundColor
    }));
-   if(dark.background!=='rgb(16, 17, 20)'||dark.post!=='rgb(25, 28, 33)')console.error('DARK THEME DIAGNOSTIC '+JSON.stringify(dark));
+   if(dark.background!=='rgb(20, 24, 39)'||dark.post!=='rgb(30, 38, 58)')console.error('DARK THEME DIAGNOSTIC '+JSON.stringify(dark));
    assert.equal(dark.mode,'dark');
-   assert.equal(dark.background,'rgb(16, 17, 20)','Dark background is not applied '+width);
-   assert.equal(dark.post,'rgb(25, 28, 33)','Dark card is not applied '+width);
+   assert.equal(dark.background,'rgb(20, 24, 39)','Dark background is not applied '+width);
+   assert.equal(dark.post,'rgb(30, 38, 58)','Dark card is not applied '+width);
    assert.equal(dark.nav,'rgba(25, 28, 33, 0.98)','Mobile navigation must respect dark mode '+width);
    assert.equal(dark.saved,'dark');
    await page.reload({waitUntil:'load'});
