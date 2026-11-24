@@ -203,7 +203,7 @@ function premiumView(){
  '<div class="cp-plan-state">'+(active?'Incluído no Premium':ico('check',17)+' Seu plano atual')+'</div></article>'+
  '<article class="cp-plan cp-plan-paid"><span class="cp-plan-eyebrow">'+ico('crown',18)+' PREMIUM</span><h3>Mais possibilidades</h3><div class="cp-plan-price">'+(price()||'Valor a definir')+'<small> / mês</small></div><p>Todos os recursos do Normal, mais:</p>'+rows(['Banner animado em GIF','Filtro de gênero no Ao vivo','Selo de destaque no perfil','Atendimento prioritário pelo WhatsApp'])+
  (active?'<div class="cp-plan-state">'+ico('check',17)+' Premium ativo'+(data.premium.paid_until?' · até '+new Date(data.premium.paid_until).toLocaleDateString('pt-BR'):'')+'</div><button type="button" class="ui-btn btn-outline" data-action="premiumWhatsapp">'+ico('chat',17)+' WhatsApp prioritário</button>':'')+
- (!active?'<div class="cp-plan-purchase"><strong>Premium por 30 dias</strong><p>Pagamento único por Pix ou cartão, sem renovação automática.</p><button type="button" class="ui-btn btn-dark" data-action="premiumCheckout" '+(!enabled?'disabled':'')+'>'+(data.checkoutBusy?'Carregando…':'Comprar Premium')+'</button></div>':'')+ (window.entreRecurring?.view?.()||'')+
+ (!active?'<div class="cp-plan-purchase"><strong>Premium por 30 dias</strong><p>Pagamento único por Pix ou cartão, sem renovação automática.</p><button type="button" class="ui-btn btn-dark" data-action="premiumCheckout" '+(!enabled?'disabled':'')+'>'+(data.checkoutBusy?'Carregando…':'Comprar Premium')+'</button></div>':'')+ (window.entreRecurring?.view?.()||'')+(window.connectAsaasTest?.markup?.()||'')+
  '<small class="cp-plan-footnote">O pagamento único não gera cobranças automáticas.</small></article></div></section>';
 }
 function checkoutView(){
