@@ -97,8 +97,8 @@ function postsView(){
   const person={id:p.author_id,display_name:p.author_name,avatar_path:p.author_avatar,avatar_uploaded_at:p.author_avatar_uploaded_at};
   const own=p.author_id===state.session?.user?.id;
   return '<article class="post-card '+(p.premium?'premium-surface':'')+'"><div class="post-card-head">'+avatar(person)+
-  '<div class="post-author"><strong>'+profileName(p.author_id,p.author_name)+badge(person)+'</strong><small>'+new Date(p.created_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+'</small></div>'+
-  (own?'<button type="button" class="post-remove" data-action="postDelete" data-id="'+Number(p.id)+'" aria-label="Apagar meu post">'+ico('trash',16)+'</button>':'')+'</div>'+
+  '<div class="post-author"><strong>'+profileName(p.author_id,p.author_name)+badge(person)+'</strong><small>'+new Date(p.created_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+(p.edited_at?' · Editada':'')+'</small></div>'+
+  (own?'<button type="button" class="post-remove" data-action="postEdit" data-id="'+Number(p.id)+'" aria-label="Editar publicação">'+ico('edit',16)+'</button><button type="button" class="post-remove" data-action="postDelete" data-id="'+Number(p.id)+'" aria-label="Apagar meu post">'+ico('trash',16)+'</button>':'')+'</div>'+
   (p.body?'<p class="post-body">'+esc(p.body)+'</p>':'')+(window.entreMedia?.postMarkup?.(p)||'')+'<div class="post-interactions"><button type="button" class="'+(p.liked?'liked':'')+'" data-action="postLike" data-id="'+Number(p.id)+'">'+ico('heart',17)+' '+Number(p.likes||0)+' curtidas</button><span>'+ico('chat',15)+' '+(p.comments?.length||0)+' comentários recentes</span></div>'+
   '<button type="button" class="post-comments-launch" data-action="postCommentsOpen" data-id="'+Number(p.id)+'">'+ico('chat',18)+' <span>Ver comentários e participar</span>'+ico('arrow',16)+'</button></article>';
  }).join(''):'<div class="social-empty"><h3>Nenhuma publicação ainda.</h3><p>Compartilhe sua primeira publicação.</p></div>')+
@@ -113,10 +113,18 @@ async function postAction(a,btn){
  if(a==='postCommentsClose'){data.commentsPost=null;data.commentsRows=[];data.commentsError='';renderView();return true;}
  if(a==='postCommentsMore'){await loadCommentPage(true);return true;}
  if(a==='postsMore'){await loadPosts(true);return true;}
+ if(a==='postEdit'){
+  const p=data.posts.find(x=>Number(x.id)===id);if(!p||p.author_id!==state.session?.user?.id)return true;
+  const user=state.session.user.id,d=document.createElement('dialog');d.className='cp-msg-dialog';d.setAttribute('aria-label','Editar publicação');
+  d.innerHTML='<header><strong>Editar publicação</strong><button type="button" aria-label="Fechar" data-post-edit-close>×</button></header><form><textarea maxlength="900" rows="5" aria-label="Texto da publicação">'+esc(p.body||'')+'</textarea><button type="submit">Salvar alteração</button></form>';
+  d.addEventListener('click',e=>{if(e.target===d||e.target.closest('[data-post-edit-close]'))d.close()});d.addEventListener('close',()=>d.remove());
+  d.addEventListener('submit',async e=>{e.preventDefault();e.stopPropagation();const button=d.querySelector('[type=submit]'),body=d.querySelector('textarea').value.trim();if(button.disabled)return;if(state.session?.user?.id!==user){d.close();return}if(body.length<3&&!(p.media_path&&!body)){toast('Use de 3 a 900 caracteres.',true);return}button.disabled=true;try{await call('connect_post_edit',{_post:id,_body:body});d.close();await loadPosts();toast('Publicação atualizada.');}catch(error){toast(infoError(error),true);button.disabled=false;}});
+  document.body.append(d);d.showModal();return true;
+ }
  if(a==='postDelete'){
   if(!confirm('Apagar esta publicação e seus comentários?'))return true;
   const oldPost=data.posts.find(p=>Number(p.id)===id);
-  await call('entre_post_delete',{_post:id});await window.entreMedia?.removePostMedia?.(oldPost);await loadPosts();toast('Post apagado.',false,'delete');return true;
+  const removed=await call('entre_post_delete',{_post:id});if(removed!==true)throw Error('Publicação indisponível.');await window.entreMedia?.removePostMedia?.(oldPost);await loadPosts();toast('Post apagado.',false,'delete');return true;
  }
  if(a==='postCommentEdit'||a==='postCommentReport'||a==='postCommentCancel'){
   const card=btn.closest('[data-comment-id]');if(!card)return true;
@@ -200,7 +208,7 @@ function premiumView(){
 async function openPremiumWhatsapp(){
  if(!data.premium?.active)throw Error('O atendimento prioritário exige Premium ativo.');
  const url=await call('entre_premium_whatsapp');whatsappLink(url,{body:''});
- supportPreferredUser=state.session?.user?.id||null;nav('support');
+ nav('support');
 }
 async function loadMercadoPagoSDK(){
  if(window.MercadoPago)return;
@@ -293,38 +301,7 @@ async function copyPix(){
 setInterval(()=>{if(state.view==='premium'&&document.visibilityState==='visible'&&
  data.webPayment?.payment_id&&['pending','in_process'].includes(data.webPayment.status)&&!data.webChecking)
  void verifyPremium().catch(e=>console.warn('Payment verification',e));},12000);
-const SUPPORT_EMAIL='connectapp.w@gmail.com';
 const supportCategories={bug:'Erro no aplicativo',account:'Conta e acesso',payment:'Pagamento ou assinatura',security:'Segurança e privacidade',other:'Outro assunto'};
-const supportProviders={default:'Aplicativo de e-mail padrão',gmail:'Gmail (web)',outlook:'Outlook (web)'};
-let supportHandoff=null,supportPreferredUser=null;
-function supportMessage({id,category,subject,description,name,handle,channel,files=0}){
- const premium=channel==='whatsapp';
- const title='[CONNECT'+(premium?' PREMIUM':'')+'] #'+id+' · '+subject.replace(/[\r\n]+/g,' ');
- const body=[
- premium?'Olá, equipe CONNECT! Sou assinante Premium e preciso de atendimento.':'Olá, equipe CONNECT! Preciso de ajuda com o aplicativo.',
- '',
- 'CHAMADO DE SUPORTE'+(premium?' PREMIUM':''),
- 'Protocolo: #'+id,
- 'Nome: '+(name||'Pessoa do CONNECT'),
- 'Perfil: '+(handle?'@'+handle:'Não informado'),
- 'Categoria: '+(supportCategories[category]||supportCategories.other),
- 'Assunto: '+subject,
- '',
- 'DESCRIÇÃO',
- description,
- '',
- files?'Anexos: '+files+' arquivo(s) registrados no protocolo privado.':'Anexos: nenhum.',
- '',
- 'Obrigado pela atenção!'
- ].join('\n');
- return {title,body};
-}
-function emailLink(provider,message){
- const e=encodeURIComponent(SUPPORT_EMAIL),subject=encodeURIComponent(message.title),body=encodeURIComponent(message.body);
- if(provider==='gmail')return 'https://mail.google.com/mail/?view=cm&fs=1&to='+e+'&su='+subject+'&body='+body;
- if(provider==='outlook')return 'https://outlook.live.com/mail/0/deeplink/compose?to='+e+'&subject='+subject+'&body='+body;
- return 'mailto:'+SUPPORT_EMAIL+'?subject='+subject+'&body='+body;
-}
 function whatsappLink(base,message){
  if(typeof base!=='string'||!/^https:\/\/wa\.me\/[0-9]{10,15}(?:\?|$)/.test(base))throw Error('WhatsApp de suporte indisponível.');
  return base.split('?')[0]+'?text='+encodeURIComponent(message.body);
