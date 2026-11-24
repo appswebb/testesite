@@ -5,7 +5,7 @@ if(window.connectBanners)return;
 const HANDLE=/^[a-z][a-z0-9_]{2,19}$/,B64=/^[A-Za-z0-9+/]+={0,2}$/;
 const MAX_GIF=2097152,MAX_PHOTO=358400,ratio=3;
 const cache=new Map(),pending=new Map();
-let editor=null,saving=false;
+let editor=null,saving=false,registrationDraft=null;
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const number=(v,def,min,max)=>Number.isFinite(Number(v))?clamp(Number(v),min,max):def;
 function position(img,b){
@@ -24,6 +24,7 @@ const uid=()=>typeof state!=='undefined'?state.session?.user?.id:null;
 const owner=()=>uid()?'owner:'+uid():null;
 async function fetchOwner(){
  if(!uid())return null;
+ if(registrationDraft?.user_id===uid()&&!state.profile)return registrationDraft;
  const {data,error}=await db.from('entre_profile_banners').select('mime,image_base64,zoom,pos_x,pos_y').eq('user_id',uid()).maybeSingle();
  if(error)throw error;
  if(data?.mime==='image/gif'){const {data:active,error:err}=await db.rpc('entre_premium_active',{_uid:uid()});if(err||active!==true)return null;}
@@ -63,8 +64,8 @@ async function photoBlob(img,b){
  const ctx=c.getContext('2d',{alpha:false});if(!ctx)throw Error('Não foi possível preparar a foto.');
  const r=cropRect(img.naturalWidth,img.naturalHeight,b.zoom,b.pos_x,b.pos_y);
  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,r.x,r.y,r.w,r.h,0,0,c.width,c.height);
- for(const quality of [.89,.75,.6,.42]){const blob=await new Promise(resolve=>c.toBlob(resolve,'image/jpeg',quality));if(blob?.type==='image/jpeg'&&blob.size<=MAX_PHOTO)return blob}
- throw Error('Não foi possível reduzir a foto para 350 KB.');
+ for(const quality of [.86,.75,.6,.42]){const blob=await new Promise(resolve=>c.toBlob(resolve,'image/jpeg',quality));if(blob?.type==='image/jpeg'&&blob.size<=Math.min(MAX_PHOTO,180000))return blob}
+ throw Error('Não foi possível reduzir a foto para 180 KB.');
 }
 function closeEditor(force=false){
  if(saving&&!force)return;
@@ -103,6 +104,7 @@ async function save(){
   const blob=e.isGif?e.file:await photoBlob(e.img,e.crop);
   const row={user_id:e.uid,mime:e.isGif?'image/gif':'image/jpeg',image_base64:await data64(blob),...(e.isGif?e.crop:{zoom:1,pos_x:.5,pos_y:.5})};
   if(uid()!==e.uid)throw Error('Sua sessão mudou.');
+  if(state.mode==='onboard'&&!state.profile){registrationDraft=row;refresh(row);notify('Banner preparado. Será salvo ao concluir o perfil.');closeEditor(true);return;}
   const {data,error:err}=await db.from('entre_profile_banners').upsert(row,{onConflict:'user_id'}).select('mime,image_base64,zoom,pos_x,pos_y').single();
   if(err)throw err;
   if(uid()===e.uid){refresh(data);notify('Banner atualizado!')}
@@ -119,5 +121,6 @@ async function remove(){
 document.addEventListener('change',e=>{if(e.target.id!=='cpBannerFile')return;const file=e.target.files?.[0];e.target.value='';void open(file).catch(err=>notify(err.message||'Não foi possível abrir a imagem.',true))});
 document.addEventListener('click',e=>{if(e.target.closest?.('[data-cp-remove]'))void remove()});
 const observer=new MutationObserver(scan);document.addEventListener('DOMContentLoaded',()=>{if(document.getElementById('app')){observer.observe(document.getElementById('app'),{childList:true,subtree:true});scan()}},{once:true});
-window.connectBanners={paint,cropRect,scan};
+async function commitRegistration(){const row=registrationDraft;if(!row||row.user_id!==uid())return true;const {data,error}=await db.from('entre_profile_banners').upsert(row,{onConflict:'user_id'}).select('mime,image_base64,zoom,pos_x,pos_y').single();if(error)throw error;registrationDraft=null;refresh(data);return true;}
+window.connectBanners={paint,cropRect,scan,commitRegistration};
 })();
