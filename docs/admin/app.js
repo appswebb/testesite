@@ -18,7 +18,7 @@ var sections=[
  ["appeals","Contestações","alert-circle"],
   ["bulletins","Avisos","message-circle"],
   ["support","Suporte","flag"],
-  ["premium","Premium","shield-check"],
+  ["premium","Premium","crown"],
  ["settings","Configurações","sliders-horizontal"],
  ["security","Segurança","shield-check"]
 ];
@@ -43,9 +43,29 @@ var shapes={
  "filter":'<path d="M4 6h16M7 12h10M10 18h4"/>',
  "chevron-left":'<path d="m15 18-6-6 6-6"/>',
  "chevron-right":'<path d="m9 18 6-6-6-6"/>',
+
+ "crown":'<path d="m2 8 5 4 5-8 5 8 5-4-2 11H4z"/><path d="M4 22h16"/>',
+ "credit-card":'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/>',
+ "wallet":'<rect x="2" y="6" width="20" height="15" rx="3"/><path d="M2 10h20M17 15h2"/>',
+ "star":'<path d="m12 2 3 6.7 7.3.8-5.4 4.9 1.5 7.1L12 18l-6.4 3.5 1.5-7.1-5.4-4.9 7.3-.8z"/>',
+ "bell":'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>',
+ "file-text":'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/>',
+ "database":'<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 4 18 4 18 0V5M3 12c0 4 18 4 18 0"/>',
+ "calendar-days":'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h2M14 14h2"/>',
+ "video":'<rect x="2" y="5" width="14" height="14" rx="2"/><path d="m16 10 6-4v12l-6-4"/>',
+ "eye":'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+ "eye-off":'<path d="m3 3 18 18M10.6 5.1C17 4.2 22 12 22 12c-.9 1.8-2.4 3.5-4.1 4.8M6.3 6.4C3.9 8.2 2 12 2 12s4 7 10 7c1.8 0 3.4-.5 4.9-1.4"/>',
+ "download":'<path d="M12 3v12m-4-4 4 4 4-4M3 17v4h18v-4"/>',
+ "upload":'<path d="M12 16V4m-4 4 4-4 4 4M3 17v4h18v-4"/>',
+ "check":'<path d="m4 12 5 5L20 6"/>',
+ "x":'<path d="M18 6 6 18M6 6l12 12"/>',
+ "menu":'<path d="M4 6h16M4 12h16M4 18h16"/>',
+ "more-horizontal":'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+ "info":'<circle cx="12" cy="12" r="10"/><path d="M12 10v6m0-9h.01"/>',
+ "circle-help":'<circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 4m0 4h.01"/>',
  "settings":'<circle cx="12" cy="12" r="3"/><path d="M12 2v2m0 16v2M4 12H2m20 0h-2M4.9 4.9l1.5 1.5m11.2 11.2 1.5 1.5m0-14.2-1.5 1.5M6.4 17.6l-1.5 1.5"/>'
 };
-function ico(n,s){return '<svg viewBox="0 0 24 24" width="'+(s||19)+'" height="'+(s||19)+'" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(shapes[n]||shapes["settings"])+'</svg>';}
+function ico(n,s){return '<svg viewBox="0 0 24 24" width="'+(s||19)+'" height="'+(s||19)+'" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(shapes[n]||shapes["circle-help"])+'</svg>';}
 function e(x){return String(x===null||x===undefined?"":x).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function fmt(date){if(!date)return "—";var d=new Date(date);return isNaN(d)?"—":new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(d);}
 function day(date){var d=new Date(String(date).slice(0,10)+"T12:00:00");return isNaN(d)?"—":new Intl.DateTimeFormat("pt-BR",{weekday:"short"}).format(d).replace(".","");}
@@ -56,7 +76,7 @@ function toast(msg,bad){clearTimeout(toastTimer);toastEl.textContent=msg;toastEl
 async function rpc(name,params){var r=await db.rpc(name,params||{});if(r.error)throw r.error;return r.data;}
 function gate(locked){
  var message=locked?"Esta conta não tem acesso ao painel. Entre com o e-mail autorizado e confirmado.":"Entre com o e-mail e a senha do seu cadastro no entre.";
- app.innerHTML='<div class="gate"><div class="gate-copy"><div><a class="brand" style="padding:0" href="../?site=1"><span class="brand-mark">e</span><span><span class="brand-text">entre<i>.</i></span><br><span class="brand-sub">COMMAND CENTER</span></span></a></div>'
+ app.innerHTML='<div class="gate"><div class="gate-copy"><div><a class="brand" style="padding:0" href="../?site=1"><span class="brand-mark"><img src="../brand-mark.svg?v=vivid-2026" alt="" /></span><span><span class="brand-text">entre<i>.</i></span><br><span class="brand-sub">COMMAND CENTER</span></span></a></div>'
  +'<div class="gate-inner"><span class="gate-kicker">ACESSO RESTRITO · SUPABASE AUTH</span><h1>Seu site,<br><em>sob controle.</em></h1><p>'+e(message)+'</p>'
  +'<form id="admin-login-form" class="admin-login-form"><label for="admin-email">E-mail</label><input id="admin-email" type="email" name="email" autocomplete="username" inputmode="email" maxlength="254" required placeholder="E-mail da conta cadastrada">'
  +'<label for="admin-password">Senha</label><div class="admin-password-wrap"><input id="admin-password" type="password" name="password" autocomplete="current-password" required placeholder="Sua senha"><button type="button" class="admin-password-toggle" data-admin-password-toggle aria-controls="admin-password" aria-label="Mostrar senha" aria-pressed="false">Mostrar</button></div>'
@@ -77,7 +97,7 @@ function adminMobileNav(){
  '<div class="admin-more-links">'+sections.filter(function(s){return !mainMobileSections.includes(s[0]);}).map(function(s){return navItem(s,true);}).join('')+'</div></div>';
 }
 function shell(){
- app.innerHTML='<div class="shell"><aside class="rail"><div class="brand"><span class="brand-mark">e</span><div><div class="brand-text">entre<i>.</i></div><div class="brand-sub">COMMAND CENTER</div></div></div><div class="rail-label">WORKSPACE</div><div class="rail-links">'+sections.map(function(s){return navItem(s,false);}).join("")+'</div><div class="rail-spacer"></div><div class="rail-bottom"><div class="admin-identity"><div class="admin-avatar">'+e((state.user&&state.user.email||"A")[0].toUpperCase())+'</div><div><strong>Admin principal</strong><small>'+e(state.user&&state.user.email||"")+'</small></div></div><div class="rail-out"><button data-action="signout">'+ico("log-out",13)+' Sair</button></div></div></aside><main class="main"><header class="topbar"><div class="topbar-left"><span class="topbar-label">entre. / ADMIN / <span id="topbar-location">'+e(viewTitle())+'</span></span></div><div class="topbar-right"><span class="topbar-live"><span class="pulse"></span> SISTEMA CONECTADO</span><button class="toolbar-btn" data-action="refresh">'+ico("refresh-cw",16)+' Atualizar</button><a class="toolbar-btn" href="../?site=1">'+ico("external-link",16)+' Ver site</a></div></header><div id="admin-view"></div></main>'+adminMobileNav()+'</div><div id="modal-root"></div>';
+ app.innerHTML='<div class="shell"><aside class="rail"><div class="brand"><span class="brand-mark"><img src="../brand-mark.svg?v=vivid-2026" alt="" /></span><div><div class="brand-text">entre<i>.</i></div><div class="brand-sub">COMMAND CENTER</div></div></div><div class="rail-label">WORKSPACE</div><div class="rail-links">'+sections.map(function(s){return navItem(s,false);}).join("")+'</div><div class="rail-spacer"></div><div class="rail-bottom"><div class="admin-identity"><div class="admin-avatar">'+e((state.user&&state.user.email||"A")[0].toUpperCase())+'</div><div><strong>Admin principal</strong><small>'+e(state.user&&state.user.email||"")+'</small></div></div><div class="rail-out"><button data-action="signout">'+ico("log-out",13)+' Sair</button></div></div></aside><main class="main"><header class="topbar"><div class="topbar-left"><span class="topbar-label">entre. / ADMIN / <span id="topbar-location">'+e(viewTitle())+'</span></span></div><div class="topbar-right"><span class="topbar-live"><span class="pulse"></span> SISTEMA CONECTADO</span><button class="toolbar-btn" data-action="refresh">'+ico("refresh-cw",16)+' Atualizar</button><a class="toolbar-btn" href="../?site=1">'+ico("external-link",16)+' Ver site</a></div></header><div id="admin-view"></div></main>'+adminMobileNav()+'</div><div id="modal-root"></div>';
 }
 function viewTitle(){return (sections.find(function(s){return s[0]===state.view;})||sections[0])[1];}
 function heading(k,title,desc){return '<div class="page-intro"><span class="eyebrow">'+e(k)+'</span><h1 class="page-title">'+title+'</h1><p>'+e(desc)+'</p></div>';}
