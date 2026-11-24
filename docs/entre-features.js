@@ -9,7 +9,8 @@ const badge=p=>premium(p?.id)?'<span class="verified-mark" title="Assinante CONN
 async function refreshPremium(){
  if(!state.session?.user)return;
  try{
-  const r=await call('entre_premium_overview');
+  const uid=state.session.user.id;const r=await call('entre_premium_overview');
+  if(state.session?.user?.id!==uid)return;
   data.premium=r||{active:false};
   if(data.premium.active)data.premiumIds.add(state.session.user.id);
   else data.premiumIds.delete(state.session.user.id);
@@ -213,7 +214,7 @@ async function loadMercadoPagoSDK(){
  if(window.MercadoPago)return;
  if(!data.mpScriptPromise)data.mpScriptPromise=new Promise((resolve,reject)=>{
   const script=document.createElement('script');script.src='https://sdk.mercadopago.com/js/v2';script.async=true;
-  script.onload=resolve;script.onerror=()=>reject(Error('Não foi possível carregar o formulário de pagamento.'));document.head.appendChild(script);
+  script.onload=resolve;script.onerror=()=>{data.mpScriptPromise=null;script.remove();reject(Error('Não foi possível carregar o formulário de pagamento.'));};document.head.appendChild(script);
  });
  await data.mpScriptPromise;
  if(!window.MercadoPago)throw Error('Formulário de pagamento indisponível.');
@@ -261,13 +262,14 @@ async function renderWebBrick(){
 }
 async function leavePremium(){data.webCheckoutOpen=false;data.webError='';await unmountPaymentBrick();}
 async function checkout(){
- if(data.checkoutBusy)return;
+ if(data.checkoutBusy||data.webBusy)return;
  if(data.premium?.active){toast('Você já é Premium.');return;}
  if(!data.premium?.checkout_enabled||!price()){toast('A administração precisa habilitar as cobranças.',true);return;}
  data.checkoutBusy=true;data.webError='';renderView();
  try{
   const {data:config,error}=await db.functions.invoke('entre-premium-web',{body:{action:'config'}});
-  if(error||!config?.enabled||!config?.public_key)throw Error(config?.message||'Pagamento Pix/cartão no navegador ainda não está configurado.');
+  if(error)throw Error('Não foi possível conectar ao checkout. Verifique sua sessão e tente novamente.');
+  if(!config?.enabled||!config?.public_key)throw Error(config?.message||'O checkout não está habilitado com credenciais de produção.');
   if(state.view!=='premium')return;data.webConfig=config;data.webCheckoutOpen=true;data.webStatusText='';
   renderView();await renderWebBrick();
  }catch(error){data.webError=infoError(error);data.webCheckoutOpen=false;renderView();toast(data.webError,true);}
