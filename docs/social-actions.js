@@ -26,7 +26,7 @@ async function action(type,btn){
  if(type==='socialChat'){
   const r=await call('entre_chat_request',{_target:id});
   if(r?.status==='blocked'){toast(r.message||'Não aceita solicitações de estranhos.',true);return true;}
-  if(r?.status==='open'&&r.pair_id){await loadPairs();await openPair(r.pair_id);}
+  if(r?.status==='open'&&r.pair_id){state.modal=null;await loadPairs();await openPair(r.pair_id);}
   else toast(r?.status==='pending'?'Convite enviado. Aguarde o aceite.':'Solicitação indisponível.',r?.status!=='pending');
   return true;
  }
