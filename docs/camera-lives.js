@@ -368,4 +368,6 @@ function beginPolling(){
 async function enter(){await refresh();beginPolling();}
 function stop(){if(s.timer)clearInterval(s.timer);s.timer=null;}
 window.entreLives={view,enter,stop,leave,refresh,isActive:()=>Boolean(s.active)};
+// Other app updates can replace the active view; reattach tracks only after a replacement.
+let lastGrid=null;new MutationObserver(()=>{const grid=document.getElementById('cameraLiveVideos');if(grid&&grid!==lastGrid){lastGrid=grid;attachAll();paintInteractions();}else if(!grid){lastGrid=null;}}).observe(document.body,{childList:true,subtree:true});
 })();
