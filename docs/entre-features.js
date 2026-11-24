@@ -203,7 +203,7 @@ function premiumView(){
  '<div class="cp-plan-state">'+(active?'Incluído no Premium':ico('check',17)+' Seu plano atual')+'</div></article>'+
  '<article class="cp-plan cp-plan-paid"><span class="cp-plan-eyebrow">'+ico('crown',18)+' PREMIUM</span><h3>Mais possibilidades</h3><div class="cp-plan-price">'+(price()||'Valor a definir')+'<small> / mês</small></div><p>Todos os recursos do Normal, mais:</p>'+rows(['Banner animado em GIF','Filtro de gênero no Ao vivo','Selo de destaque no perfil','Atendimento prioritário pelo WhatsApp'])+
  (active?'<div class="cp-plan-state">'+ico('check',17)+' Premium ativo'+(data.premium.paid_until?' · até '+new Date(data.premium.paid_until).toLocaleDateString('pt-BR'):'')+'</div><button type="button" class="ui-btn btn-outline" data-action="premiumWhatsapp">'+ico('chat',17)+' WhatsApp prioritário</button>':'')+
- (!active?'<div class="cp-plan-purchase"><strong>Premium por 30 dias</strong><p>Pagamento único por Pix ou cartão, sem renovação automática.</p><button type="button" class="ui-btn btn-dark" data-action="premiumCheckout" '+(!enabled?'disabled':'')+'>'+(data.checkoutBusy?'Carregando…':'Comprar Premium')+'</button></div>':'')+ (data.webCheckoutOpen?'<div class="cp-web-checkout"><h3>Pagamento seguro</h3><div id="connectPaymentBrick"></div><div id="webPaymentStatus" aria-live="polite">'+webPaymentStatusMarkup()+'</div></div>':data.webError?'<p role="alert" class="web-pay-error">'+esc(data.webError)+'</p>':'')+ (window.entreRecurring?.view?.()||'')+
+ (!active?'<div class="cp-plan-purchase"><strong>Premium por 30 dias</strong><p>Pagamento único por Pix ou cartão, sem renovação automática.</p><button type="button" class="ui-btn btn-dark" data-action="premiumCheckout" '+(!enabled?'disabled':'')+'>'+(data.checkoutBusy?'Carregando…':'Comprar Premium')+'</button></div>':'')+ (data.webCheckoutOpen?'<div class="cp-web-checkout"><h3>Pagamento seguro</h3><div class="cp-pix-choice"><h4>Pix</h4><p>Preencha os dados do titular para gerar o QR Code.</p><form id="connectPixForm"><label>Nome<input name="first_name" required maxlength="80" autocomplete="given-name"></label><label>Sobrenome<input name="last_name" required maxlength="80" autocomplete="family-name"></label><label>Documento<select name="document_type"><option value="CPF">CPF</option><option value="CNPJ">CNPJ</option></select></label><label>Número do documento<input name="document_number" required inputmode="numeric" maxlength="18" autocomplete="off"></label><button class="ui-btn btn-dark" type="submit">Gerar Pix</button></form></div><h4>Ou pague com cartão</h4><div id="connectPaymentBrick"></div><div id="webPaymentStatus" aria-live="polite">'+webPaymentStatusMarkup()+'</div></div>':data.webError?'<p role="alert" class="web-pay-error">'+esc(data.webError)+'</p>':'')+ (window.entreRecurring?.view?.()||'')+
  '<small class="cp-plan-footnote">O pagamento único não gera cobranças automáticas.</small></article></div></section>';
 }
 async function openPremiumWhatsapp(){
@@ -227,6 +227,27 @@ async function unmountPaymentBrick(){
  const brick=data.webBrick;data.webBrick=null;
  if(brick?.unmount)try{await brick.unmount();}catch(e){console.warn('Payment Brick cleanup',e);}
 }
+const payErrors={buyer_identification_required:'Confira o CPF ou CNPJ informado.',buyer_name_required:'Informe nome e sobrenome.',invalid_payment_method:'Meio de pagamento inválido.',invalid_payment_form:'Formulário incompleto.',invalid_payment_request:'Solicitação inválida. Tente novamente.',invalid_card_token:'Confira os dados do cartão.',payment_already_pending_or_unavailable:'Já existe um pagamento em andamento ou o plano está indisponível. Verifique o pagamento antes de tentar novamente.',payment_reservation_failed:'Não foi possível registrar a compra. Tente novamente mais tarde.',provider_credentials_rejected:'O Mercado Pago recusou as credenciais da loja.',payment_rejected_by_provider:'O Mercado Pago não aceitou a solicitação. Confira os dados ou contate o suporte.',web_checkout_not_configured:'Checkout indisponível. Confira as credenciais de produção.',login_required:'Entre novamente na sua conta.'};
+async function paymentResult(response){let result=response.data;if(response.error){try{result=await response.error.context?.json?.()||result;}catch(_){}}
+ if(response.error||!result||result.error){const code=result?.error;const message=payErrors[code]||'Não foi possível gerar o pagamento. Tente novamente.';throw Error(message+(code&&/^[a-z_]+$/.test(code)?' ('+code+')':''));}return result;}
+async function submitPix(form){
+ if(data.webBusy||!data.webCheckoutOpen)return;
+ if(data.webPayment?.payment_id&&['pending','in_process'].includes(data.webPayment.status)){refreshWebStatus();toast('Já existe um Pix pendente. Use o código abaixo.');return;}
+ const fields=new FormData(form),type=String(fields.get('document_type')),number=String(fields.get('document_number')).replace(/\D/g,'');
+ const first=String(fields.get('first_name')).trim(),last=String(fields.get('last_name')).trim();
+ if(!first||!last||!((type==='CPF'&&number.length===11)||(type==='CNPJ'&&number.length===14))){data.webError='Confira nome, sobrenome e número do documento.';refreshWebStatus();return;}
+ const button=form.querySelector('button[type=submit]'),uid=state.session?.user?.id;data.webBusy=true;button.disabled=true;data.webError='';data.webStatusText='Gerando Pix…';refreshWebStatus();
+ try{const result=await paymentResult(await db.functions.invoke('entre-premium-web',{body:{action:'pay',request_id:crypto.randomUUID(),form_data:{payment_method_id:'pix',payer:{first_name:first,last_name:last,identification:{type,number}}}}}));
+ if(state.session?.user?.id!==uid||state.view!=='premium')return;
+ data.webPayment=result;form.reset();
+ if(result.status==='approved'){await refreshPremium();data.webCheckoutOpen=false;await unmountPaymentBrick();renderView();toast('Pagamento aprovado!');return;}
+ if(result.status==='pending'||result.status==='in_process'){data.webStatusText='Aguardando pagamento';if(!result.pix_code&&!result.pix_qr_base64)data.webError='Pagamento criado, mas o código Pix não foi retornado. Não gere outra cobrança; contate o suporte.';}
+ else data.webError='Pagamento não aprovado. Confira os dados.';
+ refreshWebStatus();document.getElementById('webPaymentStatus')?.scrollIntoView({block:'center'});
+ }catch(error){data.webError=String(error.message||error);refreshWebStatus();toast(data.webError,true);}
+ finally{data.webBusy=false;if(button.isConnected)button.disabled=false;}
+}
+document.addEventListener('submit',e=>{if(e.target?.id!=='connectPixForm')return;e.preventDefault();e.stopImmediatePropagation();void submitPix(e.target);},true);
 async function renderWebBrick(){
  if(!data.webCheckoutOpen||!data.webConfig?.public_key||!document.getElementById('connectPaymentBrick'))return;
  await unmountPaymentBrick();
@@ -234,16 +255,16 @@ async function renderWebBrick(){
  const mp=new window.MercadoPago(data.webConfig.public_key,{locale:'pt-BR'});
  const builder=mp.bricks();
  data.webBrick=await builder.create('payment','connectPaymentBrick',{
-  initialization:{amount:Number(data.webConfig.price_cents)/100},
-  customization:{paymentMethods:{creditCard:'all',bankTransfer:'all'}},
+  initialization:{amount:Number(data.webConfig.price_cents)/100,payer:{email:state.session?.user?.email||''}},
+  customization:{paymentMethods:{creditCard:'all'}},
   callbacks:{
    onReady:()=>{data.webError='';refreshWebStatus();},
    onError:(error)=>{console.warn('Payment Brick',error);data.webError='Não foi possível carregar o pagamento. Atualize e tente novamente.';refreshWebStatus();},
    onSubmit:async({formData})=>{
+    if(data.webBusy||data.webPayment?.payment_id&&['pending','in_process'].includes(data.webPayment.status))throw Error('Já existe um pagamento em andamento.');
     data.webBusy=true;data.webError='';data.webStatusText='Processando seu pagamento de forma segura…';refreshWebStatus();
     try{
-     const {data:result,error}=await db.functions.invoke('entre-premium-web',{body:{action:'pay',request_id:crypto.randomUUID(),form_data:formData}});
-     if(error||!result||result.error)throw Error(result?.error||'Não foi possível enviar o pagamento.');
+     const result=await paymentResult(await db.functions.invoke('entre-premium-web',{body:{action:'pay',request_id:crypto.randomUUID(),form_data:formData}}));
      data.webPayment=result;
      if(result.status==='approved'){
       await refreshPremium();data.webCheckoutOpen=false;await unmountPaymentBrick();renderView();
@@ -254,7 +275,7 @@ async function renderWebBrick(){
      }else{
       data.webError='Pagamento recusado ou cancelado. Tente novamente.';refreshWebStatus();
      }
-    }catch(error){data.webError=infoError(error);refreshWebStatus();throw error;}
+    }catch(error){data.webError=String(error.message||error);refreshWebStatus();throw error;}
     finally{data.webBusy=false;}
    }
   }
@@ -271,7 +292,7 @@ async function checkout(){
   if(error)throw Error('Não foi possível conectar ao checkout. Verifique sua sessão e tente novamente.');
   if(!config?.enabled||!config?.public_key)throw Error(config?.message||'O checkout não está habilitado com credenciais de produção.');
   if(state.view!=='premium')return;data.webConfig=config;data.webCheckoutOpen=true;data.webStatusText='';
-  renderView();await renderWebBrick();
+  renderView();try{await renderWebBrick();}catch(error){console.warn('Card checkout unavailable');const card=document.getElementById('connectPaymentBrick');if(card)card.textContent='Cartão indisponível no momento. Você ainda pode gerar Pix acima.';}
  }catch(error){data.webError=infoError(error);data.webCheckoutOpen=false;renderView();toast(data.webError,true);}
  finally{data.checkoutBusy=false;const btn=document.querySelector('[data-action="premiumCheckout"]');if(btn){btn.disabled=!data.premium?.checkout_enabled;btn.textContent='Comprar Premium';}}
 }
