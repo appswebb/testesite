@@ -333,12 +333,12 @@ document.addEventListener("submit",async function(ev){
   try{
    var email=String(form.elements.email.value||"").trim().toLowerCase();
    var password=String(form.elements.password.value||"");
-   var token=window.connectTurnstile.consume(form);
+   var token=await window.connectTurnstile.consume(form);
    var logged=await db.auth.signInWithPassword({email:email,password:password,options:{captchaToken:token}});
    if(logged.error)throw logged.error;
    await boot();
    if(!state.verified)toast("Este e-mail não tem acesso ao painel. Verifique a confirmação e a autorização.",true);
-  }catch(err){toast(errorText(err),true);}
+  }catch(err){toast(err?.code==='captcha_failed'?'O servidor recusou a verificação de segurança. Repita o desafio.':errorText(err),true);}
   finally{if(token)window.connectTurnstile.reset(form);state.busy=false;if(submit&&submit.isConnected)submit.disabled=false;}
   return;
  }

@@ -69,7 +69,7 @@
   document.getElementById('form-success')?.classList.add('hidden');
   if(button?.disabled)return;
   busy(button,true);let captchaUsed=false;
-  const captcha=()=>{const token=window.connectTurnstile.consume(form);captchaUsed=true;return token;};
+  const captcha=async()=>{const token=await window.connectTurnstile.consume(form);captchaUsed=true;return token;};
   try{
    if(mode==='reset'){
     if(!state.session?.user)throw Error('Sua sessão de recuperação expirou. Solicite um novo link.');
@@ -91,7 +91,7 @@
    const email=fieldValue('email').trim().toLowerCase();
    if(!email||email.length>254)throw Error('Informe um e-mail válido.');
    if(mode==='forgot'){
-    const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:redirectUrl(true),captchaToken:captcha()});
+    const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:redirectUrl(true),captchaToken:await captcha()});
     if(error)throw error;
     // Do not reveal whether the account exists.
     showFormMessage('Se o e-mail estiver cadastrado, enviaremos um link para redefinir sua senha. Confira também o spam.',true);
@@ -101,7 +101,7 @@
    if(mode==='signup'){
     if(!form.elements.namedItem('adult')?.checked)throw Error('Confirme que tem 18 anos ou mais e aceite os termos.');
     passwordStrength(password,fieldValue('password_confirm'));
-    const {data,error}=await db.auth.signUp({email,password,options:{emailRedirectTo:redirectUrl(),captchaToken:captcha()}});
+    const {data,error}=await db.auth.signUp({email,password,options:{emailRedirectTo:redirectUrl(),captchaToken:await captcha()}});
     if(error)throw error;
     if(data?.session){await acceptSession(data.session);window.connectSound?.play?.('login');return;}
     showFormMessage('Cadastro solicitado. Se a conta puder ser criada, você receberá um e-mail de confirmação. Confira também o spam.',true);
@@ -109,11 +109,11 @@
     return;
    }
    if(mode==='login'){
-    const {data,error}=await db.auth.signInWithPassword({email,password,options:{captchaToken:captcha()}});
+    const {data,error}=await db.auth.signInWithPassword({email,password,options:{captchaToken:await captcha()}});
     if(error){if(/captcha|turnstile/i.test(error.message||'')||error.code==='captcha_failed')throw Error('Verificação de segurança recusada. Tente novamente.');if(error.status===429)throw Error('Muitas tentativas. Aguarde e tente novamente.');if(error.code==='email_not_confirmed')throw Error('Confira o e-mail de confirmação antes de entrar.');throw Error('Não foi possível entrar. Confira seus dados e tente novamente.');}
     await acceptSession(data.session);
    }
-  }catch(error){showFormMessage(infoError(error));}
+  }catch(error){showFormMessage(error?.code==='captcha_failed'?'O servidor recusou a verificação de segurança. Repita o desafio. Se persistir, informe o erro ao suporte.':infoError(error));}
   finally{if(captchaUsed)window.connectTurnstile.reset(form);busy(button,false);}
  }
  window.entreEmailAuth={fields,resetView,redirectUrl,passwordStrength,acceptSession,isRecovery,submit};

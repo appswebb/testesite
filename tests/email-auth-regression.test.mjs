@@ -141,3 +141,8 @@ test('auth refuses to send credentials when CAPTCHA is not ready',async()=>{
 test('public and admin authentication load Turnstile and forward its token',()=>{
  const widget=read('connect-turnstile.js');assert.doesNotThrow(()=>new Function(widget));assert.match(widget,/challenges.cloudflare.com\/turnstile/);assert.match(read('admin/app.js'),/captchaToken:token/);assert.match(read('admin/index.html'),/connect-turnstile.js/);assert.match(read('index.html'),/connect-turnstile.js/);
 });
+
+test('auth waits for the async Turnstile token before submitting and resets it afterward',async()=>{
+ const {api,db,win,events}=setup();let resolveToken,request;win.connectTurnstile.consume=()=>new Promise(resolve=>{resolveToken=resolve;});db.auth.signInWithPassword=async p=>{request=p;return {error:{status:400,code:'captcha_failed',message:'captcha failed'}};};
+ const attempt=api.submit(form('login',{email:'test@example.invalid',password:'MinhaSenhaSegura2026'}));await Promise.resolve();assert.equal(request,undefined);resolveToken('fresh-token');await attempt;assert.equal(request.options.captchaToken,'fresh-token');assert.ok(events.includes('captcha-reset'));
+});
