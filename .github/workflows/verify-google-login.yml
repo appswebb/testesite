@@ -6,6 +6,9 @@ on:
     paths:
       - 'docs/app.js'
       - 'docs/email-auth.js'
+      - 'docs/connect-turnstile.js'
+      - 'docs/connect-turnstile.css'
+      - 'docs/admin/index.html'
       - 'docs/index.html'
       - 'docs/admin/app.js'
       - 'docs/styles.css'
@@ -25,6 +28,7 @@ jobs:
         run: |
           node --check docs/app.js
           node --check docs/email-auth.js
+          node --check docs/connect-turnstile.js
           node --check docs/admin/app.js
       - name: Confirm site has only Supabase email and password login
         run: |

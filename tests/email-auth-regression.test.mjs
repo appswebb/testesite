@@ -7,6 +7,7 @@ const read=name=>readFileSync(new URL('../docs/'+name,import.meta.url),'utf8');
 function setup(hostname='entre-ruby.vercel.app'){
  const events=[];
  const win={location:{hostname,origin:'https://'+hostname,search:'',hash:''},history:{replaceState(){}}};
+ win.connectTurnstile={markup:()=>'<div data-connect-turnstile-widget></div>',consume:()=> 'test-captcha-token',reset:()=>events.push('captcha-reset')};
  const state={session:null,profile:null,isAdmin:false,mode:'signup'};
  const verifiedUser={id:'test-user',email:'test@example.invalid',app_metadata:{provider:'email'}};
  const db={auth:{
@@ -100,13 +101,16 @@ test('signup requests email confirmation without creating a fake local session',
  db.auth.signUp=async p=>{request=p;return {data:{user:{id:'placeholder'},session:null},error:null}};
  await api.submit(form('signup',{email:' TEST@EXAMPLE.INVALID ',password:'MinhaSenhaSegura2026',password_confirm:'MinhaSenhaSegura2026'}));
  assert.equal(request.email,'test@example.invalid');
+ assert.equal(request.options.captchaToken,'test-captcha-token');
  assert.equal(request.options.emailRedirectTo,'https://entre-ruby.vercel.app/');
  assert.equal(state.session,null);
  assert.ok(events.some(e=>e.success===true&&/confirmação/.test(e.msg)));
 });
 test('password login validates real Supabase session before entering app',async()=>{
  const {api,state,events,db}=setup();
+ let request;const login=db.auth.signInWithPassword;db.auth.signInWithPassword=async p=>{request=p;return login(p);};
  await api.submit(form('login',{email:'test@example.invalid',password:'MinhaSenhaSegura2026'}));
+ assert.equal(request.options.captchaToken,'test-captcha-token');
  assert.equal(state.session.user.id,'test-user');
  assert.equal(state.isAdmin,false);
  assert.ok(events.includes('account-initialized'));
@@ -116,6 +120,7 @@ test('password recovery sends a callback URL and hides account existence',async(
  const {api,db,events}=setup();let options;
  db.auth.resetPasswordForEmail=async (email,opts)=>{options=opts;return {error:null}};
  await api.submit(form('forgot',{email:'missing@example.invalid'}));
+ assert.equal(options.captchaToken,'test-captcha-token');
  assert.equal(options.redirectTo,'https://entre-ruby.vercel.app/?auth=recovery');
  assert.ok(events.some(e=>e.success===true&&/Se o e-mail estiver cadastrado/.test(e.msg)));
 });
@@ -126,4 +131,13 @@ test('boot accepts verified Supabase email sessions and rejects Google-only auth
  assert.match(src,/window\.entreEmailAuth\.acceptSession\(data\.session\)/);
  assert.match(admin,/db\.auth\.signInWithPassword/);
  assert.match(read('index.html'),/src="\.\/email-auth\.js/);
+});
+
+test('auth refuses to send credentials when CAPTCHA is not ready',async()=>{
+ const {api,db,win,events}=setup();let called=false;win.connectTurnstile.consume=()=>{throw Error('Verificação pendente');};
+ db.auth.signInWithPassword=async()=>{called=true;};
+ await api.submit(form('login',{email:'test@example.invalid',password:'MinhaSenhaSegura2026'}));assert.equal(called,false);assert.ok(events.some(e=>e.msg==='Verificação pendente'));
+});
+test('public and admin authentication load Turnstile and forward its token',()=>{
+ const widget=read('connect-turnstile.js');assert.doesNotThrow(()=>new Function(widget));assert.match(widget,/challenges.cloudflare.com\/turnstile/);assert.match(read('admin/app.js'),/captchaToken:token/);assert.match(read('admin/index.html'),/connect-turnstile.js/);assert.match(read('index.html'),/connect-turnstile.js/);
 });

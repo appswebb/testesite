@@ -84,7 +84,7 @@ function gate(locked){
  +'<div class="gate-inner"><span class="gate-kicker">ACESSO RESTRITO · SUPABASE AUTH</span><h1>Seu site,<br><em>sob controle.</em></h1><p>'+e(message)+'</p>'
  +'<form id="admin-login-form" class="admin-login-form"><label for="admin-email">E-mail</label><input id="admin-email" type="email" name="email" autocomplete="username" inputmode="email" maxlength="254" required placeholder="E-mail da conta cadastrada">'
  +'<label for="admin-password">Senha</label><div class="admin-password-wrap"><input id="admin-password" type="password" name="password" autocomplete="current-password" required placeholder="Sua senha"><button type="button" class="admin-password-toggle" data-admin-password-toggle aria-controls="admin-password" aria-label="Mostrar senha" aria-pressed="false">Mostrar</button></div>'
- +'<button class="btn-main coral" type="submit">'+ico("shield-check",19)+' Entrar no painel '+ico("arrow-right",19)+'</button></form>'
+ +window.connectTurnstile.markup()+'<button class="btn-main coral" type="submit">'+ico("shield-check",19)+' Entrar no painel '+ico("arrow-right",19)+'</button></form>'
  +'<div class="admin-gate-actions"><a class="btn-outline" href="../?site=1">Ir para o site</a><a href="../?site=1" class="admin-gate-help">Precisa cadastrar ou recuperar a senha? Acesse o site.</a></div>'
  +(locked&&state.user?'<p style="font-size:11px;margin-top:18px">Sessão atual: '+e(state.user.email)+'</p>':'')
  +'</div><div class="gate-small">CONNECT · Painel privado · E-mail confirmado e autorizado no Supabase</div></div>'
@@ -333,12 +333,13 @@ document.addEventListener("submit",async function(ev){
   try{
    var email=String(form.elements.email.value||"").trim().toLowerCase();
    var password=String(form.elements.password.value||"");
-   var logged=await db.auth.signInWithPassword({email:email,password:password});
+   var token=window.connectTurnstile.consume(form);
+   var logged=await db.auth.signInWithPassword({email:email,password:password,options:{captchaToken:token}});
    if(logged.error)throw logged.error;
    await boot();
    if(!state.verified)toast("Este e-mail não tem acesso ao painel. Verifique a confirmação e a autorização.",true);
   }catch(err){toast(errorText(err),true);}
-  finally{state.busy=false;if(submit&&submit.isConnected)submit.disabled=false;}
+  finally{if(token)window.connectTurnstile.reset(form);state.busy=false;if(submit&&submit.isConnected)submit.disabled=false;}
   return;
  }
  if(form.id==="release-form"){await saveRelease(Boolean(state.settings?.maintenance_enabled),true);return;}if(state.busy)return;
