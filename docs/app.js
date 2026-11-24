@@ -644,9 +644,9 @@ async function initializeAccount(){
   }
  }
  const premiumReturn=new URLSearchParams(window.location.search).get('premium')==='return';
- if(premiumReturn&&!state.pair?.id)state.view='premium';
+ if(premiumReturn&&!state.pair?.id)state.view=new URLSearchParams(window.location.search).get('checkoutSupport')==='1'?'support':'premium';
  if(premiumReturn){
-  const clean=new URL(window.location.href);clean.searchParams.delete('premium');
+  const clean=new URL(window.location.href);clean.searchParams.delete('premium');clean.searchParams.delete('checkoutSupport');
   window.history.replaceState(null,'',clean.pathname+clean.search+clean.hash);
  }
  render();
