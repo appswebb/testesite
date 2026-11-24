@@ -960,28 +960,48 @@ async function submitSuspensionAppeal(form){
 }
 
 function maintenanceView(){
- const s=state.siteSettings||{},preview=maintenanceIsPreview();
- const title=esc(!state.siteSettings?'Verificando a plataforma':s.maintenance_title||'Estamos atualizando o CONNECT');
- const message=esc(!state.siteSettings?'Não foi possível confirmar o status. O acesso permanece pausado enquanto tentamos novamente.':s.maintenance_message||'Estamos preparando melhorias. Assim que a atualização for liberada, você poderá voltar a conversar.');
- return '<main class="cp-service-page" id="maintenance-screen" aria-labelledby="maintenance-title"><header class="cp-service-header">'+brand()+(window.entreTheme?.toggleMarkup?.()||'')+'</header><section class="cp-service-card"><div class="cp-service-icon">'+ico('refresh',32)+'</div><span class="cp-service-label">'+(preview?'PRÉVIA DA TELA':'ATUALIZAÇÃO EM ANDAMENTO')+'</span><h1 id="maintenance-title">'+title+'</h1><p id="maintenance-message">'+message+'</p><div class="cp-service-status"><span class="cp-status-dot"></span><div><strong>Verificação automática</strong><small id="maintenance-status-text">A página verifica quando a atualização estiver disponível.</small></div></div><button type="button" data-action="maintenanceRefresh" class="ui-btn btn-dark cp-service-btn">'+ico('refresh',18)+' Verificar agora</button><a class="cp-service-link" href="./privacidade.html">Privacidade</a></section><footer>CONNECT · Até logo.</footer></main>';
+ const s=state.siteSettings||{},preview=maintenanceIsPreview(),known=Boolean(state.siteSettings);
+ const title=esc(!known?'Verificando a plataforma':s.maintenance_title||'Estamos atualizando o CONNECT');
+ const message=esc(!known?'Não foi possível confirmar o status. O acesso permanece pausado enquanto tentamos novamente.':s.maintenance_message||'Estamos preparando melhorias. Assim que a atualização for liberada, você poderá voltar a conversar.');
+ return '<main class="cp-service-page cp-maint-refined" id="maintenance-screen" data-status="'+(preview?'preview':known?'updating':'checking')+'" aria-labelledby="maintenance-title">'+
+ '<header class="cp-service-header">'+brand()+'<div class="cp-maint-header-right">'+(window.entreTheme?.toggleMarkup?.()||'')+'</div></header>'+
+ '<section class="cp-service-card cp-maint-layout"><div class="cp-maint-art" aria-hidden="true"><div class="cp-maint-orbit cp-maint-orbit-a"></div><div class="cp-maint-orbit cp-maint-orbit-b"></div><div class="cp-maint-orbit cp-maint-orbit-c"></div><div class="cp-maint-emblem"><img src="./connect-glass.svg?v=showcase-v17" width="84" height="84" alt=""></div><span class="cp-maint-satellite cp-maint-satellite-a">'+ico('refresh',20)+'</span><span class="cp-maint-satellite cp-maint-satellite-b">'+ico('chat',18)+'</span><span class="cp-maint-satellite cp-maint-satellite-c">'+ico('check',17)+'</span><div class="cp-maint-art-caption"><span></span> CONNECT <i></i> SISTEMA</div></div>'+
+ '<div class="cp-maint-content"><span class="cp-service-label"><span class="cp-maint-dot"></span><span id="maintenance-state-label">'+(preview?'PRÉVIA DA TELA':known?'ATUALIZAÇÃO EM ANDAMENTO':'VERIFICANDO STATUS')+'</span></span>'+
+ '<h1 id="maintenance-title">'+title+'</h1><p id="maintenance-message">'+message+'</p>'+
+ '<div class="cp-service-status cp-maint-status" role="status" aria-live="polite"><span class="cp-maint-status-icon">'+ico('refresh',19)+'</span><div><strong id="maintenance-status-heading">Verificação automática</strong><small id="maintenance-status-text">Assim que o acesso for liberado, você voltará automaticamente.</small></div><span class="cp-maint-live-indicator" aria-hidden="true"><i></i><i></i><i></i></span></div>'+
+ '<div class="cp-maint-actions"><button type="button" data-action="maintenanceRefresh" class="ui-btn btn-dark cp-service-btn">'+ico('refresh',17)+' <span>Verificar agora</span></button><span id="maintenance-last-check" class="cp-maint-last">'+(preview?'Modo de prévia':'Aguardando verificação')+'</span></div></div></section>'+
+ '<footer class="cp-maint-footer"><span>CONNECT · Até logo.</span><a class="cp-service-link" href="./privacidade.html">Privacidade</a></footer></main>';
+}
+function paintMaintenanceStatus(status,manual=false){
+ const root=document.getElementById('maintenance-screen');if(!root)return;
+ const btn=root.querySelector('[data-action="maintenanceRefresh"]'),label=document.getElementById('maintenance-state-label'),head=document.getElementById('maintenance-status-heading'),line=document.getElementById('maintenance-status-text'),last=document.getElementById('maintenance-last-check');
+ if(btn){btn.disabled=status==='checking'||status==='released';btn.setAttribute('aria-busy',String(status==='checking'));const span=btn.querySelector('span');if(span)span.textContent=status==='checking'?'Verificando…':'Verificar agora';}
+ if(status==='checking'){root.dataset.check='checking';if(manual&&line)line.textContent='Consultando o status da plataforma…';return;}
+ root.dataset.check=status;
+ if(status==='released'){if(label)label.textContent='ATUALIZAÇÃO LIBERADA';if(head)head.textContent='Tudo pronto';if(line)line.textContent='Abrindo o CONNECT automaticamente…';return;}
+ if(status==='error'){if(head)head.textContent='Verificação indisponível';if(line)line.textContent='Não foi possível verificar agora. Continuaremos tentando.';return;}
+ if(label)label.textContent=maintenanceIsPreview()?'PRÉVIA DA TELA':'ATUALIZAÇÃO EM ANDAMENTO';
+ if(head)head.textContent='Verificação automática';
+ if(line)line.textContent=maintenanceIsPreview()?'Esta é uma prévia da tela de atualização.':manual?'A atualização continua ativa. O acesso será liberado automaticamente.':'Assim que o acesso for liberado, você voltará automaticamente.';
+ if(last)last.textContent='Verificado às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 }
 let maintenancePolling=false;
 async function maintenanceCheck(manual=false){
  if(maintenancePolling)return;
  maintenancePolling=true;
+ paintMaintenanceStatus('checking',manual);
  try{
   const previous=maintenanceIsActive();
   const response=await db.rpc('entre_public_settings');
   if(response.error)throw response.error;
-  if(!response.data)return;
+  if(!response.data)throw Error('Status indisponível');
   const before=state.siteSettings;
   state.siteSettings=response.data;
   const active=maintenanceIsActive();
   if(state.session&&!active)await checkSuspension();
   if(!active&&!state.suspension)considerPublicAnnouncement(response.data);
   if(previous&&!active&&!maintenanceIsPreview()){
-   const status=document.getElementById('maintenance-status-text');
-   if(status)status.textContent='Atualização liberada! Abrindo a nova versão…';
+   paintMaintenanceStatus('released');
    const target=new URL(window.location.href);
    target.searchParams.delete('maintenance_preview');
    target.searchParams.set('released',new Date(response.data.release_at||Date.now()).getTime().toString());
@@ -992,15 +1012,15 @@ async function maintenanceCheck(manual=false){
    window.entreVideo?.cleanup?.();state.searching=false;clearSearchTimer();
    if(state.channel){db.removeChannel(state.channel);state.channel=null;}
    state.pair=null;state.peer=null;state.modal=null;
-   render();
+   render();paintMaintenanceStatus('active');
   }else if(active){
    const title=document.getElementById('maintenance-title'),msg=document.getElementById('maintenance-message');
    if(title)title.textContent=response.data.maintenance_title||'Tem coisa boa chegando.';
    if(msg)msg.textContent=response.data.maintenance_message||'Uma nova versão está chegando.';
-   if(manual){const status=document.getElementById('maintenance-status-text');if(status)status.textContent='A atualização continua ativa. Esta página será liberada automaticamente.';}
+   paintMaintenanceStatus('active',manual);
   }else if(before?.maintenance_enabled!==response.data.maintenance_enabled){render();}else if(state.view==='avisos'&&before?.announcement_version!==response.data.announcement_version){renderView();}
  }catch(err){
-  if(manual){const target=document.getElementById('maintenance-status-text');if(target)target.textContent='Não foi possível verificar agora. Continuaremos tentando.';}
+  paintMaintenanceStatus('error',manual);
   console.warn('Maintenance status check failed',err);
  }finally{maintenancePolling=false;}
 }
