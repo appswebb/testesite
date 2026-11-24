@@ -16,15 +16,22 @@
   button.setAttribute('aria-pressed',String(reveal));
   button.setAttribute('aria-label',reveal?'Ocultar senha':'Mostrar senha');
  });
+ document.addEventListener('input',event=>{
+  if(!['auth-password','auth-password-confirm'].includes(event.target.id))return;
+  const form=event.target.closest('form[data-form="signup"]');if(!form)return;
+  const p=form.elements.namedItem('password')?.value||'',c=form.elements.namedItem('password_confirm')?.value||'';
+  const rules={length:p.length>=12&&p.length<=128,letter:/[a-zA-ZÀ-ÿ]/.test(p),number:/\d/.test(p),match:!!c&&p===c};
+  for(const [name,valid] of Object.entries(rules)){const el=form.querySelector('[data-password-rule="'+name+'"]');if(el){el.classList.toggle('is-valid',valid);el.setAttribute('aria-label',el.textContent+(valid?', atendido':', pendente'));}}
+ });
  function fields(signup,forgot){
   const email=field('email','auth-email','E-mail','email','email','voce@exemplo.com');
   if(forgot)return `<div class="email-auth-fields"><div class="form-grid">${email}</div><button class="ui-btn btn-dark auth-email-submit" type="submit" id="authSubmit">Enviar link de recuperação</button><p class="auth-email-hint">Se este e-mail estiver cadastrado, você receberá instruções para recuperar o acesso.</p></div>`;
   const password=field('password','auth-password','Senha','password',signup?'new-password':'current-password',signup?'Pelo menos 12 caracteres':'Sua senha',signup?'12':'');
   const confirm=signup?field('password_confirm','auth-password-confirm','Confirmar senha','password','new-password','Repita sua senha','12'):'';
-  return `<div class="email-auth-fields"><div class="form-grid">${email}${password}${confirm}</div>${signup?'<label class="checkbox-line auth-terms"><input type="checkbox" name="adult" required><span>Confirmo que tenho 18 anos ou mais e aceito os <a href="./termos.html" target="_blank" rel="noopener noreferrer">Termos de uso</a> e a <a href="./privacidade.html" target="_blank" rel="noopener noreferrer">Política de privacidade</a>.</span></label><p class="auth-email-hint">Crie uma senha com pelo menos 12 caracteres, incluindo letras e números.</p>':'<div class="auth-email-links"><button type="button" class="text-link" data-action="forgot">Esqueci minha senha</button></div>'}<button class="ui-btn btn-dark auth-email-submit" type="submit" id="authSubmit">${signup?'Criar conta com e-mail':'Entrar com e-mail'}</button></div>`;
+  return `<div class="email-auth-fields"><div class="form-grid">${email}${password}${confirm}</div>${signup?'<label class="checkbox-line auth-terms"><input type="checkbox" name="adult" required><span>Confirmo que tenho 18 anos ou mais e aceito os <a href="./termos.html" target="_blank" rel="noopener noreferrer">Termos de uso</a> e a <a href="./privacidade.html" target="_blank" rel="noopener noreferrer">Política de privacidade</a>.</span></label><div class="cx-password-rules" aria-live="polite"><span data-password-rule="length">12 caracteres</span><span data-password-rule="letter">Uma letra</span><span data-password-rule="number">Um número</span><span data-password-rule="match">Senhas iguais</span></div>':'<div class="auth-email-links"><button type="button" class="text-link" data-action="forgot">Esqueci minha senha</button></div>'}<button class="ui-btn btn-dark auth-email-submit" type="submit" id="authSubmit">${signup?'Criar conta com e-mail':'Entrar com e-mail'}</button></div>`;
  }
  function resetView(){
-  return `<div class="auth-shell"><aside class="auth-visual">${brand()}<div><span class="eyebrow" style="color:#e9b49f">SEGURANÇA DA SUA CONTA</span><h2>De volta ao <em>CONNECT</em></h2></div><p class="legal-note">Seus dados de login são protegidos pelo Supabase.</p></aside><main class="auth-main"><div class="auth-card"><div class="hidden-mobile-brand">${brand()}</div><h1>Uma <em>nova senha.</em></h1><p class="auth-sub">Use 12 caracteres ou mais, incluindo letras e números.</p><div id="form-error" class="hidden form-error" role="alert"></div><div id="form-success" class="hidden form-success" role="status"></div><form id="authForm" data-form="reset"><div class="form-grid">${field('password','new-password','Nova senha','password','new-password','Nova senha','12')}${field('password_confirm','new-password-confirm','Confirmar nova senha','password','new-password','Repita a senha','12')}</div><button class="ui-btn btn-dark auth-email-submit" type="submit" id="authSubmit">Atualizar senha</button></form></div></main></div>`;
+  return `<div class="auth-shell cx-auth-shell"><aside class="auth-visual cx-auth-visual">${brand()}<div class="cx-auth-editorial"><span>SEGURANÇA DA CONTA</span><h2>Recupere seu acesso.</h2></div><img class="cx-reset-mark" src="./connect-glass.svg?v=signature-v9" alt="" width="220" height="200"></aside><main class="auth-main"><div class="auth-card"><div class="hidden-mobile-brand">${brand()}</div><h1>Uma <em>nova senha.</em></h1><p class="auth-sub">Use 12 caracteres ou mais, incluindo letras e números.</p><div id="form-error" class="hidden form-error" role="alert"></div><div id="form-success" class="hidden form-success" role="status"></div><form id="authForm" data-form="reset"><div class="form-grid">${field('password','new-password','Nova senha','password','new-password','Nova senha','12')}${field('password_confirm','new-password-confirm','Confirmar nova senha','password','new-password','Repita a senha','12')}</div><button class="ui-btn btn-dark auth-email-submit" type="submit" id="authSubmit">Atualizar senha</button></form></div></main></div>`;
  }
  function redirectUrl(recovery=false){
   const url=new URL(window.location.hostname==='appswebb.github.io'?'/testesite/':'/',window.location.origin);
@@ -94,6 +101,7 @@
     if(error)throw error;
     if(data?.session){await acceptSession(data.session);return;}
     showFormMessage('Cadastro solicitado. Se a conta puder ser criada, você receberá um e-mail de confirmação. Confira também o spam.',true);
+    const card=form.closest('.auth-card');if(card){card.classList.add('cx-confirmation');const box=document.getElementById('form-success');if(box){box.setAttribute('tabindex','-1');box.focus();}const next=document.createElement('button');next.type='button';next.className='ui-btn btn-outline cx-confirm-login';next.dataset.action='login';next.textContent='Já confirmei meu e-mail';if(!card.querySelector('.cx-confirm-login'))form.after(next);}
     return;
    }
    if(mode==='login'){
