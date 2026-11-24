@@ -1,118 +1,75 @@
-/* entre. themes: user-controlled appearance, shared by all pages on this origin.
- * Storage is intentionally local to the device; no personal/profile data is transmitted.
- */
-(function(){
+/* CONNECT appearance: one shared light/dark mode, private app-only accent. */
+(()=>{
 'use strict';
-const KEY='entre.appearance.v1';
+const KEY='connect.appearance.v2',OLD='entre.appearance.v1';
 const MODES=['light','dark'];
-const DEFAULT={mode:'dark',color:'#C33DF0',style:'neon'};
-const NEON_COLOR=DEFAULT.color;
-const STYLES=['neon','romance','neutral'];
-const PRESETS=[
- ['#C33DF0','Neon CONNECT'],
- ['#D16A8A','Rosa antigo'],['#A63B5E','Vinho'],
- ['#7757F4','Violeta'],['#2977D5','Azul'],['#F07C55','Coral'],
- ['#AE63CF','Lavanda'],['#DAA520','Dourado'],['#EA5386','Rosa']
-];
+const PRESETS=[['#7757F4','Violeta'],['#2977D5','Azul'],['#F07C55','Coral'],['#AE63CF','Lavanda'],['#DAA520','Dourado'],['#EA5386','Rosa']];
 const hex=v=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v)?v.toUpperCase():null;
-function read(){
+function load(){
  try{
-  const stored=JSON.parse(localStorage.getItem(KEY)||'null');
-  if(!stored)return {...DEFAULT};
-  // One-time migration of previous factory defaults, without discarding custom choices.
-  if(stored.revision!==11&&(!stored.style||stored.style==='romance')&&stored.mode!=='light'&&['#D16A8A','#7545F7'].includes(hex(stored.color)))return {...DEFAULT};
-  return {mode:stored?.mode==='custom'?'light':MODES.includes(stored?.mode)?stored.mode:DEFAULT.mode,
-   color:hex(stored?.color)||DEFAULT.color,style:STYLES.includes(stored?.style)?stored.style:DEFAULT.style};
- }catch{return {...DEFAULT};}
+  const now=JSON.parse(localStorage.getItem(KEY)||'null');
+  if(now)return {mode:MODES.includes(now.mode)?now.mode:'light',color:hex(now.color)};
+  const old=JSON.parse(localStorage.getItem(OLD)||'null');
+  const factory=old&&((old.style==='neon'&&hex(old.color)==='#C33DF0')||(old.style==='romance'&&hex(old.color)==='#D16A8A'));
+  const result={mode:!factory&&old?.mode==='dark'?'dark':'light',color:factory?null:hex(old?.color)};
+  localStorage.setItem(KEY,JSON.stringify(result));return result;
+ }catch{return {mode:'light',color:null};}
 }
-let state=read();
-function rgb(h){return [1,3,5].map(n=>parseInt(h.slice(n,n+2),16));}
-function readable(h){
- const c=rgb(h).map(v=>{v/=255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);});
- const luminance=c[0]*.2126+c[1]*.7152+c[2]*.0722;
- // WCAG relative-luminance threshold where black/white have equal contrast.
- return luminance>.179?'#111111':'#FFFFFF';
-}
+let state=load(),scope='external';
+const rgb=h=>[1,3,5].map(n=>parseInt(h.slice(n,n+2),16));
+function readable(h){const c=rgb(h).map(v=>{v/=255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4)});return c[0]*.2126+c[1]*.7152+c[2]*.0722>.179?'#111111':'#FFFFFF'}
+const normal=()=>state.mode==='dark'?'#F5F6F8':'#20232A';
+const accent=()=>scope==='app'&&state.color?state.color:normal();
+const sun='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>';
+const moon='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.9 13.4A9 9 0 0 1 10.6 3.1 9 9 0 1 0 20.9 13.4Z"/></svg>';
+function toggleMarkup(){return '<button type="button" class="connect-mode-toggle" data-theme-toggle aria-label="'+(state.mode==='dark'?'Ativar modo claro':'Ativar modo escuro')+'" title="'+(state.mode==='dark'?'Modo claro':'Modo escuro')+'">'+(state.mode==='dark'?sun:moon)+'</button>'}
 function apply(){
- const root=document.documentElement;
- root.dataset.theme=state.mode;
- root.dataset.connectStyle=state.style;
- const accent=state.color;
- const accentOn=readable(accent);
- root.style.setProperty('--ui-accent',accent);
- root.style.setProperty('--ui-accent-on',accentOn);
- root.style.setProperty('--ui-accent-soft',`rgb(${rgb(accent).join(' ')} / .13)`);
- root.style.setProperty('--ui-accent-faint',`rgb(${rgb(accent).join(' ')} / .07)`);
- root.style.setProperty('--ui-accent-shadow',`rgb(${rgb(accent).join(' ')} / .24)`);
- const dark=state.mode==='dark';
- const tokens=state.style==='neon'?(dark?{'--ui-bg':'#100A18','--ui-panel':'#1B1227','--ui-panel-alt':'#281B37','--ui-text':'#F8F3FF','--ui-muted':'#C5B8D5','--ui-line':'#4B315C'}:{'--ui-bg':'#F8F5FC','--ui-panel':'#FFFFFF','--ui-panel-alt':'#F0E9F7','--ui-text':'#251634','--ui-muted':'#6E5A80','--ui-line':'#DDD0EA'}):state.style==='romance'?(dark?{'--ui-bg':'#140F14','--ui-panel':'#211820','--ui-panel-alt':'#2C202A','--ui-text':'#F8EDF0','--ui-muted':'#C0AAB5','--ui-line':'#48303E'}:{'--ui-bg':'#FBF4F4','--ui-panel':'#FFFDFD','--ui-panel-alt':'#F4E7EA','--ui-text':'#30202A','--ui-muted':'#76606A','--ui-line':'#E8D8DF'}):dark?{'--ui-bg':'#15171b','--ui-panel':'#20232a','--ui-panel-alt':'#2b2f37','--ui-text':'#f5f6f8','--ui-muted':'#b7bdc8','--ui-line':'#393e49'}:{'--ui-bg':'#f5f6f9','--ui-panel':'#ffffff','--ui-panel-alt':'#eef0f4','--ui-text':'#20232a','--ui-muted':'#606978','--ui-line':'#dfe3eb'};
- for(const [key,value] of Object.entries(tokens))root.style.setProperty(key,value,'important');
- root.style.setProperty('--ui-theme-surface',tokens['--ui-panel']);root.style.setProperty('--ui-theme-text',tokens['--ui-text']);
- const brand=state.style==='neon'&&accent===NEON_COLOR;
- root.dataset.connectGradient=brand?'brand':'custom';
- root.style.setProperty('--cn-grad',brand?'linear-gradient(110deg,#6519D0 0%,#9C22BE 47%,#B92D67 82%,#BD4F32 100%)':'linear-gradient(145deg,color-mix(in srgb,'+accent+' 85%,white),'+accent+')','important');root.style.setProperty('--cn-ink',brand?'#FFFFFF':accentOn,'important');
- document.querySelectorAll('meta[name="theme-color"]').forEach(meta=>meta.setAttribute('content',tokens['--ui-bg']));
+ const root=document.documentElement,dark=state.mode==='dark',color=accent(),ink=readable(color);
+ root.dataset.theme=state.mode;root.dataset.themeScope=scope;
+ delete root.dataset.connectStyle;delete root.dataset.connectGradient;
+ const tokens=dark?{'--ui-bg':'#15171B','--ui-panel':'#20232A','--ui-panel-alt':'#2B2F37','--ui-text':'#F5F6F8','--ui-muted':'#B7BDC8','--ui-line':'#393E49'}:{'--ui-bg':'#F5F6F9','--ui-panel':'#FFFFFF','--ui-panel-alt':'#EEF0F4','--ui-text':'#20232A','--ui-muted':'#606978','--ui-line':'#DFE3EB'};
+ const set=(k,v)=>root.style.setProperty(k,v,'important');
+ for(const [k,v] of Object.entries(tokens))set(k,v);
+ set('--ui-accent',color);set('--ui-accent-on',ink);set('--cn-ink',ink);
+ set('--cn-grad',scope==='app'&&state.color?'linear-gradient(145deg,color-mix(in srgb,'+color+' 92%,white),'+color+')':color);
+ for(const [suffix,opacity] of [['soft',.13],['faint',.07],['shadow',.24]])set('--ui-accent-'+suffix,'rgb('+rgb(color).join(' ')+' / '+opacity+')');
+ set('--ui-theme-surface',tokens['--ui-panel']);set('--ui-theme-text',tokens['--ui-text']);
  root.style.colorScheme=state.mode;
+ document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.setAttribute('content',tokens['--ui-bg']));
  if(document.body){document.body.style.removeProperty('background-color');document.body.style.removeProperty('color')}
  document.querySelectorAll('[data-theme-surface-applied]').forEach(el=>{el.style.removeProperty('background-color');el.style.removeProperty('background');el.style.removeProperty('color');delete el.dataset.themeSurfaceApplied});
- window.dispatchEvent(new CustomEvent('entre:themechange',{detail:{mode:state.mode,accent}}));
+ window.dispatchEvent(new CustomEvent('entre:themechange',{detail:{mode:state.mode,accent:color,scope}}));
 }
-function persist(){
- try{localStorage.setItem(KEY,JSON.stringify({...state,revision:11}));}catch(e){console.warn('Theme preference not persisted',e);}
-}
-function setMode(mode){
- if(!MODES.includes(mode))return false;
- state.mode=mode;persist();apply();syncControls();return true;
-}
-function setStyle(style){if(!STYLES.includes(style))return false;state.style=style;if(style==='neon'){state.mode='dark';state.color=NEON_COLOR;}persist();apply();syncControls();return true;}
-function setColor(color){
- const valid=hex(color);
- if(!valid)return false;
- state.color=valid;persist();apply();syncControls();return true;
-}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(_){}}
+function setScope(next){next=next==='app'?'app':'external';if(next!==scope){scope=next;apply();syncControls()}return scope}
+function setMode(mode){if(!MODES.includes(mode))return false;state.mode=mode;persist();apply();syncControls();return true}
+function setColor(value){if(scope!=='app')return false;const color=value===null?null:hex(value);if(value!==null&&!color)return false;state.color=color;persist();apply();syncControls();return true}
 function renderControls(){
- return '<section class="appearance-panel" aria-labelledby="appearanceTitle">'+
- '<div class="appearance-heading"><div><span class="appearance-eyebrow">A SUA EXPERIÊNCIA</span><h3 id="appearanceTitle">Aparência do aplicativo</h3><p>Escolha o modo, o estilo e a cor separadamente.</p></div></div>'+
- '<div class="appearance-mode-grid" role="group" aria-label="Selecionar aparência">'+
- '<button type="button" class="appearance-mode" data-theme-mode="light" aria-pressed="'+(state.mode==='light')+'"><span class="appearance-mini light"><i></i><b></b></span><strong>Claro</strong><small>Limpo e suave</small></button>'+
- '<button type="button" class="appearance-mode" data-theme-mode="dark" aria-pressed="'+(state.mode==='dark')+'"><span class="appearance-mini dark"><i></i><b></b></span><strong>Escuro</strong><small>Conforto à noite</small></button>'+
- '</div><div class="appearance-style-picker" role="group" aria-label="Estilo visual"><button type="button" data-connect-style="neon" aria-pressed="'+(state.style==='neon')+'"><i class="nx-theme-sample"></i><strong>CONNECT Neon</strong><small>Tema padrão</small></button><button type="button" data-connect-style="romance" aria-pressed="'+(state.style==='romance')+'">Dark Romance</button><button type="button" data-connect-style="neutral" aria-pressed="'+(state.style==='neutral')+'">Neutro</button></div><div class="appearance-custom-settings" data-theme-custom-panel>'+ 
- '<label for="appearanceColor">Escolha sua cor</label><div class="appearance-color-line">'+
- '<input id="appearanceColor" data-theme-color type="color" value="'+state.color+'" aria-label="Selecionar cor personalizada">'+
- '<output id="appearanceHex" for="appearanceColor">'+state.color+'</output><span class="appearance-color-hint">Visualização instantânea</span></div>'+
- '<div class="appearance-swatches" role="group" aria-label="Cores sugeridas">'+
- PRESETS.map(([color,label])=>'<button type="button" class="appearance-swatch" data-theme-swatch="'+color+'" style="--swatch:'+color+'" title="'+label+'" aria-label="'+label+'" aria-pressed="'+(state.color===color)+'"><span></span></button>').join('')+
- '</div></div></section>';
+ const custom=scope==='app',value=state.color||normal();
+ return '<section class="appearance-panel" aria-labelledby="appearanceTitle"><div class="appearance-heading"><div><h3 id="appearanceTitle">Aparência</h3><p>'+(custom?'Escolha o modo e, se quiser, uma cor de destaque.':'Escolha entre claro e escuro.')+'</p></div></div>'+
+ '<div class="appearance-mode-grid" role="group" aria-label="Modo de aparência">'+
+ MODES.map(mode=>'<button type="button" class="appearance-mode" data-theme-mode="'+mode+'" aria-pressed="'+(state.mode===mode)+'"><span class="appearance-mini '+mode+'"><i></i><b></b></span><strong>'+(mode==='light'?'Claro':'Escuro')+'</strong><small>'+(mode==='light'?'Limpo e suave':'Conforto à noite')+'</small></button>').join('')+'</div>'+
+ (custom?'<div class="appearance-custom-settings"><label for="appearanceColor">Cor personalizada</label><div class="appearance-color-line"><input id="appearanceColor" data-theme-color type="color" value="'+value+'" aria-label="Escolher cor personalizada"><output id="appearanceHex">'+value+'</output><button type="button" class="connect-color-reset" data-theme-reset-color>Restaurar padrão</button></div><div class="appearance-swatches" role="group" aria-label="Cores sugeridas">'+PRESETS.map(([color,label])=>'<button type="button" class="appearance-swatch" data-theme-swatch="'+color+'" style="--swatch:'+color+'" aria-label="'+label+'" aria-pressed="'+(state.color===color)+'"><span></span></button>').join('')+'</div></div>':'')+'</section>';
 }
 function syncControls(){
- document.querySelectorAll('button[data-connect-style]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.connectStyle===state.style)));
- document.querySelectorAll('[data-theme-mode]').forEach(btn=>{
-  const chosen=btn.dataset.themeMode===state.mode;
-  btn.setAttribute('aria-pressed',String(chosen));
-  btn.classList.toggle('is-selected',chosen);
- });
- document.querySelectorAll('[data-theme-custom-panel]').forEach(el=>{el.hidden=false;});
- document.querySelectorAll('[data-theme-color]').forEach(el=>{if(el.value.toUpperCase()!==state.color)el.value=state.color;});
- document.querySelectorAll('#appearanceHex').forEach(el=>{el.textContent=state.color;});
- document.querySelectorAll('[data-theme-swatch]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.themeSwatch===state.color)));
+ document.querySelectorAll('[data-theme-toggle]').forEach(b=>{b.innerHTML=state.mode==='dark'?sun:moon;b.setAttribute('aria-label',state.mode==='dark'?'Ativar modo claro':'Ativar modo escuro');b.title=state.mode==='dark'?'Modo claro':'Modo escuro'});
+ document.querySelectorAll('[data-theme-mode]').forEach(b=>{const yes=b.dataset.themeMode===state.mode;b.setAttribute('aria-pressed',String(yes));b.classList.toggle('is-selected',yes)});
+ document.querySelectorAll('[data-theme-color]').forEach(b=>b.value=state.color||normal());
+ document.querySelectorAll('#appearanceHex').forEach(b=>b.textContent=state.color||normal());
+ document.querySelectorAll('[data-theme-swatch]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeSwatch===state.color)));
 }
-document.addEventListener('click',event=>{
- const style=event.target.closest('button[data-connect-style]');if(style){setStyle(style.dataset.connectStyle);return;}
- const mode=event.target.closest('[data-theme-mode]');
- if(mode){setMode(mode.dataset.themeMode);return;}
- const swatch=event.target.closest('[data-theme-swatch]');
- if(swatch)setColor(swatch.dataset.themeSwatch);
+document.addEventListener('click',e=>{
+ const b=e.target.closest?.('[data-theme-toggle],[data-theme-mode],[data-theme-swatch],[data-theme-reset-color]');if(!b)return;
+ if(b.hasAttribute('data-theme-toggle'))setMode(state.mode==='dark'?'light':'dark');
+ else if(b.hasAttribute('data-theme-mode'))setMode(b.dataset.themeMode);
+ else if(b.hasAttribute('data-theme-reset-color'))setColor(null);
+ else if(b.hasAttribute('data-theme-swatch'))setColor(b.dataset.themeSwatch);
 },true);
-document.addEventListener('input',event=>{if(event.target.matches?.('[data-theme-color]'))setColor(event.target.value);},true);
-window.addEventListener('storage',event=>{if(event.key===KEY){state=read();apply();syncControls();}});
+document.addEventListener('input',e=>{if(e.target.matches?.('[data-theme-color]'))setColor(e.target.value)},true);
+window.addEventListener('storage',e=>{if(e.key===KEY){state=load();apply();syncControls()}});
 document.addEventListener('DOMContentLoaded',()=>{
- // Apply a previously chosen motion mode without waiting for async login.
- try{
-  document.body.classList.toggle('motion-off',localStorage.getItem('entre.motionOff')==='1');
-  document.body.classList.toggle('motion-force',localStorage.getItem('entre.motionForce')==='1'&&localStorage.getItem('entre.motionOff')!=='1');
- }catch(e){}
- apply();syncControls();
+ try{document.body.classList.toggle('motion-off',localStorage.getItem('entre.motionOff')==='1');document.body.classList.toggle('motion-force',localStorage.getItem('entre.motionForce')==='1'&&localStorage.getItem('entre.motionOff')!=='1')}catch(_){}
+ document.querySelectorAll('[data-theme-toggle-slot]').forEach(el=>{el.innerHTML=toggleMarkup()});apply();syncControls();
 },{once:true});
-window.entreTheme={read:()=>({...state}),setMode,setStyle,setColor,renderControls,syncControls,PRESETS};
-apply();
+window.entreTheme={read:()=>({...state}),setScope,setMode,setColor,renderControls,syncControls,toggleMarkup,PRESETS};apply();
 })();
