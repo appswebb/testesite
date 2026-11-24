@@ -259,6 +259,7 @@ async function renderWebBrick(){
   }
  });
 }
+async function leavePremium(){data.webCheckoutOpen=false;data.webError='';await unmountPaymentBrick();}
 async function checkout(){
  if(data.checkoutBusy)return;
  if(data.premium?.active){toast('Você já é Premium.');return;}
@@ -267,7 +268,7 @@ async function checkout(){
  try{
   const {data:config,error}=await db.functions.invoke('entre-premium-web',{body:{action:'config'}});
   if(error||!config?.enabled||!config?.public_key)throw Error(config?.message||'Pagamento Pix/cartão no navegador ainda não está configurado.');
-  data.webConfig=config;data.webCheckoutOpen=true;data.webStatusText='';
+  if(state.view!=='premium')return;data.webConfig=config;data.webCheckoutOpen=true;data.webStatusText='';
   renderView();await renderWebBrick();
  }catch(error){data.webError=infoError(error);data.webCheckoutOpen=false;renderView();toast(data.webError,true);}
  finally{data.checkoutBusy=false;const btn=document.querySelector('[data-action="premiumCheckout"]');if(btn){btn.disabled=!data.premium?.checkout_enabled;btn.textContent='Comprar Premium';}}
@@ -309,7 +310,7 @@ function supportView(){
  return '<section class="csup-page"><header class="csup-intro"><h2>Como podemos ajudar?</h2><p>Envie seu relato diretamente à equipe CONNECT. Acompanhe as respostas pelo protocolo.</p></header>'+prioritySupport()+'<form id="supportTicketForm" class="csup-form"><div class="csup-fields"><h3>Novo chamado</h3><div class="field"><label for="supportCategory">Categoria</label><select name="category" id="supportCategory">'+Object.entries(supportCategories).map(([v,label])=>'<option value="'+v+'">'+label+'</option>').join('')+'</select></div><div class="field"><label for="supportSubject">Assunto</label><input name="subject" id="supportSubject" minlength="5" maxlength="120" required placeholder="Resuma o problema"></div><div class="field"><label for="supportDescription">Descrição</label><textarea name="description" id="supportDescription" minlength="20" maxlength="3000" required rows="5" placeholder="Como podemos ajudar?"></textarea></div><div class="field"><label for="supportProof">Provas (opcionais)</label><input name="proof" id="supportProof" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" multiple><small>Até 3 arquivos de 5 MB. Enviados ao painel em armazenamento privado.</small></div><p class="csup-privacy">'+ico('lock',15)+' Não inclua senhas ou dados bancários.</p><button class="ui-btn btn-dark csup-submit" type="submit" '+(data.supportBusy?'disabled':'')+'>Enviar chamado '+ico('arrow',18)+'</button></div></form><button type="button" class="ui-btn btn-outline" data-action="nav" data-view="protocols">Meus protocolos '+ico('arrow',16)+'</button></section>';
 }
 function prioritySupport(){const active=data.premium?.active===true;return '<article class="csup-priority"><div class="csup-priority-icon">'+ico('crown',24)+'</div><div><small>CONNECT PREMIUM</small><h3>Atendimento prioritário</h3><p>'+(active?'Seu plano inclui suporte pelo WhatsApp.':'Tenha um canal direto de atendimento pelo WhatsApp ao adquirir o Premium.')+'</p></div><button type="button" class="ui-btn btn-dark" '+(active?'data-action="premiumWhatsapp"':'data-action="nav" data-view="premium"')+'>'+(active?'Falar no WhatsApp':'Conhecer Premium')+'</button></article>';}
-function protocolsView(){return '<section class="csup-page"><header class="csup-intro"><h2>Meus protocolos</h2><p>Acompanhe e gerencie seus chamados de suporte.</p></header><button type="button" class="ui-btn btn-dark" data-action="nav" data-view="support">Novo chamado</button><section class="csup-history"><div id="cpSupportHistory">'+supportHistory()+'</div></section></section>';}
+function protocolsView(){if(supportOwner!==state.session?.user?.id)data.support=[];return '<section class="csup-page"><header class="csup-intro"><h2>Meus protocolos</h2><p>Acompanhe e gerencie seus chamados de suporte.</p></header><button type="button" class="ui-btn btn-dark" data-action="nav" data-view="support">Novo chamado</button><section class="csup-history"><div id="cpSupportHistory">'+supportHistory()+'</div></section></section>';}
 function supportHistory(){const labels={submitted:'Aguardando resposta',reviewing:'Em atendimento',resolved:'Resolvido',cancelled:'Cancelado'};return data.support.length?data.support.map(t=>'<article class="csup-ticket"><strong>#'+Number(t.id)+' · '+esc(t.subject)+'</strong><small class="csup-ticket-status" data-status="'+esc(t.status)+'">'+esc(labels[t.status]||t.status)+'</small><div class="csup-ticket-actions"><button class="ui-btn btn-outline" type="button" data-support-thread="'+Number(t.id)+'">Abrir protocolo</button>'+(['submitted','reviewing'].includes(t.status)?'<button class="ui-btn btn-outline" type="button" data-support-cancel="'+Number(t.id)+'">Cancelar</button>':'')+'</div></article>').join(''):'<p class="csup-note">Nenhum protocolo ainda.</p>';}
 let supportOwner=null,supportSeq=0;
 async function loadSupport(){const uid=state.session?.user?.id;if(!uid)return;if(supportOwner!==uid){data.support=[];supportOwner=uid;}const seq=++supportSeq;try{const rows=await call('entre_my_support_tickets');if(state.session?.user?.id!==uid||seq!==supportSeq)return;data.support=Array.isArray(rows)?rows:[];const root=document.getElementById('cpSupportHistory');if(root&&root.innerHTML!==supportHistory())root.innerHTML=supportHistory();}catch(e){console.warn('Support unavailable');}}
@@ -328,10 +329,10 @@ async function submitSupport(form){
 }
 async function enter(view){
  if(view==='posts')await loadPosts();
- if(view==='premium'){await refreshPremium();await window.entreRecurring?.loadStatus?.();renderView();}
+ if(view==='premium'){await refreshPremium();await window.entreRecurring?.loadStatus?.();if(state.view==='premium'&&!data.webCheckoutOpen)renderView();}
  if(view==='support'){await refreshPremium();if(state.view==='support')renderView();}
  if(view==='protocols'){data.support=[];await loadSupport();}
 }
-Object.assign(mod,{data,isPremium:premium,badge,loadBadges,refreshPremium,loadPosts,postsView,postAction,postForm,premiumView,checkout,verifyPremium,copyPix,unmountPaymentBrick,openPremiumWhatsapp,supportView,protocolsView,submitSupport,loadSupport,enter});
+Object.assign(mod,{data,isPremium:premium,badge,loadBadges,refreshPremium,loadPosts,postsView,postAction,postForm,premiumView,checkout,verifyPremium,copyPix,unmountPaymentBrick,leavePremium,openPremiumWhatsapp,supportView,protocolsView,submitSupport,loadSupport,enter});
 window.entreExtras=mod;
 })();
