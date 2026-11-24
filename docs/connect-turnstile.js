@@ -14,16 +14,33 @@
   if(n==='200500')return 'O navegador não carregou a verificação'+detail+'. Confira bloqueadores e conexão.';
   return 'Falha na verificação de segurança'+detail+'. Tente novamente.';
  }
+ let loadedAPI=null,attempt=0;
  function load(){
+  if(loadedAPI)return Promise.resolve(loadedAPI);
   if(loading)return loading;
   loading=new Promise((resolve,reject)=>{
-   let script=null,timer=null,finished=false;
-   const fail=()=>{if(finished)return;finished=true;clearTimeout(timer);script?.remove();reject(Error('Não foi possível carregar a Cloudflare. Confira a conexão e bloqueadores de conteúdo.'));};
-   const ready=()=>{if(finished)return;if(!window.turnstile?.render||!window.turnstile?.ready){fail();return;}window.turnstile.ready(()=>{if(finished)return;finished=true;clearTimeout(timer);resolve(window.turnstile);});};
-   timer=setTimeout(fail,25000);
-   if(window.turnstile?.render){ready();return;}
-   script=document.createElement('script');script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';script.async=true;
-   script.onerror=fail;script.onload=ready;document.head.append(script);
+   const name='connectTurnstileReady'+(++attempt);
+   let script=null,timer=null,finished=false,downloaded=false;
+   const cleanup=()=>{clearTimeout(timer);delete window[name];};
+   const fail=(code,message)=>{if(finished)return;finished=true;cleanup();script?.remove();reject(Error(message+' ('+code+').'));};
+   const ready=()=>{
+    if(finished)return;
+    const api=window.turnstile;
+    if(typeof api?.render!=='function')return;
+    finished=true;cleanup();loadedAPI=api;resolve(api);
+   };
+   timer=setTimeout(()=>fail(downloaded?'CF-INIT':'CF-TIMEOUT',downloaded?'A Cloudflare foi baixada, mas não inicializou':'A conexão com a Cloudflare demorou demais'),30000);
+   if(typeof window.turnstile?.render==='function'&&typeof window.turnstile?.ready==='function'){
+    try{window.turnstile.ready(ready);return;}catch(_){}
+   }
+   // Register the official explicit-render onload callback before inserting the script.
+   window[name]=ready;
+   script=document.createElement('script');
+   script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload='+name;
+   script.async=true;
+   script.onerror=()=>fail('CF-NET','Não foi possível acessar challenges.cloudflare.com. Confira DNS privado, VPN e bloqueadores');
+   script.onload=()=>{downloaded=true;if(typeof window.turnstile?.ready==='function'){try{window.turnstile.ready(ready);}catch(_){/* official callback remains pending */}}};
+   document.head.appendChild(script);
   }).catch(error=>{loading=null;throw error;});return loading;
  }
  function notify(c){for(const wake of [...c.waiters])wake();}
@@ -72,6 +89,6 @@
   const token=c.token;c.token='';c.used=true;status(c,'Validando segurança…');return token;
  }
  window.connectTurnstile={markup,consume,reset};
- function start(){new MutationObserver(sync).observe(document.body,{childList:true,subtree:true});sync();}
+ function start(){new MutationObserver(sync).observe(document.body,{childList:true,subtree:true});sync();if(document.querySelector(selector))void load().catch(()=>{});}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();

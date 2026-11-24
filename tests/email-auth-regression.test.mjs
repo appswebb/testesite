@@ -146,3 +146,5 @@ test('auth waits for the async Turnstile token before submitting and resets it a
  const {api,db,win,events}=setup();let resolveToken,request;win.connectTurnstile.consume=()=>new Promise(resolve=>{resolveToken=resolve;});db.auth.signInWithPassword=async p=>{request=p;return {error:{status:400,code:'captcha_failed',message:'captcha failed'}};};
  const attempt=api.submit(form('login',{email:'test@example.invalid',password:'MinhaSenhaSegura2026'}));await Promise.resolve();assert.equal(request,undefined);resolveToken('fresh-token');await attempt;assert.equal(request.options.captchaToken,'fresh-token');assert.ok(events.includes('captcha-reset'));
 });
+
+test('Turnstile uses the official explicit onload callback and separates network from initialization failures',()=>{const source=read('connect-turnstile.js');assert.match(source,/render=explicit&onload=/);assert.match(source,/window\[name\]=ready/);assert.match(source,/CF-NET/);assert.match(source,/CF-INIT/);assert.match(source,/CF-TIMEOUT/);assert.match(read('index.html'),/connect-turnstile.js\?v=3/);assert.match(read('admin/index.html'),/connect-turnstile.js\?v=3/);});
