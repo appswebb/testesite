@@ -1,7 +1,7 @@
 /* Realtime presence, account activity, and recovery after a mobile browser pause. */
 (()=>{
 'use strict';
-let feedDirty=false,roomTimer=0;let pairsDirty=false,pairsLoading=false;let publicChannel=null,accountChannel=null,account=null,count=null,countAt=0,started=false,pinging=false,counting=false,onlineBusy=false,onlineQueued=false,activityTimer=0,presenceTimer=0,resuming=false,lastPing=0,lastResume=0;
+let onlineSignature=null,feedDirty=false,roomTimer=0;let pairsDirty=false,pairsLoading=false;let publicChannel=null,accountChannel=null,account=null,count=null,countAt=0,started=false,pinging=false,counting=false,onlineBusy=false,onlineQueued=false,activityTimer=0,presenceTimer=0,resuming=false,lastPing=0,lastResume=0;
 const ready=()=>typeof db!=='undefined'&&typeof state!=='undefined';
 const uid=()=>ready()?state.session?.user?.id:null;
 const member=()=>uid()&&state.profile&&!state.suspension&&!maintenanceIsActive();
@@ -21,9 +21,9 @@ async function refreshOnline(){
  if(document.querySelector('.cn-online-filter[open]')||api().data.offset>0||api().data.online.length>12)return;
  if(onlineBusy||api().data.busy){onlineQueued=true;return;}
  onlineBusy=true;const user=uid();
- try{const before=JSON.stringify(api().data.online.map(({last_seen,...p})=>({...p,recent:Date.now()-new Date(last_seen).getTime()>90000})));await api().loadOnline(true);if(uid()!==user)return;
+ try{const before=onlineSignature;await api().loadOnline(true);if(uid()!==user)return;
  const after=JSON.stringify(api().data.online.map(({last_seen,...p})=>({...p,recent:Date.now()-new Date(last_seen).getTime()>90000})));
- if(state.view==='online'&&!document.querySelector('.cn-online-filter[open]')&&before!==after)renderView();
+ if(state.view==='online'&&!document.querySelector('.cn-online-filter[open]')&&before!==after){onlineSignature=after;renderView();}
  }finally{onlineBusy=false;if(onlineQueued){onlineQueued=false;setTimeout(refreshOnline,500)}}
 }
 function presenceEvent(){clearTimeout(presenceTimer);presenceTimer=setTimeout(()=>{void refreshCount();void refreshOnline()},180)}
@@ -44,7 +44,7 @@ function subscribe(){
  const user=member()?uid():null;
  if(account===user)return;
  if(accountChannel){void db.removeChannel(accountChannel);accountChannel=null;}
- account=user;lastPing=0;pairsDirty=false;
+ account=user;lastPing=0;pairsDirty=false;onlineSignature=null;
  if(!user)return;
  accountChannel=db.channel('connect-account-'+user)
  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_community_signal'},communityEvent)
