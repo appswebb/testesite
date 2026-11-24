@@ -13,13 +13,13 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "./connect-app-icon.svg?v=original-v12",
+      "src": "./connect-app-icon.svg?v=clean-v16",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "./connect-app-icon.svg?v=original-v12",
+      "src": "./connect-app-icon.svg?v=clean-v16",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "maskable"
