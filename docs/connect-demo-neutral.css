@@ -1,0 +1,10 @@
+/* Match the actual app's default light palette, never inherit legacy accent tokens. */
+html[data-theme=light][data-theme-scope=app]{
+--ui-bg:#F5F6F9!important;--ui-panel:#FFFFFF!important;--ui-panel-alt:#EEF0F4!important;--ui-text:#20232A!important;--ui-muted:#606978!important;--ui-line:#DFE3EB!important;
+--ui-accent:#20232A!important;--ui-accent-on:#FFFFFF!important;--ui-accent-soft:rgb(32 35 42 / .13)!important;--ui-accent-faint:rgb(32 35 42 / .07)!important;--ui-accent-shadow:rgb(32 35 42 / .24)!important;
+--ui-theme-surface:#FFFFFF!important;--ui-theme-text:#20232A!important;--cn-grad:#20232A!important;--cn-ink:#FFFFFF!important;
+}
+html[data-theme] #app{filter:grayscale(1);background:var(--ui-bg)!important}
+html[data-theme] #app :is(.btn-dark,.premium-buy,.cn-nav-link.is-active,.live-start,.live-start-btn){background:#111111!important;color:#FFFFFF!important;border-color:#111111!important}
+html[data-theme] #app :is(.live-app-card,.cn-feed-composer,.post-card,.settings-card,.cp-plan,.cn-feed-stories){background:var(--ui-panel)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+html[data-theme] #app :is(.live-mode,.story-ring,.feed-add-media){background:var(--ui-panel-alt)!important;border-color:var(--ui-line)!important;color:var(--ui-text)!important}
