@@ -1,6 +1,59 @@
 
 (function(){
 const api=window.entreSocial;
+let profileSequence=0,returnFocus=null;
+async function openPerson(id,handle=''){
+ if(!state.session?.user||!state.profile||maintenanceIsActive()||state.suspension)return;
+ if(window.entreSocial?.requiredPoll?.()&&!activeEncounter()){toast('Primeiro, registre seu voto na enquete oficial.',true);return;}
+ const uid=state.session.user.id;
+ if(id===uid||(!id&&handle&&handle===state.profile.username)){setConnectMenu(false);nav('profile');return;}
+ const request=++profileSequence;
+ try{
+  let person=null;
+  if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id||'')){
+   const {data,error}=await db.from('entre_profiles').select('id,username,display_name,age,bio,gender,avatar_path,avatar_uploaded_at').eq('id',id).maybeSingle();
+   if(error)throw error;person=data;
+  }else if(/^[a-z][a-z0-9_]{2,19}$/i.test(handle)){
+   const rows=await api.rpc('entre_user_search',{_query:handle.toLowerCase()});
+   person=(Array.isArray(rows)?rows:[]).find(p=>p.username===handle.toLowerCase());
+  }
+  if(request!==profileSequence||state.session?.user?.id!==uid)return;
+  if(!person){toast('O perfil não está disponível.',true);return;}
+  await Promise.allSettled([signAvatar(person),window.entreExtras?.loadBadges?.([person])]);
+  if(request!==profileSequence||state.session?.user?.id!==uid)return;
+  returnFocus=document.activeElement;
+  setConnectMenu(false);api.data.socialProfile=person;state.modal='socialProfile';
+  document.getElementById('modalBackdrop')?.remove();
+  document.getElementById('app').insertAdjacentHTML('beforeend',api.profileModal());
+  document.querySelector('#modalBackdrop [data-action="closemodal"]')?.focus({preventScroll:true});
+ }catch(error){if(request===profileSequence)toast('Não foi possível abrir esse perfil.',true);}
+}
+window.connectProfileReturnFocus=()=>{if(returnFocus?.isConnected)returnFocus.focus({preventScroll:true});returnFocus=null;};
+function target(event){
+ const el=event.target.closest?.('[data-cp-user],[data-avatar-id]');
+ if(!el||el.closest('.cp-visitor,.pi-avatar-wrap,.cn-account-trigger,.cn-side-profile,.cn-account-head,.cn-dock,.auth-shell,.avatar-uploader,.crop-dialog'))return null;
+ const id=el.dataset.cpUser||el.dataset.avatarId||'',handle=el.dataset.cpHandle||'';
+ return id||handle?{el,id,handle}:null;
+}
+document.addEventListener('click',event=>{
+ const p=target(event);if(!p)return;
+ event.preventDefault();event.stopImmediatePropagation();void openPerson(p.id,p.handle);
+},true);
+document.addEventListener('keydown',event=>{
+ if(!['Enter',' '].includes(event.key)||event.repeat)return;
+ const p=target(event);if(!p||p.el!==event.target)return;
+ event.preventDefault();event.stopImmediatePropagation();void openPerson(p.id,p.handle);
+},true);
+function decorate(){
+ document.querySelectorAll('#app [data-cp-user],#app [data-avatar-id]').forEach(el=>{
+  if(!target({target:el}))return;
+  el.classList.add('cp-profile-target');
+  if(!el.closest('button,a,[role=button]')){el.tabIndex=0;el.setAttribute('role','link');el.setAttribute('aria-label','Abrir perfil'+(el.classList.contains('cp-person-link')?' de '+el.textContent.trim():''));}
+ });
+}
+document.addEventListener('DOMContentLoaded',()=>{const app=document.getElementById('app');if(app)new MutationObserver(decorate).observe(app,{childList:true,subtree:true});decorate()},{once:true});
+api.openPerson=openPerson;
+
 async function action(type,btn){
  const id=btn?.dataset.id,call=api.rpc;
  try{
@@ -13,9 +66,7 @@ async function action(type,btn){
  }
  if(type==='onlineMore'||type==='onlineRestart'){await api.loadOnline(type==='onlineRestart');renderView();return true;}
  if(type==='profileOpen'){
-  const person=[...Object.values(state.pairsProfiles||{}),...api.data.online,...(api.data.peopleResults||[])].find(p=>p?.id===id);
-  if(!person){toast('O perfil não está mais disponível.',true);return true;}
-  api.data.socialProfile=person;state.modal='socialProfile';render();return true;
+  await openPerson(id,btn?.dataset.cpHandle||'');return true;
  }
  if(type==='socialFollow'){
   const r=await call('entre_follow_request',{_target:id});
