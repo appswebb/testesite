@@ -240,3 +240,21 @@ html[data-theme] #app .cl-public .cl-end .cl-primary::after{content:"";width:6px
  html[data-theme] #app .cl-header .cl-header-actions{gap:2px}
  html[data-theme] #app .cl-header .cl-header-actions .cl-login-button{min-width:48px!important}
 }
+
+
+/* Upcoming features and consistent profile links, no layout changes to other screens. */
+#app .cp-soon{width:min(100%,720px);margin:0 auto;display:grid;gap:18px;padding:10px 0 24px}
+#app .cp-soon>header{padding:8px 0}
+#app .cp-soon-kicker{color:var(--ui-muted);font-size:10px;font-weight:750;letter-spacing:.12em}
+#app .cp-soon h2{color:var(--ui-text);font-size:clamp(28px,6vw,40px);letter-spacing:-.045em;margin:8px 0}
+#app .cp-soon p{color:var(--ui-muted);font-size:13px;line-height:1.6;margin:0}
+#app .cp-soon-card{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:start;gap:12px;padding:18px;border:1px solid var(--ui-line);border-radius:18px;background:var(--ui-panel);color:var(--ui-text)}
+#app .cp-soon-icon{display:grid;place-items:center;width:48px;height:48px;background:var(--ui-panel-alt);border:1px solid var(--ui-line);border-radius:14px}
+#app .cp-soon-card h3{font-size:17px;margin:0 0 6px}
+#app .cp-soon-status{font-size:10px;font-weight:700;border:1px solid var(--ui-line);border-radius:99px;padding:6px 9px;background:var(--ui-panel-alt);white-space:nowrap;color:var(--ui-muted)}
+.cp-profile-target{cursor:pointer!important}
+.cp-person-link{color:inherit;font:inherit}
+.cp-profile-target:focus-visible{outline:2px solid var(--ui-accent);outline-offset:3px;border-radius:4px}
+@media(hover:hover){.cp-person-link.cp-profile-target:hover{text-decoration:underline;text-underline-offset:3px}}
+#app #modalBackdrop:has(.cp-visitor){z-index:100010!important}
+@media(max-width:420px){#app .cp-soon-card{grid-template-columns:42px minmax(0,1fr);padding:14px;gap:10px}#app .cp-soon-icon{width:42px;height:42px}#app .cp-soon-status{grid-column:2;justify-self:start}}
