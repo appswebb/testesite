@@ -23,7 +23,7 @@ function row(pair){
  const p=api.pref(pair),archived=Boolean(p.archived_at);
  return '<article class="conversation-entry '+(p.pinned?'is-pinned':'')+'">'+
  '<button class="convo-card" type="button" data-action="openpair" data-id="'+esc(pair.id)+'">'+
- avatar(peer)+'<div class="convo-details"><strong>'+esc(peer.display_name)+(window.entreExtras?.badge?.(peer)||'')+'</strong>'+
+ avatar(peer)+'<div class="convo-details"><strong>'+profileName(peer.id,peer.display_name,peer.username)+(window.entreExtras?.badge?.(peer)||'')+'</strong>'+
  '<p>'+(peer.username?'@'+esc(peer.username)+' · ':'')+(archived?'Arquivada':p.pinned?'Fixada · conversa permanente':'Conversa permanente')+'</p>'+
  '<small>Começou em '+(pair.origin==='online'?'Pessoas online':'Chat ao vivo')+'</small></div>'+
  '<span class="conversation-card-arrow">'+ico('chevron',17)+'</span></button>'+conversationMenu(pair)+'</article>';
