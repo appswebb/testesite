@@ -1,7 +1,8 @@
 /* entre. · Motion System / progressive enhancement; no auth, database or private chat access. */
 (()=>{'use strict';
 const reduce=matchMedia('(prefers-reduced-motion: reduce)');
-const shouldReduce=()=>document.body.classList.contains('motion-off')||(reduce.matches&&!document.body.classList.contains('motion-force'));
+const shouldReduce=()=>document.documentElement.dataset.motionLevel==='light'||document.body.classList.contains('motion-off')||(!document.documentElement.dataset.motionLevel&&reduce.matches&&!document.body.classList.contains('motion-force'));
+const level=()=>document.documentElement.dataset.motionLevel||'medium';
 let observer=null, scheduled=false, seenMatch=false, votedRecently=0;
 const $=(s,root=document)=>root.querySelector(s);
 const $$=(s,root=document)=>[...root.querySelectorAll(s)];
@@ -30,7 +31,7 @@ function celebrate(){
  const container=document.createElement('div');container.className='entre-celebration';container.setAttribute('aria-hidden','true');
  const accent=getComputedStyle(document.documentElement).getPropertyValue('--ui-accent').trim()||'#111111';
  const colors=[accent,'#FFFFFF','#D9DDE5','#FBC5D2',accent];
- for(let i=0;i<34;i++){
+ for(let i=0;i<(level()==='high'?46:22);i++){
   const piece=document.createElement('i');piece.className='entre-confetti';
   const a=i*2.3999632297,dist=80+(i*41%260);
   piece.style.setProperty('--dx',Math.cos(a)*dist+'px');piece.style.setProperty('--dy',Math.sin(a)*dist+'px');

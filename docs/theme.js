@@ -5,9 +5,9 @@
 'use strict';
 const KEY='entre.appearance.v1';
 const MODES=['light','dark','custom'];
-const DEFAULT={mode:'light',color:'#2977D5'};
+const DEFAULT={mode:'light',color:'#7757F4'};
 const PRESETS=[
- ['#17191D','Grafite'],['#2977D5','Azul'],['#F07C55','Coral'],
+ ['#7757F4','Violeta'],['#2977D5','Azul'],['#F07C55','Coral'],
  ['#AE63CF','Lavanda'],['#DAA520','Dourado'],['#EA5386','Rosa']
 ];
 const hex=v=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v)?v.toUpperCase():null;
@@ -29,32 +29,32 @@ function readable(h){
 function apply(){
  const root=document.documentElement;
  root.dataset.theme=state.mode;
- const accent=state.mode==='custom'?state.color:state.mode==='dark'?'#F5F6F8':'#111111';
+ const accent=state.mode==='custom'?state.color:state.mode==='dark'?'#B4A6FF':'#6850EC';
  const accentOn=readable(accent);
  root.style.setProperty('--ui-accent',accent);
  root.style.setProperty('--ui-accent-on',accentOn);
  root.style.setProperty('--ui-accent-soft',`rgb(${rgb(accent).join(' ')} / .13)`);
  root.style.setProperty('--ui-accent-faint',`rgb(${rgb(accent).join(' ')} / .07)`);
  root.style.setProperty('--ui-accent-shadow',`rgb(${rgb(accent).join(' ')} / .24)`);
- root.style.setProperty('--ui-theme-surface',state.mode==='dark'?'#17191D':'#FFFFFF');
+ root.style.setProperty('--ui-theme-surface',state.mode==='dark'?'#1D2335':'#FFFFFF');
  root.style.setProperty('--ui-theme-text',state.mode==='dark'?'#F5F6F8':'#151719');
- const metaColor=state.mode==='dark'?'#101114':state.mode==='custom'?accent:'#F6F7F7';
+ const metaColor=state.mode==='dark'?'#141827':'#F7F7FD';
  document.querySelectorAll('meta[name="theme-color"]').forEach(meta=>meta.setAttribute('content',metaColor));
  root.style.colorScheme=state.mode==='dark'?'dark':'light';
  // Explicit inline fallback is necessary because legacy pages include fixed
  // !important surface rules which sometimes defeat the token stylesheet.
  // Apply on every mode change and on DOMContentLoaded, even before auth.
  if(document.body){
-  document.body.style.setProperty('background-color',state.mode==='dark'?'#101114':'#FFFFFF','important');
-  document.body.style.setProperty('color',state.mode==='dark'?'#F7F8FA':'#15191A','important');
+  document.body.style.setProperty('background-color',state.mode==='dark'?'#141827':'#F7F7FD','important');
+  document.body.style.setProperty('color',state.mode==='dark'?'#F6F5FF':'#242238','important');
  }
  // Immediate background sync for mounted legacy cards. Several old stylesheets
  // define a white !important shorthand and otherwise flash white on theme switch.
  const surfaces=document.querySelectorAll('.post-card,.post-compose,.settings-card,.form-panel,.profile-preview,.online-person,.conversation-entry,.comments-dialog,.room-shell,.camera-live-stage,.global-search-section,.support-card,.support-history,.premium-checkout-card');
  for(const el of surfaces){
   if(state.mode==='dark'){
-   el.style.setProperty('background-color','#191c21','important');
-   el.style.setProperty('color','#f7f8fa','important');
+   el.style.setProperty('background-color','#1E263A','important');
+   el.style.setProperty('color','#F6F5FF','important');
    el.dataset.themeSurfaceApplied='dark';
   }else if(el.dataset.themeSurfaceApplied==='dark'){
    el.style.removeProperty('background-color');el.style.removeProperty('background');el.style.removeProperty('color');
