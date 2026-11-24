@@ -33,7 +33,7 @@ async function loadPosts(more=false){
   await window.entreMedia?.signPosts?.(data.posts);
   const ids=data.posts.filter(p=>p.premium).map(p=>p.author_id);
   for(const id of ids)data.premiumIds.add(id);
-  renderView();
+  if(state.view==='posts')renderView();
  }catch(e){toast(infoError(e),true);}finally{data.postLoading=false;}
 }
 
@@ -103,8 +103,7 @@ function postsView(){
   (p.body?'<p class="post-body">'+esc(p.body)+'</p>':'')+(window.entreMedia?.postMarkup?.(p)||'')+'<div class="post-interactions"><button type="button" class="'+(p.liked?'liked':'')+'" data-action="postLike" data-id="'+Number(p.id)+'">'+ico('heart',17)+' '+Number(p.likes||0)+' curtidas</button><span>'+ico('chat',15)+' '+(p.comments?.length||0)+' comentários recentes</span></div>'+
   '<button type="button" class="post-comments-launch" data-action="postCommentsOpen" data-id="'+Number(p.id)+'">'+ico('chat',18)+' <span>Ver comentários e participar</span>'+ico('arrow',16)+'</button></article>';
  }).join(''):'<div class="social-empty"><h3>A comunidade está começando.</h3><p>Seu post pode ser o primeiro. Faça uma pergunta ou compartilhe uma ideia.</p></div>')+
- (data.postMore?'<button class="ui-btn btn-outline" data-action="postsMore">Carregar mais posts</button>':'')+'</div>'+
- '<aside class="posts-aside"><strong>Um espaço para conversas reais</strong><p>Não compartilhe telefone, dados pessoais, endereços nem informações íntimas. Respeito e privacidade são essenciais.</p><button type="button" data-action="nav" data-view="support" class="ui-btn btn-outline btn-sm">Reportar um problema</button></aside></section>'+commentsOverlay();
+ (data.postMore?'<button class="ui-btn btn-outline" data-action="postsMore">Carregar mais posts</button>':'')+'</div></section>'+commentsOverlay();
 }
 async function postAction(a,btn){
  const id=Number(btn.dataset.id);
