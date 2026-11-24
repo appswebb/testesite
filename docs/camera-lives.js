@@ -106,7 +106,7 @@ const interaction={comments:[],hearts:0,comments_enabled:true,draft:'',timer:nul
 const liveNumber=n=>Number(n||0).toLocaleString('pt-BR');
 const moderation={target:null,rows:[],busy:false,open:false};
 const studio={data:{},busy:false,tab:'',timer:null,lastGift:null};
-const isStaff=()=>s.localRole==='host'||studio.data.can_moderate===true||interaction.can_moderate===true;
+const isStaff=()=>s.localRole==='host'||studio.data.can_moderate===true;
 const giftKinds={rose:['🌹','Rosa',1],star:['⭐','Estrela',3],fire:['🔥','Fogo',5]};
 const liveGuests=()=>{const rows=[...(studio.data.guests||[])];if(s.active?.guest_id&&!rows.some(x=>x.id===s.active.guest_id))rows.push({id:s.active.guest_id,name:s.active.guest_name||'Convidado',status:'approved'});return rows;};
 function studioButton(action,label,id='',value=''){return '<button type="button" data-live-action="studio-'+action+'" data-id="'+esc(id)+'" data-value="'+esc(value)+'">'+esc(label)+'</button>';}
@@ -154,14 +154,14 @@ function paintStudio(){
  if(strip.innerHTML!==bits)strip.innerHTML=bits;
 }
 async function studioCall(type='read',id=null,value=null){
- const live=s.active?.id;if(!live||studio.busy)return false;studio.busy=true;
+ const live=s.active?.id;if(!live||studio.busy){if(type!=='read')toast('Aguarde a atualização da live e tente novamente.');return false;}studio.busy=true;
  try{let data,error;
   if(type==='guest_remove'){const r=await db.functions.invoke('entre-camera-live-token',{body:{live_id:live,action:'guest_remove',target:id}});data=r.data?.studio;error=r.error;if(!error&&!r.data?.removed)toast('Retirada salva, mas a revogação do vídeo não foi confirmada.',true);}
   else{const r=await db.rpc('connect_live_studio',{_live:live,_action:type,_target:id,_value:value});data=r.data;error=r.error;}
   if(error||!data)throw error||Error('Recurso indisponível');if(s.active?.id!==live)return false;
   const wasStaff=isStaff();studio.data=data;interaction.can_moderate=data.can_moderate===true;
   if(wasStaff!==isStaff()&&state.view==='lives'){renderView();attachAll();}
-  if(s.localRole==='guest'&&data.my_guest!=='approved'&&!s.joining){await join(live);return true;}
+  if(s.localRole==='guest'&&data.my_guest!=='approved'&&!s.joining){if(s.room){await s.room.localParticipant.setCameraEnabled(false).catch(()=>{});await s.room.localParticipant.setMicrophoneEnabled(false).catch(()=>{});}await join(live);return true;}
   paintStudio();showStudio();return true;
  }catch(e){if(type!=='read')toast(infoError(e),true);return false;}
  finally{studio.busy=false;}
@@ -515,7 +515,7 @@ document.addEventListener('click',event=>{
  void action(button.dataset.liveAction,button).catch(e=>toast(infoError(e),true));
 });
 document.addEventListener('input',event=>{if(event.target?.closest?.('#connectLiveCommentForm'))interaction.draft=event.target.value;});
-document.addEventListener('submit',async event=>{if(event.target?.id==='connectLiveWordsForm'){event.preventDefault();await studioCall('words',null,event.target.elements.namedItem('words').value);toast('Filtro atualizado.');return;}if(event.target?.id!=='connectLiveCommentForm')return;event.preventDefault();const input=event.target.elements.namedItem('comment'),value=input.value.trim();if(!value||interaction.busy)return;const live=s.active?.id;if(await interact('comment',value)&&live===s.active?.id){if(interaction.draft.trim()===value)interaction.draft='';if(input.isConnected&&input.value.trim()===value)input.value='';}});
+document.addEventListener('submit',async event=>{if(event.target?.id==='connectLiveWordsForm'){event.preventDefault();if(await studioCall('words',null,event.target.elements.namedItem('words').value))toast('Filtro atualizado.');return;}if(event.target?.id!=='connectLiveCommentForm')return;event.preventDefault();const input=event.target.elements.namedItem('comment'),value=input.value.trim();if(!value||interaction.busy)return;const live=s.active?.id;if(await interact('comment',value)&&live===s.active?.id){if(interaction.draft.trim()===value)interaction.draft='';if(input.isConnected&&input.value.trim()===value)input.value='';}});
 function beginPolling(){
  if(s.timer)clearInterval(s.timer);
  s.timer=setInterval(()=>{if(state.view==='lives'&&!document.hidden)void refresh(!s.active);},8000);
