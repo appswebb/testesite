@@ -233,3 +233,39 @@ html[data-theme] #console .admin-version{font-size:10px;color:var(--ui-muted);fo
 html[data-theme] #app .cn-view .notification-controls button{max-width:100%;white-space:normal}
 html[data-theme] #app .cn-online-filter-panel{max-width:calc(100vw - 32px)}
 html[data-theme] #app .cn-view .live-visual-empty :is(span,p){color:var(--ui-muted)!important}
+
+/* Targeted mobile corrections — keep existing layout, navigation and theme. */
+html[data-theme] #app .cn-public-v7 .cn-art-fade{transform:none!important;perspective:none!important;animation:none!important;overflow:visible!important;box-shadow:none!important;background:transparent!important;border:0!important;padding:0!important}
+html[data-theme] #app .cn-public-v7 .cn-art-fade::before,html[data-theme] #app .cn-public-v7 .cn-art-fade::after{content:none!important;display:none!important}
+html[data-theme] #app .cn-public-v7 .cn-art-fade img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:contain;transform:none!important;animation:none!important;filter:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;background:transparent!important;mask-image:linear-gradient(to right,transparent 0%,#000 15%,#000 85%,transparent 100%),linear-gradient(to bottom,transparent 0%,#000 15%,#000 85%,transparent 100%)!important;mask-composite:intersect!important;-webkit-mask-image:linear-gradient(to right,transparent 0%,#000 15%,#000 85%,transparent 100%),linear-gradient(to bottom,transparent 0%,#000 15%,#000 85%,transparent 100%)!important;-webkit-mask-composite:source-in!important}
+html[data-theme] #app .connect-app-screen .live-app-card.cn-unified-match{display:flex!important;flex-direction:column!important;gap:0!important;overflow:hidden!important;padding:18px!important;background:radial-gradient(ellipse at 50% 13%,var(--ui-accent-soft),transparent 52%),var(--ui-panel)!important;border-radius:24px!important}
+html[data-theme] #app .cn-unified-match .cn-match-art{width:100%;margin:0 0 12px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;height:clamp(155px,25dvh,225px);min-height:0!important}
+html[data-theme] #app .cn-unified-match .connect-mode-label{margin:0 0 12px!important;font-size:16px!important}
+html[data-theme] #app .cn-unified-match .live-modes{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px!important;min-width:0}
+html[data-theme] #app .cn-unified-match .live-mode{min-width:0!important}
+html[data-theme] #app .cn-unified-match .live-filter-trigger{margin:10px 0 12px!important}
+html[data-theme] #app .cn-unified-match .live-filter-trigger>span{min-width:0;flex:1;overflow-wrap:anywhere}
+html[data-theme] #app .cn-unified-match .live-app-find{margin:0!important}
+html[data-theme] #app .motion-level-picker{display:grid!important;grid-template-columns:1fr!important;gap:9px!important;margin:16px 0 12px!important;min-width:0}
+html[data-theme] #app .motion-level-picker .motion-level-option{appearance:none!important;display:grid!important;grid-template-columns:44px minmax(0,1fr) 20px!important;align-items:center;gap:12px!important;min-height:68px;width:100%;margin:0!important;padding:11px 12px!important;min-width:0;text-align:left;white-space:normal!important;background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border:1px solid var(--ui-line)!important;border-radius:16px!important;box-shadow:none!important}
+html[data-theme] #app .motion-level-picker .motion-level-option.is-active{border-color:var(--ui-accent)!important;background:var(--ui-accent-soft)!important;box-shadow:inset 0 0 0 1px var(--ui-accent)!important}
+.cn-motion-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:var(--ui-accent-soft);color:var(--ui-accent);box-shadow:inset 0 1px 0 #ffffff66}
+.cn-motion-copy{min-width:0;display:flex;flex-direction:column;gap:3px}
+html[data-theme] #app .cn-motion-copy strong{display:block!important;font:750 14px/1.3 var(--cn-font)!important;color:var(--ui-text)!important}
+html[data-theme] #app .cn-motion-copy small{display:block!important;font:400 12px/1.35 var(--cn-font)!important;color:var(--ui-muted)!important;overflow-wrap:anywhere}
+.cn-motion-radio{width:19px;height:19px;border-radius:50%;border:2px solid var(--ui-muted);box-sizing:border-box;display:grid;place-items:center}
+.motion-level-option.is-active .cn-motion-radio{border-color:var(--ui-accent)}
+.motion-level-option.is-active .cn-motion-radio::after{content:'';width:9px;height:9px;border-radius:50%;background:var(--ui-accent)}
+html[data-theme] #app .motion-level-option:focus-visible{outline:2px solid var(--ui-accent);outline-offset:2px}
+html[data-theme] #app .motion-level-note{font-size:12px!important;line-height:1.55!important;color:var(--ui-muted)!important;margin:0!important}
+html[data-theme] #app .rooms-empty .cn-room-empty-icon{display:grid!important;place-items:center;width:60px;height:60px;font-size:0!important;border-radius:20px;background:var(--ui-accent-soft);color:var(--ui-accent)!important;margin:0 auto 12px}
+@media(max-width:900px){
+ html[data-theme] #app .cn-main:has(>.cn-view[data-section="rooms"]){min-height:100dvh!important;display:flex!important;flex-direction:column!important;padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))!important}
+ html[data-theme] #app .cn-view[data-section="rooms"]{flex:1 0 auto;display:flex;flex-direction:column;min-height:0}
+ html[data-theme] #app .cn-view[data-section="rooms"] .rooms-static-shell{display:flex!important;flex-direction:column!important;flex:1 0 auto!important;min-height:calc(100dvh - 62px - 94px - env(safe-area-inset-bottom,0px))!important;margin:0!important;box-sizing:border-box;gap:0}
+ html[data-theme] #app .cn-view[data-section="rooms"] .rooms-static-shell .rooms-discussion{flex:1 1 auto!important;height:auto!important;min-height:clamp(140px,35dvh,450px)!important;max-height:calc(100dvh - 252px - env(safe-area-inset-bottom,0px))!important;overflow-y:auto!important;touch-action:pan-y!important;overscroll-behavior-y:auto!important}
+ html[data-theme] #app .cn-view[data-section="rooms"] .room-composer{flex:none!important;margin-top:12px!important}
+ html[data-theme] #app .cn-view[data-section="rooms"] .rooms-cooldown{flex:none}
+}
+@media(max-width:480px){html[data-theme] #app .connect-app-screen .live-app-card.cn-unified-match{padding:13px!important}html[data-theme] #app .cn-unified-match .cn-match-art{height:clamp(145px,24dvh,200px)}}
+@media(max-height:480px) and (max-width:900px){html[data-theme] #app .cn-view[data-section="rooms"] .rooms-static-shell{min-height:0!important}html[data-theme] #app .cn-view[data-section="rooms"] .rooms-static-shell .rooms-discussion{min-height:110px!important;max-height:45dvh!important}html[data-theme] #app .cn-main:has(>.cn-view[data-section="rooms"]){padding-bottom:calc(75px + env(safe-area-inset-bottom,0px))!important}html[data-theme] #app .cn-unified-match .cn-match-art{height:115px}}
