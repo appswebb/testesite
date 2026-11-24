@@ -327,7 +327,7 @@ function commitLocalAvatar(path){
 function avatarFresh(p){return Boolean(p?.avatar_path); /* Permanent until replaced or removed */}
 async function signAvatar(p,force=false){
  if(!avatarFresh(p)||!p.avatar_path||maintenanceIsActive())return false;
- const path=p.avatar_path;
+ const path=p.avatar_path,owner=state.session?.user?.id;
  const existing=state.avatarUrls[path];
  if(!force&&existing&&!existing.local&&existing.expires>Date.now()+100000)return true;
  try{
@@ -335,6 +335,7 @@ async function signAvatar(p,force=false){
   const {data,error}=await db.storage.from(AVATAR_BUCKET).createSignedUrl(path,300);
   if(error)throw error;
   if(!data?.signedUrl)throw Error('O Storage não retornou a foto.');
+  if(state.session?.user?.id!==owner)return false;
   state.avatarUrls[path]={url:data.signedUrl,expires:Date.now()+260000,local:false};
   refreshAvatarElements(p);
   if(existing?.local)setTimeout(()=>URL.revokeObjectURL(existing.url),30000); // Keep the preview until the signed photo loads.
@@ -342,7 +343,7 @@ async function signAvatar(p,force=false){
  }catch(e){
   console.warn('Falha ao abrir foto privada:',e?.message||e);
   // The freshly compressed image still appears immediately in the owner's UI.
-  return Boolean(existing?.url);
+  return state.session?.user?.id===owner&&Boolean(existing?.url);
  }
 }
 function avatarUploader(p){
@@ -671,24 +672,39 @@ function renderView(){if(maintenanceIsActive())return;if(state.session&&state.pr
 function showFormMessage(msg,success=false){window.connectSound?.play?.(success?'success':'error');const id=success?'form-success':'form-error';const target=document.getElementById(id);if(target){target.classList.remove('hidden');target.textContent=msg}}
 function busy(btn,value){if(btn){btn.disabled=value;btn.dataset.oldLabel ||= btn.innerHTML;if(value)btn.textContent='Só um instante...';else btn.innerHTML=btn.dataset.oldLabel}}
 async function getProfile(){const uid=state.session?.user.id;if(!uid)return null;const {data,error}=await db.from('entre_profiles').select('*').eq('id',uid).maybeSingle();if(error)throw error;return data}
-async function loadPairs(){if(!state.session||!state.profile)return;const uid=state.session.user.id;const {data,error}=await db.from('entre_pairs').select('*').or(`a.eq.${uid},b.eq.${uid}`).in('status',['active','connected','closed']).order('created_at',{ascending:false}).limit(50);if(error)throw error;state.pairs=data||[];const ids=[...new Set(state.pairs.map(p=>p.a===uid?p.b:p.a))];state.pairsProfiles={};if(ids.length){const {data:profiles}=await db.from('entre_profiles').select('id,username,display_name,age,bio,gender,avatar_path,avatar_uploaded_at').in('id',ids);if(profiles?.length){await Promise.all(profiles.map(signAvatar));await window.entreExtras?.loadBadges?.(profiles);}for(const pair of state.pairs){state.pairsProfiles[pair.id]=profiles?.find(p=>p.id===(pair.a===uid?pair.b:pair.a))||{id:pair.a===uid?pair.b:pair.a,display_name:'Conta indisponível'}}}return state.pairs}
+let pairsLoadSeq=0;
+async function loadPairs(){
+ const uid=state.session?.user?.id;if(!uid||!state.profile)return;
+ const seq=++pairsLoadSeq;
+ const valid=()=>state.session?.user?.id===uid&&seq===pairsLoadSeq;
+ const {data,error}=await db.from('entre_pairs').select('*').or(`a.eq.${uid},b.eq.${uid}`).in('status',['active','connected','closed']).order('created_at',{ascending:false}).limit(50);
+ if(!valid())return;if(error)throw error;
+ const pairs=data||[],ids=[...new Set(pairs.map(p=>p.a===uid?p.b:p.a))],map={};
+ let profiles=[];
+ if(ids.length){const result=await db.from('entre_profiles').select('id,username,display_name,age,bio,gender,avatar_path,avatar_uploaded_at').in('id',ids);if(!valid())return;profiles=result.data||[];await Promise.allSettled(profiles.map(signAvatar));if(!valid())return;await window.entreExtras?.loadBadges?.(profiles);}
+ if(!valid())return;
+ for(const pair of pairs){const other=pair.a===uid?pair.b:pair.a;map[pair.id]=profiles.find(p=>p.id===other)||{id:other,display_name:'Conta indisponível'};}
+ state.pairs=pairs;state.pairsProfiles=map;return pairs;
+}
 async function initializeAccount(){
- state.profile=await getProfile();
+ const uid=state.session?.user?.id;if(!uid)return;const profile=await getProfile();if(state.session?.user?.id!==uid)return;
+ state.profile=profile;window.entreSocial?.resetAccount?.();window.entreRooms?.resetAccount?.();state.pairs=[];state.pairsProfiles={};
  if(state.profile){try{await signAvatar(state.profile);}catch(e){console.warn('Avatar load unavailable',e);}}
  try{installAvatarRealtime();}catch(e){console.warn('Avatar updates unavailable',e);}
  state.pair=null;state.peer=null;state.searching=false;state.messages=[];
  if(state.profile){
-  await window.entreExtras?.refreshPremium?.();
+  await window.entreExtras?.refreshPremium?.();if(state.session?.user?.id!==uid)return;
   state.preference=window.entreExtras?.isPremium?.(state.session.user.id)?state.profile.preference:'any';
   // A temporary problem in the chat/notification service must not invalidate
   // an already confirmed session or force the admin back to the login page.
   try{await loadPairs();}catch(e){console.warn('Conversations unavailable',e);state.pairs=[];state.pairsProfiles={};}
   try{await window.entreSocial?.refreshBulletins?.(true);}catch(e){console.warn('Bulletin feed unavailable',e);}
   try{await window.entreSocial?.init?.();}catch(e){console.warn('Social services unavailable',e);}
+  if(state.session?.user?.id!==uid)return;
   const active=state.pairs.find(p=>p.status==='active'&&new Date(p.expires_at)>Date.now());
   if(active){
    state.pair=active;state.peer=state.pairsProfiles[active.id]||null;state.view='connect';
-   try{await loadMessages();subscribePair(active.id);}catch(e){console.warn('Temporary chat unavailable',e);state.pair=null;state.peer=null;state.view='posts';}
+   try{subscribePair(active.id);await loadMessages();}catch(e){console.warn('Temporary chat unavailable',e);state.pair=null;state.peer=null;state.view='posts';}
    state.liveMode=active.mode||'chat';
   }
  }
@@ -705,7 +721,7 @@ async function initializeAccount(){
   void window.connectRealtime?.resume?.();
   void window.entreGeo?.init?.();
   if(state.view==='posts'||state.view==='premium')void window.entreExtras?.enter?.(state.view);
-  if(premiumReturn&&!onboardingReturn)toast('Confira a situação do pagamento. O Premium é liberado após a confirmação pelo Asaas.');
+  if(premiumReturn&&!onboardingReturn)toast('O Premium é contratado pelo WhatsApp e liberado pela equipe após confirmação.');
   const requestedHandle=new URLSearchParams(window.location.search).get('profile');
   if(requestedHandle&&!activeEncounter())void window.entreSocial?.openUsernameProfile?.(requestedHandle);
  }
@@ -756,12 +772,40 @@ async function saveProfile(form){
  }finally{busy(submit,false)}
 }
 function clearSearchTimer(){if(state.searchLoop){clearInterval(state.searchLoop);state.searchLoop=null}}
-async function startSearch(){if(maintenanceIsActive())return;if(!state.session||!state.profile||state.searching||cancellingSearch||activeEncounter())return;window.entreGeo?.target?.();if(state.preference!=='any'&&!window.entreExtras?.isPremium?.(state.session.user.id)){state.preference='any';renderView();premiumNotice('O filtro de gênero');return;}state.liveFiltersOpen=false;document.body.classList.remove('live-filters-open');state.searching=true;state.pair=null;state.peer=null;state.view='connect';render();await pollSearch();if(state.searching&&!state.searchLoop)state.searchLoop=setInterval(pollSearch,3500)}
+async function startSearch(){if(maintenanceIsActive())return;if(!state.session||!state.profile||state.searching||cancellingSearch||activeEncounter())return;window.entreGeo?.target?.();if(state.preference!=='any'&&!window.entreExtras?.isPremium?.(state.session.user.id)){state.preference='any';renderView();premiumNotice('O filtro de gênero');return;}state.liveFiltersOpen=false;document.body.classList.remove('live-filters-open');state.searching=true;if(state.channel){void db.removeChannel(state.channel);state.channel=null;}state.pair=null;state.peer=null;state.messages=[];state.view='connect';render();await pollSearch();if(state.searching&&!state.searchLoop)state.searchLoop=setInterval(pollSearch,3500)}
 let polling=false,cancellingSearch=false,pendingSearchRequest=null;
-async function pollSearch(){if(polling||!state.searching)return;polling=true;const uid=state.session?.user?.id;try{pendingSearchRequest=Promise.resolve(db.rpc('entre_find_mode_location',{_preference:state.preference,_mode:state.liveMode,...(window.entreGeo?.target?.()||{_target_state:null,_target_city:null})}));const {data,error}=await pendingSearchRequest;if(error)throw error;if(state.session?.user?.id!==uid)return;applySearchQuota(data?.quota,uid);paintSearchQuota();if(data?.status==='daily_limit'){state.searching=false;clearSearchTimer();if(state.view==='connect')renderView();toast('Você atingiu 50 encontros hoje. Assine o Premium para encontros ilimitados ou volte amanhã.',true);return;}if(!state.searching)return;if(data?.status==='matched'&&data.pair_id){state.searching=false;clearSearchTimer();await openPair(data.pair_id);window.entreSocial?.showMatchAnimation?.(state.peer);toast('Você encontrou uma conexão!',false,'found')}}catch(e){toast(infoError(e),true);state.searching=false;clearSearchTimer();renderView()}finally{polling=false;pendingSearchRequest=null}}
+async function pollSearch(){if(polling||!state.searching)return;polling=true;const uid=state.session?.user?.id;try{pendingSearchRequest=Promise.resolve(db.rpc('entre_find_mode_location',{_preference:state.preference,_mode:state.liveMode,...(window.entreGeo?.target?.()||{_target_state:null,_target_city:null})}));const {data,error}=await pendingSearchRequest;if(error)throw error;if(state.session?.user?.id!==uid)return;applySearchQuota(data?.quota,uid);paintSearchQuota();if(data?.status==='daily_limit'){state.searching=false;clearSearchTimer();if(state.view==='connect')renderView();toast('Você atingiu 50 encontros hoje. Assine o Premium para encontros ilimitados ou volte amanhã.',true);return;}if(!state.searching)return;if(data?.status==='matched'&&data.pair_id){state.searching=false;clearSearchTimer();if(await openPair(data.pair_id)){window.entreSocial?.showMatchAnimation?.(state.peer);toast('Você encontrou uma conexão!',false,'found')}}}catch(e){if(state.session?.user?.id===uid){toast(infoError(e),true);state.searching=false;clearSearchTimer();renderView()}}finally{polling=false;pendingSearchRequest=null}}
 async function cancelSearch(){if(cancellingSearch)return;cancellingSearch=true;state.searching=false;clearSearchTimer();const uid=state.session?.user?.id;try{if(pendingSearchRequest)await pendingSearchRequest.catch(()=>{});if(state.session?.user?.id!==uid)return;const {error}=await db.rpc('entre_leave');if(error)throw error;await refreshSearchQuota();}catch(e){toast(infoError(e),true)}finally{cancellingSearch=false;if(state.session?.user?.id===uid&&state.view==='connect')renderView();}}
-async function openPair(id){if(activeEncounter()&&state.pair.id!==id){toast('Encerre o encontro atual antes de abrir outra conversa.',true);return;}const {data,error}=await db.from('entre_pairs').select('*').eq('id',id).single();if(error)throw error;if(data.status==='closed'){toast('Este encontro temporário já terminou.',true);nav('connect');return;}state.pair=data;state.encounterChatMin=true;state.searching=false;clearSearchTimer();const other=data.a===state.session.user.id?data.b:data.a;const {data:profile}=await db.from('entre_profiles').select('id,username,display_name,age,bio,gender,avatar_path,avatar_uploaded_at').eq('id',other).maybeSingle();if(profile)await signAvatar(profile);state.peer=profile||{id:other,display_name:'Esta pessoa'};state.view=data.status==='connected'?'chat':'connect';await loadMessages();if(data.status!=='closed')subscribePair(id);render();void window.connectRelationships?.tick?.();if(data.status==='active'&&data.mode==='video')void window.entreVideo?.start?.(data)}
-async function loadMessages(){if(!state.pair)return;const pairId=state.pair.id;const {data,error}=await db.from('entre_messages').select('id,body,sender_id,created_at,edited_at,deleted_at').eq('pair_id',pairId).is('deleted_at',null).order('id',{ascending:false}).limit(40);if(state.pair?.id!==pairId)return;if(error){console.warn(error);return}state.messages=(data||[]).reverse();if(window.entreSocial)window.entreSocial.data.hasEarlier=(data||[]).length===40}
+let openPairSeq=0,messageLoadSeq=0,messageRevision=0;
+async function openPair(id){
+ if(activeEncounter()&&state.pair.id!==id){toast('Encerre o encontro atual antes de abrir outra conversa.',true);return false;}
+ const uid=state.session?.user?.id;if(!uid)return false;const seq=++openPairSeq;
+ const valid=()=>state.session?.user?.id===uid&&seq===openPairSeq&&!maintenanceIsActive()&&!state.suspension;
+ const {data,error}=await db.from('entre_pairs').select('*').eq('id',id).single();if(!valid())return false;if(error)throw error;
+ if(!data||data.status==='closed'){toast('Este encontro temporário já terminou.',true);nav('connect');return false;}
+ if(state.channel){void db.removeChannel(state.channel);state.channel=null;}
+ state.pair=data;state.messages=[];state.peer=null;state.encounterChatMin=true;state.searching=false;clearSearchTimer();
+ const other=data.a===uid?data.b:data.a;const {data:profile}=await db.from('entre_profiles').select('id,username,display_name,age,bio,gender,avatar_path,avatar_uploaded_at').eq('id',other).maybeSingle();
+ if(!valid()||state.pair?.id!==id)return false;
+ if(profile)await signAvatar(profile);
+ if(!valid()||state.pair?.id!==id)return false;
+ state.peer=profile||{id:other,display_name:'Esta pessoa'};state.view=data.status==='connected'?'chat':'connect';
+ subscribePair(id);await loadMessages();
+ if(!valid()||state.pair?.id!==id)return false;
+ render();void window.connectRelationships?.tick?.();if(state.pair.status==='active'&&state.pair.mode==='video')void window.entreVideo?.start?.(state.pair);
+ return true;
+}
+async function loadMessages(){
+ const pairId=state.pair?.id,uid=state.session?.user?.id;if(!pairId||!uid)return;
+ const seq=++messageLoadSeq,revision=messageRevision;
+ const valid=()=>state.pair?.id===pairId&&state.session?.user?.id===uid&&seq===messageLoadSeq;
+ const {data,error}=await db.from('entre_messages').select('id,body,sender_id,created_at,edited_at,deleted_at').eq('pair_id',pairId).is('deleted_at',null).order('id',{ascending:false}).limit(40);
+ if(!valid())return;if(error){console.warn(error);return;}
+ // An INSERT/UPDATE during the fetch makes the snapshot stale. Reconcile again
+ // rather than overwriting the event that already reached the client.
+ if(revision!==messageRevision){void loadMessages().then(()=>refreshEncounterMessages()).catch(e=>console.warn(e));return;}
+ state.messages=(data||[]).reverse();if(window.entreSocial)window.entreSocial.data.hasEarlier=(data||[]).length===40;
+}
 function refreshEncounterMessages(){
  if(!(activeEncounter()&&state.view==='connect')&&!(state.view==='chat'&&state.pair?.status==='connected'))return false;
  const list=document.getElementById('messageList');
@@ -772,24 +816,24 @@ function refreshEncounterMessages(){
  void window.connectRelationships?.tick?.();
  return true;
 }
-function subscribePair(id){if(state.channel){db.removeChannel(state.channel);state.channel=null}state.channel=db.channel(`entre_pair_${id}_${Math.random().toString(36).slice(2,7)}`).on('postgres_changes',{event:'INSERT',schema:'public',table:'entre_messages',filter:`pair_id=eq.${id}`},async(payload)=>{if(state.pair?.id===id){const row=payload?.new;if(row?.id&&row.pair_id===id&&!row.deleted_at){if(!state.messages.some(m=>m.id===row.id)){state.messages.push(row);state.messages.sort((a,b)=>Number(a.id)-Number(b.id));if(row.sender_id!==state.session?.user?.id)window.connectSound?.play?.('receive');}}else await loadMessages();if(!refreshEncounterMessages()&&['connect','chat'].includes(state.view))renderView()}}) .on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_messages',filter:`pair_id=eq.${id}`},async(payload)=>{if(state.pair?.id===id){const m=state.messages.find(x=>x.id===payload.new.id);if(payload.new.deleted_at){state.messages=state.messages.filter(x=>String(x.id)!==String(payload.new.id));refreshEncounterMessages();void window.connectRelationships?.tick?.();}else if(m){Object.assign(m,payload.new);refreshEncounterMessages();}else{await loadMessages();refreshEncounterMessages();}}}).on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_pairs',filter:`id=eq.${id}`},async()=>{if(state.pair?.id===id)await refreshPair()}).subscribe()}
+function subscribePair(id){const owner=state.session?.user?.id;if(state.channel){db.removeChannel(state.channel);state.channel=null}state.channel=db.channel(`entre_pair_${id}_${Math.random().toString(36).slice(2,7)}`).on('postgres_changes',{event:'INSERT',schema:'public',table:'entre_messages',filter:`pair_id=eq.${id}`},async(payload)=>{if(state.session?.user?.id===owner&&state.pair?.id===id){messageRevision++;const row=payload?.new;if(row?.id&&row.pair_id===id&&!row.deleted_at){if(!state.messages.some(m=>m.id===row.id)){state.messages.push(row);state.messages.sort((a,b)=>Number(a.id)-Number(b.id));if(row.sender_id!==state.session?.user?.id)window.connectSound?.play?.('receive');}}else await loadMessages();if(!refreshEncounterMessages()&&['connect','chat'].includes(state.view))renderView()}}) .on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_messages',filter:`pair_id=eq.${id}`},async(payload)=>{if(state.session?.user?.id===owner&&state.pair?.id===id){messageRevision++;const m=state.messages.find(x=>String(x.id)===String(payload.new.id));if(payload.new.deleted_at){state.messages=state.messages.filter(x=>String(x.id)!==String(payload.new.id));refreshEncounterMessages();void window.connectRelationships?.tick?.();}else if(m){Object.assign(m,payload.new);refreshEncounterMessages();}else{await loadMessages();refreshEncounterMessages();}}}).on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_pairs',filter:`id=eq.${id}`},async()=>{if(state.session?.user?.id===owner&&state.pair?.id===id)await refreshPair()}).subscribe(status=>{if(status==='SUBSCRIBED'&&state.session?.user?.id===owner&&state.pair?.id===id){void loadMessages().then(()=>refreshEncounterMessages()).catch(e=>console.warn(e));void refreshPair();}})}
 let refreshingPair=false,pairRefreshQueued=false;
 async function refreshPair(){
  if(!state.pair)return;if(refreshingPair){pairRefreshQueued=true;return;}refreshingPair=true;try{
- const id=state.pair.id,prior=state.pair.status,previous=state.pair;
+ const id=state.pair.id,prior=state.pair.status,previous=state.pair,owner=state.session?.user?.id;
  const {data,error}=await db.from('entre_pairs').select('*').eq('id',id).maybeSingle();
- if(error||state.pair?.id!==id)return;
+ if(error||state.pair?.id!==id||state.session?.user?.id!==owner)return;
  if(!data){window.entreVideo?.cleanup?.();if(state.channel){void db.removeChannel(state.channel);state.channel=null;}state.pair=null;state.messages=[];state.peer=null;if(['connect','chat'].includes(state.view))state.view='connect';render();if(prior==='active')toast('Encontro encerrado.',false,'end');return;}
  state.pair=data;
  if(data.status==='closed'&&prior!=='closed'){window.entreVideo?.cleanup?.();
   if(state.channel){db.removeChannel(state.channel);state.channel=null;}
   state.pair=null;state.peer=null;state.messages=[];
-  await loadPairs();if(['connect','chat'].includes(state.view))state.view='connect';render();
+  await loadPairs().catch(e=>console.warn(e));if(state.session?.user?.id!==owner||state.pair)return;if(['connect','chat'].includes(state.view))state.view='connect';render();
   toast('Encontro encerrado.',false,'end');
   return;
  }
  if(data.status==='connected'&&prior!=='connected'){window.entreVideo?.cleanup?.();
-  await loadPairs();
+  await loadPairs().catch(e=>console.warn(e));if(state.session?.user?.id!==owner||state.pair?.id!==id)return;
   if(['connect','chat'].includes(state.view))state.view='chat';render();toast('Match confirmado! Esta é uma conversa permanente.',false,'match');
   return;
  }
@@ -798,13 +842,26 @@ async function refreshPair(){
  if(['chat','connect'].includes(state.view))renderView();
  }finally{refreshingPair=false;if(pairRefreshQueued){pairRefreshQueued=false;void refreshPair();}}
 }
-async function sendMessage(form){if(maintenanceIsActive())return;if(!state.pair||!(state.pair.status==='connected'||(state.pair.status==='active'&&new Date(state.pair.expires_at)>Date.now()))){toast('O chat temporário foi encerrado.',true);return;}const input=form.querySelector('#messageInput');const body=input.value.trim();if(!body)return;const sendingPair=state.pair.id;input.value='';input.blur();const {data,error}=await db.from('entre_messages').insert({pair_id:state.pair.id,sender_id:state.session.user.id,body}).select('id,body,sender_id,created_at,edited_at,deleted_at').single();if(error){if(state.pair?.id===sendingPair&&!input.value)input.value=body;toast(infoError(error),true);return}if(state.pair?.id!==sendingPair)return;window.connectSound?.play?.('send');if(!state.messages.some(m=>m.id===data.id)){state.messages.push(data);if(!refreshEncounterMessages()&&['connect','chat'].includes(state.view))renderView()}}
+async function sendMessage(form){
+ if(maintenanceIsActive())return;
+ if(!state.pair||!(state.pair.status==='connected'||(state.pair.status==='active'&&new Date(state.pair.expires_at)>Date.now()))){toast('O chat temporário foi encerrado.',true);return;}
+ const input=form.querySelector('#messageInput'),body=input?.value.trim();if(!body)return;
+ const sendingPair=state.pair.id,owner=state.session?.user?.id;if(!owner)return;
+ const same=()=>state.pair?.id===sendingPair&&state.session?.user?.id===owner;
+ input.value='';
+ try{
+  const {data,error}=await db.from('entre_messages').insert({pair_id:sendingPair,sender_id:owner,body}).select('id,body,sender_id,created_at,edited_at,deleted_at').single();
+  if(error)throw error;if(!same())return;
+  messageRevision++;window.connectSound?.play?.('send');
+  if(!state.messages.some(m=>String(m.id)===String(data.id))){state.messages.push(data);state.messages.sort((a,b)=>Number(a.id)-Number(b.id));if(!refreshEncounterMessages()&&['connect','chat'].includes(state.view))renderView();}
+ }catch(error){if(same()){const current=document.getElementById('messageInput');if(current&&!current.value)current.value=body;toast(infoError(error),true);}}
+}
 async function vote(accept){if(maintenanceIsActive())return;if(!state.pair)return;try{const {data,error}=await db.rpc('entre_vote',{_pair:state.pair.id,_accept:accept});if(error)throw error;if(data==='closed'){await refreshPair();await loadPairs();toast('Encontro encerrado. O chat temporário foi apagado.');return}await refreshPair();if(accept&&data==='active')toast('Sua escolha foi registrada. Falta a outra pessoa.',false,'success')}catch(e){toast(infoError(e),true)}}
 async function endPair(){if(!state.pair)return;try{const {error}=await db.rpc('entre_close',{_pair:state.pair.id});if(error)throw error;window.entreVideo?.cleanup?.();state.pair=null;state.messages=[];state.peer=null;state.modal=null;if(state.channel){db.removeChannel(state.channel);state.channel=null}await loadPairs();if(['connect','chat'].includes(state.view))state.view='connect';render();toast('Encontro encerrado.',false,'end')}catch(e){toast(infoError(e),true)}}
-async function blockPartner(){if(!state.peer)return;try{const {error}=await db.rpc('entre_block',{_user:state.peer.id});if(error)throw error;window.entreVideo?.cleanup?.();state.modal=null;state.pair=null;state.peer=null;state.messages=[];await loadPairs();if(['connect','chat'].includes(state.view))state.view='connect';render();toast('Pessoa bloqueada. Vocês não serão reconectados.',false,'delete')}catch(e){toast(infoError(e),true)}}
-async function logout({silent=false}={}){window.entreSocial?.resetForeground?.();await window.connectRealtime?.depart?.();window.entreVideo?.cleanup?.();window.entreRooms?.stop?.();await window.entreLives?.leave?.();try{if(state.searching)await db.rpc('entre_leave');clearSearchTimer();if(state.channel){await db.removeChannel(state.channel);state.channel=null}if(state.profileChannel){await db.removeChannel(state.profileChannel);state.profileChannel=null}for(const item of Object.values(state.avatarUrls)){if(item.local)URL.revokeObjectURL(item.url)}state.avatarUrls={};const {error}=await db.auth.signOut({scope:'local'});if(error)throw error;state.session=null;state.profile=null;state.pair=null;state.peer=null;state.pairs=[];state.suspension=null;state.searching=false;state.mode='landing';state.view='posts';dockScroll=0;render();toast('Você saiu da conta.',false,silent?null:'logout')}catch(e){toast(infoError(e),true)}}
+async function blockPartner(){if(!state.peer)return;try{const {error}=await db.rpc('entre_block',{_user:state.peer.id});if(error)throw error;window.entreVideo?.cleanup?.();if(state.channel){void db.removeChannel(state.channel);state.channel=null;}state.modal=null;state.pair=null;state.peer=null;state.messages=[];await loadPairs();if(['connect','chat'].includes(state.view))state.view='connect';render();toast('Pessoa bloqueada. Vocês não serão reconectados.',false,'delete')}catch(e){toast(infoError(e),true)}}
+async function logout({silent=false}={}){window.entreSocial?.resetForeground?.();await window.connectRealtime?.depart?.();window.entreVideo?.cleanup?.();window.entreRooms?.stop?.();await window.entreLives?.leave?.();try{const wasSearching=state.searching;state.searching=false;clearSearchTimer();if(pendingSearchRequest)await pendingSearchRequest.catch(()=>{});if(wasSearching)await db.rpc('entre_leave');if(state.channel){await db.removeChannel(state.channel);state.channel=null}if(state.profileChannel){await db.removeChannel(state.profileChannel);state.profileChannel=null}for(const item of Object.values(state.avatarUrls)){if(item.local)URL.revokeObjectURL(item.url)}state.avatarUrls={};const {error}=await db.auth.signOut({scope:'local'});if(error)throw error;state.session=null;state.profile=null;state.pair=null;state.peer=null;state.pairs=[];state.pairsProfiles={};state.messages=[];state.suspension=null;window.entreSocial?.resetAccount?.();window.entreRooms?.resetAccount?.();window.entreExtras?.resetAccount?.();state.searching=false;state.mode='landing';state.view='posts';dockScroll=0;render();toast('Você saiu da conta.',false,silent?null:'logout')}catch(e){toast(infoError(e),true)}}
 async function deleteData(){const val=document.getElementById('deleteConfirm')?.value||'';if(val!=='EXCLUIR'){toast('Digite EXCLUIR para confirmar.',true);return}try{const {error}=await db.rpc('entre_delete_my_profile');if(error)throw error;state.modal=null;await logout({silent:true});toast('Seus dados do CONNECT foram excluídos.',false,'delete')}catch(e){toast(infoError(e),true)}}
-function updateTimerText(){if(!state.pair||state.pair.status!=='active')return;const seconds=Math.max(0,Math.ceil((new Date(state.pair.expires_at).getTime()-Date.now())/1000));const mm=String(Math.floor(seconds/60)).padStart(2,'0'),ss=String(seconds%60).padStart(2,'0');document.querySelectorAll('.timer-text').forEach(el=>{el.textContent=`${mm}:${ss}`;el.classList.toggle('urgent',seconds<=30)});if(seconds===0&&state.closedOnce!==state.pair.id){state.closedOnce=state.pair.id;db.rpc('entre_close',{_pair:state.pair.id}).then(()=>refreshPair()).catch(()=>{})}}
+function updateTimerText(){if(!state.pair||state.pair.status!=='active')return;const seconds=Math.max(0,Math.ceil((new Date(state.pair.expires_at).getTime()-Date.now())/1000));const mm=String(Math.floor(seconds/60)).padStart(2,'0'),ss=String(seconds%60).padStart(2,'0');document.querySelectorAll('.timer-text').forEach(el=>{el.textContent=`${mm}:${ss}`;el.classList.toggle('urgent',seconds<=30)});if(seconds===0&&state.closedOnce!==state.pair.id){state.closedOnce=state.pair.id;db.rpc('entre_close',{_pair:state.pair.id}).then(({error})=>{if(error)throw error;return refreshPair();}).catch(()=>{state.closedOnce=null;})}}
 function nav(view){
  if(onboardingPlanPending())return;
  if(view==='home')view='posts';
@@ -933,9 +990,9 @@ function considerPublicAnnouncement(settings){
  update();publicNoticeInterval=setInterval(update,100);
 }
 async function checkSuspension(){
- if(!state.session?.user)return false;
+ const uid=state.session?.user?.id;if(!uid)return false;
  const response=await db.rpc('entre_my_suspension');
- if(response.error)throw response.error;
+ if(state.session?.user?.id!==uid)return false;if(response.error)throw response.error;
  const suspended=response.data?.suspended===true;
  if(suspended){
   const was=!!state.suspension;

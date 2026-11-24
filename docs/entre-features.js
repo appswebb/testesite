@@ -20,25 +20,26 @@ async function refreshPremium(){
 }
 async function loadBadges(profiles){
  const ids=[...new Set((profiles||[]).map(p=>p?.id).filter(Boolean))].slice(0,120);
- if(!ids.length)return;
- try{const active=await call('entre_premium_badges',{_ids:ids});for(const id of ids)data.premiumIds.delete(id);for(const id of(Array.isArray(active)?active:[]))data.premiumIds.add(id);}
+ const owner=state.session?.user?.id;if(!ids.length||!owner)return;
+ try{const active=await call('entre_premium_badges',{_ids:ids});if(state.session?.user?.id!==owner)return;for(const id of ids)data.premiumIds.delete(id);for(const id of(Array.isArray(active)?active:[]))data.premiumIds.add(id);}
  catch(e){console.warn('Badge status',e);}
 }
+let feedLoadQueued=false,feedLoadSeq=0;
 async function loadPosts(more=false){
- if(data.postLoading)return;syncFeedOwner();const uid=state.session?.user?.id;data.postLoading=true;feedError='';
+ syncFeedOwner();const uid=state.session?.user?.id;if(!uid)return;if(data.postLoading){if(!more)feedLoadQueued=true;return;}const seq=++feedLoadSeq;data.postLoading=true;feedError='';
  try{
   const rows=await call('entre_posts_feed',{_before:more?data.postBefore:null});
   if(state.session?.user?.id!==uid)return;
   const arr=Array.isArray(rows)?rows:[];
-  data.posts=more?data.posts.concat(arr):arr;
-  data.postMore=arr.length===15;
-  data.postBefore=data.posts[data.posts.length-1]?.id||null;
-  await Promise.allSettled(data.posts.filter(p=>p.author_avatar).map(p=>signAvatar({id:p.author_id,display_name:p.author_name,avatar_path:p.author_avatar,avatar_uploaded_at:p.author_avatar_uploaded_at})));
-  await window.entreMedia?.signPosts?.(data.posts);
-  if(state.session?.user?.id!==uid)return;
+  const next=more?Array.from(new Map(data.posts.concat(arr).map(p=>[String(p.id),p])).values()):arr;
+  await Promise.allSettled(next.filter(p=>p.author_avatar).map(p=>signAvatar({id:p.author_id,display_name:p.author_name,avatar_path:p.author_avatar,avatar_uploaded_at:p.author_avatar_uploaded_at})));
+  if(state.session?.user?.id!==uid||seq!==feedLoadSeq)return;
+  await window.entreMedia?.signPosts?.(next);
+  if(state.session?.user?.id!==uid||seq!==feedLoadSeq)return;
+  data.posts=next;data.postMore=arr.length===15;data.postBefore=next.at(-1)?.id||null;
   for(const p of data.posts){if(p.premium)data.premiumIds.add(p.author_id);else data.premiumIds.delete(p.author_id);}
   feedLoaded=true;
- }catch(e){feedError=infoError(e);toast(feedError,true);}finally{data.postLoading=false;if(state.session?.user?.id===uid&&state.view==='posts')renderView();}
+ }catch(e){if(state.session?.user?.id===uid&&seq===feedLoadSeq){feedError=infoError(e);toast(feedError,true);}}finally{data.postLoading=false;if(state.session?.user?.id===uid&&state.view==='posts')renderView();if(feedLoadQueued){feedLoadQueued=false;if(state.session?.user?.id&&state.view==='posts')void loadPosts();}}
 }
 
 function commentCard(c){
@@ -98,7 +99,7 @@ let feedDraft='',feedDraftOwner=null,feedLoaded=false,feedError='',feedOwner=nul
 function syncFeedOwner(){
  const uid=state.session?.user?.id||null;
  if(feedDraftOwner!==uid){feedDraftOwner=uid;feedDraft='';window.entreMedia?.clearMedia?.();}
- if(feedOwner!==uid){feedOwner=uid;feedLoaded=false;feedError='';}
+ if(feedOwner!==uid){feedOwner=uid;feedLoaded=false;feedError='';data.posts=[];data.postBefore=null;data.postMore=false;data.expandedPostComments.clear();data.commentsPost=null;data.commentsRows=[];}
 }
 document.addEventListener('input',e=>{if(e.target?.matches?.('#postCreateForm textarea[name="body"]')){syncFeedOwner();feedDraft=e.target.value;const count=document.getElementById('connectFeedCount');if(count)count.textContent=String(feedDraft.length)+'/900';}});
 function feedTime(value){
@@ -175,7 +176,7 @@ async function postForm(form){
   try{
    if(window.entreMedia?.pending?.())await window.entreMedia.publish(body||'');
    else{if(!body||body.length<3||body.length>900)throw Error('Post precisa ter de 3 a 900 caracteres.');await call('entre_post_create',{_body:body});toast('Seu post foi publicado.',false,'publish');}
-   if(state.session?.user?.id===uid){feedDraft='';const field=document.getElementById('connectPostBody');if(field)field.value='';await loadPosts();}return true;
+   if(state.session?.user?.id===uid){if(feedDraft.trim()===(body||'')){feedDraft='';const field=document.getElementById('connectPostBody');if(field)field.value='';}await loadPosts();}return true;
   }finally{feedPublishing=false;if(state.session?.user?.id===uid&&state.view==='posts')renderView();else if(button?.isConnected)button.disabled=false;}
  }
  if(form.classList.contains('post-comment-edit-form')){
@@ -268,6 +269,7 @@ async function enter(view){
  if(view==='support'){await refreshPremium();if(state.view==='support')renderView();}
  if(view==='protocols'){protocolQuery='';data.support=[];await loadSupport();}
 }
-Object.assign(mod,{data,isPremium:premium,badge,loadBadges,refreshPremium,loadPosts,postsView,postAction,postForm,premiumView,checkoutView,checkout,verifyPremium,copyPix,unmountPaymentBrick,leavePremium,openPremiumWhatsapp,supportView,protocolsView,submitSupport,loadSupport,enter});
+function resetAccount(){syncFeedOwner();data.premium=null;data.premiumOwner=null;data.premiumIds.clear();data.support=[];protocolQuery='';supportOwner=null;supportSeq++;premiumRefreshSeq++;}
+Object.assign(mod,{data,resetAccount,isPremium:premium,badge,loadBadges,refreshPremium,loadPosts,postsView,postAction,postForm,premiumView,checkoutView,checkout,verifyPremium,copyPix,unmountPaymentBrick,leavePremium,openPremiumWhatsapp,supportView,protocolsView,submitSupport,loadSupport,enter});
 window.entreExtras=mod;
 })();

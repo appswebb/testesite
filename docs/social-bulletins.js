@@ -21,6 +21,7 @@ async function refreshBulletins(silent=false,force=false){
   d.bulletinSignature=signature;d.bulletinError='';d.bulletinLoaded=true;
   if((state.view==='avisos'||(state.view==='notifications'&&['bulletins','polls'].includes(d.notificationTab)))&&!silent&&(removed||!document.activeElement?.closest?.('.bulletin-reply-form,.poll-choices')))renderView();
  }catch(e){
+  if(state.session?.user?.id!==user)return;
   d.bulletinError='Não foi possível atualizar os avisos. Tente novamente.';
   d.bulletinLoaded=true;
   console.warn('Bulletins',e);

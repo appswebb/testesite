@@ -5,11 +5,11 @@ const data={presence:{visible:false,allow_requests:false},online:[],offset:0,has
 async function rpc(name,params){const r=await db.rpc(name,params||{});if(r.error)throw r.error;return r.data;}
 const pref=p=>data.prefs[p.id]||{folder:p.origin==='online'?'online':'live',pinned:false,archived_at:null};
 const isHidden=id=>Boolean(data.prefs[id]?.hidden_at);
-async function loadPrefs(){try{const rows=await rpc('entre_conversation_list');data.prefs={};for(const p of(Array.isArray(rows)?rows:[])){if(p?.pair_id)data.prefs[p.pair_id]=p;}}catch(e){console.warn('Prefs',e);}}
+async function loadPrefs(){const owner=state.session?.user?.id;if(!owner)return;try{const rows=await rpc('entre_conversation_list');if(state.session?.user?.id!==owner)return;data.prefs={};for(const p of(Array.isArray(rows)?rows:[])){if(p?.pair_id)data.prefs[p.pair_id]=p;}}catch(e){console.warn('Prefs',e);}}
 async function loadOnline(reset=false){
  if(data.busy)return;data.busy=true;data.onlineError=false;
  try{
-  const offset=reset?0:data.offset+data.online.length;const account=state.session?.user?.id;if(offset>240){data.hasMore=false;return;}
+  const offset=reset?0:data.offset+data.online.length;const account=state.session?.user?.id;if(!account)return;if(offset>240){data.hasMore=false;return;}
   const result=await rpc('entre_online_page',{_offset:offset,_limit:12});
   if(state.session?.user?.id!==account)return;const people=Array.isArray(result?.rows)?result.rows:[];
   await Promise.all(people.filter(p=>p.avatar_path).map(p=>signAvatar(p).catch(()=>false)));
@@ -22,7 +22,7 @@ async function loadOnline(reset=false){
   data.hasMore=Boolean(result?.has_more);data.loaded=true;
  }catch(e){data.loaded=true;data.onlineError=true;console.warn('Online page',e);}finally{data.busy=false;}
 }
-async function refreshInbox(){try{const r=await rpc('entre_social_inbox');data.follows=Array.isArray(r?.follows)?r.follows:[];data.chats=Array.isArray(r?.chats)?r.chats:[];if(state.view==='online'&&!document.querySelector('.cn-online-filter[open]'))renderView();}catch(e){console.warn('Inbox',e);}}
+async function refreshInbox(){const owner=state.session?.user?.id;if(!owner)return;try{const r=await rpc('entre_social_inbox');if(state.session?.user?.id!==owner)return;data.follows=Array.isArray(r?.follows)?r.follows:[];data.chats=Array.isArray(r?.chats)?r.chats:[];if(state.view==='online'&&!document.querySelector('.cn-online-filter[open]'))renderView();}catch(e){console.warn('Inbox',e);}}
 // Foreground-only banners: never replay the offline backlog.
 let foregroundSince=Date.now(),bannerUser=null,bannerReady=false,bannerTimer=0,bannerQueue=[],bannerSeen=new Set();
 const importantKinds=new Set(['poll','bulletin','follow','follow_accepted','chat_request','chat_accepted','message','matched','account_restored','account_suspended','retention','system']);
@@ -68,16 +68,17 @@ async function updateConversation(pairId,change){
  const r=await rpc('entre_conversation_update',{_pair:pairId,...change});
  if(r?.pair_id)data.prefs[r.pair_id]=r;return r;
 }
+let socialOwner=null,initializedOwner=null;
+function resetAccount(){const owner=state.session?.user?.id||null;if(socialOwner===owner)return;socialOwner=owner;initializedOwner=null;Object.assign(data,{presence:{visible:false,allow_requests:false},online:[],offset:0,hasMore:false,loaded:false,onlineError:false,follows:[],chats:[],prefs:{},notifications:[],unread:0,notiMore:false,hasEarlier:false,bulletins:[],pendingPoll:null,bulletinLoaded:false,bulletinError:'',bulletinSignature:'',notificationTab:'personal'});resetForeground();}
 async function init(){
- if(data.started||!state.session?.user||!state.profile)return;
- data.started=true;
+ resetAccount();const owner=state.session?.user?.id;if(!owner||!state.profile||initializedOwner===owner)return;initializedOwner=owner;
  await window.connectRealtime?.resume?.();
  await Promise.allSettled([loadPrefs(),refreshInbox(),refreshNotifications(),window.entreSocial?.refreshBulletins?.(true)]);
- 
+ if(data.started)return;data.started=true;
  setInterval(async()=>{if(!state.session?.user||state.suspension||maintenanceIsActive())return;await refreshNotifications();if(state.view==='online'&&!document.hidden)await refreshInbox();if(!document.hidden)await window.entreSocial?.refreshBulletins?.(!['avisos','notifications'].includes(state.view));},30000);
  document.addEventListener('visibilitychange',async()=>{if(document.hidden||!state.session?.user||state.suspension)return;await refreshNotifications();await window.entreSocial?.refreshBulletins?.(state.view!=='avisos');});
  document.addEventListener('change',async e=>{const select=e.target.closest('[data-social-folder]');if(!select)return;try{await updateConversation(select.dataset.socialFolder,{_folder:select.value});toast('Conversa movida.');renderView();}catch(error){toast(infoError(error),true);}});
 }
 async function enter(view){if(!state.session?.user||!state.profile)return;if(view==='online')await Promise.allSettled([loadOnline(true),refreshInbox()]);if(view==='notifications')await Promise.allSettled([refreshNotifications(),window.entreSocial?.refreshBulletins?.(true)]);if(view==='conversations')await loadPrefs();if(view==='avisos')await window.entreSocial?.refreshBulletins?.(true);renderView();}
-return{data,rpc,pref,isHidden,init,enter,loadOnline,loadPrefs,refreshInbox,refreshNotifications,resetForeground,updateConversation,isArchived:id=>Boolean(data.prefs[id]?.archived_at)};
+return{data,rpc,pref,isHidden,init,resetAccount,enter,loadOnline,loadPrefs,refreshInbox,refreshNotifications,resetForeground,updateConversation,isArchived:id=>Boolean(data.prefs[id]?.archived_at)};
 })();

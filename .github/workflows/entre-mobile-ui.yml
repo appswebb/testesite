@@ -130,6 +130,8 @@ jobs:
           run_check node tests/admin-dialog-buttons.cjs
           run_check node --test tests/social-ui-regression.test.mjs
           run_check node --test tests/maintenance-refined.test.mjs
+          run_check node --test tests/maintenance-release.test.mjs
+          run_check node --test tests/account-races.test.mjs
           run_check node --test tests/checkout-expiry.test.mjs
           run_check node --test tests/daily-search-quota.test.mjs
           run_check node --test tests/partnerships.test.mjs

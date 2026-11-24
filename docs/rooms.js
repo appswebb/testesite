@@ -25,8 +25,10 @@ function paint(scrollToEnd=false){
  const cool=document.getElementById('roomCooldown');
  if(cool)cool.textContent=s.expiresCooldown>Date.now()?'Aguarde '+Math.ceil((s.expiresCooldown-Date.now())/1000)+'s para enviar outra.':'Uma mensagem a cada 5 segundos · apaga em 24h';
 }
+let roomOwner=null;
+function resetAccount(){const uid=state.session?.user?.id||null;if(roomOwner===uid)return;roomOwner=uid;s.rows=[];s.older=false;s.expiresCooldown=0;s.room='br';s.city='';s.state='SP';s.cities=[];if(s.refreshTimer)clearInterval(s.refreshTimer);s.refreshTimer=null;}
 function view(){
- const current=title(s.room),label=s.room==='br'?'🇧🇷':icon(s.room);
+ resetAccount();const current=title(s.room),label=s.room==='br'?'🇧🇷':icon(s.room);
  return '<section class="room-shell rooms-static-shell" aria-label="Salas públicas">'+
  '<header class="rooms-static-header"><div class="rooms-static-title"><h2>Salas</h2><div class="rooms-current-name">'+label+' <strong>'+esc(current)+'</strong></div></div>'+
  '<button type="button" class="rooms-open-filter" data-room-action="filter" aria-haspopup="dialog" aria-expanded="false" aria-controls="roomsFilterOverlay">'+ico('sliders',18)+' Filtros</button></header>'+
@@ -133,11 +135,11 @@ function startPolling(){
  s.refreshTimer=setInterval(()=>{if(state.view==='rooms'&&!document.hidden&&!s.loading&&!s.loadingMore)void load();},7000);
 }
 async function enter(){
- if(state.view!=='rooms')return;
+ resetAccount();if(state.view!=='rooms')return;
  const mine=window.entreGeo?.details?.().self;
  if(mine?.state&&s.state==='SP')s.state=mine.state;
  if(!s.cities.length)void cities(s.state);
- await load();startPolling();
+ await load();if(state.view==='rooms')startPolling();
 }
 async function send(form){
  if(s.busy||!state.session)return;
@@ -146,9 +148,9 @@ async function send(form){
  if(s.expiresCooldown>Date.now()){toast('Aguarde o intervalo de 5 segundos.',true);return;}
  s.busy=true;const btn=form.querySelector('[type="submit"]');if(btn)btn.disabled=true;
  try{
-  const {error}=await db.rpc('entre_room_send',{_room:s.room,_body:body});
-  if(error)throw error;
-  input.value='';input.blur();window.connectSound?.play?.('send');s.expiresCooldown=Date.now()+5000;
+  const owner=state.session?.user?.id,room=s.room;const {error}=await db.rpc('entre_room_send',{_room:room,_body:body});
+  if(error)throw error;if(state.session?.user?.id!==owner||s.room!==room)return;
+  if(input.value.trim()===body)input.value='';window.connectSound?.play?.('send');s.expiresCooldown=Date.now()+5000;
   await load();
  }catch(e){toast(infoError(e),true);if(/5 segundos/.test(e.message||''))s.expiresCooldown=Date.now()+5000;}
  finally{s.busy=false;if(btn?.isConnected)btn.disabled=false;paint();}
@@ -183,5 +185,5 @@ document.addEventListener('click',e=>{
 
 });
 document.addEventListener('click',event=>{if(event.target?.id==='roomsFilterOverlay')closeRoomFilter();});
-window.entreRooms={view,enter,messageContext:id=>state.view==='rooms'?{room:s.room,message:s.rows.find(r=>String(r.id)===String(id))}:null,applyMutation:(room,row)=>{if(state.view!=='rooms'||room!==s.room)return;const item=s.rows.find(r=>r.id===row.id);if(row.deleted_at)s.rows=s.rows.filter(r=>String(r.id)!==String(row.id));else if(item)Object.assign(item,row);paint();},refresh:()=>state.view==='rooms'&&!document.hidden?load():Promise.resolve(),stop:()=>{closeRoomFilter(false);if(s.refreshTimer)clearInterval(s.refreshTimer);s.refreshTimer=null;},roomChange,details:()=>({room:s.room,rows:s.rows.length,filterOpen:s.filterOpen})};
+window.entreRooms={view,enter,resetAccount,messageContext:id=>state.view==='rooms'?{room:s.room,message:s.rows.find(r=>String(r.id)===String(id))}:null,applyMutation:(room,row)=>{if(state.view!=='rooms'||room!==s.room)return;const item=s.rows.find(r=>r.id===row.id);if(row.deleted_at)s.rows=s.rows.filter(r=>String(r.id)!==String(row.id));else if(item)Object.assign(item,row);paint();},refresh:()=>state.view==='rooms'&&!document.hidden?load():Promise.resolve(),stop:()=>{closeRoomFilter(false);if(s.refreshTimer)clearInterval(s.refreshTimer);s.refreshTimer=null;},roomChange,details:()=>({room:s.room,rows:s.rows.length,filterOpen:s.filterOpen})};
 })();
