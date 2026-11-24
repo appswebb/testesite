@@ -6,7 +6,7 @@ function personCard(p){
  const follow=p.follow_status,allowed=p.allow_requests||follow==='accepted'||p.follower_status==='accepted';
  return '<article class="online-person '+(window.entreExtras?.isPremium?.(p.id)?'premium-surface':'')+'"><div class="online-person-head"><span class="person-online-indicator"></span> ONLINE AGORA</div>'+
  '<div class="online-person-content">'+avatar(p,'large')+'<div><h3>'+esc(p.display_name)+(window.entreExtras?.badge?.(p)||'')+', '+(Number(p.age)>0?Number(p.age):'')+'</h3><small>'+esc(genders[p.gender]||'Pessoa')+'</small><small class="person-handle">@'+esc(p.username||'')+'</small></div></div>'+
- '<p class="online-person-bio">'+esc(p.bio||'Que tal começar com um oi?')+'</p>'+
+ '<p class="online-person-bio">'+esc(p.bio||'Sem biografia.')+'</p>'+
  '<div class="online-person-actions"><button type="button" class="ui-btn btn-outline btn-sm" data-action="profileOpen" data-id="'+esc(p.id)+'">Ver perfil</button><button type="button" class="ui-btn btn-outline btn-sm" data-action="socialFollow" data-id="'+esc(p.id)+'"'+(follow==='pending'||follow==='accepted'?' disabled':'')+'>'+
  (follow==='accepted'?'✓ Seguindo':follow==='pending'?'Pedido enviado':'+ Seguir')+'</button>'+
  '<button type="button" class="ui-btn btn-dark btn-sm" data-action="socialChat" data-id="'+esc(p.id)+'">'+ico('chat',15)+' Conversar</button></div>'+
@@ -20,17 +20,14 @@ function inbox(){
 }
 function onlineView(){
  const v=Boolean(s.presence.visible),d=Boolean(s.presence.allow_requests);
- return heading('GENTE DE VERDADE','Encontre <em>pessoas.</em>','Encontre pessoas online ou pesquise pelo @.')+
- '<div class="online-controls"><div><strong>Meu perfil na lista</strong><p>'+(v?'Visível enquanto você estiver no site.':'Você está invisível para a lista de pessoas online.')+'</p></div>'+
- '<button class="social-switch '+(v?'is-on':'')+'" type="button" role="switch" aria-checked="'+v+'" data-action="onlineVisibility">'+(v?'Visível':'Invisível')+'</button></div>'+
- '<div class="online-controls"><div><strong>Conversas de desconhecidos</strong><p>'+(d?'Você decide se aceita cada convite.':'Só seguidores aceitos podem conversar sem convite.')+'</p></div>'+
- '<button class="social-switch '+(d?'is-on':'')+'" type="button" role="switch" aria-checked="'+d+'" data-action="onlineDirect">'+(d?'Liberadas':'Bloqueadas')+'</button></div>'+
- inbox()+'<div class="online-section-title"><h3>Explorar perfis <span class="live-dot"></span></h3><small>Ativos nos últimos 90 segundos</small></div>'+
+ return '<div class="cn-online-top"><span><i class="cn-online-dot"></i> Pessoas online</span><details class="cn-online-filter" '+(s.onlineFilterOpen?'open':'')+'><summary>'+ico('sliders',18)+' Filtros</summary><div class="cn-online-filter-panel"><div class="online-controls"><div><strong>Meu perfil na lista</strong></div><button class="social-switch '+(v?'is-on':'')+'" type="button" role="switch" aria-checked="'+v+'" data-action="onlineVisibility">'+(v?'Visível':'Invisível')+'</button></div><div class="online-controls"><div><strong>Conversas de desconhecidos</strong></div><button class="social-switch '+(d?'is-on':'')+'" type="button" role="switch" aria-checked="'+d+'" data-action="onlineDirect">'+(d?'Liberadas':'Bloqueadas')+'</button></div></div></details></div>'+
+ inbox()+
  (s.online.length?'<div class="online-card-grid">'+s.online.map(personCard).join('')+'</div>':
- '<div class="social-empty">'+ico('users',30)+'<h3>'+(s.onlineError?'Não foi possível carregar os perfis.':s.loaded?'Ainda não há perfis visíveis.':'Carregando pessoas…')+'</h3><p>Somente quem autorizou aparecer e esteve ativo recentemente fica nesta lista. Você pode ativar sua visibilidade acima ou conhecer alguém no chat ao vivo.</p><button type="button" class="ui-btn btn-dark btn-sm" data-action="nav" data-view="connect">Encontrar alguém ao vivo</button></div>')+
+ '<div class="social-empty">'+ico('users',30)+'<h3>'+(s.onlineError?'Não foi possível carregar os perfis.':s.loaded?'Ainda não há perfis visíveis.':'Carregando pessoas…')+'</h3><p>A lista mostra apenas perfis visíveis e ativos.</p><button type="button" class="ui-btn btn-dark btn-sm" data-action="nav" data-view="connect">Encontrar alguém ao vivo</button></div>')+
  (s.hasMore?'<div class="social-more"><button class="ui-btn btn-outline" data-action="onlineMore">Carregar mais 12 pessoas</button></div>':'')+
  (s.offset>0?'<div class="social-more"><button class="ui-btn btn-quiet" data-action="onlineRestart">Voltar ao início</button></div>':'')+
  '<div id="onlineScrollAnchor" aria-hidden="true"></div>';
 }
+document.addEventListener('toggle',event=>{if(event.target.matches?.('.cn-online-filter'))s.onlineFilterOpen=event.target.open},true);
 Object.assign(api,{onlineView,inbox,personCard});
 })();

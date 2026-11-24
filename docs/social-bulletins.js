@@ -17,12 +17,12 @@ async function refreshBulletins(silent=false){
   d.bulletinSignature=signature;d.bulletinError='';d.bulletinLoaded=true;
   const after=d.pendingPoll?.id||null;
   if(before!==after){render();return;}
-  if(state.view==='avisos'&&!silent&&!document.activeElement?.closest?.('.bulletin-reply-form,.poll-choices'))renderView();
+  if((state.view==='avisos'||(state.view==='notifications'&&d.notificationTab==='bulletins'))&&!silent&&!document.activeElement?.closest?.('.bulletin-reply-form,.poll-choices'))renderView();
  }catch(e){
   d.bulletinError='Não foi possível atualizar os avisos. Tente novamente.';
   d.bulletinLoaded=true;
   console.warn('Bulletins',e);
-  if(state.view==='avisos'&&!silent)renderView();
+  if((state.view==='avisos'||(state.view==='notifications'&&d.notificationTab==='bulletins'))&&!silent)renderView();
  }finally{d.bulletinBusy=false;}
 }
 function voteResults(b){
@@ -48,13 +48,13 @@ function bulletinsView(){
  (d.bulletinError?'<div class="bulletin-error" role="status">'+esc(d.bulletinError)+' <button type="button" data-action="bulletinsRefresh">Tentar novamente</button></div>':'')+
  (!d.bulletinLoaded?'<div class="social-empty"><h3>Carregando avisos…</h3><p>Verificando as publicações ativas.</p></div>':
  d.bulletins.length?'<div class="bulletin-feed">'+d.bulletins.filter(active).map(bulletinCard).join('')+'</div>':
- '<div class="social-empty">'+ico('megaphone',27)+'<h3>Nenhum aviso ativo.</h3><p>Quando a administração publicar um comunicado ou uma enquete, aparecerá aqui por 24 horas. As notificações pessoais continuam no sino.</p></div>');
+ '<div class="social-empty">'+ico('megaphone',27)+'<h3>Nenhum aviso ativo.</h3><p>Comunicados e enquetes ficam disponíveis por 24 horas.</p></div>');
 }
 function pollGateView(){
  const poll=pending();
  if(!poll||state.pair?.status==='active'||maintenanceIsActive()||state.suspension)return '';
  return '<div class="bulletin-gate" id="bulletinGate" role="dialog" aria-modal="true" aria-labelledby="bulletinGateTitle">'+
- '<div class="bulletin-gate-card"><div class="bulletin-gate-brand">entre<span>.</span></div>'+
+ '<div class="bulletin-gate-card"><div class="bulletin-gate-brand">CONNECT</div>'+
  '<span class="notice-label">'+ico('megaphone',16)+' ENQUETE OFICIAL · VOTO OBRIGATÓRIO</span>'+
  '<h2 id="bulletinGateTitle">'+esc(poll.title)+'</h2>'+
  (poll.body?'<p>'+esc(poll.body)+'</p>':'<p>Escolha uma opção para continuar usando o CONNECT.</p>')+

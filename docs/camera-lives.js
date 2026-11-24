@@ -120,7 +120,7 @@ function discoveryResults(){
  return '<div class="camera-live-empty live-visual-empty" role="status">'+ico('camera',28)+
  '<strong>'+(s.loading?'Buscando transmissões…':s.error?'Não foi possível carregar as lives':s.rows.length?'Nenhuma live nesse filtro':'Ninguém transmitindo agora')+'</strong>'+
  '<p>'+(s.error?'Confira a conexão e tente novamente.':s.rows.length?'Experimente outra categoria ou região.':'Seja a primeira pessoa a transmitir.')+'</p>'+
- (s.error?'<button type="button" data-live-action="refresh">Tentar novamente</button>':(s.region!=='global'||s.search||s.category!=='all')?'<button type="button" data-live-action="resetFilters">Ver todas</button>':'<button type="button" data-live-action="create">Iniciar live</button>')+
+ (s.error?'<button type="button" data-live-action="refresh">Tentar novamente</button>':(s.region!=='global'||s.search||s.category!=='all')?'<button type="button" data-live-action="resetFilters">Ver todas</button>':'' )+
  '</div>';
 }
 function updateDiscovery(){
@@ -134,10 +134,10 @@ function updateDiscovery(){
 function view(){
  if(s.active)return '<section class="camera-live-shell live-discovery-screen live-active-screen">'+viewer()+'</section>';
  return '<section class="camera-live-shell live-explore-screen" aria-label="Explorar transmissões ao vivo">'+
- '<header class="live-explore-header"><div class="live-explore-heading"><h2>Explorar lives</h2>'+
+ '<header class="live-explore-header"><div class="live-explore-heading"><h2>Ao vivo agora</h2>'+
  '<span class="live-explore-count"><i aria-hidden="true"></i><span id="liveTotalCount">'+s.rows.length+'</span> ao vivo</span></div>'+
  '<div class="live-explore-actions"><button type="button" class="live-explore-refresh" data-live-action="refresh" aria-label="Atualizar lives" title="Atualizar">'+ico('refresh',17)+'</button>'+ 
- '<button type="button" class="live-explore-start" data-live-action="create" aria-expanded="'+String(s.showCreate)+'" aria-controls="cameraLiveComposer">'+ico('camera',17)+' '+(s.showCreate?'Fechar':'Iniciar live')+'</button></div></header>'+
+ '<button type="button" class="live-explore-start" data-live-action="create" aria-expanded="'+String(s.showCreate)+'" aria-controls="cameraLiveComposer">'+ico(s.showCreate?'close':'camera',17)+' '+(s.showCreate?'Fechar':'Iniciar live')+'</button></div></header>'+
  '<div class="live-explore-toolbar"><label class="live-explore-search">'+ico('search',19)+
  '<span class="sr-only">Buscar transmissões</span><input data-live-filter="search" type="search" maxlength="90" placeholder="Pesquisar lives ou pessoas" value="'+esc(s.search)+'" autocomplete="off"></label>'+
  '<button type="button" class="live-region-trigger" data-live-action="region" aria-controls="liveRegionFilters" aria-expanded="'+String(s.showRegion)+'">'+ico('compass',18)+' <span>Região</span></button></div>'+
@@ -149,7 +149,7 @@ function view(){
  '<div class="live-compose-fields"><label>Categoria<select name="category">'+CATEGORIES.filter(c=>c[0]!=='all').map(([key,label])=>'<option value="'+key+'">'+esc(label)+'</option>').join('')+'</select></label>'+
  '<label>Capa (opcional)<input name="cover" id="cameraLiveCover" type="file" accept="image/jpeg,image/png,image/webp"></label></div>'+
  '<div id="liveCoverPreview" class="live-cover-preview" hidden></div>'+
- '<button type="submit">'+ico('camera',18)+' Começar live</button></form></div>'+
+ '<button type="submit">'+ico('check',18)+' Transmitir</button></form></div>'+
  '<div class="live-explore-results-heading"><strong>Transmitindo agora</strong><span id="liveDiscoverCount">'+filtered().length+'</span></div>'+
  '<div id="liveDiscoverResults">'+discoveryResults()+'</div></section>';
 }
@@ -176,7 +176,7 @@ async function refresh(paint=true){
    // Preserve the user's typing and keyboard while the live directory polls.
    if(!s.active&&(document.activeElement?.closest?.('.live-explore-toolbar')||document.activeElement?.closest?.('.camera-live-filters')||document.activeElement?.closest?.('.live-create-composer'))){
     updateDiscovery();
-    const total=document.getElementById('liveTotalCount');if(total)total.textContent=String(s.rows.length)+' no ar';
+    const total=document.getElementById('liveTotalCount');if(total)total.textContent=String(s.rows.length);
    }else{renderView();if(s.active)attachAll();}
   }
  }catch(e){console.warn('Lives indisponíveis',e);s.error=infoError(e);if(paint&&state.view==='lives'&&!s.active)renderView();}

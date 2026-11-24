@@ -90,10 +90,9 @@ async function loadCommentPage(more=false){
 }
 
 function postsView(){
- return (window.entreStories?.markup?.()||'')+heading('COMUNIDADE','Feed <em>social.</em>','')+
- '<section class="posts-shell"><div class="posts-stream"><form id="postCreateForm" class="post-compose"><div class="post-compose-top">'+avatar(state.profile)+'<div><strong>O que você quer compartilhar?</strong><small>Seu espaço para começar uma conversa.</small></div>'+badge(state.profile)+'</div>'+
- '<textarea name="body" minlength="3" maxlength="900" placeholder="Uma ideia, uma pergunta ou uma legenda para sua foto ou vídeo…"></textarea>'+ (window.entreMedia?.composeMarkup?.()||'')+
- '<div class="post-compose-footer"><small>Texto, foto ou vídeo · respeite os outros.</small><button type="submit" class="ui-btn btn-dark btn-sm">Publicar '+ico('arrow',15)+'</button></div></form>'+
+ return '<section class="posts-shell"><div class="posts-stream"><section class="cn-feed-composer"><div class="cn-compose-heading">'+avatar(state.profile)+'<div><strong>Criar</strong><small>Compartilhe com a comunidade</small></div><button type="button" class="cn-story-create" data-story-action="compose">'+ico('clock',17)+' Story</button></div><form id="postCreateForm" class="post-compose cn-inline-post">'+
+ '<textarea name="body" minlength="3" maxlength="900" placeholder="O que você quer publicar?"></textarea>'+ (window.entreMedia?.composeMarkup?.()||'')+
+ '<div class="post-compose-footer"><button type="submit" class="ui-btn btn-dark btn-sm">Publicar post '+ico('arrow',15)+'</button></div></form>'+(window.entreStories?.markup?.()||'')+'</section>'+
  (data.posts.length?data.posts.map(p=>{
   const person={id:p.author_id,display_name:p.author_name,avatar_path:p.author_avatar,avatar_uploaded_at:p.author_avatar_uploaded_at};
   const own=p.author_id===state.session?.user?.id;
@@ -102,7 +101,7 @@ function postsView(){
   (own?'<button type="button" class="post-remove" data-action="postDelete" data-id="'+Number(p.id)+'" aria-label="Apagar meu post">'+ico('trash',16)+'</button>':'')+'</div>'+
   (p.body?'<p class="post-body">'+esc(p.body)+'</p>':'')+(window.entreMedia?.postMarkup?.(p)||'')+'<div class="post-interactions"><button type="button" class="'+(p.liked?'liked':'')+'" data-action="postLike" data-id="'+Number(p.id)+'">'+ico('heart',17)+' '+Number(p.likes||0)+' curtidas</button><span>'+ico('chat',15)+' '+(p.comments?.length||0)+' comentários recentes</span></div>'+
   '<button type="button" class="post-comments-launch" data-action="postCommentsOpen" data-id="'+Number(p.id)+'">'+ico('chat',18)+' <span>Ver comentários e participar</span>'+ico('arrow',16)+'</button></article>';
- }).join(''):'<div class="social-empty"><h3>A comunidade está começando.</h3><p>Seu post pode ser o primeiro. Faça uma pergunta ou compartilhe uma ideia.</p></div>')+
+ }).join(''):'<div class="social-empty"><h3>Nenhuma publicação ainda.</h3><p>Compartilhe sua primeira publicação.</p></div>')+
  (data.postMore?'<button class="ui-btn btn-outline" data-action="postsMore">Carregar mais posts</button>':'')+'</div></section>'+commentsOverlay();
 }
 async function postAction(a,btn){

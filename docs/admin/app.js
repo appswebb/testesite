@@ -15,9 +15,10 @@ var sections=[
  ["updates","Atualização","refresh-cw"],
  ["users","Usuários","users"],
  ["reports","Denúncias","flag"],
+ ["pairs","Encontros","heart-handshake"],
  ["appeals","Contestações","alert-circle"],
   ["bulletins","Avisos","message-circle"],
-  ["support","Suporte","flag"],
+  ["support","Suporte","circle-help"],
   ["premium","Premium","crown"],
  ["settings","Configurações","sliders-horizontal"],
  ["security","Segurança","shield-check"]
@@ -76,7 +77,7 @@ function toast(msg,bad){clearTimeout(toastTimer);toastEl.textContent=msg;toastEl
 async function rpc(name,params){var r=await db.rpc(name,params||{});if(r.error)throw r.error;return r.data;}
 function gate(locked){
  var message=locked?"Esta conta não tem acesso ao painel. Entre com o e-mail autorizado e confirmado.":"Entre com o e-mail e a senha do seu cadastro no CONNECT";
- app.innerHTML='<div class="gate"><div class="gate-copy"><div><a class="brand" style="padding:0" href="../?site=1"><span class="brand-mark"><img src="../connect-app-icon.svg?v=3" alt="" /></span><span><span class="brand-text">CONNECT</span><br><span class="brand-sub">COMMAND CENTER</span></span></a></div>'
+ app.innerHTML='<div class="gate"><div class="gate-copy"><div><a class="brand" style="padding:0" href="../?site=1"><span class="brand-mark"><img src="../connect-app-icon.svg?v=3" alt="" /></span><span><span class="brand-text">CONNECT</span><br><span class="brand-sub">ADMINISTRAÇÃO</span></span></a></div>'
  +'<div class="gate-inner"><span class="gate-kicker">ACESSO RESTRITO · SUPABASE AUTH</span><h1>Seu site,<br><em>sob controle.</em></h1><p>'+e(message)+'</p>'
  +'<form id="admin-login-form" class="admin-login-form"><label for="admin-email">E-mail</label><input id="admin-email" type="email" name="email" autocomplete="username" inputmode="email" maxlength="254" required placeholder="E-mail da conta cadastrada">'
  +'<label for="admin-password">Senha</label><div class="admin-password-wrap"><input id="admin-password" type="password" name="password" autocomplete="current-password" required placeholder="Sua senha"><button type="button" class="admin-password-toggle" data-admin-password-toggle aria-controls="admin-password" aria-label="Mostrar senha" aria-pressed="false">Mostrar</button></div>'
@@ -97,7 +98,7 @@ function adminMobileNav(){
  '<div class="admin-more-links">'+sections.filter(function(s){return !mainMobileSections.includes(s[0]);}).map(function(s){return navItem(s,true);}).join('')+'</div></div>';
 }
 function shell(){
- app.innerHTML='<div class="shell"><aside class="rail"><div class="brand"><span class="brand-mark"><img src="../connect-app-icon.svg?v=3" alt="" /></span><div><div class="brand-text">CONNECT</div><div class="brand-sub">COMMAND CENTER</div></div></div><div class="rail-label">WORKSPACE</div><div class="rail-links">'+sections.map(function(s){return navItem(s,false);}).join("")+'</div><div class="rail-spacer"></div><div class="rail-bottom"><div class="admin-identity"><div class="admin-avatar">'+e((state.user&&state.user.email||"A")[0].toUpperCase())+'</div><div><strong>Admin principal</strong><small>'+e(state.user&&state.user.email||"")+'</small></div></div><div class="rail-out"><button data-action="signout">'+ico("log-out",13)+' Sair</button></div></div></aside><main class="main"><header class="topbar"><div class="topbar-left"><span class="topbar-label">CONNECT / ADMIN / <span id="topbar-location">'+e(viewTitle())+'</span></span></div><div class="topbar-right"><span class="topbar-live"><span class="pulse"></span> SISTEMA CONECTADO</span><button class="toolbar-btn" data-action="refresh">'+ico("refresh-cw",16)+' Atualizar</button><a class="toolbar-btn" href="../?site=1">'+ico("external-link",16)+' Ver site</a></div></header><div id="admin-view"></div></main>'+adminMobileNav()+'</div><div id="modal-root"></div>';
+ app.innerHTML='<div class="shell"><aside class="rail"><div class="brand"><span class="brand-mark"><img src="../connect-app-icon.svg?v=3" alt="" /></span><div><div class="brand-text">CONNECT</div><div class="brand-sub">COMMAND CENTER</div></div></div><div class="rail-label">GESTÃO</div><div class="rail-links">'+sections.map(function(s){return navItem(s,false);}).join("")+'</div><div class="rail-spacer"></div><div class="rail-bottom"><div class="admin-identity"><div class="admin-avatar">'+e((state.user&&state.user.email||"A")[0].toUpperCase())+'</div><div><strong>Administrador</strong><small>'+e(state.user&&state.user.email||"")+'</small></div></div><div class="rail-out"><button data-action="signout">'+ico("log-out",13)+' Sair</button></div></div></aside><main class="main"><header class="topbar"><div class="topbar-left"><span class="topbar-label">CONNECT / ADMIN / <span id="topbar-location">'+e(viewTitle())+'</span></span></div><div class="topbar-right"><span class="topbar-live"><span class="pulse"></span> SISTEMA CONECTADO</span><button class="toolbar-btn" data-action="refresh">'+ico("refresh-cw",16)+' Atualizar</button><a class="toolbar-btn" href="../?site=1">'+ico("external-link",16)+' Ver site</a></div></header><div id="admin-view"></div></main>'+adminMobileNav()+'</div><div id="modal-root"></div>';
 }
 function viewTitle(){return (sections.find(function(s){return s[0]===state.view;})||sections[0])[1];}
 function heading(k,title,desc){return '<div class="page-intro"><span class="eyebrow">'+e(k)+'</span><h1 class="page-title">'+title+'</h1><p>'+e(desc)+'</p></div>';}

@@ -4,7 +4,7 @@
 (function(){
 'use strict';
 const KEY='entre.appearance.v1';
-const MODES=['light','dark','custom'];
+const MODES=['light','dark'];
 const DEFAULT={mode:'dark',color:'#7545F7'};
 const PRESETS=[
  ['#7757F4','Violeta'],['#2977D5','Azul'],['#F07C55','Coral'],
@@ -14,7 +14,7 @@ const hex=v=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v)?v.toUpperCase():null
 function read(){
  try{
   const stored=JSON.parse(localStorage.getItem(KEY)||'null');
-  return {mode:MODES.includes(stored?.mode)?stored.mode:DEFAULT.mode,
+  return {mode:stored?.mode==='custom'?'light':MODES.includes(stored?.mode)?stored.mode:DEFAULT.mode,
    color:hex(stored?.color)||DEFAULT.color};
  }catch{return {...DEFAULT};}
 }
@@ -29,38 +29,22 @@ function readable(h){
 function apply(){
  const root=document.documentElement;
  root.dataset.theme=state.mode;
- const accent=state.mode==='custom'?state.color:state.mode==='dark'?'#B4A6FF':'#7545F7';
+ const accent=state.color;
  const accentOn=readable(accent);
  root.style.setProperty('--ui-accent',accent);
  root.style.setProperty('--ui-accent-on',accentOn);
  root.style.setProperty('--ui-accent-soft',`rgb(${rgb(accent).join(' ')} / .13)`);
  root.style.setProperty('--ui-accent-faint',`rgb(${rgb(accent).join(' ')} / .07)`);
  root.style.setProperty('--ui-accent-shadow',`rgb(${rgb(accent).join(' ')} / .24)`);
- root.style.setProperty('--ui-theme-surface',state.mode==='dark'?'#251B39':'#FFFFFF');
- root.style.setProperty('--ui-theme-text',state.mode==='dark'?'#F5F6F8':'#151719');
- const metaColor=state.mode==='dark'?'#191329':'#F7F7FD';
- document.querySelectorAll('meta[name="theme-color"]').forEach(meta=>meta.setAttribute('content',metaColor));
- root.style.colorScheme=state.mode==='dark'?'dark':'light';
- // Explicit inline fallback is necessary because legacy pages include fixed
- // !important surface rules which sometimes defeat the token stylesheet.
- // Apply on every mode change and on DOMContentLoaded, even before auth.
- if(document.body){
-  document.body.style.setProperty('background-color',state.mode==='dark'?'#191329':'#F7F7FD','important');
-  document.body.style.setProperty('color',state.mode==='dark'?'#F6F5FF':'#242238','important');
- }
- // Immediate background sync for mounted legacy cards. Several old stylesheets
- // define a white !important shorthand and otherwise flash white on theme switch.
- const surfaces=document.querySelectorAll('.post-card,.post-compose,.settings-card,.form-panel,.profile-preview,.online-person,.conversation-entry,.comments-dialog,.room-shell,.camera-live-stage,.global-search-section,.support-card,.support-history,.premium-checkout-card');
- for(const el of surfaces){
-  if(state.mode==='dark'){
-   el.style.setProperty('background-color','#2A203E','important');
-   el.style.setProperty('color','#F6F5FF','important');
-   el.dataset.themeSurfaceApplied='dark';
-  }else if(el.dataset.themeSurfaceApplied==='dark'){
-   el.style.removeProperty('background-color');el.style.removeProperty('background');el.style.removeProperty('color');
-   delete el.dataset.themeSurfaceApplied;
-  }
- }
+ const dark=state.mode==='dark';
+ const tokens=dark?{'--ui-bg':'#15171b','--ui-panel':'#20232a','--ui-panel-alt':'#2b2f37','--ui-text':'#f5f6f8','--ui-muted':'#b7bdc8','--ui-line':'#393e49'}:{'--ui-bg':'#f5f6f9','--ui-panel':'#ffffff','--ui-panel-alt':'#eef0f4','--ui-text':'#20232a','--ui-muted':'#606978','--ui-line':'#dfe3eb'};
+ for(const [key,value] of Object.entries(tokens))root.style.setProperty(key,value,'important');
+ root.style.setProperty('--ui-theme-surface',tokens['--ui-panel']);root.style.setProperty('--ui-theme-text',tokens['--ui-text']);
+ root.style.setProperty('--cn-grad','linear-gradient(145deg,color-mix(in srgb,'+accent+' 85%,white),'+accent+')','important');root.style.setProperty('--cn-ink',accentOn,'important');
+ document.querySelectorAll('meta[name="theme-color"]').forEach(meta=>meta.setAttribute('content',tokens['--ui-bg']));
+ root.style.colorScheme=state.mode;
+ if(document.body){document.body.style.removeProperty('background-color');document.body.style.removeProperty('color')}
+ document.querySelectorAll('[data-theme-surface-applied]').forEach(el=>{el.style.removeProperty('background-color');el.style.removeProperty('background');el.style.removeProperty('color');delete el.dataset.themeSurfaceApplied});
  window.dispatchEvent(new CustomEvent('entre:themechange',{detail:{mode:state.mode,accent}}));
 }
 function persist(){
@@ -73,16 +57,15 @@ function setMode(mode){
 function setColor(color){
  const valid=hex(color);
  if(!valid)return false;
- state.color=valid;state.mode='custom';persist();apply();syncControls();return true;
+ state.color=valid;persist();apply();syncControls();return true;
 }
 function renderControls(){
  return '<section class="appearance-panel" aria-labelledby="appearanceTitle">'+
- '<div class="appearance-heading"><div><span class="appearance-eyebrow">A SUA EXPERIÊNCIA</span><h3 id="appearanceTitle">Aparência do aplicativo</h3><p>Escolha um tema ou defina sua própria cor. A preferência também vale para o painel e as páginas públicas neste aparelho.</p></div><span class="appearance-illustration" aria-hidden="true">✳</span></div>'+
+ '<div class="appearance-heading"><div><span class="appearance-eyebrow">A SUA EXPERIÊNCIA</span><h3 id="appearanceTitle">Aparência do aplicativo</h3><p>Escolha o modo e a cor separadamente.</p></div></div>'+
  '<div class="appearance-mode-grid" role="group" aria-label="Selecionar aparência">'+
  '<button type="button" class="appearance-mode" data-theme-mode="light" aria-pressed="'+(state.mode==='light')+'"><span class="appearance-mini light"><i></i><b></b></span><strong>Claro</strong><small>Limpo e suave</small></button>'+
  '<button type="button" class="appearance-mode" data-theme-mode="dark" aria-pressed="'+(state.mode==='dark')+'"><span class="appearance-mini dark"><i></i><b></b></span><strong>Escuro</strong><small>Conforto à noite</small></button>'+
- '<button type="button" class="appearance-mode" data-theme-mode="custom" aria-pressed="'+(state.mode==='custom')+'"><span class="appearance-mini custom"><i></i><b></b></span><strong>Personalizado</strong><small>Sua identidade</small></button></div>'+
- '<div class="appearance-custom-settings" data-theme-custom-panel '+(state.mode==='custom'?'':'hidden')+'>'+
+ '</div><div class="appearance-custom-settings" data-theme-custom-panel>'+ 
  '<label for="appearanceColor">Escolha sua cor</label><div class="appearance-color-line">'+
  '<input id="appearanceColor" data-theme-color type="color" value="'+state.color+'" aria-label="Selecionar cor personalizada">'+
  '<output id="appearanceHex" for="appearanceColor">'+state.color+'</output><span class="appearance-color-hint">Visualização instantânea</span></div>'+
@@ -96,7 +79,7 @@ function syncControls(){
   btn.setAttribute('aria-pressed',String(chosen));
   btn.classList.toggle('is-selected',chosen);
  });
- document.querySelectorAll('[data-theme-custom-panel]').forEach(el=>{el.hidden=state.mode!=='custom';});
+ document.querySelectorAll('[data-theme-custom-panel]').forEach(el=>{el.hidden=false;});
  document.querySelectorAll('[data-theme-color]').forEach(el=>{if(el.value.toUpperCase()!==state.color)el.value=state.color;});
  document.querySelectorAll('#appearanceHex').forEach(el=>{el.textContent=state.color;});
  document.querySelectorAll('[data-theme-swatch]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.themeSwatch===state.color)));

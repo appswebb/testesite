@@ -12,7 +12,7 @@ function view(){
  '<div id="globalSearchContents" aria-live="polite">'+results()+'</div></section>';
 }
 function results(){
- if(s.term.trim().length<2)return '<div class="global-search-welcome"><span>✳</span><h3>O que você quer encontrar hoje?</h3><p>Experimente um nome, @ ou palavra de uma publicação. As pessoas podem aparecer mesmo quando não estão online.</p></div>';
+ if(s.term.trim().length<2)return '<div class="global-search-welcome"><span class="cn-search-empty-icon">'+ico('search',29)+'</span><h3>Pesquisar</h3><p>Digite um nome, @ ou palavra.</p></div>';
  return (s.error?'<p class="global-search-error" role="alert">'+esc(s.error)+'</p>':'')+
  '<section class="global-search-section"><h3>Pessoas <span>'+s.people.length+'</span></h3>'+personList(s.people)+'</section>'+
  '<section class="global-search-section"><h3>Publicações <span>'+s.posts.length+'</span></h3>'+

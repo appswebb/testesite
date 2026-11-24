@@ -31,7 +31,7 @@ async function refreshNotifications(before=null){
   if(!before&&previous>0&&rows[0]?.id>previous&&document.hidden&&'Notification' in window&&Notification.permission==='granted'){try{new Notification(rows[0]?.kind==='poll'?'CONNECT • Enquete obrigatória':rows[0]?.kind==='bulletin'?'CONNECT • Novo aviso oficial':'CONNECT • Nova atividade',{body:rows[0]?.kind==='poll'?'Uma enquete oficial está aguardando seu voto.':rows[0]?.kind==='bulletin'?'A administração publicou um novo comunicado.':'Você tem uma nova mensagem ou solicitação.',tag:'entre-social'});}catch(e){}}
   data.unread=Math.max(0,Math.min(99,Number(r?.unread)||0));data.notiMore=Boolean(r?.has_more);
   document.querySelectorAll('.toolbar-bell .social-unread').forEach(badge=>{badge.textContent=data.unread?String(data.unread):'';});
-  if(state.view==='notifications')renderView();
+  if(state.view==='notifications'&&data.notificationTab!=='bulletins')renderView();
  }catch(e){console.warn('Notifications',e);}finally{data.notiBusy=false;}
 }
 async function updateConversation(pairId,change){

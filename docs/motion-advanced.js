@@ -1,6 +1,6 @@
 /* Pointer-only 3D depth. Never reads personal data or requests device sensors. */
 (()=>{'use strict';
-const selector='.landing-demo-tile,.step-card,.live-visual-card,.premium-checkout-card';
+const selector='.cn-how-grid article,.cn-demo-grid article,.live-visual-card,.premium-checkout-card,.live-mode,.cn-art-fade';
 const canTilt=()=>document.documentElement.dataset.motionLevel==='high'&&
  document.body?.classList.contains('motion-force')&&
  window.matchMedia?.('(pointer:fine)').matches===true;

@@ -80,9 +80,10 @@ async function action(type,btn){
  }
  if(type==='notificationsRead'){await call('entre_notifications_read');await api.refreshNotifications();renderView();return true;}
  if(type==='notificationsMore'){await api.refreshNotifications(api.data.notifications.at(-1)?.id||null);renderView();return true;}
+ if(type==='notificationTab'){api.data.notificationTab=btn.dataset.value==='bulletins'?'bulletins':'personal';renderView();if(api.data.notificationTab==='bulletins')await api.refreshBulletins?.();return true;}
  if(type==='notificationOpen'){
   await call('entre_notifications_read',{_until:Number(id)});
-  if(Number(btn.dataset.bulletin)>0){await api.refreshBulletins?.(true);nav('notifications');document.querySelector('.notifications-official')?.scrollIntoView({behavior:'smooth',block:'start'});}else if(btn.dataset.pair){await loadPairs();await openPair(btn.dataset.pair);}else nav('online');
+  if(Number(btn.dataset.bulletin)>0){api.data.notificationTab='bulletins';await api.refreshBulletins?.(true);nav('notifications');}else if(btn.dataset.pair){await loadPairs();await openPair(btn.dataset.pair);}else nav('online');
   await api.refreshNotifications();return true;
  }
  if(type==='notificationsPermission'){
