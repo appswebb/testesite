@@ -20,7 +20,11 @@ test('theme includes three intensities, colorful nonblack dark mode and personal
  assert.ok(theme.includes("state.mode==='custom'?state.color"));
  assert.ok(css.includes('html[data-theme="dark"]'));
  assert.ok(css.includes('#141827'));
- assert.ok(css.includes('data-motion-level="high"'));
+ assert.ok(read('motion-levels.css').includes('data-motion-level="high"'));
+ assert.ok(read('index.html').includes('motion-advanced.js'));
+ assert.ok(read('admin/index.html').includes('admin-refined.css'));
+ assert.ok(read('perfil.html').includes('share-refined.css'));
+ assert.ok(read('index.html').includes('motion-levels.css'));
 });
 test('private chat media handlers and database RLS are wired',()=>{
  const app=read('app.js'),media=read('chat-media.js');
