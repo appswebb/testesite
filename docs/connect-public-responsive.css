@@ -513,3 +513,13 @@ html[data-theme] body>.cp-match-filter-sheet .cp-geo-panel button:disabled{opaci
 html[data-theme] body>.cp-match-filter-sheet .cp-geo-panel button:focus-visible{outline:2px solid var(--ui-accent)!important;outline-offset:2px}
 html[data-theme] body>.cp-match-filter-sheet .live-app-filter-body{min-width:0!important;align-content:start;overflow-x:hidden!important}
 @media(prefers-reduced-motion:reduce){.cp-geo-select svg{transition:none!important}}
+
+
+/* Live aggregate presence; no user identities are exposed publicly. */
+html[data-theme] #app .cl-presence-count{display:flex;align-items:center;justify-content:flex-start;gap:5px;font:600 12px/1.4 Inter,system-ui,sans-serif;color:var(--ui-muted);margin:10px 0 0}
+html[data-theme] #app .cl-presence-count i{display:block;width:7px;height:7px;flex:none;border-radius:50%;background:#25b76b;box-shadow:0 0 0 3px #25b76b24}
+html[data-theme] #app .cl-presence-count strong{color:var(--ui-text);font-variant-numeric:tabular-nums}
+html[data-theme] #app .cl-presence-count span{font-size:10px}
+html[data-theme] #app .cp-online-total{font:700 12px/1 Inter,system-ui,sans-serif;padding:5px 8px;border-radius:999px;background:var(--ui-panel-alt);color:var(--ui-text);font-variant-numeric:tabular-nums}
+html[data-theme] #app .online-person .person-online-indicator.is-reconnecting{background:#9b9ba3!important;box-shadow:0 0 0 3px #9b9ba324!important}
+@media(max-width:760px){html[data-theme] #app .cl-public .cl-hero .cl-presence-count{order:0;justify-content:center;margin:6px 0 0}}
