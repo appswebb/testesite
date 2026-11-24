@@ -70,3 +70,120 @@ button, a, [role="button"] {touch-action: manipulation;}
 :root[data-connect-theme="dark"] .step-card,body[data-connect-theme="dark"] .step-card {background:#2b223d}
 :root[data-connect-theme="dark"] .how-section,body[data-connect-theme="dark"] .how-section {background:var(--paper)}
 :root[data-connect-theme="dark"] .home-bar nav a,body[data-connect-theme="dark"] .home-bar nav a {color:#c7bade}
+
+
+/* Homepage editorial layout — isolated from authenticated screens. */
+.home-header {position:relative;background:var(--canvas);border-bottom:1px solid var(--line)}
+.home-header .home-bar {height:78px;gap:24px}
+.home-header .brand {font-size:27px;gap:8px}
+.home-header .brand-glyph {width:34px;height:34px}
+.home-header .home-actions {gap:8px}
+.home-header .home-actions .ui-btn {font-size:13px;padding:10px 16px;min-height:42px}
+.home-header .btn-quiet,.landing-hero .btn-quiet {color:var(--ink)}
+.home-header .home-bar nav {gap:24px}
+.home-header .home-bar nav a {color:var(--mute)}
+.landing-hero {display:block;min-height:0;padding:36px 0 56px;background:var(--canvas)}
+.landing-hero:before {display:none}
+.landing-hero .hero-grid {grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(24px,5vw,80px);align-items:center}
+.landing-hero .hero-copy {padding:28px 0}
+.landing-hero .hero-kicker {padding:0;border:0;background:none;box-shadow:none;color:var(--mute);font-size:12px;gap:8px}
+.landing-hero .hero-kicker .spark {color:var(--connect-violet)}
+.landing-hero .hero-title {font-size:clamp(56px,6.4vw,100px);line-height:.99;letter-spacing:-.075em;margin:24px 0}
+.landing-hero .hero-title em {transform:none}
+.landing-hero .hero-text {font-size:16px;line-height:1.7;color:var(--mute);max-width:420px;margin-bottom:0}
+.landing-hero .hero-cta {gap:12px;margin-top:28px;flex-wrap:wrap}
+.landing-hero .hero-cta .ui-btn {min-height:46px;font-size:14px;padding:12px 20px}
+.landing-hero .hero-foot {margin-top:24px;font-size:11px;line-height:1.55;color:var(--mute);gap:8px}
+.landing-hero .hero-art {height:auto;min-height:0;aspect-ratio:1.02;transform:none;margin:0;max-width:100%;overflow:hidden;border-radius:32px;background:linear-gradient(145deg,#e9dfff,#f9e8e5 70%,#eee5ff);filter:none}
+.landing-hero .hero-art:before {width:77%;background:transparent;border:1px solid #ffffff9c;box-shadow:0 0 0 35px #ffffff25,0 0 0 70px #ffffff18;animation:none}
+.landing-hero .orbit {width:84%;border-color:#ffffffa0}
+.landing-hero .portrait {width:41%;height:60%;border-width:4px;border-radius:clamp(16px,2vw,26px);box-shadow:0 16px 35px #34224c24}
+.landing-hero .portrait-a {left:8%;top:26%;transform:none}
+.landing-hero .portrait-b {right:8%;top:15%;transform:none}
+.landing-hero .hero-art:hover .portrait {transform:none}
+.landing-hero .portrait-label {left:6px;right:6px;bottom:6px;padding:8px;font-size:11px;gap:3px;flex-wrap:wrap}
+.landing-hero .portrait-label small {font-size:9px}
+.landing-hero .hero-time {left:8%;top:8%;transform:none;padding:10px 14px;border-radius:14px}
+.landing-hero .hero-time strong {font-size:clamp(23px,3vw,34px)}
+.landing-hero .hero-time span {font-size:8px}
+.landing-hero .hero-match-note {bottom:6%;right:7%;transform:none;padding:9px 13px;border-radius:14px;font-size:10px}
+.landing-hero .hero-match-note b {font-size:21px}
+.landing-hero .scroll-hint {display:none}
+.landing-hero + .ticker {padding:13px 0;background:var(--canvas2)}
+.landing-hero + .ticker .ticker-track {gap:28px}
+.landing-hero + .ticker .ticker-track span {font-size:10px;color:var(--mute)}
+.how-section {padding:82px 0;background:var(--paper)}
+.how-section .section-intro {margin-bottom:34px;align-items:end}
+.how-section .section-title,#manifesto .section-title {font-size:clamp(38px,4.5vw,64px);letter-spacing:-.065em}
+.how-section .section-intro p {margin-bottom:10px}
+.how-section .steps-grid {gap:14px}
+.how-section .step-card {min-height:0;padding:26px;border-radius:20px;background:var(--canvas);border-color:var(--line)}
+.how-section .step-number {color:var(--mute);font-size:10px;letter-spacing:.07em}
+.how-section .step-card .step-icon {width:48px;height:48px;border-radius:15px;margin:22px 0 18px}
+.how-section .step-icon svg {width:25px;height:25px}
+.how-section .step-card h3 {font-size:23px}
+.how-section .step-card p {color:var(--mute)}
+#experiencia.manifesto {padding:78px 0}
+#experiencia .manifesto-inner {grid-template-columns:1.2fr .8fr;gap:clamp(30px,6vw,90px)}
+#experiencia h2 {font-size:clamp(40px,4.6vw,66px);margin:0}
+#experiencia h2 em {color:#d7c2ff}
+#experiencia .caption {color:#e1d9ec}
+#manifesto.section-pad {padding:78px 0}
+.home-footer {padding:28px 0}
+.home-footer .footer-row {gap:16px;flex-wrap:wrap}
+@media(max-width:900px) {
+ .home-header .home-bar nav {display:none}
+ .landing-hero .hero-grid {gap:22px}
+ .landing-hero .hero-title {font-size:clamp(43px,6.8vw,68px)}
+ .landing-hero .hero-copy {padding:12px 0}
+ .landing-hero .hero-art {border-radius:24px}
+ .how-section .step-card {padding:20px}
+}
+@media(max-width:700px) {
+ .home-header .wrap,.landing-hero .wrap,.how-section .wrap,#experiencia .wrap,#manifesto .wrap,.home-footer .wrap {width:calc(100% - 36px)}
+ .home-header .home-bar {height:64px;gap:6px}
+ .home-header .brand {font-size:23px;gap:5px}
+ .home-header .brand-glyph {width:28px;height:28px}
+ .home-header .home-actions {gap:3px}
+ .home-header .home-actions .ui-btn {padding:8px 10px;font-size:11px;min-height:36px;gap:4px}
+ .home-header .home-actions .ui-btn svg {width:13px;height:13px}
+ .landing-hero {padding:25px 0 32px}
+ .landing-hero .hero-grid {grid-template-columns:minmax(0,1fr);gap:24px}
+ .landing-hero .hero-copy {padding:0}
+ .landing-hero .hero-title {font-size:clamp(43px,11.7vw,70px);margin:16px 0;line-height:1.02}
+ .landing-hero .hero-kicker {font-size:11px}
+ .landing-hero .hero-text {font-size:14px;line-height:1.6}
+ .landing-hero .hero-cta {margin-top:19px;gap:5px}
+ .landing-hero .hero-cta .ui-btn {font-size:12px;padding:11px 14px;min-height:43px}
+ .landing-hero .hero-foot {margin-top:15px;font-size:10px}
+ .landing-hero .hero-art {aspect-ratio:1.15;width:100%;height:auto;min-height:0;max-width:520px;margin:0 auto}
+ .landing-hero .portrait {border-width:3px}
+ .landing-hero .portrait-label {font-size:9px;padding:5px}
+ .landing-hero .portrait-label small {font-size:8px}
+ .landing-hero .hero-time {padding:8px 10px}
+ .landing-hero .hero-match-note {padding:7px 10px}
+ .landing-hero .hero-match-note b {font-size:18px}
+ .how-section,#experiencia.manifesto,#manifesto.section-pad {padding:48px 0}
+ .how-section .section-intro {margin-bottom:22px}
+ .how-section .section-intro p {margin:12px 0 0;font-size:14px}
+ .how-section .steps-grid {grid-template-columns:minmax(0,1fr);gap:10px}
+ .how-section .step-card {display:grid;grid-template-columns:46px minmax(0,1fr);column-gap:14px;padding:18px}
+ .how-section .step-number {grid-column:2}
+ .how-section .step-card .step-icon {grid-column:1;grid-row:1/4;margin:0;width:44px;height:44px}
+ .how-section .step-card h3 {grid-column:2;font-size:21px;margin:7px 0}
+ .how-section .step-card p {grid-column:2;font-size:13px;line-height:1.6}
+ #experiencia .manifesto-inner {grid-template-columns:1fr;gap:20px}
+ #experiencia .caption strong {margin-bottom:8px}
+ .home-footer .footer-row {display:grid;gap:12px}
+}
+@media(max-width:360px) {
+ .home-header .wrap {width:calc(100% - 24px)}
+ .home-header .brand {font-size:21px}
+ .home-header .brand-glyph {width:25px;height:25px}
+ .home-header .home-actions .ui-btn {padding:8px}
+ .home-header .home-actions .ui-btn svg {display:none}
+}
+@media(prefers-reduced-motion:reduce) {
+ .landing-hero .portrait,.landing-hero .orbit,.landing-hero .hero-time {animation:none!important;transform:none!important}
+ .landing-hero + .ticker .ticker-track {animation:none!important}
+}
