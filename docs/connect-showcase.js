@@ -13,7 +13,7 @@ const items=[
 let ico;
 const I=(n,s=18)=>ico(n,s);
 const artLabels={meet:'Ao vivo: escolha de texto ou vídeo',feed:'Início: publicações e comentários',chat:'Conversas: organização de contatos',rooms:'Salas: conversa regional',lives:'Lives: busca de transmissões',online:'Online: perfis e solicitações',notes:'Notificações e avisos',settings:'Configurações: temas, animações e sons'};
-const phone=(id,priority=false)=>'<div class="cl-phone" role="img" aria-label="'+artLabels[id]+' — demonstração com dados fictícios"><div class="cl-phone-screen"><iframe class="cl-demo-frame" src="./demo-'+id+'.html?v=20261124-no-stories" title="'+artLabels[id]+'" width="390" height="760" sandbox="allow-same-origin" tabindex="-1" aria-hidden="true" '+(priority?'loading="eager"':'loading="lazy"')+'></iframe></div></div>';
+const phone=(id,priority=false)=>'<div class="cl-phone" role="img" aria-label="'+artLabels[id]+' — demonstração com dados fictícios"><div class="cl-phone-screen"><iframe class="cl-demo-frame" src="./demo-'+id+'.html?v='+(id==='meet'?'20261124-current-live':'20261124-no-stories')+'" title="'+artLabels[id]+'" width="390" height="760" sandbox="allow-same-origin" tabindex="-1" aria-hidden="true" '+(priority?'loading="eager"':'loading="lazy"')+'></iframe></div></div>';
 const image=(id,priority=false)=>id==='hero'?'<div class="cl-phone-pair">'+phone('feed',true)+phone('meet',true)+'</div>':phone(id,priority);
 let raf=0;
 const watched=new WeakSet();
