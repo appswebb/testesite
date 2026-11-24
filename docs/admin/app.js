@@ -224,7 +224,7 @@ async function load(view){
   if(view==="pairs")state.pairs=await rpc("entre_admin_pairs",{_limit:60});
    if(view==="bulletins")state.bulletins=await rpc("entre_admin_bulletins");
   if(view==="support")state.supportTickets=await rpc("entre_admin_support_tickets");
-  if(view==="premium"){state.premiumConfig=await rpc("entre_admin_premium_settings");state.recurringConfig=await rpc("entre_admin_premium_recurring_settings");}
+  if(view==="premium"){state.premiumConfig=await rpc("entre_admin_premium_settings");state.recurringConfig=null;}
   if(view==="security"){state.appeals=await rpc("entre_admin_appeals");state.privacyRequests=await rpc("entre_admin_privacy_requests");}
   state.refreshAt=new Date();lastLoad=Date.now();
  }catch(err){toast(errorText(err),true);}
