@@ -26,7 +26,7 @@ html[data-theme] #app .pi-field-form :is(input,textarea,select){width:100%!impor
 #app .pi-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
 #app .pi-share{margin-top:16px;width:100%;justify-content:center}
 #app .pi-banner-note{display:block;margin-top:9px;text-align:center}
-html[data-theme] #app .cl-nav .cl-login{min-width:90px!important;min-height:44px!important;padding:10px 17px!important;font-size:14px!important;font-weight:750!important;white-space:nowrap!important}
-html[data-theme] #app .cl-nav .connect-mode-toggle{width:40px!important;height:40px!important;min-width:40px!important}
-html[data-theme] #app .cl-nav .cl-actions{gap:8px}
-@media(max-width:365px){#app .pi-body{padding-inline:14px}#app .pi-two{grid-template-columns:1fr;gap:0}html[data-theme] #app .cl-nav .cl-login{min-width:76px!important;padding:8px 11px!important}}
+
+
+
+@media(max-width:365px){#app .pi-body{padding-inline:14px}#app .pi-two{grid-template-columns:1fr;gap:0}}

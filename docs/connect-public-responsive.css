@@ -1,0 +1,69 @@
+/* Public landing only. Shared scale and predictable dimensions, independent of private app. */
+html[data-theme] #app .cl-header{width:100%;background:var(--ui-bg);border-bottom:1px solid var(--ui-line)}
+html[data-theme] #app .cl-header .cl-nav{
+ --cl-control:44px;--cl-mark:clamp(25px,7.2vw,34px);--cl-word:clamp(16px,4.8vw,22px);
+ display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;
+ width:min(1120px,calc(100% - 48px));min-width:0;min-height:64px;height:auto;margin:0 auto;padding:8px 0;
+ gap:clamp(7px,1.8vw,24px);box-sizing:border-box;
+}
+html[data-theme] #app .cl-header .cl-wordmark{
+ display:inline-flex;align-items:center;justify-self:start;gap:5px;min-width:0;max-width:100%;
+ min-height:var(--cl-control);padding:0;margin:0;text-decoration:none;white-space:nowrap;
+ color:var(--ui-text)!important;font:800 var(--cl-word)/1 Inter,system-ui,-apple-system,sans-serif!important;letter-spacing:-.045em!important;
+}
+html[data-theme] #app .cl-header .cl-wordmark img{
+ display:block;flex:none;width:var(--cl-mark)!important;height:var(--cl-mark)!important;max-width:none;object-fit:contain;
+ margin:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;border:0!important;filter:brightness(0);
+}
+html[data-theme=dark] #app .cl-header .cl-wordmark img{filter:brightness(0) invert(1)}
+html[data-theme] #app .cl-header .cl-wordmark span{font:inherit!important;letter-spacing:inherit;color:inherit!important}
+html[data-theme] #app .cl-header .cl-header-links{display:flex;align-items:center;gap:24px;justify-self:center;white-space:nowrap}
+html[data-theme] #app .cl-header .cl-header-links a{font:600 13px/1.4 Inter,system-ui,sans-serif;color:var(--ui-muted);padding:10px 2px}
+html[data-theme] #app .cl-header .cl-header-actions{display:flex;align-items:center;justify-content:flex-end;justify-self:end;gap:8px;min-width:0;flex-wrap:nowrap}
+html[data-theme] #app .cl-header .cl-header-actions .connect-mode-toggle,
+html[data-theme] #app .cl-header .cl-header-actions .cl-login-button{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:none;
+ height:var(--cl-control)!important;min-height:var(--cl-control)!important;max-height:var(--cl-control)!important;
+ padding:0!important;margin:0!important;border:1px solid var(--ui-line)!important;border-radius:12px!important;
+ box-sizing:border-box!important;box-shadow:none!important;white-space:nowrap!important;cursor:pointer;
+}
+html[data-theme] #app .cl-header .cl-header-actions .connect-mode-toggle{
+ width:var(--cl-control)!important;min-width:var(--cl-control)!important;max-width:var(--cl-control)!important;background:var(--ui-panel)!important;color:var(--ui-text)!important;
+}
+html[data-theme] #app .cl-header .connect-mode-toggle svg{width:19px!important;height:19px!important}
+html[data-theme] #app .cl-header .cl-login-button{
+ width:82px!important;min-width:82px!important;max-width:82px!important;background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;
+ font:700 13px/1 Inter,system-ui,sans-serif!important;
+}
+html[data-theme] #app .cl-header :is(.cl-wordmark,.cl-login-button,.connect-mode-toggle):focus-visible{outline:2px solid var(--ui-text);outline-offset:3px}
+html[data-theme] #app .cl-public .cl-wrap,html[data-theme] #app .cl-footer .cl-wrap{width:min(1120px,calc(100% - 48px));min-width:0}
+html[data-theme] #app .cl-hero>*{min-width:0}
+html[data-theme] #app .cl-public .cl-hero .cl-actions>*{min-height:44px;max-width:100%;white-space:normal;text-align:center}
+html[data-theme] #app .cl-public .cl-demo-copy{overflow-wrap:anywhere}
+@media(max-width:760px){
+ html[data-theme] #app .cl-header .cl-nav{grid-template-columns:minmax(0,1fr) auto;width:calc(100% - 28px);min-height:60px;gap:10px;padding:8px 0}
+ html[data-theme] #app .cl-header .cl-header-links{display:none}
+ html[data-theme] #app .cl-header .cl-header-actions{gap:6px}
+ html[data-theme] #app .cl-header .cl-login-button{width:74px!important;min-width:74px!important;max-width:74px!important}
+ html[data-theme] #app .cl-public .cl-wrap,html[data-theme] #app .cl-footer .cl-wrap{width:calc(100% - 28px)}
+ html[data-theme] #app .cl-public h1{font-size:clamp(32px,10.7vw,54px)!important;line-height:1.06!important;letter-spacing:-.055em!important;margin:11px 0 14px!important}
+ html[data-theme] #app .cl-public .cl-hero{padding:24px 0 10px;gap:12px}
+ html[data-theme] #app .cl-public .cl-hero p{font-size:clamp(14px,4vw,16px);margin-bottom:16px;line-height:1.6}
+ html[data-theme] #app .cl-public .cl-hero .cl-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ html[data-theme] #app .cl-public .cl-hero .cl-actions>*{padding:9px 10px!important;font-size:12px;min-width:0;min-height:44px;width:100%;gap:5px}
+ html[data-theme] #app .cl-public .cl-hero .cl-actions svg{flex:none;width:16px;height:16px}
+ html[data-theme] #app .cl-public .cl-demo{grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:12px;padding:12px}
+}
+@media(max-width:340px){
+ html[data-theme] #app .cl-header .cl-nav{width:calc(100% - 20px);gap:6px;--cl-word:16px;--cl-mark:25px}
+ html[data-theme] #app .cl-header .cl-header-actions{gap:5px}
+ html[data-theme] #app .cl-header .cl-login-button{width:64px!important;min-width:64px!important;max-width:64px!important}
+ html[data-theme] #app .cl-public .cl-wrap,html[data-theme] #app .cl-footer .cl-wrap{width:calc(100% - 20px)}
+ html[data-theme] #app .cl-public .cl-demo{gap:8px;padding:9px}
+ html[data-theme] #app .cl-public .cl-demo-copy h3{font-size:16px;line-height:1.25}
+}
+@media(max-width:279px){
+ html[data-theme] #app .cl-header .cl-nav{grid-template-columns:1fr;justify-items:center}
+ html[data-theme] #app .cl-header .cl-wordmark,html[data-theme] #app .cl-header .cl-header-actions{justify-self:center}
+ html[data-theme] #app .cl-public .cl-hero .cl-actions{grid-template-columns:1fr}
+}
