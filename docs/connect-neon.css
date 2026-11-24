@@ -1,0 +1,122 @@
+/* CONNECT NEON / approved reference, isolated layout + shared app design language. */
+html{--nx-violet:#9b44fc;--nx-pink:#ff50b4;--nx-coral:#ff9869;--nx-edge:linear-gradient(130deg,#ff906e 0%,#b843fa 37%,#7139fb 63%,#ff68b9 100%);--nx-font:Inter,system-ui,-apple-system,sans-serif}
+html[data-connect-style=neon]{--ui-card-shadow:0 12px 34px #10051e26}
+.nx-header,.nx-public,.nx-footer{color:#f8f3ff;font-family:var(--nx-font);background:#100817;box-sizing:border-box}
+.nx-header *,.nx-public *,.nx-footer *{box-sizing:border-box}
+.nx-wrap{width:min(1220px,calc(100% - 64px));margin-inline:auto;min-width:0}
+.nx-header{position:relative;z-index:5;background:#100817;border-bottom:1px solid #352046}
+.nx-nav{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:72px}
+.nx-nav .cn-brand,.nx-footer .cn-brand{color:#fff!important;gap:8px}.nx-nav .cn-brand img,.nx-footer .cn-brand img{width:46px;height:30px;object-fit:contain;mix-blend-mode:screen}
+.nx-nav nav,.nx-footer nav{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.nx-nav nav a,.nx-footer nav a{color:#e3d6ec;text-decoration:none;font-size:13px;font-weight:650}
+.nx-nav nav a:hover,.nx-footer nav a:hover{color:#fff}
+.nx-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.nx-cta,.nx-ghost{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;min-height:45px;padding:10px 19px;font:700 13px/1.3 var(--nx-font);text-decoration:none;cursor:pointer;white-space:normal;transition:transform .18s ease,box-shadow .18s ease;max-width:100%}
+.nx-cta{color:white!important;border:1px solid transparent;background:linear-gradient(#190b25,#190b25) padding-box,var(--nx-edge) border-box;box-shadow:inset 0 0 12px #d745f83b,0 0 15px #b834fb60}
+.nx-main-cta{background:linear-gradient(110deg,#6d17cf,#a225bf 55%,#bd3b57) padding-box,var(--nx-edge) border-box;box-shadow:0 0 20px #c73de55c}
+.nx-ghost{background:#1b1127;border:1px solid #593c6e;color:#f8f3ff!important}
+.nx-cta:active,.nx-ghost:active{transform:scale(.97)}.nx-cta:hover{box-shadow:0 0 22px #c548ff85}
+.nx-public{isolation:isolate;overflow:hidden;background:radial-gradient(ellipse 65% 25% at 100% 5%,#5e124f65,transparent),radial-gradient(ellipse 55% 23% at 0% 10%,#381a795e,transparent),#100817}
+.nx-hero{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr);align-items:center;gap:clamp(10px,3vw,45px);min-height:540px;padding:35px 0 34px}
+.nx-hero::before{content:'';position:absolute;inset:-9% -10% 0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 22% 0%,#9c34fa40,transparent 38%),radial-gradient(ellipse at 86% 75%,#dc237747,transparent 50%)}
+.nx-hero-copy{min-width:0;position:relative;z-index:1}
+.nx-hero-logo{display:block;width:min(67%,220px);height:auto;aspect-ratio:320/197;object-fit:contain;mix-blend-mode:screen;filter:drop-shadow(0 0 14px #b73af955)}
+.nx-hero-name{font-size:clamp(20px,3vw,35px);font-weight:750;letter-spacing:.15em;color:#fff;margin:0 0 15px;line-height:1.1}
+html[data-theme] #app .nx-public .nx-hero h1{font:800 clamp(39px,4.5vw,68px)/1.04 var(--nx-font)!important;letter-spacing:-.055em!important;color:white!important;margin:0 0 14px!important;overflow-wrap:normal}
+html[data-theme] #app .nx-public .nx-hero h1 em{font:inherit!important;font-style:italic!important;color:#ff9ba9!important;background:linear-gradient(120deg,#ca64ff 0%,#ff7bbb 48%,#ffb28c 100%);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nx-hero-copy>p{font-size:clamp(15px,1.45vw,18px);line-height:1.6;color:#e4d8ed;max-width:475px;margin:0 0 20px}.nx-hero-copy>small{display:block;color:#b9a5cf;font-size:11px;margin-top:13px;line-height:1.5}
+.nx-hero-visual{position:relative;isolation:isolate;min-width:0;align-self:stretch;display:flex;align-items:center;justify-content:center;min-height:360px}
+.nx-hero-visual::before{position:absolute;content:'';inset:12% 0;z-index:-1;border-radius:50%;background:radial-gradient(ellipse,#bd24d938,transparent 70%);filter:blur(20px)}
+.nx-hero-visual img{width:100%;max-width:680px;height:auto;display:block;object-fit:contain;mask-image:radial-gradient(ellipse 83% 80% at 50% 48%,#000 49%,transparent 88%);-webkit-mask-image:radial-gradient(ellipse 83% 80% at 50% 48%,#000 49%,transparent 88%);mix-blend-mode:screen;transform:none!important;animation:none!important;filter:none!important}
+.nx-art-caption{position:absolute;bottom:6px;right:12px;color:#aa94bc;font-size:10px}
+.nx-resources,.nx-how,.nx-final{padding:30px 0;scroll-margin-top:18px}
+.nx-heading{margin-bottom:20px;max-width:660px}.nx-heading>span,.nx-eyebrow{font-size:10px;letter-spacing:.14em;font-weight:800;color:#dba8ff}
+html[data-theme] #app .nx-public h2{font:780 clamp(27px,3.6vw,46px)/1.15 var(--nx-font)!important;color:#fff!important;letter-spacing:-.04em!important;margin:8px 0 10px!important}
+.nx-heading p,.nx-final p,.nx-profile-promo p{color:#d9c9e5;line-height:1.6;font-size:14px;margin:0}
+.nx-feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.nx-feature{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.95fr);gap:9px;min-width:0;min-height:258px;border:1px solid transparent;border-radius:23px;background:linear-gradient(140deg,#2a1139,#1c0d2a 50%,#160b20) padding-box,linear-gradient(145deg,#bb4ef5,#70319f 52%,#f35caa) border-box;overflow:hidden;padding:16px 12px 0 17px;box-shadow:inset 0 0 24px #e14bda13,0 8px 23px #09040c55;align-items:stretch;scroll-margin-top:12px}
+.nx-feature:nth-child(3n+2){background:linear-gradient(135deg,#311238,#1c0b27 55%,#1d1029) padding-box,linear-gradient(145deg,#ff6dbc,#7a2ca7 56%,#ff926a) border-box}
+.nx-feature:nth-child(3n){background:linear-gradient(135deg,#39182f,#210e29 65%,#1d1029) padding-box,linear-gradient(145deg,#ff976e,#9239b9 57%,#ff5fbc) border-box}
+.nx-feature::after{content:'';position:absolute;inset:auto -4px -40px 37%;height:70px;z-index:-1;pointer-events:none;background:radial-gradient(ellipse,#f740bc56,transparent 70%);filter:blur(13px)}
+.nx-feature-copy{padding-bottom:18px;min-width:0;z-index:1}
+.nx-feature-icon,.nx-steps article>span{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;color:#fff;border:1px solid #e57dff;background:linear-gradient(150deg,#a62cdc,#4a1669 55%,#771a62);box-shadow:inset 0 1px 5px #fff5,0 0 13px #c340ed56}
+html[data-theme] #app .nx-public .nx-feature h3{font:800 clamp(17px,1.7vw,23px)/1.15 var(--nx-font)!important;color:white!important;letter-spacing:-.04em!important;margin:11px 0 7px!important;overflow-wrap:anywhere}
+.nx-feature-copy p{font-size:12px;line-height:1.5;color:#e1d2ea;margin:0;overflow-wrap:anywhere}
+.nx-feature-visual{position:relative;min-width:0;align-self:end;display:flex;align-items:flex-end;justify-content:center;height:100%;max-height:250px}
+.nx-device{width:min(100%,145px);border-radius:21px 21px 7px 7px;padding:4px;background:linear-gradient(155deg,#f6c3ff,#7531ae 35%,#29153f 55%,#f48ecb);border:1px solid #ce79e9;box-shadow:0 0 16px #cf4bfa38,0 10px 23px #0008;transform:rotate(4deg) translateY(9px);transform-origin:bottom center}
+.nx-device .cx-shot{display:block;width:100%;height:auto;border-radius:17px 17px 5px 5px;border:1px solid #100b15;background:#100b15}
+.nx-photo-preview{width:100%;height:100%;min-height:210px;background-image:url('./neon-phones.avif?v=11');background-repeat:no-repeat;background-size:auto 100%;border-radius:20px 20px 0 0;mask-image:linear-gradient(180deg,#000 0%,#000 88%,transparent 100%)}
+.nx-photo-feed{background-position:9% center}.nx-photo-meet{background-position:90% center}
+.nx-preview-note{display:block;margin-top:10px;font-size:10px;color:#b9a5cf}
+.nx-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.nx-steps article{position:relative;padding:19px;background:#21102f;border:1px solid #583169;border-radius:19px;min-width:0}.nx-steps article>small{position:absolute;top:17px;right:17px;color:#c3a1da;font-weight:700;font-size:11px}.nx-steps h3{color:#fff;font-size:17px;margin:12px 0 6px}.nx-steps p{font-size:13px;color:#d8c6e3;margin:0}
+.nx-profile-promo{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);align-items:center;gap:30px;margin-block:25px 15px;padding:28px 34px;border-radius:26px;border:1px solid #8c4bac;background:radial-gradient(ellipse at 90% 15%,#7d236f45,transparent 65%),linear-gradient(135deg,#271135,#1b0d27);box-shadow:inset 0 -6px 22px #b92fc41a}
+.nx-profile-art{min-width:0;display:grid;place-items:center}.nx-profile-art img{width:min(100%,320px);height:auto;mix-blend-mode:screen;mask-image:radial-gradient(ellipse,#000 48%,transparent 80%)}
+.nx-perks{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}.nx-perks span{display:flex;align-items:center;gap:6px;font-size:11px;color:#eee2f5;padding:7px 9px;border:1px solid #5f3971;background:#1a0e27;border-radius:10px}
+.nx-final{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-block:34px 50px}.nx-final-copy{min-width:0}.nx-footer{border-top:1px solid #382046;padding:22px 0}.nx-footer>.nx-wrap{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:15px}.nx-footer small{font-size:11px;color:#baa9ce}
+.nx-public :is(button,a):focus-visible,.nx-header :is(button,a):focus-visible{outline:3px solid #dca6ff;outline-offset:3px}
+/* Account menu and app-native controls, all functional markup is unchanged. */
+html[data-theme] #app .cn-account-dialog{width:min(390px,calc(100vw - 28px));max-width:calc(100vw - 28px);max-height:calc(100dvh - 100px);border-radius:25px;box-shadow:0 24px 80px #10071f66}
+html[data-theme] #app .cn-account-head{padding:16px 14px;background:var(--ui-panel-alt);border-bottom:1px solid var(--ui-line)}
+html[data-theme] #app .cn-account-head .avatar{width:50px!important;height:50px!important;min-width:50px!important;border:2px solid var(--ui-accent)}
+html[data-theme] #app .cn-account-head h2{font-size:16px!important}
+html[data-theme] #app .cn-account-body{padding:9px 11px 13px}
+.nx-menu-heading{padding:9px 9px 5px;font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--ui-muted)}
+html[data-theme] #app .cn-menu-item.nx-account-row{display:flex!important;gap:10px;min-height:61px;padding:8px;border-radius:13px}
+html[data-theme] #app .cn-menu-item .nx-menu-icon{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:12px;background:var(--ui-accent-soft);color:var(--ui-accent);border:1px solid var(--ui-line)}
+html[data-theme] #app .nx-menu-icon svg{width:21px!important;height:21px!important;stroke-width:1.8!important;fill:none!important}
+html[data-theme] #app .nx-menu-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+.nx-menu-copy strong{font-size:13px;line-height:1.3;color:var(--ui-text)}.nx-menu-copy small{font-size:10px;line-height:1.3;color:var(--ui-muted)}
+html[data-theme] #app .cn-menu-item.cn-signout{margin-top:6px;background:#d74b7220;color:#db5579!important;border:1px solid #d74b7240}
+html[data-theme] #app .cn-account-dialog::backdrop{background:#10071985;backdrop-filter:blur(5px)}
+.appearance-style-picker{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.appearance-style-picker button[data-connect-style=neon]{grid-column:1/-1;display:grid;grid-template-columns:46px 1fr;gap:3px 11px;text-align:left;align-items:center;padding:10px 12px;min-height:61px}
+.nx-theme-sample{grid-row:span 2;width:46px;height:38px;border:1px solid #bd65f6;border-radius:10px;background:radial-gradient(ellipse at 10% 90%,#7b31de,transparent 65%),radial-gradient(ellipse at 90% 20%,#f56b7f,transparent 65%),#110a19}
+.appearance-style-picker button[data-connect-style=neon] small{font-size:10px;color:var(--ui-muted)}
+html[data-connect-style=neon] #app .cn-shell,html[data-connect-style=neon] #app .cn-main{background:var(--ui-bg)!important;color:var(--ui-text)!important}
+html[data-connect-style=neon][data-theme=dark] #app .cn-main{background:radial-gradient(ellipse 90% 35% at 50% 0%,#4b1e6d28,transparent 90%),var(--ui-bg)!important}
+html[data-connect-style=neon] #app :is(.cn-sidebar,.cn-toolbar){background:var(--ui-panel)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+html[data-connect-style=neon] #app .cn-toolbar{border-bottom:1px solid var(--ui-line)}
+html[data-connect-style=neon] #app :is(.cn-icon-button,.cn-search,.cn-account-trigger){color:var(--ui-text)!important}
+html[data-connect-style=neon] #app :is(.cn-icon-button,.cn-account-trigger){border-color:var(--ui-line)!important}
+html[data-connect-style=neon] #app .cn-account-trigger .avatar{border:2px solid var(--ui-accent)!important}
+html[data-connect-style=neon] #app :is(.cn-feed-composer,.post-compose,.post-card,.rooms-static-shell,.room-shell,.camera-live-card,.camera-live-stage,.live-create-composer,.convo-card,.pair-card,.online-person,.online-profile-card,.profile-preview,.profile-edit-panel,.profile-view-card,.form-panel,.settings-card,.notification-item,.premium-checkout-card,.support-access-card,.global-search-shell,.live-app-card,.modal-card,.comments-dialog,.rooms-filter-dialog,.cn-account-dialog,.appearance-panel){background-color:var(--ui-panel)!important;border-color:var(--ui-line)!important;color:var(--ui-text)!important;box-shadow:var(--ui-card-shadow)}
+html[data-connect-style=neon] #app .cn-view[data-section=connect] .cn-unified-match{background:radial-gradient(ellipse at 50% 6%,var(--ui-accent-soft),transparent 65%),var(--ui-panel)!important;border-color:var(--ui-line)!important}
+html[data-connect-style=neon] #app .cn-match-art img{mix-blend-mode:screen;filter:drop-shadow(0 0 12px var(--ui-accent-shadow));object-fit:contain}
+html[data-connect-style=neon][data-theme=light] #app .cn-match-art img{mix-blend-mode:normal}
+html[data-connect-style=neon] #app .cn-match-node{background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+html[data-connect-style=neon] #app :is(.live-mode,.connect-mode-card,.live-filter-trigger,.rooms-open-filter,.room-composer input,.chat-form input,.global-search-field,.field input,.field select,.field textarea){background-color:var(--ui-panel-alt)!important;border-color:var(--ui-line)!important;color:var(--ui-text)!important}
+html[data-connect-style=neon] #app :is(.live-mode.active,.live-mode.is-active,.connect-mode-card.active,.motion-level-option.is-active){border-color:var(--ui-accent)!important;background:var(--ui-accent-soft)!important;box-shadow:inset 0 0 0 1px var(--ui-accent)!important}
+html[data-connect-style=neon] #app .cn-main .bubble-row.theirs .bubble{background:var(--ui-panel-alt)!important;color:var(--ui-text)!important}
+html[data-connect-style=neon] #app .cn-main .bubble-row.mine .bubble{background:var(--cn-grad)!important;color:var(--cn-ink)!important}
+html[data-connect-style=neon] #app .cn-main .premium-pitch{background:radial-gradient(ellipse at 80% 10%,var(--ui-accent-soft),transparent 65%),var(--ui-panel)!important;border-color:var(--ui-line)!important;color:var(--ui-text)!important}
+html[data-connect-style=neon] #app .cn-main .premium-pitch :is(h3,p,.premium-perks){color:var(--ui-text)!important}
+html[data-connect-style=neon] #app .cn-main .premium-pitch h3 em{color:var(--ui-accent)!important}
+html[data-connect-style=neon] #app .cn-dock{border-color:var(--ui-line)!important;background:linear-gradient(180deg,var(--ui-panel-alt),var(--ui-panel))!important;box-shadow:inset 0 1px 0 #fff2,0 12px 33px #0005!important}
+html[data-connect-style=neon][data-theme=dark] #app .cn-dock{border-color:#75418f!important;background:linear-gradient(180deg,#2d193e,#1b1028)!important}
+html[data-connect-style=neon] #app .cn-dock .cn-nav-link.is-active,html[data-connect-style=neon] #app .cn-side-nav .cn-nav-link.is-active{background:var(--cn-grad)!important;color:var(--cn-ink)!important;box-shadow:0 0 12px var(--ui-accent-shadow),inset 0 1px 0 #fff3!important}
+html[data-connect-style=neon] #app .cn-main :is(.live-app-find,.btn-dark,.ui-btn.btn-primary){background:var(--cn-grad)!important;color:var(--cn-ink)!important}
+html[data-connect-style=neon][data-theme=dark] #app .cn-account-dialog{background:linear-gradient(145deg,#241332,#1b1227)!important;border:1px solid #744398!important}
+html[data-connect-style=neon] #app .nx-menu-icon{border-color:var(--ui-line)!important;background:var(--ui-accent-soft)!important}
+html[data-connect-style=neon] #app .cn-menu-item:hover{background:var(--ui-accent-soft)!important}
+html[data-connect-style=neon] #app .cx-auth-shell .auth-main{background:radial-gradient(ellipse at 70% 10%,var(--ui-accent-faint),transparent 70%),var(--ui-bg)!important}
+html[data-connect-style=neon] #app .cx-auth-shell .cx-auth-visual{background:radial-gradient(ellipse at 45% 30%,#621d8150,transparent 67%),var(--ui-bg)!important}
+html[data-connect-style=neon] #app .cx-auth-shell .auth-card{background:var(--ui-panel)!important;border-color:var(--ui-line)!important;box-shadow:0 12px 50px var(--ui-accent-shadow)!important}
+.cx-auth-device{padding:0!important;overflow:hidden;border-radius:23px!important;max-width:440px!important;width:100%}
+.cx-auth-device>img{display:block;width:100%!important;max-width:none!important;aspect-ratio:480/407;height:auto!important;object-fit:contain;border:0!important;border-radius:0!important;box-shadow:none!important}.cx-auth-logo{display:none!important}
+html[data-connect-style=neon] #app .cx-auth-visual .cx-auth-editorial h2{color:var(--ui-text)!important}
+html[data-connect-style=neon] #app .cn-splash{background:radial-gradient(ellipse at 50% 40%,#4e1a775c,transparent 65%),#100a18!important}
+html[data-theme=light] #app .cx-reveal-static{color:var(--ui-text)}
+html[data-theme=light] #app .cn-splash .cx-reveal-animated{background:#100a18;border-radius:22px}
+@keyframes nx-reveal{from{opacity:0;translate:0 9px}to{opacity:1;translate:0 0}}
+@keyframes nx-glow{0%,100%{filter:drop-shadow(0 0 10px #a52df655)}50%{filter:drop-shadow(0 0 20px #f64dce80)}}
+@keyframes nx-menu-rise{from{opacity:0;translate:0 8px}to{opacity:1;translate:0 0}}
+html[data-motion-level=medium] body:not(.motion-off) .nx-hero-copy,html[data-motion-level=high] body:not(.motion-off) .nx-hero-copy{animation:nx-reveal .45s ease-out both}
+html[data-motion-level=high] body:not(.motion-off) .nx-hero-logo{animation:nx-glow 4s ease-in-out infinite}
+html[data-motion-level=medium] body:not(.motion-off) .cn-account-dialog[open],html[data-motion-level=high] body:not(.motion-off) .cn-account-dialog[open]{animation:nx-menu-rise .2s ease-out both}
+html[data-motion-level=high] body:not(.motion-off) .nx-feature{transform:perspective(900px) rotateX(var(--tilt-x,0deg)) rotateY(var(--tilt-y,0deg));transition:transform .25s ease,box-shadow .25s ease}
+html[data-motion-level=high] body:not(.motion-off) .nx-feature:hover{box-shadow:0 0 25px #b244fa3b}
+html[data-motion-level=light] .nx-public *,body.motion-off .nx-public *,body.motion-off .cn-account-dialog{animation:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){body:not(.motion-force) .nx-public *,body:not(.motion-force) .cn-account-dialog{animation:none!important;transition:none!important}}
+@media(max-width:1050px){.nx-wrap{width:calc(100% - 40px)}.nx-nav nav{display:none}.nx-hero{min-height:0}.nx-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.nx-feature{min-height:245px}.nx-hero-visual{min-height:0}}
+@media(max-width:760px){.nx-wrap{width:calc(100% - 28px)}.nx-nav{min-height:64px;gap:8px}.nx-nav .cn-brand{font-size:17px!important;gap:4px!important}.nx-nav .cn-brand img{width:37px;height:25px}.nx-nav .nx-actions{gap:5px;flex-wrap:nowrap}.nx-nav :is(.nx-cta,.nx-ghost){font-size:11px;min-height:38px;padding:8px 11px;white-space:nowrap}.nx-nav .nx-cta svg{display:none}.nx-hero{display:flex;flex-direction:column;align-items:stretch;padding:24px 0 14px;gap:12px}.nx-hero-copy{text-align:left}.nx-hero-logo{width:148px;margin-left:-8px}.nx-hero-name{font-size:21px;margin-bottom:10px}.nx-hero-copy>p{font-size:14px;margin-bottom:16px}.nx-hero .nx-actions>*{font-size:12px;padding:10px 13px}.nx-hero-visual{min-height:0;aspect-ratio:480/407}.nx-art-caption{right:8px;bottom:5px;font-size:9px}.nx-resources,.nx-how{padding:20px 0}.nx-feature-grid{grid-template-columns:1fr;gap:10px}.nx-feature{grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);min-height:210px;max-height:none;padding:13px 13px 0 14px;border-radius:20px;gap:8px}.nx-feature-copy{padding-bottom:14px}.nx-feature-visual{max-height:220px}.nx-feature-icon{width:39px;height:39px;border-radius:11px}.nx-feature-copy p{font-size:13px}.nx-device{max-width:127px;border-radius:18px 18px 6px 6px}.nx-device .cx-shot{border-radius:14px 14px 5px 5px}.nx-photo-preview{min-height:200px}.nx-steps{grid-template-columns:1fr;gap:9px}.nx-steps article{display:grid;grid-template-columns:43px 1fr;gap:3px 12px;padding:12px}.nx-steps article>span{width:43px;height:43px;grid-row:span 2}.nx-steps h3{margin:0 18px 0 0;font-size:15px}.nx-steps p{grid-column:2;font-size:12px}.nx-profile-promo{grid-template-columns:1fr;gap:10px;padding:18px;margin-top:13px}.nx-profile-art img{max-width:180px}.nx-final{flex-direction:column;align-items:flex-start;gap:14px;padding:23px 0 35px}.nx-footer nav{width:100%;gap:12px}.nx-footer nav a{font-size:11px}html[data-theme] #app .cn-account-dialog{inset:auto 10px calc(10px + env(safe-area-inset-bottom,0px)) 10px!important;width:auto!important;max-width:none!important;max-height:calc(100dvh - 42px - env(safe-area-inset-bottom,0px));border-radius:24px!important;margin:0!important}.cn-account-body{overflow-y:auto;overscroll-behavior:contain}}
+@media(max-width:365px){.nx-wrap{width:calc(100% - 22px)}.nx-nav .cn-brand{font-size:14px!important}.nx-nav .cn-brand img{width:30px;height:22px}.nx-nav :is(.nx-cta,.nx-ghost){padding:7px 8px;font-size:10px}html[data-theme] #app .nx-public .nx-hero h1{font-size:36px!important}.nx-feature-copy p{font-size:12px}.nx-feature-grid{gap:9px}}

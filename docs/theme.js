@@ -5,9 +5,11 @@
 'use strict';
 const KEY='entre.appearance.v1';
 const MODES=['light','dark'];
-const DEFAULT={mode:'dark',color:'#D16A8A',style:'romance'};
-const STYLES=['romance','neutral'];
+const DEFAULT={mode:'dark',color:'#C33DF0',style:'neon'};
+const NEON_COLOR=DEFAULT.color;
+const STYLES=['neon','romance','neutral'];
 const PRESETS=[
+ ['#C33DF0','Neon CONNECT'],
  ['#D16A8A','Rosa antigo'],['#A63B5E','Vinho'],
  ['#7757F4','Violeta'],['#2977D5','Azul'],['#F07C55','Coral'],
  ['#AE63CF','Lavanda'],['#DAA520','Dourado'],['#EA5386','Rosa']
@@ -16,6 +18,9 @@ const hex=v=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v)?v.toUpperCase():null
 function read(){
  try{
   const stored=JSON.parse(localStorage.getItem(KEY)||'null');
+  if(!stored)return {...DEFAULT};
+  // One-time migration of previous factory defaults, without discarding custom choices.
+  if((!stored.style||stored.style==='romance')&&stored.mode!=='light'&&['#D16A8A','#7545F7'].includes(hex(stored.color)))return {...DEFAULT};
   return {mode:stored?.mode==='custom'?'light':MODES.includes(stored?.mode)?stored.mode:DEFAULT.mode,
    color:hex(stored?.color)||DEFAULT.color,style:STYLES.includes(stored?.style)?stored.style:DEFAULT.style};
  }catch{return {...DEFAULT};}
@@ -40,10 +45,12 @@ function apply(){
  root.style.setProperty('--ui-accent-faint',`rgb(${rgb(accent).join(' ')} / .07)`);
  root.style.setProperty('--ui-accent-shadow',`rgb(${rgb(accent).join(' ')} / .24)`);
  const dark=state.mode==='dark';
- const tokens=state.style==='romance'?(dark?{'--ui-bg':'#140F14','--ui-panel':'#211820','--ui-panel-alt':'#2C202A','--ui-text':'#F8EDF0','--ui-muted':'#C0AAB5','--ui-line':'#48303E'}:{'--ui-bg':'#FBF4F4','--ui-panel':'#FFFDFD','--ui-panel-alt':'#F4E7EA','--ui-text':'#30202A','--ui-muted':'#76606A','--ui-line':'#E8D8DF'}):dark?{'--ui-bg':'#15171b','--ui-panel':'#20232a','--ui-panel-alt':'#2b2f37','--ui-text':'#f5f6f8','--ui-muted':'#b7bdc8','--ui-line':'#393e49'}:{'--ui-bg':'#f5f6f9','--ui-panel':'#ffffff','--ui-panel-alt':'#eef0f4','--ui-text':'#20232a','--ui-muted':'#606978','--ui-line':'#dfe3eb'};
+ const tokens=state.style==='neon'?(dark?{'--ui-bg':'#100A18','--ui-panel':'#1B1227','--ui-panel-alt':'#281B37','--ui-text':'#F8F3FF','--ui-muted':'#C5B8D5','--ui-line':'#4B315C'}:{'--ui-bg':'#F8F5FC','--ui-panel':'#FFFFFF','--ui-panel-alt':'#F0E9F7','--ui-text':'#251634','--ui-muted':'#6E5A80','--ui-line':'#DDD0EA'}):state.style==='romance'?(dark?{'--ui-bg':'#140F14','--ui-panel':'#211820','--ui-panel-alt':'#2C202A','--ui-text':'#F8EDF0','--ui-muted':'#C0AAB5','--ui-line':'#48303E'}:{'--ui-bg':'#FBF4F4','--ui-panel':'#FFFDFD','--ui-panel-alt':'#F4E7EA','--ui-text':'#30202A','--ui-muted':'#76606A','--ui-line':'#E8D8DF'}):dark?{'--ui-bg':'#15171b','--ui-panel':'#20232a','--ui-panel-alt':'#2b2f37','--ui-text':'#f5f6f8','--ui-muted':'#b7bdc8','--ui-line':'#393e49'}:{'--ui-bg':'#f5f6f9','--ui-panel':'#ffffff','--ui-panel-alt':'#eef0f4','--ui-text':'#20232a','--ui-muted':'#606978','--ui-line':'#dfe3eb'};
  for(const [key,value] of Object.entries(tokens))root.style.setProperty(key,value,'important');
  root.style.setProperty('--ui-theme-surface',tokens['--ui-panel']);root.style.setProperty('--ui-theme-text',tokens['--ui-text']);
- root.style.setProperty('--cn-grad','linear-gradient(145deg,color-mix(in srgb,'+accent+' 85%,white),'+accent+')','important');root.style.setProperty('--cn-ink',accentOn,'important');
+ const brand=state.style==='neon'&&accent===NEON_COLOR;
+ root.dataset.connectGradient=brand?'brand':'custom';
+ root.style.setProperty('--cn-grad',brand?'linear-gradient(110deg,#6519D0 0%,#9C22BE 47%,#B92D67 82%,#BD4F32 100%)':'linear-gradient(145deg,color-mix(in srgb,'+accent+' 85%,white),'+accent+')','important');root.style.setProperty('--cn-ink',brand?'#FFFFFF':accentOn,'important');
  document.querySelectorAll('meta[name="theme-color"]').forEach(meta=>meta.setAttribute('content',tokens['--ui-bg']));
  root.style.colorScheme=state.mode;
  if(document.body){document.body.style.removeProperty('background-color');document.body.style.removeProperty('color')}
@@ -57,7 +64,7 @@ function setMode(mode){
  if(!MODES.includes(mode))return false;
  state.mode=mode;persist();apply();syncControls();return true;
 }
-function setStyle(style){if(!STYLES.includes(style))return false;state.style=style;persist();apply();syncControls();return true;}
+function setStyle(style){if(!STYLES.includes(style))return false;state.style=style;if(style==='neon'){state.mode='dark';state.color=NEON_COLOR;}persist();apply();syncControls();return true;}
 function setColor(color){
  const valid=hex(color);
  if(!valid)return false;
@@ -69,7 +76,7 @@ function renderControls(){
  '<div class="appearance-mode-grid" role="group" aria-label="Selecionar aparência">'+
  '<button type="button" class="appearance-mode" data-theme-mode="light" aria-pressed="'+(state.mode==='light')+'"><span class="appearance-mini light"><i></i><b></b></span><strong>Claro</strong><small>Limpo e suave</small></button>'+
  '<button type="button" class="appearance-mode" data-theme-mode="dark" aria-pressed="'+(state.mode==='dark')+'"><span class="appearance-mini dark"><i></i><b></b></span><strong>Escuro</strong><small>Conforto à noite</small></button>'+
- '</div><div class="appearance-style-picker" role="group" aria-label="Estilo visual"><button type="button" data-connect-style="romance" aria-pressed="'+(state.style==='romance')+'">Dark Romance</button><button type="button" data-connect-style="neutral" aria-pressed="'+(state.style==='neutral')+'">Neutro</button></div><div class="appearance-custom-settings" data-theme-custom-panel>'+ 
+ '</div><div class="appearance-style-picker" role="group" aria-label="Estilo visual"><button type="button" data-connect-style="neon" aria-pressed="'+(state.style==='neon')+'"><i class="nx-theme-sample"></i><strong>CONNECT Neon</strong><small>Tema padrão</small></button><button type="button" data-connect-style="romance" aria-pressed="'+(state.style==='romance')+'">Dark Romance</button><button type="button" data-connect-style="neutral" aria-pressed="'+(state.style==='neutral')+'">Neutro</button></div><div class="appearance-custom-settings" data-theme-custom-panel>'+ 
  '<label for="appearanceColor">Escolha sua cor</label><div class="appearance-color-line">'+
  '<input id="appearanceColor" data-theme-color type="color" value="'+state.color+'" aria-label="Selecionar cor personalizada">'+
  '<output id="appearanceHex" for="appearanceColor">'+state.color+'</output><span class="appearance-color-hint">Visualização instantânea</span></div>'+
