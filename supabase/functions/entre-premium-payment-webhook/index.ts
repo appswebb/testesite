@@ -33,6 +33,7 @@ Deno.serve(async(req:Request)=>{
     {headers:{"Authorization":"Bearer "+access}});
   if(!check.ok)return json({error:"verification_unavailable"},503);
   const payment=await check.json();
+  if(payment.live_mode!==true)return json({status:"test_payment_ignored"});
   if(String(payment.id)!==dataId)return json({error:"payment_mismatch"},409);
   const match=/^connect-premium:([0-9a-f-]{36}):([0-9a-f-]{36})$/i.exec(String(payment.external_reference||""));
   if(!match)return json({status:"ignored"});
