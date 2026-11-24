@@ -467,3 +467,13 @@ html[data-theme] body>.cp-match-filter-sheet>summary>span{flex:1}
 html[data-theme] body>.cp-match-filter-sheet .live-app-filter-body{flex:1 1 auto;min-height:0!important;overflow-y:auto!important;overscroll-behavior:contain;display:grid;gap:12px;padding:0!important}
 html[data-theme] body>.cp-match-filter-sheet .live-filter-footer{flex:none;padding:0!important}
 html[data-theme] body>.cp-match-filter-sheet .live-filter-find{width:100%!important;min-height:44px!important}
+
+
+/* Same filter affordance in Rooms, Online and Live. */
+html[data-theme] #app .rooms-open-filter{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;flex:none!important;
+ min-width:0!important;width:auto!important;min-height:42px!important;padding:8px 12px!important;
+ border:1px solid var(--ui-line)!important;border-radius:13px!important;background:var(--ui-panel)!important;color:var(--ui-text)!important;
+ font:700 12px/1.2 Inter,system-ui,sans-serif!important;box-shadow:none!important;white-space:nowrap!important;cursor:pointer
+}
+html[data-theme] #app .rooms-open-filter svg{width:18px!important;height:18px!important;flex:none!important}
