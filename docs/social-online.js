@@ -4,12 +4,12 @@
 const api=window.entreSocial,s=api.data;
 function personCard(p){
  const recent=Date.now()-new Date(p.last_seen).getTime()>90000;const follow=p.follow_status,allowed=p.allow_requests||follow==='accepted'||p.follower_status==='accepted';
- return '<article class="online-person '+(window.entreExtras?.isPremium?.(p.id)?'premium-surface':'')+'"><div class="online-person-head"><span class="person-online-indicator '+(recent?'is-reconnecting':'')+'"></span> '+(recent?'ATIVO RECENTEMENTE':'ONLINE AGORA')+'</div>'+
- '<div class="online-person-content">'+avatar(p,'large')+'<div class="cp-online-identity"><h3>'+profileName(p.id,p.display_name,p.username)+(window.entreExtras?.badge?.(p)||'')+(Number(p.age)>0?', '+Number(p.age):'')+'</h3>'+(p.username?'<small class="person-handle">'+profileName(p.id,'@'+p.username,p.username)+'</small>':'')+'<small class="cp-online-gender">'+esc(genders[p.gender]||'Pessoa')+'</small></div></div>'+
- '<p class="online-person-bio">'+esc(p.bio||'Sem biografia.')+'</p>'+
+ return '<article class="online-person cx-online-card '+(window.entreExtras?.isPremium?.(p.id)?'premium-surface':'')+'"><div class="cx-online-cover"><div class="cx-online-rings" aria-hidden="true"></div><span class="cx-online-status"><i class="person-online-indicator '+(recent?'is-reconnecting':'')+'"></i>'+ (recent?'Ativo há pouco':'Online')+'</span></div>'+
+ '<div class="cx-online-body"><div class="online-person-content">'+avatar(p,'large')+'<div class="cp-online-identity"><h3>'+profileName(p.id,p.display_name,p.username)+(window.entreExtras?.badge?.(p)||'')+'</h3>'+(p.username?'<small class="person-handle">'+profileName(p.id,'@'+p.username,p.username)+'</small>':'')+'<div class="cx-online-meta"><span>'+esc(genders[p.gender]||'Pessoa')+'</span>'+(Number(p.age)>0?'<span>'+Number(p.age)+' anos</span>':'')+'</div></div></div>'+
+ (p.bio?'<p class="online-person-bio">'+esc(p.bio)+'</p>':'<p class="online-person-bio cx-online-no-bio">Sem biografia</p>')+
  '<div class="online-person-actions">'+(window.connectRelationships?.followButton?.(p.id,follow)||'')+
- '<button type="button" class="ui-btn btn-dark btn-sm" data-action="socialChat" data-id="'+esc(p.id)+'">'+ico('chat',15)+' Conversar</button></div>'+
- (!allowed?'<small class="online-restriction">Não aceita conversas de desconhecidos. Siga e aguarde o aceite.</small>':'')+'</article>';
+ '<button type="button" class="ui-btn '+(allowed?'btn-dark':'btn-outline')+' btn-sm" data-action="socialChat" data-id="'+esc(p.id)+'" '+(!allowed?'disabled':'')+'>'+ico(allowed?'chat':'lock',15)+' Conversar</button></div>'+
+ (!allowed?'<small class="online-restriction">'+ico('lock',12)+' Conversa após aceitar sua solicitação.</small>':'')+'</div></article>';
 }
 function inbox(){
  if(!s.follows.length&&!s.chats.length)return '';
