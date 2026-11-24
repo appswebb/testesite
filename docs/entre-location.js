@@ -161,7 +161,7 @@
   if(geo.busy||state.searching)return;
   geo.busy=true;picker='';paintCompact();
   try{
-   if(type==='geoDetect')await detect();
+   if(type==='geoDetect'){await detect();if(state.view==='connect'&&state.liveFiltersOpen){document.querySelector('body > .cp-match-filter-sheet [data-action="liveFiltersClose"]')?.click();}}
    else if(type==='geoSave')await save(geo.homeState,geo.homeCity);
    geo.homeExpanded=false;
   }catch(error){toast(error?.message||'Não foi possível atualizar sua localização.',true);}
