@@ -145,3 +145,39 @@ html[data-theme] #app .cp-permanent-chat .enc-media-toolbar button{min-height:34
  html[data-theme] #app .cp-permanent-chat .pair-topbar{padding:3px 8px!important}
  html[data-theme] #app .cp-permanent-chat .chat-form{padding:4px 8px!important}
 }
+
+
+/* Header login: understated outlined pill; retain a 44px touch target. */
+html[data-theme] #app .cl-header .cl-header-actions .cl-login-button{
+ position:relative;isolation:isolate;
+ width:70px!important;min-width:70px!important;max-width:70px!important;
+ background:transparent!important;color:var(--ui-text)!important;border:0!important;
+ border-radius:999px!important;font:650 13px/1 Inter,system-ui,sans-serif!important;
+}
+html[data-theme] #app .cl-header .cl-header-actions .cl-login-button::before{
+ content:"";position:absolute;inset:5px 0;z-index:-1;pointer-events:none;
+ border:1px solid var(--ui-line);border-radius:999px;background:var(--ui-panel);
+ transition:background .18s ease,border-color .18s ease;
+}
+@media(hover:hover){
+ html[data-theme] #app .cl-header .cl-header-actions .cl-login-button:hover::before{
+ background:var(--ui-panel-alt);border-color:var(--ui-muted);
+ }
+}
+html[data-theme] #app .cl-header .cl-header-actions .cl-login-button:active::before{
+ background:var(--ui-accent-soft);border-color:var(--ui-muted);
+}
+@media(max-width:760px){
+ html[data-theme] #app .cl-header .cl-header-actions .cl-login-button{
+ width:64px!important;min-width:64px!important;max-width:64px!important;
+ font-size:12px!important;
+ }
+}
+@media(max-width:340px){
+ html[data-theme] #app .cl-header .cl-header-actions .cl-login-button{
+ width:58px!important;min-width:58px!important;max-width:58px!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-theme] #app .cl-header .cl-header-actions .cl-login-button::before{transition:none}
+}
