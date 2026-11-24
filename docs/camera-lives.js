@@ -104,8 +104,51 @@ function card(l){
 }
 const interaction={comments:[],hearts:0,comments_enabled:true,draft:'',timer:null,busy:false,ready:false,error:false};
 const liveNumber=n=>Number(n||0).toLocaleString('pt-BR');
+const moderation={target:null,rows:[],busy:false,open:false};
+function closeModeration(){moderation.open=false;moderation.target=null;document.getElementById('connectLiveModeration')?.remove();}
+function modButton(action,label,id=''){return '<button type="button" data-live-action="'+action+'" data-id="'+esc(id)+'">'+esc(label)+'</button>';}
+function showModeration(){
+ if(s.localRole!=='host'||!s.active||!moderation.open)return;
+ const stage=document.querySelector('.connect-live-overlay');if(!stage)return;
+ let sheet=document.getElementById('connectLiveModeration');
+ if(!sheet){sheet=document.createElement('section');sheet.id='connectLiveModeration';sheet.className='connect-live-mod-sheet';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-label','Moderação da transmissão');stage.appendChild(sheet);}
+ const people=new Map();
+ for(const p of (s.room?.remoteParticipants?.values()||[]))people.set(p.identity,p.name||'Participante');
+ for(const c of interaction.comments)if(c.user_id&&c.user_id!==s.active.host_id)people.set(c.user_id,c.name);
+ for(const r of moderation.rows)people.set(r.user_id,r.name);
+ const id=moderation.target,restriction=moderation.rows.find(r=>r.user_id===id);
+ const muted=restriction?.muted_until&&Date.parse(restriction.muted_until)>Date.now();
+ sheet.innerHTML='<header><strong>'+esc(id?(people.get(id)||'Participante'):'Moderação da live')+'</strong>'+modButton('mod-close','Fechar')+'</header><div class="connect-live-mod-body">'+
+ (id?modButton('mod-list','Voltar à lista')+(!restriction?.banned?modButton('mute5','Silenciar por 5 minutos',id)+modButton('mute30','Silenciar por 30 minutos',id)+modButton('mute_live','Silenciar até o fim da live',id)+modButton('ban','Banir e expulsar da live',id):modButton('unban','Remover banimento',id))+(muted?modButton('unmute','Liberar comentários',id):''):
+ '<p>Participantes e contas com restrições</p>'+([...people].filter(([uid])=>uid!==s.active.host_id).map(([uid,name])=>{const r=moderation.rows.find(x=>x.user_id===uid);return modButton('mod-user',name+(r?.banned?' · Banido':r?.muted_until?' · Silenciado':''),uid);}).join('')||'<p>Nenhum participante disponível.</p>'))+'</div>';
+}
+async function moderationAction(type,button){
+ if(s.localRole!=='host'||!s.active)return;
+ const live=s.active.id,id=button.dataset.id||null;
+ if(type==='mod-close'){closeModeration();return;}
+ if(type==='mod-user'){moderation.target=id;moderation.open=true;showModeration();return;}
+ if(moderation.busy)return;
+ if(type==='ban'&&!confirm('Banir esta pessoa da transmissão e remover todos os comentários dela?'))return;
+ moderation.busy=true;
+ try{
+  if(type==='mod-list'){moderation.open=true;moderation.target=null;}
+  if(type==='ban'){
+   const {data,error}=await db.functions.invoke('entre-camera-live-token',{body:{live_id:live,action:'ban',target:id}});
+   if(error||!Array.isArray(data?.restrictions))throw error||Error('Não foi possível banir.');
+   if(s.active?.id!==live)return;moderation.rows=data.restrictions;
+   toast(data.removed?'Participante banido.':'Banimento salvo; a expulsão pelo vídeo não foi confirmada.',!data.removed);
+  }else{
+   const {data,error}=await db.rpc('connect_live_moderate',{_live:live,_target:type==='mod-list'?null:id,_action:type==='mod-list'?'list':type});
+   if(error)throw error;if(s.active?.id!==live)return;moderation.rows=Array.isArray(data)?data:[];
+   if(type!=='mod-list')toast('Moderação atualizada.');
+  }
+  if(['ban','mute5','mute30','mute_live'].includes(type)){interaction.comments=interaction.comments.filter(c=>c.user_id!==id);paintInteractions();}
+  if(type!=='mod-list')moderation.target=null;
+  showModeration();void interact();
+ }finally{moderation.busy=false;}
+}
 function liveComment(c){
- return '<div class="connect-live-comment" data-live-comment-id="'+esc(c.id)+'"><span><b>'+esc(c.name)+'</b> '+esc(c.body)+'</span>'+(c.can_delete?'<button type="button" data-live-action="comment-delete" data-id="'+esc(c.id)+'" aria-label="Excluir comentário">×</button>':'')+'</div>';
+ return '<div class="connect-live-comment" data-live-comment-id="'+esc(c.id)+'"><span><b>'+esc(c.name)+'</b> '+esc(c.body)+'</span>'+(s.localRole==='host'&&c.user_id&&c.user_id!==s.active?.host_id?'<button type="button" data-live-action="mod-user" data-id="'+esc(c.user_id)+'" aria-label="Moderar participante">⋯</button>':'')+(c.can_delete?'<button type="button" data-live-action="comment-delete" data-id="'+esc(c.id)+'" aria-label="Excluir comentário">×</button>':'')+'</div>';
 }
 function liveMessages(){
  return interaction.comments.length?interaction.comments.map(liveComment).join(''):'<p class="connect-live-hint">'+(interaction.error?'Interações temporariamente indisponíveis.':interaction.ready?'Seja a primeira pessoa a comentar.':'Carregando comentários…')+'</p>';
@@ -145,17 +188,17 @@ function paintInteractions(){
  const hearts=document.getElementById('connectLiveHearts');if(hearts)hearts.textContent='♥ '+liveNumber(interaction.hearts);
  const people=document.getElementById('connectLivePeople');if(people)people.textContent=liveNumber(s.room?1+s.room.remoteParticipants.size:0)+' conectados';
  const clock=document.getElementById('connectLiveClock');if(clock&&s.active?.started_at){const sec=Math.max(0,Math.floor((Date.now()-Date.parse(s.active.started_at))/1000));if(Number.isFinite(sec))clock.textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');}
- const form=document.getElementById('connectLiveCommentForm');if(form){const input=form.elements.namedItem('comment');input.disabled=!interaction.comments_enabled;input.placeholder=interaction.comments_enabled?'Comentar…':'Comentários desativados';form.querySelector('[type=submit]').disabled=!interaction.comments_enabled;}
+ const form=document.getElementById('connectLiveCommentForm');if(form){const input=form.elements.namedItem('comment');input.disabled=!interaction.comments_enabled;input.placeholder=interaction.muted?'Você está silenciado':interaction.comments_enabled?'Comentar…':'Comentários desativados';form.querySelector('[type=submit]').disabled=!interaction.comments_enabled;}
  const moderate=document.querySelector('[data-live-action="comments-toggle"]');if(moderate){const label=interaction.comments_enabled?'Pausar comentários':'Liberar comentários';moderate.setAttribute('aria-label',label);moderate.title=label;moderate.setAttribute('aria-pressed',String(!interaction.comments_enabled));}
 }
 async function interact(type='read',body=null,id=null){
  const live=s.active?.id;if(!live||interaction.busy)return false;
  interaction.busy=true;
- try{const {data,error}=await db.rpc('connect_live_interact',{_live:live,_action:type,_body:body,_comment:id});if(error)throw error;if(s.active?.id!==live)return false;interaction.comments=Array.isArray(data?.comments)?data.comments:[];interaction.hearts=data?.hearts||0;interaction.comments_enabled=data?.comments_enabled!==false;interaction.ready=true;interaction.error=false;paintInteractions();return true;}
+ try{const {data,error}=await db.rpc('connect_live_interact',{_live:live,_action:type,_body:body,_comment:id});if(error)throw error;if(s.active?.id!==live)return false;if(data?.banned){toast('Você foi banido desta live.',true);await leave(false);return false;}interaction.muted=data?.muted===true;interaction.comments=Array.isArray(data?.comments)?data.comments:[];interaction.hearts=data?.hearts||0;interaction.comments_enabled=data?.comments_enabled!==false;interaction.ready=true;interaction.error=false;paintInteractions();return true;}
  catch(error){if(s.active?.id===live){interaction.error=true;paintInteractions();if(type!=='read')toast(infoError(error),true);}return false;}
  finally{interaction.busy=false;}
 }
-function stopInteractions(){clearInterval(interaction.timer);interaction.timer=null;interaction.comments=[];interaction.hearts=0;interaction.comments_enabled=true;interaction.draft='';interaction.ready=false;interaction.error=false;lastMessageList=null;}
+function stopInteractions(){clearInterval(interaction.timer);interaction.timer=null;interaction.comments=[];interaction.hearts=0;interaction.comments_enabled=true;interaction.draft='';interaction.ready=false;interaction.error=false;lastMessageList=null;interaction.muted=false;closeModeration();moderation.rows=[];}
 function startInteractions(){clearInterval(interaction.timer);void interact();interaction.timer=setInterval(()=>{if(s.active&&!document.hidden){paintInteractions();void interact();}},3000);}
 function viewer(){
  if(!s.active)return '';
@@ -166,7 +209,7 @@ function viewer(){
  (role==='host'&&source.guest_requested_by&&!source.guest_id?'<div class="camera-live-invite"><strong>Pedido de participação</strong><button type="button" data-live-action="approve">Aceitar</button><button type="button" data-live-action="reject">Recusar</button></div>':'')+
  (publisher?control('mic','mic',s.mic?'Desligar microfone':'Ligar microfone','class="'+(s.mic?'':'muted')+'" aria-pressed="'+String(!s.mic)+'"')+control('camera','camera',s.camera?'Desligar câmera':'Ligar câmera','class="'+(s.camera?'':'muted')+'" aria-pressed="'+String(!s.camera)+'"'):'')+
  (role==='viewer'&&!source.guest_id?control('request','users',source.requested?'Pedido enviado':'Pedir para participar',source.requested?'disabled':''):'')+
- (role==='host'?control('comments-toggle','chat',interaction.comments_enabled?'Pausar comentários':'Liberar comentários','aria-pressed="'+String(!interaction.comments_enabled)+'"'):'')+
+ (role==='host'?control('mod-list','shield','Moderação da live')+control('comments-toggle','chat',interaction.comments_enabled?'Pausar comentários':'Liberar comentários','aria-pressed="'+String(!interaction.comments_enabled)+'"'):'')+
  (role==='viewer'&&s.rows.some(x=>x.id!==l.id)?control('next','arrow','Próxima live'):'')+
  '</div>';
  return '<section class="camera-live-stage connect-live-overlay" aria-label="Transmissão ao vivo">'+
@@ -345,6 +388,7 @@ async function start(form){
  }finally{if(btn?.isConnected)btn.disabled=false;}
 }
 async function action(type,button){
+ if(['mod-list','mod-close','mod-user','mute5','mute30','mute_live','ban','unban','unmute'].includes(type)){await moderationAction(type,button);return;}
  if(type==='heart'){await interact('heart');return;}
  if(type==='comment-delete'){if(confirm('Excluir este comentário?'))await interact('delete',null,button.dataset.id);return;}
  if(type==='comments-toggle'){await interact(interaction.comments_enabled?'close':'open');return;}
@@ -403,5 +447,5 @@ async function enter(){await refresh();beginPolling();}
 function stop(){if(s.timer)clearInterval(s.timer);s.timer=null;}
 window.entreLives={view,enter,stop,leave,refresh,isActive:()=>Boolean(s.active)};
 // Other app updates can replace the active view; reattach tracks only after a replacement.
-let lastGrid=null;new MutationObserver(()=>{const grid=document.getElementById('cameraLiveVideos');if(grid&&grid!==lastGrid){lastGrid=grid;attachAll();paintInteractions();}else if(!grid){lastGrid=null;}}).observe(document.body,{childList:true,subtree:true});
+let lastGrid=null;new MutationObserver(()=>{const grid=document.getElementById('cameraLiveVideos');if(grid&&grid!==lastGrid){lastGrid=grid;attachAll();paintInteractions();showModeration();}else if(!grid){lastGrid=null;}}).observe(document.body,{childList:true,subtree:true});
 })();
