@@ -46,3 +46,5 @@ html[data-theme] .encounter-stage .live-video-panel{background:#211730!important
 @media(max-width:365px){.cn-feature small{display:none}.cn-cta{gap:7px}.cn-primary,.cn-outline{padding:10px 12px}.cn-public-bar .brand{font-size:17px!important}}
 @media(prefers-reduced-motion:reduce){.cn-art img,.cn-primary,.cn-outline{animation:none!important;transition:none!important}}
 html[data-motion-level="light"] .cn-art img{animation:none!important}
+
+.cn-quick-links{display:flex;flex-wrap:wrap;gap:8px}.cn-quick-links button{display:flex;align-items:center;gap:7px;min-height:40px;padding:8px 12px;border:1px solid var(--ui-line);border-radius:12px;background:var(--ui-panel);color:var(--ui-text);font:650 12px/1.2 Inter,sans-serif}.cn-quick-links button:hover{border-color:var(--ui-accent)}@media(max-width:760px){.cn-quick-links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.cn-quick-links button{min-width:0;flex-direction:column;justify-content:center;gap:5px;padding:8px 2px;font-size:10px}.cn-public-bar .brand-glyph{width:32px!important}}
