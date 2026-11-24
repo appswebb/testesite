@@ -90,9 +90,9 @@ async function loadCommentPage(more=false){
 }
 
 function postsView(){
- return '<section class="posts-shell"><div class="posts-stream"><section class="cn-feed-composer"><div class="cn-compose-heading">'+avatar(state.profile)+'<div><strong>Criar</strong><small>Compartilhe com a comunidade</small></div><button type="button" class="cn-story-create" data-story-action="compose">'+ico('clock',17)+' Story</button></div><form id="postCreateForm" class="post-compose cn-inline-post">'+
+ return '<section class="posts-shell"><div class="posts-stream">'+(window.entreStories?.markup?.()||'')+'<section class="cn-feed-composer"><div class="cn-compose-heading">'+avatar(state.profile)+'<div><strong>Criar</strong><small>Compartilhe com a comunidade</small></div></div><form id="postCreateForm" class="post-compose cn-inline-post">'+
  '<textarea name="body" minlength="3" maxlength="900" placeholder="O que você quer publicar?"></textarea>'+ (window.entreMedia?.composeMarkup?.()||'')+
- '<div class="post-compose-footer"><button type="submit" class="ui-btn btn-dark btn-sm">Publicar post '+ico('arrow',15)+'</button></div></form>'+(window.entreStories?.markup?.()||'')+'</section>'+
+ '<div class="post-compose-footer"><button type="submit" class="ui-btn btn-dark btn-sm">Publicar post '+ico('arrow',15)+'</button></div></form></section>'+
  (data.posts.length?data.posts.map(p=>{
   const person={id:p.author_id,display_name:p.author_name,avatar_path:p.author_avatar,avatar_uploaded_at:p.author_avatar_uploaded_at};
   const own=p.author_id===state.session?.user?.id;
@@ -192,11 +192,10 @@ function premiumView(){
  return '<section class="cp-plan-page"><div class="cp-plan-heading"><h2>Escolha seu plano</h2><p>Dois planos. A mesma comunidade.</p></div><div class="cp-plan-grid">'+
  '<article class="cp-plan"><span class="cp-plan-eyebrow">NORMAL</span><h3>Gratuito</h3><div class="cp-plan-price">R$ 0</div><p>Conheça pessoas e participe da comunidade.</p>'+rows(['Encontros por texto e vídeo','Conversas, posts, stories, salas e lives','Banner de perfil com foto','Temas claro, escuro e cor personalizada'])+
  '<div class="cp-plan-state">'+(active?'Incluído no Premium':ico('check',17)+' Seu plano atual')+'</div></article>'+
- '<article class="cp-plan cp-plan-paid"><span class="cp-plan-eyebrow">'+ico('crown',18)+' PREMIUM</span><h3>Mais possibilidades</h3><div class="cp-plan-price">'+(price()||'Valor a definir')+'<small> / 30 dias</small></div><p>Todos os recursos do Normal, mais:</p>'+rows(['Banner animado em GIF','Filtro de gênero no Ao vivo','Selo de destaque no perfil','Atendimento prioritário pelo WhatsApp'])+
- (active?'<div class="cp-plan-state">'+ico('check',17)+' Premium ativo'+(data.premium.paid_until?' · até '+new Date(data.premium.paid_until).toLocaleDateString('pt-BR'):'')+'</div><button type="button" class="ui-btn btn-dark" data-action="premiumWhatsapp">'+ico('chat',17)+' WhatsApp prioritário</button>':'<button type="button" class="ui-btn btn-dark premium-buy" data-action="premiumCheckout" '+(enabled?'':'disabled')+'>'+ico('shield',17)+' '+(data.checkoutBusy?'Abrindo pagamento…':'Assinar Premium')+'</button>')+
- '<details class="cp-plan-recurring" '+(active||window.entreRecurring?.isOpen?.()?'open':'')+'><summary>Opções de renovação mensal</summary>'+(window.entreRecurring?.view?.()||'<p>Renovação indisponível.</p>')+'</details>'+
- '<div class="web-payment-status" id="webPaymentStatus" role="status">'+webPaymentStatusMarkup()+'</div><div class="web-checkout-embed" '+(data.webCheckoutOpen&&!active?'':'hidden')+'><div id="connectPaymentBrick" aria-label="Pagamento seguro com Pix ou cartão"></div></div>'+
- '<button type="button" class="cp-plan-verify" data-action="premiumVerify" '+(data.webChecking?'disabled':'')+'>'+ico('refresh',15)+' '+(data.webChecking?'Verificando…':'Já paguei · verificar pagamento')+'</button><small class="cp-plan-footnote">Pagamento seguro pelo Mercado Pago. A opção de 30 dias não renova automaticamente.</small></article></div></section>';
+ '<article class="cp-plan cp-plan-paid"><span class="cp-plan-eyebrow">'+ico('crown',18)+' PREMIUM</span><h3>Mais possibilidades</h3><div class="cp-plan-price">'+(window.entreRecurring?.price?.()||'Valor a definir')+'<small> / mês</small></div><p>Todos os recursos do Normal, mais:</p>'+rows(['Banner animado em GIF','Filtro de gênero no Ao vivo','Selo de destaque no perfil','Atendimento prioritário pelo WhatsApp'])+
+ (active?'<div class="cp-plan-state">'+ico('check',17)+' Premium ativo'+(data.premium.paid_until?' · até '+new Date(data.premium.paid_until).toLocaleDateString('pt-BR'):'')+'</div><button type="button" class="ui-btn btn-outline" data-action="premiumWhatsapp">'+ico('chat',17)+' WhatsApp prioritário</button>':'')+
+ (window.entreRecurring?.view?.()||'<p>Carregando assinatura mensal…</p>')+
+ '<small class="cp-plan-footnote">Cobrança mensal automática no cartão. Cancele a renovação quando quiser.</small></article></div></section>';
 }
 async function openPremiumWhatsapp(){
  if(!data.premium?.active)throw Error('O atendimento prioritário exige Premium ativo.');
@@ -339,7 +338,7 @@ async function submitSupport(form){
 }
 async function enter(view){
  if(view==='posts')await Promise.allSettled([loadPosts(),window.entreStories?.refresh?.()]);
- if(view==='premium'){await refreshPremium();await window.entreRecurring?.loadStatus?.();renderView();if(data.webCheckoutOpen&&!data.premium?.active)void renderWebBrick().catch(e=>{data.webError=infoError(e);refreshWebStatus();});}
+ if(view==='premium'){await refreshPremium();await window.entreRecurring?.loadStatus?.();renderView();}
  if(view==='support'){await Promise.all([loadSupport(),refreshPremium()]);renderView();}
 }
 Object.assign(mod,{data,isPremium:premium,badge,loadBadges,refreshPremium,loadPosts,postsView,postAction,postForm,premiumView,checkout,verifyPremium,copyPix,unmountPaymentBrick,openPremiumWhatsapp,supportView,submitSupport,loadSupport,enter});

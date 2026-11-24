@@ -7,18 +7,14 @@ function view(){
  const active=window.entreExtras?.data?.premium?.active;
  const status=d.subscription?.status||'none',canCancel=['pending','authorized','paused'].includes(status);
  const enabled=d.config?.enabled===true;
- return '<section class="recurring-premium-box"><div class="recurring-premium-header"><span class="recurring-kicker">✳ PLANO MENSAL</span><h3>Premium que <em>renova sozinho.</em></h3><p>Assinatura mensal recorrente em cartão. Você autoriza a cobrança automática e pode cancelar a renovação quando quiser, sem precisar do aplicativo do Mercado Pago.</p>'+
- '<div class="recurring-premium-price"><strong>'+esc(price()||'Preço no painel')+'</strong><small>/ mês · cartão de crédito</small></div></div>'+
- '<div class="recurring-premium-actions">'+
- (status==='pending'?'<p class="recurring-pending">Assinatura cadastrada. A primeira cobrança pode levar até cerca de uma hora; o Premium só ativa depois da confirmação do pagamento.</p>':'')+
- (status==='authorized'?'<p class="recurring-success">Renovação mensal ativa. Último pagamento confirmado: '+(d.subscription?.last_invoice_at?new Date(d.subscription.last_invoice_at).toLocaleDateString('pt-BR'):'aguardando atualização')+'.</p>':'')+
- (status==='cancelled'?'<p>Renovação mensal cancelada. Seu acesso pago continua válido até a data já confirmada.</p>':'')+
- (d.error?'<p class="recurring-error" role="alert">'+esc(d.error)+'</p>':'')+
- (!canCancel&&!active?'<label class="recurring-consent"><input id="recurringConsent" type="checkbox"><span>Autorizo a cobrança automática mensal de '+esc(price()||'valor definido no painel')+' no cartão, até que eu cancele. Entendo que Pix é apenas para pagamentos avulsos.</span></label>'+
- '<button type="button" class="ui-btn btn-dark" data-recurring-action="open" '+(!enabled||d.busy?'disabled':'')+'>'+ico('credit-card',18)+' '+(enabled?'Assinar mensalmente no cartão':'Recorrência aguardando ativação')+'</button>':'')+
- (canCancel?'<button type="button" class="ui-btn btn-outline" data-recurring-action="verify">Verificar última cobrança</button><button type="button" class="recurring-cancel" data-recurring-action="cancel">Cancelar renovação automática</button>':'')+
- '<div id="recurringCardBrick" '+(d.open?'':'hidden')+' class="recurring-card-brick"></div>'+
- '<p class="recurring-premium-note">O cartão é tokenizado pelo Mercado Pago. O CONNECT não recebe o número completo do cartão. O plano avulso de 30 dias com Pix/cartão continua disponível acima.</p></div></section>';
+ return '<div class="cp-recurring-inline">'+
+ (status==='pending'?'<p>Assinatura autorizada. Aguardando a primeira cobrança.</p>':'')+
+ (status==='authorized'?'<p>Renovação automática ativa.</p>':'')+
+ (status==='cancelled'?'<p>Renovação cancelada. Acesso pago válido até o vencimento.</p>':'')+
+ (d.error?'<p role="alert" class="cp-recurring-error">'+esc(d.error)+'</p>':'')+
+ (!canCancel&&!d.open?'<label class="cp-recurring-consent"><input id="recurringConsent" type="checkbox"><span>Autorizo a cobrança mensal automática de '+esc(price()||'valor informado')+' no cartão até cancelar.</span></label><button type="button" class="ui-btn btn-dark" data-recurring-action="open" '+(!enabled||d.busy?'disabled':'')+'>Assinar Premium</button>':'')+
+ (canCancel?'<button type="button" class="ui-btn btn-outline" data-recurring-action="verify">Verificar pagamento</button><button type="button" class="cp-plan-verify" data-recurring-action="cancel">Cancelar renovação</button>':'')+
+ '<div id="recurringCardBrick" '+(d.open?'':'hidden')+'></div><small>Pagamento seguro pelo Mercado Pago.</small></div>';
 }
 async function loadStatus(paint=false){
  if(!state.session?.user)return;
@@ -87,12 +83,12 @@ async function action(which){
    await loadStatus();d.open=false;await unmount();renderView();
    toast('Renovação automática cancelada no Mercado Pago.');
   }
- }catch(e){d.error=infoError(e);toast(d.error,true);if(state.view==='premium')renderView();}
- finally{d.busy=false;}
+ }catch(e){d.error=infoError(e);d.open=false;toast(d.error,true);if(state.view==='premium')renderView();}
+ finally{d.busy=false;const b=document.querySelector('[data-recurring-action="open"]');if(b&&d.config?.enabled)b.disabled=false;}
 }
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-recurring-action]');if(!b)return;
  void action(b.dataset.recurringAction);
 });
-window.entreRecurring={view,loadStatus,unmount,isOpen:()=>d.open};
+window.entreRecurring={view,loadStatus,unmount,isOpen:()=>d.open,price};
 })();
