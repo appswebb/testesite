@@ -307,29 +307,82 @@ html[data-theme] .live-explore-refresh:focus-visible{
  outline:3px solid var(--ui-accent-shadow)!important;outline-offset:2px
 }
 
-/* Connect LIVE — compact stage */
-.live-active-screen .camera-live-stage{position:relative;display:flex;flex-direction:column;gap:8px;min-width:0;padding:10px!important;border-radius:20px;overflow:hidden;background:#17171d;color:#fff}
-.live-active-screen .camera-live-stage-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px!important}
-.live-active-screen .camera-live-stage-head h3{font-size:17px!important;margin:4px 0!important;overflow-wrap:anywhere}
-.live-active-screen .camera-live-stage-head p{font-size:11px;margin:0;color:#e3e3e8}
-.live-active-screen .camera-live-grid{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:3px;min-height:180px;max-height:50dvh;overflow:hidden;background:#0e0e13;border-radius:14px}
-.live-active-screen .camera-live-video{position:relative;min-width:0;min-height:0;aspect-ratio:9/13;background:#25252d}
-.live-active-screen .camera-live-video video{width:100%;height:100%;object-fit:cover;display:block}
-.live-active-screen .camera-live-video audio{display:none}
-.live-active-screen .camera-live-video-name{position:absolute;left:8px;bottom:8px;z-index:1;background:#0009;color:#fff;padding:4px 8px;border-radius:12px;font-size:11px}
-.live-active-screen .camera-live-tools{display:flex!important;flex-wrap:wrap;gap:5px!important;padding:0!important}
-.live-active-screen .camera-live-tools button,.live-active-screen .camera-live-back{width:auto!important;min-height:36px!important;padding:6px 9px!important;font-size:11px!important;border-radius:10px!important;flex:0 0 auto!important}
-.live-active-screen .camera-live-security{font-size:10px!important;color:#c7c7cd;margin:0!important}
-.connect-live-social{display:flex;flex-direction:column;gap:6px;min-width:0;color:#fff}
-.connect-live-meta{display:flex;align-items:center;gap:12px;font-size:11px;color:#ddd}
-.connect-live-meta span:last-child{margin-left:auto;font-variant-numeric:tabular-nums}
-.connect-live-messages{height:clamp(84px,19dvh,180px);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;display:flex;flex-direction:column;gap:5px}
-.connect-live-comment{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;font-size:12px;line-height:1.45;padding:3px 2px;color:#fff;overflow-wrap:anywhere}
-.connect-live-comment b{color:#f3a3a9;margin-right:5px}
-.connect-live-comment button,.connect-live-moderate,.connect-live-next{background:transparent!important;color:#ddd!important;border:0!important;font-size:11px!important;padding:4px 7px!important;min-height:30px!important;width:auto!important;align-self:flex-start}
-.connect-live-hint{font-size:12px;color:#b8b8c0;margin:4px 0}
-#connectLiveCommentForm{display:flex;align-items:center;gap:5px;margin:0;min-width:0}
-#connectLiveCommentForm input{flex:1;min-width:0;width:0;background:#ffffff16!important;border:1px solid #ffffff28!important;color:white!important;border-radius:20px!important;padding:9px 12px!important;font-size:14px!important;min-height:40px!important}
-#connectLiveCommentForm button{flex:0 0 auto;min-height:40px!important;width:auto!important;padding:6px 10px!important;font-size:12px!important;border-radius:20px!important;border:0;background:#ffffff20;color:#fff}
-#connectLiveCommentForm .connect-live-heart{font-size:21px!important;color:#ff849b!important}
-@media(max-height:500px) and (orientation:landscape){.live-active-screen .camera-live-grid{max-height:40dvh;min-height:100px}.connect-live-messages{height:80px}.live-active-screen .camera-live-video{aspect-ratio:16/9}}
+
+/* LIVE: one continuous media stage. Video fills the surface; all UI is overlaid. */
+html[data-theme] .live-active-screen.camera-live-shell{
+ display:block!important;width:min(100%,470px)!important;max-width:470px!important;min-width:0!important;
+ margin:0 auto 12px!important;padding:0!important;background:transparent!important;border:0!important;
+}
+html[data-theme] .live-active-screen .connect-live-overlay{
+ position:relative!important;isolation:isolate;display:block!important;width:100%!important;box-sizing:border-box;
+ height:clamp(320px,calc(100dvh - 164px),680px)!important;min-height:0!important;max-height:none!important;
+ margin:0!important;padding:0!important;overflow:hidden!important;border:0!important;border-radius:18px!important;
+ background:#101014!important;color:#fff!important;box-shadow:none!important;
+}
+html[data-theme] .connect-live-overlay .camera-live-grid{
+ position:absolute!important;inset:0!important;display:grid!important;grid-template-columns:repeat(auto-fit,minmax(0,1fr))!important;
+ grid-auto-rows:minmax(0,1fr);gap:2px!important;width:100%!important;height:100%!important;min-height:0!important;max-height:none!important;
+ margin:0!important;padding:0!important;border:0!important;border-radius:0!important;overflow:hidden!important;background:#17171e!important;
+}
+html[data-theme] .connect-live-overlay .camera-live-video{
+ display:flex!important;position:relative!important;align-items:center;justify-content:center;
+ width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;max-height:none!important;
+ aspect-ratio:auto!important;border:0!important;border-radius:0!important;background:#17171e!important;overflow:hidden!important;
+}
+html[data-theme] .connect-live-overlay .camera-live-video video{width:100%!important;height:100%!important;max-height:none!important;object-fit:cover!important;display:block}
+html[data-theme] .connect-live-overlay .camera-live-grid:has(.camera-live-video:nth-child(2)) video{object-fit:contain!important}
+html[data-theme] .connect-live-overlay .camera-live-video audio{position:absolute;width:0;height:0}
+html[data-theme] .connect-live-overlay .camera-live-video-name{position:absolute;top:100px;bottom:auto!important;left:6px;max-width:90%;z-index:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff!important;background:#1119!important;font-size:10px!important;border-radius:10px;padding:3px 7px}
+html[data-theme] .connect-live-overlay .camera-live-wait{min-height:0!important;height:100%;display:grid;place-content:center;text-align:center;padding:12px;color:#ddd!important}
+html[data-theme] .connect-live-overlay .camera-live-stage-head{
+ position:absolute!important;z-index:2;inset:0 0 auto;display:flex!important;justify-content:space-between;align-items:flex-start!important;
+ gap:8px;padding:12px 10px 28px!important;margin:0!important;background:linear-gradient(180deg,#000b 0%,#0000 100%)!important;
+ color:#fff!important;border:0!important;pointer-events:none;
+}
+.connect-live-heading{min-width:0;flex:1}
+html[data-theme] .connect-live-overlay .camera-live-pill{display:inline-flex;color:white!important;background:#cf3654!important;border:0!important;border-radius:5px!important;font-size:9px!important;padding:3px 6px!important;line-height:1.2!important}
+html[data-theme] .connect-live-overlay .camera-live-stage-head h3{font-size:15px!important;line-height:1.2!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:5px 0 2px!important;color:#fff!important;text-shadow:0 1px 4px #000}
+html[data-theme] .connect-live-overlay .camera-live-stage-head p{font-size:11px!important;line-height:1.2!important;color:#fff!important;margin:0!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 4px #000}
+html[data-theme] .connect-live-overlay .camera-live-stage-head p [data-action]{pointer-events:auto;color:inherit!important}
+.connect-live-meta{display:flex;gap:9px;align-items:center;font-size:10px;color:#f8f8f8!important;margin-top:5px;text-shadow:0 1px 4px #000;font-variant-numeric:tabular-nums}
+html[data-theme] .connect-live-overlay .camera-live-back{pointer-events:auto;display:grid!important;place-items:center;width:36px!important;height:36px!important;min-height:36px!important;min-width:36px!important;padding:0!important;border:0!important;border-radius:50%!important;color:#fff!important;background:#0007!important;box-shadow:none!important}
+html[data-theme] .connect-live-overlay .connect-live-social{
+ position:absolute!important;z-index:3;inset:auto 0 0;display:flex!important;flex-direction:column;gap:5px;
+ min-width:0!important;padding:22px 10px 9px!important;margin:0!important;border:0!important;
+ background:linear-gradient(0deg,#000c 0%,#0008 47%,#0000 100%)!important;color:white!important;pointer-events:none;
+}
+.connect-live-messages{width:min(86%,380px);height:clamp(70px,21dvh,150px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;pointer-events:auto}
+.connect-live-messages::-webkit-scrollbar{display:none}
+.connect-live-message-stack{min-height:100%;display:flex;flex-direction:column;justify-content:flex-end;gap:4px}
+.connect-live-comment{display:flex;justify-content:space-between;align-items:flex-start;gap:4px;font-size:12px;line-height:1.35;color:#fff!important;overflow-wrap:anywhere;text-shadow:0 1px 4px #000}
+.connect-live-comment span{min-width:0}
+.connect-live-comment b{color:#f5c3cd!important;font-weight:750;margin-right:4px}
+html[data-theme] .connect-live-overlay .connect-live-comment button{flex:none;display:grid;place-items:center;width:26px!important;min-width:26px!important;min-height:24px!important;height:24px!important;padding:0!important;background:transparent!important;color:#eee!important;border:0!important;box-shadow:none!important}
+.connect-live-hint{font-size:11px;color:#e7e7e7!important;margin:0;text-shadow:0 1px 3px #000}
+.connect-live-comment-new{animation:connectLiveCommentIn .22s ease-out both}
+@keyframes connectLiveCommentIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+html[data-theme] .connect-live-overlay .camera-live-tools{display:flex!important;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:5px!important;width:100%;margin:0!important;padding:0!important;background:transparent!important;border:0!important;pointer-events:none}
+html[data-theme] .connect-live-overlay .camera-live-tools:empty{display:none!important}
+html[data-theme] .connect-live-overlay .camera-live-tools>button{pointer-events:auto;display:grid!important;place-items:center;flex:0 0 36px!important;width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;margin:0!important;padding:0!important;color:#fff!important;background:#0008!important;border:1px solid #ffffff30!important;border-radius:50%!important;box-shadow:none!important}
+html[data-theme] .connect-live-overlay .camera-live-tools>button.muted,html[data-theme] .connect-live-overlay .camera-live-tools>button[aria-pressed="true"]{background:#a12746b0!important}
+html[data-theme] .connect-live-overlay .camera-live-invite{pointer-events:auto;display:flex;flex-wrap:nowrap;gap:5px;padding:5px!important;background:#17171ed9!important;border:0!important;border-radius:9px!important}
+html[data-theme] .connect-live-overlay .camera-live-invite strong{font-size:10px!important;color:white!important}
+html[data-theme] .connect-live-overlay .camera-live-invite button{width:auto!important;min-height:30px!important;padding:4px 7px!important;font-size:10px!important}
+html[data-theme] .connect-live-overlay #connectLiveCommentForm{pointer-events:auto;display:flex!important;align-items:center;gap:5px;margin:0!important;min-width:0;width:100%;background:transparent!important;padding:0!important}
+html[data-theme] .connect-live-overlay #connectLiveCommentForm input{flex:1;min-width:0!important;width:0!important;background:#0008!important;border:1px solid #ffffff38!important;color:#fff!important;border-radius:22px!important;padding:8px 12px!important;font-size:16px!important;height:40px!important;min-height:40px!important;box-sizing:border-box}
+html[data-theme] .connect-live-overlay #connectLiveCommentForm input::placeholder{color:#ddd!important}
+html[data-theme] .connect-live-overlay #connectLiveCommentForm button{display:grid!important;place-items:center;flex:0 0 40px!important;width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;padding:0!important;border-radius:50%!important;border:0!important;background:#0008!important;color:#fff!important;box-shadow:none!important}
+html[data-theme] .connect-live-overlay #connectLiveCommentForm .connect-live-heart{color:#ff8299!important}
+@media(max-width:700px){
+ html[data-theme] .live-active-screen .connect-live-overlay{height:clamp(300px,calc(100dvh - 150px),640px)!important;border-radius:15px!important}
+}
+@media(max-height:500px) and (orientation:landscape){
+ html[data-theme] .live-active-screen.camera-live-shell{width:min(100%,680px)!important;max-width:680px!important}
+ html[data-theme] .live-active-screen .connect-live-overlay{height:clamp(220px,calc(100dvh - 98px),440px)!important}
+ .connect-live-messages{height:66px;width:min(58%,350px)}
+ html[data-theme] .connect-live-overlay .camera-live-video video{object-fit:contain!important}
+ html[data-theme] .connect-live-overlay .camera-live-stage-head{padding:6px 8px 15px!important}
+ html[data-theme] .connect-live-overlay .camera-live-video-name{top:72px}
+ html[data-theme] .connect-live-overlay .connect-live-social{padding:12px 8px 6px!important}
+}
+@media(prefers-reduced-motion:reduce){.connect-live-comment-new{animation:none!important}}

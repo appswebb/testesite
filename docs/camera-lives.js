@@ -104,20 +104,49 @@ function card(l){
 }
 const interaction={comments:[],hearts:0,comments_enabled:true,draft:'',timer:null,busy:false,ready:false,error:false};
 const liveNumber=n=>Number(n||0).toLocaleString('pt-BR');
+function liveComment(c){
+ return '<div class="connect-live-comment" data-live-comment-id="'+esc(c.id)+'"><span><b>'+esc(c.name)+'</b> '+esc(c.body)+'</span>'+(c.can_delete?'<button type="button" data-live-action="comment-delete" data-id="'+esc(c.id)+'" aria-label="Excluir comentário">×</button>':'')+'</div>';
+}
 function liveMessages(){
- return interaction.comments.length?interaction.comments.map(c=>'<div class="connect-live-comment"><span><b>'+esc(c.name)+'</b> '+esc(c.body)+'</span>'+(c.can_delete?'<button type="button" data-live-action="comment-delete" data-id="'+esc(c.id)+'" aria-label="Excluir comentário">×</button>':'')+'</div>').join(''):'<p class="connect-live-hint">'+(interaction.error?'Interações temporariamente indisponíveis.':interaction.ready?'Seja a primeira pessoa a comentar.':'Carregando comentários…')+'</p>';
+ return interaction.comments.length?interaction.comments.map(liveComment).join(''):'<p class="connect-live-hint">'+(interaction.error?'Interações temporariamente indisponíveis.':interaction.ready?'Seja a primeira pessoa a comentar.':'Carregando comentários…')+'</p>';
 }
-function liveSocial(){
- return '<section class="connect-live-social" aria-label="Interações da live"><div class="connect-live-meta"><span id="connectLivePeople">'+liveNumber(s.room?1+s.room.remoteParticipants.size:0)+' conectados</span><span id="connectLiveHearts">♥ '+liveNumber(interaction.hearts)+'</span><span id="connectLiveClock"></span></div><div id="connectLiveMessages" class="connect-live-messages" role="log" aria-label="Comentários">'+liveMessages()+'</div><form id="connectLiveCommentForm"><input aria-label="Comentar na live" name="comment" maxlength="250" autocomplete="off" placeholder="'+(interaction.comments_enabled?'Comentar…':'Comentários desativados')+'" value="'+esc(interaction.draft)+'" '+(!interaction.comments_enabled?'disabled':'')+'><button type="submit" aria-label="Enviar comentário" '+(!interaction.comments_enabled?'disabled':'')+'>Enviar</button><button type="button" class="connect-live-heart" data-live-action="heart" aria-label="Curtir live">♥</button></form>'+(s.localRole==='host'?'<button type="button" class="connect-live-moderate" data-live-action="comments-toggle">'+(interaction.comments_enabled?'Pausar comentários':'Liberar comentários')+'</button>':'')+(s.localRole==='viewer'&&s.rows.some(x=>x.id!==s.active?.id)?'<button type="button" class="connect-live-next" data-live-action="next">Próxima live →</button>':'')+'</section>';
+function liveMeta(){
+ return '<div class="connect-live-meta"><span id="connectLivePeople">'+liveNumber(s.room?1+s.room.remoteParticipants.size:0)+' conectados</span><span id="connectLiveHearts">♥ '+liveNumber(interaction.hearts)+'</span><span id="connectLiveClock"></span></div>';
 }
+function liveSocial(tools){
+ return '<section class="connect-live-social" aria-label="Interações da live"><div id="connectLiveMessages" class="connect-live-messages" role="log" aria-live="polite" aria-label="Comentários"><div class="connect-live-message-stack">'+liveMessages()+'</div></div>'+tools+'<form id="connectLiveCommentForm"><input aria-label="Comentar na live" name="comment" maxlength="250" autocomplete="off" placeholder="'+(interaction.comments_enabled?'Comentar…':'Comentários desativados')+'" value="'+esc(interaction.draft)+'" '+(!interaction.comments_enabled?'disabled':'')+'><button type="submit" aria-label="Enviar comentário" title="Enviar" '+(!interaction.comments_enabled?'disabled':'')+'>'+ico('send',19)+'</button><button type="button" class="connect-live-heart" data-live-action="heart" aria-label="Curtir live" title="Curtir">'+ico('heart',21)+'</button></form></section>';
+}
+let lastMessageList=null;
 function paintInteractions(){
  const list=document.getElementById('connectLiveMessages');
- if(list){const nearBottom=list.scrollHeight-list.scrollTop-list.clientHeight<48;const html=liveMessages();if(list.innerHTML!==html){list.innerHTML=html;if(nearBottom)list.scrollTop=list.scrollHeight;}}
+ if(list){
+  const stack=list.querySelector('.connect-live-message-stack');
+  if(stack){
+   const first=list!==lastMessageList;
+   const nearBottom=first||list.scrollHeight-list.scrollTop-list.clientHeight<48;
+   lastMessageList=list;
+   if(!interaction.comments.length){const markup=liveMessages();if(stack.innerHTML!==markup)stack.innerHTML=markup;}
+   else{
+    stack.querySelector('.connect-live-hint')?.remove();
+    const ids=new Set(interaction.comments.map(c=>String(c.id)));
+    const existing=new Map(Array.from(stack.children).map(el=>[el.dataset.liveCommentId,el]));
+    for(const [id,node] of existing)if(!ids.has(id))node.remove();
+    for(const c of interaction.comments){
+     if(existing.has(String(c.id)))continue;
+     const t=document.createElement('template');t.innerHTML=liveComment(c);
+     const node=t.content.firstElementChild;
+     if(!first)node.classList.add('connect-live-comment-new');
+     stack.appendChild(node);
+    }
+   }
+   if(nearBottom)list.scrollTop=list.scrollHeight;
+  }
+ }
  const hearts=document.getElementById('connectLiveHearts');if(hearts)hearts.textContent='♥ '+liveNumber(interaction.hearts);
  const people=document.getElementById('connectLivePeople');if(people)people.textContent=liveNumber(s.room?1+s.room.remoteParticipants.size:0)+' conectados';
  const clock=document.getElementById('connectLiveClock');if(clock&&s.active?.started_at){const sec=Math.max(0,Math.floor((Date.now()-Date.parse(s.active.started_at))/1000));if(Number.isFinite(sec))clock.textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');}
  const form=document.getElementById('connectLiveCommentForm');if(form){const input=form.elements.namedItem('comment');input.disabled=!interaction.comments_enabled;input.placeholder=interaction.comments_enabled?'Comentar…':'Comentários desativados';form.querySelector('[type=submit]').disabled=!interaction.comments_enabled;}
- const moderate=document.querySelector('[data-live-action="comments-toggle"]');if(moderate)moderate.textContent=interaction.comments_enabled?'Pausar comentários':'Liberar comentários';
+ const moderate=document.querySelector('[data-live-action="comments-toggle"]');if(moderate){const label=interaction.comments_enabled?'Pausar comentários':'Liberar comentários';moderate.setAttribute('aria-label',label);moderate.title=label;moderate.setAttribute('aria-pressed',String(!interaction.comments_enabled));}
 }
 async function interact(type='read',body=null,id=null){
  const live=s.active?.id;if(!live||interaction.busy)return false;
@@ -126,19 +155,24 @@ async function interact(type='read',body=null,id=null){
  catch(error){if(s.active?.id===live){interaction.error=true;paintInteractions();if(type!=='read')toast(infoError(error),true);}return false;}
  finally{interaction.busy=false;}
 }
-function stopInteractions(){clearInterval(interaction.timer);interaction.timer=null;interaction.comments=[];interaction.hearts=0;interaction.comments_enabled=true;interaction.draft='';interaction.ready=false;interaction.error=false;}
+function stopInteractions(){clearInterval(interaction.timer);interaction.timer=null;interaction.comments=[];interaction.hearts=0;interaction.comments_enabled=true;interaction.draft='';interaction.ready=false;interaction.error=false;lastMessageList=null;}
 function startInteractions(){clearInterval(interaction.timer);void interact();interaction.timer=setInterval(()=>{if(s.active&&!document.hidden){paintInteractions();void interact();}},3000);}
 function viewer(){
  if(!s.active)return '';
  const l=s.active,role=s.localRole||'viewer',publisher=role==='host'||role==='guest';
  const source=s.rows.find(x=>x.id===l.id)||l;
- return '<section class="camera-live-stage"><header class="camera-live-stage-head"><div><span class="camera-live-pill">● AO VIVO · '+(publisher?'CÂMERA':'ASSISTINDO')+'</span><h3>'+esc(source.title||'Live')+'</h3><p>'+profileName(source.host_id,source.host_name,source.host_username)+(source.guest_name?' · com '+profileName(source.guest_id,source.guest_name,source.guest_username):'')+'</p></div><button type="button" data-live-action="leave" class="camera-live-back">'+ico('close',18)+' Sair</button></header>'+
- '<div class="camera-live-grid" id="cameraLiveVideos"><div class="camera-live-wait"><span>✳</span><p>'+(s.joining?'Conectando ao vídeo…':'Aguardando a câmera do apresentador…')+'</p></div></div>'+
- '<div class="camera-live-tools">'+(publisher?'<button type="button" data-live-action="mic" class="'+(s.mic?'':'muted')+'">'+ico('mic',17)+' '+(s.mic?'Microfone':'Microfone desligado')+'</button><button type="button" data-live-action="camera" class="'+(s.camera?'':'muted')+'">'+ico('camera',17)+' '+(s.camera?'Câmera':'Câmera desligada')+'</button>':'')+
- (role==='host'&&source.guest_requested_by&&!source.guest_id?'<div class="camera-live-invite"><strong>Alguém quer participar da transmissão</strong><button type="button" data-live-action="approve">Aceitar</button><button type="button" data-live-action="reject">Recusar</button></div>':'')+
- (role==='viewer'&&!source.guest_id?'<button type="button" data-live-action="request" '+(source.requested?'disabled':'')+'>'+ico('users',17)+' '+(source.requested?'Pedido enviado':'Pedir para entrar com câmera')+'</button>':'')+
- (role==='host'?'<button type="button" class="camera-live-danger" data-live-action="end">Encerrar live</button>':'')+'</div>'+
- liveSocial()+'<p class="camera-live-security">Só apresentador e convidado compartilham câmera e microfone.</p></section>';
+ const control=(action,icon,label,extra='')=>'<button type="button" data-live-action="'+action+'" aria-label="'+esc(label)+'" title="'+esc(label)+'" '+extra+'>'+ico(icon,18)+'</button>';
+ const tools='<div class="camera-live-tools" aria-label="Controles da transmissão">'+
+ (role==='host'&&source.guest_requested_by&&!source.guest_id?'<div class="camera-live-invite"><strong>Pedido de participação</strong><button type="button" data-live-action="approve">Aceitar</button><button type="button" data-live-action="reject">Recusar</button></div>':'')+
+ (publisher?control('mic','mic',s.mic?'Desligar microfone':'Ligar microfone','class="'+(s.mic?'':'muted')+'" aria-pressed="'+String(!s.mic)+'"')+control('camera','camera',s.camera?'Desligar câmera':'Ligar câmera','class="'+(s.camera?'':'muted')+'" aria-pressed="'+String(!s.camera)+'"'):'')+
+ (role==='viewer'&&!source.guest_id?control('request','users',source.requested?'Pedido enviado':'Pedir para participar',source.requested?'disabled':''):'')+
+ (role==='host'?control('comments-toggle','chat',interaction.comments_enabled?'Pausar comentários':'Liberar comentários','aria-pressed="'+String(!interaction.comments_enabled)+'"'):'')+
+ (role==='viewer'&&s.rows.some(x=>x.id!==l.id)?control('next','arrow','Próxima live'):'')+
+ '</div>';
+ return '<section class="camera-live-stage connect-live-overlay" aria-label="Transmissão ao vivo">'+
+ '<div class="camera-live-grid" id="cameraLiveVideos"><div class="camera-live-wait"><p>'+(s.joining?'Conectando ao vídeo…':'Aguardando a câmera do apresentador…')+'</p></div></div>'+
+ '<header class="camera-live-stage-head"><div class="connect-live-heading"><span class="camera-live-pill">● AO VIVO</span><h3>'+esc(source.title||'Live')+'</h3><p>'+profileName(source.host_id,source.host_name,source.host_username)+(source.guest_name?' · '+profileName(source.guest_id,source.guest_name,source.guest_username):'')+'</p>'+liveMeta()+'</div><button type="button" data-live-action="'+(role==='host'?'end':'leave')+'" class="camera-live-back" aria-label="'+(role==='host'?'Encerrar live':'Sair da live')+'" title="'+(role==='host'?'Encerrar live':'Sair da live')+'">'+ico('close',20)+'</button></header>'+
+ liveSocial(tools)+'</section>';
 }
 function discoveryResults(){
  const rows=filtered();
