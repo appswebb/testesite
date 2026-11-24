@@ -27,11 +27,14 @@ Deno.serve(async(req:Request)=>{
   if(!apiUrl||!serviceKey||!anonKey)return err("supabase_configuration_missing",503);
   const client=createClient(apiUrl,anonKey,{auth:{persistSession:false}});
   const {data:{user},error:authError}=await client.auth.getUser(token);
-  if(authError||!user?.email)return err("login_required",401);
+  if(authError||!user?.email||!user.email_confirmed_at)return err("login_required",401);
   const service=createClient(apiUrl,serviceKey,{auth:{persistSession:false}});
   const body=await req.json().catch(()=>null);
   if(!body||typeof body!=="object")return err("invalid_request");
   const action=String(body.action||"config");
+  const authorized=createClient(apiUrl,anonKey,{global:{headers:{Authorization:"Bearer "+token}},auth:{persistSession:false}});
+  const [ban,maintenance]=await Promise.all([authorized.rpc("entre_is_banned"),authorized.rpc("entre_maintenance_active")]);
+  if(ban.error||maintenance.error||ban.data===true||maintenance.data===true)return err("account_or_checkout_unavailable",403);
   const {data:settings,error:settingError}=await service.from("entre_premium_settings").select("enabled,monthly_price_cents").eq("id",1).maybeSingle();
   if(settingError)return err("settings_unavailable",503);
   const cents=Number(settings?.monthly_price_cents||0);
@@ -99,14 +102,9 @@ Deno.serve(async(req:Request)=>{
   const tokenCard=String(form.token||"");
   if(!isPix&&(!/^[A-Za-z0-9_-]{5,256}$/.test(tokenCard)||Number(form.installments||1)!==1))
     return err("invalid_card_token");
-  const {data:latest}=await service.from("entre_premium_web_payments").select("id,status,created_at").eq("user_id",user.id)
-   .order("created_at",{ascending:false}).limit(1).maybeSingle();
-  if(latest&&["creating","pending","in_process"].includes(latest.status)&&Date.parse(latest.created_at)>Date.now()-30*60000)
-    return err("payment_already_pending",409);
-  const {error:insertError}=await service.from("entre_premium_web_payments").insert({
-   id:requestId,user_id:user.id,amount_cents:cents,method:isPix?"pix":"card",status:"creating"
-  });
-  if(insertError)return err("payment_request_already_registered",409);
+  const {data:reserved,error:reserveError}=await service.rpc("connect_reserve_web_payment",{_user:user.id,_request:requestId,_cents:cents,_method:isPix?"pix":"card"});
+  if(reserveError)return err("payment_reservation_failed",503);
+  if(reserved!==true)return err("payment_already_pending_or_unavailable",409);
   const payload:any={
    transaction_amount:cents/100,description:"CONNECT Premium - 30 dias",
    payment_method_id:method,external_reference:"connect-premium:"+user.id+":"+requestId,
@@ -124,7 +122,7 @@ Deno.serve(async(req:Request)=>{
   });
   const payment=await result.json().catch(()=>({}));
   if(!result.ok||!idNum(payment.id)){
-   await service.from("entre_premium_web_payments").update({status:"error",updated_at:new Date().toISOString()}).eq("id",requestId);
+   if(result.status>=400&&result.status<500&&result.status!==429&&result.status!==408)await service.from("entre_premium_web_payments").update({status:"error",updated_at:new Date().toISOString()}).eq("id",requestId);
    return err("payment_rejected_by_provider",502);
   }
   const paymentId=String(payment.id);
