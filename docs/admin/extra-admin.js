@@ -17,7 +17,7 @@ function premiumPage(config,escape,icon){
 function supportPage(rows,escape,format,icon,badge){
  const items=Array.isArray(rows)?rows:[];
  return '<section class="data-panel support-admin-panel"><div class="data-tools"><div><h3>Chamados recebidos</h3><small>Relatos com provas anexadas em armazenamento privado.</small></div>'+badge(items.length+' protocolos','neutral')+'</div>'+
- (items.length?items.map(t=>'<article class="support-admin-ticket"><div class="support-admin-top"><strong>Protocolo #'+Number(t.id)+' · '+escape(t.subject)+'</strong>'+badge(({submitted:'AGUARDANDO',reviewing:'EM ATENDIMENTO',resolved:'RESOLVIDO'})[t.status]||t.status,'neutral')+'</div>'+
+ (items.length?items.map(t=>'<article class="support-admin-ticket"><div class="support-admin-top"><strong>Protocolo #'+Number(t.id)+' · '+escape(t.subject)+'</strong>'+badge(({submitted:'AGUARDANDO',reviewing:'EM ATENDIMENTO',resolved:'RESOLVIDO',cancelled:'CANCELADO'})[t.status]||t.status,'neutral')+'</div>'+
  '<small>'+escape(t.user_email||'Conta indisponível')+' · '+format(t.created_at)+' · '+escape(t.category)+'</small>'+
  '<p>'+escape(t.description)+'</p><div class="support-evidence-links">'+(t.evidence||[]).map((path,i)=>'<button type="button" class="small-btn" data-action="evidenceOpen" data-path="'+escape(path)+'">'+icon('external-link',15)+' Prova '+(i+1)+'</button>').join('')+'</div><button type="button" class="small-btn" data-action="supportThread" data-id="'+Number(t.id)+'">Responder protocolo</button></article>').join(''):
  '<p class="section-desc" style="padding:24px">Nenhum chamado com provas por enquanto.</p>')+'</section>';
