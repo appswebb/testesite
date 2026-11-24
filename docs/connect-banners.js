@@ -42,7 +42,7 @@ function get(key,loader){
  pending.set(key,job);return job;
 }
 function scan(){
- document.querySelectorAll('[data-cp-owner],[data-cp-handle]').forEach(el=>{
+ document.querySelectorAll('.cp-banner[data-cp-owner],.cp-banner[data-cp-handle]').forEach(el=>{
   if(el.dataset.cpLoading)return;
   const own=el.hasAttribute('data-cp-owner'),handle=el.dataset.cpHandle||'',key=own?owner():'public:'+handle;
   if(!key||(!own&&!HANDLE.test(handle)))return;
@@ -50,7 +50,7 @@ function scan(){
  });
 }
 function refresh(b){
- const key=owner();if(key){cache.set(key,{data:b,at:Date.now()});document.querySelectorAll('[data-cp-owner]').forEach(el=>{el.dataset.cpLoading='1';paint(el,b)})}
+ const key=owner();if(key){cache.set(key,{data:b,at:Date.now()});document.querySelectorAll('.cp-banner[data-cp-owner]').forEach(el=>{el.dataset.cpLoading='1';paint(el,b)})}
  if(typeof state!=='undefined'&&state.profile?.username)cache.delete('public:'+state.profile.username);
 }
 function data64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=()=>rej(Error('Não foi possível ler a imagem.'));r.readAsDataURL(blob)})}
