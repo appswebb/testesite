@@ -122,7 +122,7 @@
    const current=await rpc('entre_my_location');
    if(current?.state&&current?.city){geo.self=current;geo.homeState=current.state;geo.homeCity=current.city;void citiesFor(current.state);}
   }catch(error){console.warn('Não foi possível carregar cidade de referência',error);}
-  if(state.view==='connect')renderView();
+  if(state.view==='connect'&&state.liveFiltersOpen)paintCompact();
  }
  async function save(stateCode,cityName){
   const uf=String(stateCode||'').toUpperCase().trim(),city=String(cityName||'').trim();
