@@ -60,7 +60,7 @@ test('browser payment integration never trusts client pricing or status',()=>{
  assert.match(read('docs/entre-features.js'),/sdk\.mercadopago\.com\/js\/v2/);
 });
 
-test('entre. brand is preserved while new Yellow Pop skin covers every page',()=>{
+test('updated colorful design covers core app pages without changing billing logic',()=>{
  const html=read('docs/index.html'),admin=read('docs/admin/index.html');
  const manifest=JSON.parse(read('docs/manifest.webmanifest'));
  const app=read('docs/app.js'),extras=read('docs/entre-features.js');
