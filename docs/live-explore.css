@@ -386,3 +386,52 @@ html[data-theme] .connect-live-overlay #connectLiveCommentForm .connect-live-hea
  html[data-theme] .connect-live-overlay .connect-live-social{padding:12px 8px 6px!important}
 }
 @media(prefers-reduced-motion:reduce){.connect-live-comment-new{animation:none!important}}
+
+/* Lock the app viewport only while a public broadcast is open.
+   The dock and toolbar stay in place; comments remain the only vertical scroll area. */
+html[data-theme]:has(#app .connect-live-overlay),
+html[data-theme]:has(#app .connect-live-overlay) body{
+ height:100%!important;overflow:hidden!important;overscroll-behavior:none!important;
+}
+html[data-theme] #app:has(.connect-live-overlay){
+ position:fixed!important;inset:0!important;width:100%!important;height:100dvh!important;
+ min-height:0!important;max-height:100dvh!important;overflow:hidden!important;overscroll-behavior:none!important;
+}
+html[data-theme] #app>.cn-shell.app-shell:has(.connect-live-overlay){
+ height:100%!important;min-height:0!important;max-height:100%!important;overflow:hidden!important;
+}
+html[data-theme] #app>.cn-shell>.cn-main.app-main:has(.connect-live-overlay){
+ display:flex!important;flex-direction:column!important;height:100%!important;min-height:0!important;
+ max-height:100%!important;box-sizing:border-box!important;overflow:hidden!important;
+ padding:0 26px 12px!important;
+}
+html[data-theme] #app .cn-main:has(.connect-live-overlay)>.cn-toolbar{
+ flex:0 0 auto!important;position:relative!important;top:auto!important;margin:0!important;
+}
+html[data-theme] #app .cn-main:has(.connect-live-overlay)>#view-content{
+ flex:1 1 0!important;min-height:0!important;height:auto!important;overflow:hidden!important;
+ display:flex!important;flex-direction:column!important;align-items:center!important;
+ margin:0 auto!important;padding:0!important;transform:none!important;animation:none!important;
+}
+html[data-theme] #app .live-active-screen.camera-live-shell{
+ flex:1 1 0!important;min-height:0!important;height:100%!important;max-height:680px!important;
+ margin:0 auto!important;overflow:hidden!important;overscroll-behavior:none!important;
+}
+html[data-theme] #app .live-active-screen .connect-live-overlay{
+ height:100%!important;min-height:0!important;max-height:100%!important;touch-action:pan-y;
+}
+html[data-theme] #app .connect-live-overlay .connect-live-messages{
+ touch-action:pan-y;overscroll-behavior:contain;max-height:25dvh;
+}
+html[data-theme] #app .connect-live-overlay #connectLiveCommentForm{touch-action:manipulation}
+@media(max-width:900px){
+ html[data-theme] #app>.cn-shell>.cn-main.app-main:has(.connect-live-overlay){
+  padding:0 max(12px,env(safe-area-inset-right)) calc(90px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left))!important;
+ }
+}
+@media(max-height:480px) and (max-width:900px){
+ html[data-theme] #app>.cn-shell>.cn-main.app-main:has(.connect-live-overlay){
+  padding-bottom:calc(68px + env(safe-area-inset-bottom,0px))!important;
+ }
+ html[data-theme] #app .connect-live-overlay .connect-live-messages{height:min(66px,16dvh)}
+}
