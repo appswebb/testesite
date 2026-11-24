@@ -68,3 +68,21 @@ html[data-theme] #app .ce-session .ce-vote-wait{white-space:normal!important;ove
 html[data-theme] #app .ce-session .ce-decision{flex:1 1 auto!important}
 html[data-theme] #app .ce-session .ce-vote-buttons{max-width:100%!important}
 html[data-theme] #app .ce-video-toolbar button.ce-media-control{min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+
+/* v17: genuine rendered app components in neutral, noninteractive phone previews. */
+.cl-phone{box-sizing:border-box;width:100%;min-width:0;padding:6px;border-radius:26px;border:1px solid #85878b;background:#27282c;box-shadow:0 12px 28px #00000020,inset 0 0 0 2px #ffffff38;position:relative;overflow:hidden}
+.cl-phone-screen{position:relative;width:100%;aspect-ratio:390/760;border-radius:20px;overflow:hidden;background:#F5F6F9;isolation:isolate}
+.cl-phone-screen::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:22%;height:5px;border-radius:0 0 5px 5px;background:#27282c;z-index:1;pointer-events:none}
+.cl-demo-frame{position:absolute!important;inset:0 auto auto 0!important;width:390px!important;height:760px!important;max-width:none!important;max-height:none!important;border:0!important;display:block!important;transform:scale(.4);transform-origin:top left!important;pointer-events:none!important;overflow:hidden!important;background:#F5F6F9!important}
+.cl-phone-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;align-items:center;max-width:590px;margin:auto;padding:12px 0 22px}
+.cl-phone-pair .cl-phone:first-child{translate:0 12px}
+.cl-hero-art{width:100%;max-width:590px;margin:auto}
+.cl-demo-art{width:100%;min-width:0;display:grid;place-items:center;padding:3px 0}
+.cl-demo-art .cl-phone{width:min(100%,220px);border-radius:18px;padding:4px}
+.cl-demo-art .cl-phone-screen{border-radius:14px}
+.cl-demo{grid-template-columns:minmax(0,.83fr) minmax(0,1.17fr);min-height:0;padding:16px;gap:20px}
+.cl-hero .cl-actions .cl-primary{min-height:48px;padding-inline:19px}
+.cl-nav .cn-brand img,.cl-footer .cn-brand img{width:29px!important;height:29px!important;object-fit:contain!important}
+.cl-splash-brand img{width:84px!important;height:84px!important;object-fit:contain!important}
+@media(max-width:760px){.cl-phone-pair{gap:10px;max-width:450px;padding:8px 3px 18px}.cl-phone{border-radius:19px;padding:4px}.cl-phone-screen{border-radius:15px}.cl-demo{gap:13px;padding:12px}.cl-demo-art .cl-phone{width:min(100%,152px)}.cl-nav .cn-brand img{width:27px!important;height:27px!important}}
+@media(max-width:355px){.cl-demo{gap:9px;padding:9px}.cl-phone-pair{gap:7px}}

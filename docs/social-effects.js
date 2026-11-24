@@ -6,7 +6,7 @@ api.showMatchAnimation=function(peer){
  document.getElementById('entre-meeting')?.remove();
  const el=document.createElement('div');
  el.id='entre-meeting';el.className='meet-overlay';el.setAttribute('role','status');
- el.className='connect-match-effect';el.innerHTML='<div class="connect-match-core"><img src="./connect-glass.svg?v=clean-v16" alt=""><strong>Vocês se encontraram.</strong><small>Seu encontro de cinco minutos começou.</small></div>';
+ el.className='connect-match-effect';el.innerHTML='<div class="connect-match-core"><img src="./connect-glass.svg?v=showcase-v17" alt=""><strong>Vocês se encontraram.</strong><small>Seu encontro de cinco minutos começou.</small></div>';
  document.body.append(el);setTimeout(()=>el.remove(),1450);
 };
 api.showEndAnimation=function(){toast('Encontro encerrado.',false,'end');};
