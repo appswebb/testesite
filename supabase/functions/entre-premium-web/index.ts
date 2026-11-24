@@ -33,6 +33,8 @@ Deno.serve(async(req:Request)=>{
   const body=await req.json().catch(()=>null);
   if(!body||typeof body!=="object")return err("invalid_request");
   const action=String(body.action||"config");
+  if(action==="config")return json({enabled:false,message:"O CONNECT utiliza Asaas."});
+  if(action==="pay")return err("provider_retired",410);
   const authorized=createClient(apiUrl,anonKey,{global:{headers:{Authorization:"Bearer "+token}},auth:{persistSession:false}});
   const [ban,maintenance]=await Promise.all([authorized.rpc("entre_is_banned"),authorized.rpc("entre_maintenance_active")]);
   if(ban.error||maintenance.error||ban.data===true||maintenance.data===true)return err("account_or_checkout_unavailable",403);
