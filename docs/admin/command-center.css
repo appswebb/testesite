@@ -1,0 +1,60 @@
+/* CONNECT Command Center — unified operational shell, shared by every administration view. */
+html[data-theme] #console{font-family:Inter,system-ui,sans-serif;color:var(--ui-text);min-width:0}
+html[data-theme] #console .shell{grid-template-columns:236px minmax(0,1fr);min-width:0;gap:0}
+html[data-theme] #console .rail{padding:23px 13px 16px!important;min-height:0;border-right:1px solid var(--ui-line)!important;gap:4px}
+html[data-theme] #console .rail .brand{padding:6px 9px 24px!important;gap:10px!important}
+html[data-theme] #console .rail .brand-mark,html[data-theme] #console .gate .brand-mark{background:none!important;width:43px!important;height:30px!important;min-width:43px!important;box-shadow:none!important}
+html[data-theme] #console .brand-mark img{object-fit:contain!important;width:100%!important;height:100%!important}
+html[data-theme] #console .rail .brand-text{font:800 20px/1 Sora,Inter,sans-serif!important;letter-spacing:-.065em!important}
+html[data-theme] #console .rail .brand-sub{font:600 9px/1.6 Inter,sans-serif!important;letter-spacing:.13em!important}
+html[data-theme] #console .rail-group{margin-bottom:12px}
+html[data-theme] #console .rail-label{font-size:9px!important;color:var(--ui-muted)!important;font-weight:750;letter-spacing:.13em;padding:0 11px!important;margin:7px 0 5px!important}
+html[data-theme] #console .rail-links{gap:3px!important}
+html[data-theme] #console .rail .rail-item{padding:10px 10px!important;min-height:39px!important;border:1px solid transparent!important;border-radius:10px!important;gap:10px!important;font-size:12px!important}
+html[data-theme] #console .rail .rail-item.active{background:var(--ui-accent-soft)!important;border-color:var(--ui-line)!important;position:relative;color:var(--ui-text)!important}
+html[data-theme] #console .rail .rail-item.active:before{content:"";position:absolute;left:0;top:10px;bottom:10px;border-radius:0 5px 5px 0;width:3px;background:var(--ui-accent)}
+html[data-theme] #console .rail .rail-item svg{width:17px!important;height:17px!important;min-width:17px!important}
+html[data-theme] #console .rail-bottom{padding:12px 4px 0!important}html[data-theme] #console .admin-identity small{max-width:130px;overflow:hidden;text-overflow:ellipsis}
+html[data-theme] #console .main{padding:0 26px 46px!important;max-width:1350px!important;min-width:0}
+html[data-theme] #console .topbar{position:sticky;top:0;z-index:15;padding:15px 0;margin:0 0 26px!important;background:var(--ui-bg);border-bottom:1px solid var(--ui-line);min-width:0;gap:9px!important}
+html[data-theme] #console .topbar-left,html[data-theme] #console .topbar-right{min-width:0;display:flex;align-items:center;gap:9px!important}
+html[data-theme] #console .admin-top-brand{display:none;flex:none}html[data-theme] #console .admin-top-brand img{object-fit:contain}
+html[data-theme] #console .admin-top-context{min-width:0;display:grid;gap:2px}
+html[data-theme] #console .admin-top-context small{font-size:9px;letter-spacing:.14em;color:var(--ui-muted);font-weight:750}
+html[data-theme] #console .admin-top-context strong{font-size:17px;line-height:1.2;letter-spacing:-.035em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html[data-theme] #console .topbar-right .admin-icon-action,html[data-theme] #console .topbar-right .connect-mode-toggle{display:grid!important;place-items:center!important;flex:none;width:39px!important;height:39px!important;min-width:39px!important;min-height:39px!important;border-radius:11px!important;padding:0!important;border:1px solid var(--ui-line)!important;background:var(--ui-panel)!important;box-shadow:none!important;color:var(--ui-text)!important}
+html[data-theme] #console .topbar-right .admin-icon-action svg,html[data-theme] #console .topbar-right .connect-mode-toggle svg{display:block!important;width:18px!important;height:18px!important;stroke-width:1.8!important;stroke:currentColor!important;fill:none!important}
+html[data-theme] #console .topbar-live{padding:7px 9px!important;gap:6px!important;font-size:10px!important;background:var(--ui-panel)!important;border:1px solid var(--ui-line)!important}
+html[data-theme] #console .topbar-live .pulse{background:#2ba478!important;box-shadow:0 0 0 3px #2ba47822!important;width:6px!important;height:6px!important}
+html[data-theme] #console .page-intro{margin-bottom:19px!important;display:grid;gap:5px}
+html[data-theme] #console .page-intro .eyebrow{font-size:10px!important;color:var(--ui-muted)!important;letter-spacing:.13em;margin:0!important}
+html[data-theme] #console .page-intro .page-title{font:750 clamp(25px,3vw,37px)/1.12 Sora,Inter,sans-serif!important;letter-spacing:-.055em!important;margin:0!important;overflow-wrap:anywhere}
+html[data-theme] #console .page-intro .page-title em{font:inherit!important;opacity:.72;color:var(--ui-text)!important}
+html[data-theme] #console .page-intro p{font-size:12px!important;line-height:1.55!important;margin:0}
+html[data-theme] #console :is(.panel,.stat,.data-panel,.form-card,.support-admin-ticket,.bulletin-card,.release-entry){border-radius:16px!important;box-shadow:0 4px 16px #00000007!important;min-width:0;overflow-wrap:anywhere}
+html[data-theme] #console :is(.panel,.form-card){padding:18px!important}
+html[data-theme] #console .stat-grid{gap:11px!important}
+html[data-theme] #console .stat{padding:16px!important;gap:10px!important}
+html[data-theme] #console .stat strong{font-family:Sora,Inter,sans-serif!important;font-size:30px!important;letter-spacing:-.06em}
+html[data-theme] #console .stat-label{font-size:11px!important;line-height:1.4}
+html[data-theme] #console .stat-icon{width:33px!important;height:33px!important;border-radius:10px!important;flex:none}
+html[data-theme] #console .panel-grid{gap:12px!important}
+html[data-theme] #console .data-tools{padding:14px 16px!important;background:var(--ui-panel)!important}
+html[data-theme] #console .list-row{gap:9px!important;padding:13px 15px!important}
+html[data-theme] #console .list-main,html[data-theme] #console .person-details{min-width:0}
+html[data-theme] #console .person-details :is(strong,small){max-width:100%;overflow:hidden;text-overflow:ellipsis}
+html[data-theme] #console :is(.btn-main,.btn-outline,.small-btn,.quick,.chip){font:650 12px/1.25 Inter,sans-serif!important;border-radius:10px!important;min-height:37px;max-width:100%;white-space:normal;align-items:center;gap:6px}
+html[data-theme] #console :is(.btn-main,.btn-outline,.small-btn,.quick,.chip) svg{width:16px!important;height:16px!important;flex:none;fill:none!important;stroke:currentColor!important}
+html[data-theme] #console .data-tools .search-box{min-width:0;width:min(310px,100%)}
+html[data-theme] #console :is(input,textarea,select){min-width:0;max-width:100%;font-size:13px!important}
+html[data-theme] #console :is(.admin-user-actions,.filter-row,.quick-links,.table-footer){flex-wrap:wrap;min-width:0;gap:7px}
+html[data-theme] #console .admin-bottom-bar{border:1px solid var(--ui-line)!important;border-radius:18px!important;box-shadow:0 6px 25px #0002!important;gap:3px!important;overflow:hidden}
+html[data-theme] #console .admin-bottom-bar button{min-width:0!important;min-height:46px!important;padding:7px 3px!important;border-radius:11px!important;gap:4px!important}
+html[data-theme] #console .admin-bottom-bar button svg{width:19px!important;height:19px!important;stroke-width:1.8!important}
+html[data-theme] #console .admin-bottom-bar button span{font-size:9px!important;text-overflow:ellipsis;overflow:hidden;max-width:100%;white-space:nowrap}
+html[data-theme] #console .admin-more-menu{border:1px solid var(--ui-line)!important;border-radius:20px!important;padding:15px!important;background:var(--ui-panel)!important}
+html[data-theme] #console .admin-more-links button{border:1px solid var(--ui-line)!important;border-radius:12px!important;padding:11px!important;min-width:0;gap:7px!important;font-size:11px!important}
+html[data-theme] #console .admin-more-links button svg{width:19px!important;height:19px!important;flex:none}
+html[data-theme] #console .admin-more-links button.active{background:var(--ui-accent-soft)!important;color:var(--ui-text)!important}
+@media(max-width:980px){html[data-theme] #console .shell{grid-template-columns:minmax(0,1fr)}html[data-theme] #console .rail{display:none!important}html[data-theme] #console .main{padding:0 14px 100px!important}html[data-theme] #console .admin-top-brand{display:block}html[data-theme] #console .topbar{padding:12px 0;margin-bottom:16px!important}html[data-theme] #console .topbar-live{display:none!important}html[data-theme] #console .topbar-right{gap:6px!important}html[data-theme] #console .topbar-right .admin-icon-action,html[data-theme] #console .topbar-right .connect-mode-toggle{width:35px!important;height:35px!important;min-width:35px!important;min-height:35px!important;border-radius:10px!important}html[data-theme] #console .admin-top-context strong{font-size:14px}html[data-theme] #console .admin-top-context small{font-size:8px;letter-spacing:.08em}html[data-theme] #console .stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}html[data-theme] #console .stat{padding:13px!important}html[data-theme] #console .stat strong{font-size:24px!important}html[data-theme] #console .panel-grid{grid-template-columns:minmax(0,1fr)!important}html[data-theme] #console .page-intro .page-title{font-size:26px!important}html[data-theme] #console :is(.panel,.form-card){padding:14px!important}html[data-theme] #console .data-tools{padding:12px!important}html[data-theme] #console .list-row{padding:12px!important}html[data-theme] #console .admin-bottom-bar{display:flex!important;position:fixed!important;left:12px!important;right:12px!important;bottom:max(9px,env(safe-area-inset-bottom))!important;width:auto!important;justify-content:space-between!important;padding:5px!important;z-index:25}html[data-theme] #console .admin-bottom-bar button{flex:1;display:flex!important;align-items:center!important;flex-direction:column!important;justify-content:center!important}html[data-theme] #console .admin-more-menu{bottom:75px!important;max-height:calc(100dvh - 105px)!important;overflow:auto!important}}
+@media(max-width:380px){html[data-theme] #console .main{padding-inline:10px!important}html[data-theme] #console .admin-top-brand{display:none}html[data-theme] #console .topbar-right .admin-icon-action,html[data-theme] #console .topbar-right .connect-mode-toggle{width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important}html[data-theme] #console .topbar-right .admin-icon-action svg{width:16px!important;height:16px!important}html[data-theme] #console .admin-top-context small{font-size:7px}html[data-theme] #console .admin-top-context strong{font-size:13px}html[data-theme] #console .stat-grid{gap:7px!important}html[data-theme] #console .stat-icon{width:27px!important;height:27px!important}html[data-theme] #console .admin-bottom-bar button span{font-size:8px!important}}
