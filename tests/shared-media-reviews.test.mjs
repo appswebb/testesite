@@ -15,7 +15,8 @@ test('public profile has meaningful guest and member navigation, secure server a
  assert.match(js,/auth=signup/);
  assert.match(js,/\?profile=/);
  assert.match(js,/avatar_url/);
- assert.match(js,/textContent=p\.display_name/);
+ assert.match(js,/name\.textContent=String\(p\.display_name/);
+ assert.match(js,/\.slice\(0,90\)/);
  assert.match(css,/\.share-profile-card/);
  assert.match(css,/@media\(max-width:810px\)/);
  assert.doesNotMatch(html,/service.role|service_role|sb_secret_/i);
