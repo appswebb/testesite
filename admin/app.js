@@ -49,7 +49,7 @@ function day(date){var d=new Date(String(date).slice(0,10)+"T12:00:00");return i
 function badge(text,kind){return '<span class="badge '+(kind||"")+'">'+e(text)+'</span>';}
 function person(name,secondary,accent){var n=String(name||"Pessoa");return '<span class="person-avatar '+(accent?"coral":"")+'">'+e(n.slice(0,1).toUpperCase())+'</span><span class="person-details"><strong title="'+e(n)+'">'+e(n)+'</strong><small>'+e(secondary||"")+'</small></span>';}
 function errorText(err){var s=String(err&&err.message||err||"Erro desconhecido");if(s.indexOf("42501")>=0||s.toLowerCase().indexOf("administrativo negado")>=0)return "Acesso negado pelo servidor. Esta conta não possui permissão administrativa.";return s;}
-function toast(msg,bad){clearTimeout(toastTimer);toastEl.textContent=msg;toastEl.className=(bad?"error ":"")+"show";toastTimer=setTimeout(function(){toastEl.className="";},4200);}
+function toast(msg,bad){if(bad)window.connectSound?.play?.('error');clearTimeout(toastTimer);toastEl.textContent=msg;toastEl.className=(bad?"error ":"")+"show";toastTimer=setTimeout(function(){toastEl.className="";},4200);}
 async function rpc(name,params){var r=await db.rpc(name,params||{});if(r.error)throw r.error;return r.data;}
 function gate(locked){
  var message=locked?"Esta conta não possui permissão administrativa. Entre com a conta Google autorizada no Supabase.":"Administre o entre. com controle, clareza e segurança — em um único espaço.";
@@ -230,7 +230,7 @@ document.addEventListener("click",async function(ev){
   catch(err){toast(errorText(err),true);}return;
  }
  if(a==="toggle-maintenance"){await saveRelease(!Boolean(state.settings?.maintenance_enabled),false);return;}
- if(a==="signout"){await db.auth.signOut({scope:"local"});state.user=null;state.verified=false;gate(false);return;}
+ if(a==="signout"){const {error}=await db.auth.signOut({scope:"local"});if(error){toast(errorText(error),true);return;}state.user=null;state.verified=false;gate(false);window.connectSound?.play?.("logout");return;}
  if(a==="edit-user"){openUser(n.dataset.id);return;}
  if(a==="review"){openReport(n.dataset.id);return;}
  if(a==="prev-users"&&state.userPage>0){state.userPage--;await load("users");return;}

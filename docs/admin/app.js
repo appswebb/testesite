@@ -73,7 +73,7 @@ function day(date){var d=new Date(String(date).slice(0,10)+"T12:00:00");return i
 function badge(text,kind){return '<span class="badge '+(kind||"")+'">'+e(text)+'</span>';}
 function person(name,secondary,accent){var n=String(name||"Pessoa");return '<span class="person-avatar '+(accent?"coral":"")+'">'+e(n.slice(0,1).toUpperCase())+'</span><span class="person-details"><strong title="'+e(n)+'">'+e(n)+'</strong><small>'+e(secondary||"")+'</small></span>';}
 function errorText(err){var s=String(err&&err.message||err||"Erro desconhecido");if(/invalid login credentials|invalid_credentials/i.test(s))return "E-mail ou senha incorretos.";if(/email not confirmed|email_not_confirmed/i.test(s))return "Confirme seu e-mail antes de entrar.";if(s.indexOf("42501")>=0||s.toLowerCase().indexOf("administrativo negado")>=0)return "Acesso negado pelo servidor. Esta conta não possui permissão administrativa.";return s;}
-function toast(msg,bad){clearTimeout(toastTimer);toastEl.textContent=msg;toastEl.className=(bad?"error ":"")+"show";toastTimer=setTimeout(function(){toastEl.className="";},4200);}
+function toast(msg,bad){if(bad)window.connectSound?.play?.('error');clearTimeout(toastTimer);toastEl.textContent=msg;toastEl.className=(bad?"error ":"")+"show";toastTimer=setTimeout(function(){toastEl.className="";},4200);}
 async function rpc(name,params){var r=await db.rpc(name,params||{});if(r.error)throw r.error;return r.data;}
 function gate(locked){
  var message=locked?"Esta conta não tem acesso ao painel. Entre com o e-mail autorizado e confirmado.":"Entre com o e-mail e a senha do seu cadastro no CONNECT";
@@ -293,7 +293,7 @@ document.addEventListener("click",async function(ev){
   catch(err){toast(errorText(err),true);}return;
  }
  if(a==="toggle-maintenance"){await saveRelease(!Boolean(state.settings?.maintenance_enabled),false);return;}
- if(a==="signout"){await db.auth.signOut({scope:"local"});state.user=null;state.verified=false;gate(false);return;}
+ if(a==="signout"){const {error}=await db.auth.signOut({scope:"local"});if(error){toast(errorText(error),true);return;}state.user=null;state.verified=false;gate(false);window.connectSound?.play?.("logout");return;}
  if(a==="commentReview"||a==="commentDismiss"){
   try{await rpc('entre_admin_review_comment_report',{_id:Number(n.dataset.id),_status:a==="commentReview"?"reviewed":"dismissed"});toast("Denúncia atualizada.");await load("reports");}
   catch(err){toast(errorText(err),true);}return;

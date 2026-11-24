@@ -73,7 +73,7 @@ function voice(kind){
 }
 function clickKind(el){
  const d=el.dataset||{},a=d.action||d.liveAction||d.roomAction||d.storyAction||'';
- if(el.type==='submit'||/^(logout|startsearch|cancelsearch|vote|endpair|block|removeAvatar|delete2|postLike|postDelete|postCommentDelete|socialFollow|socialChat|followAccept|followDecline|chatAccept|chatDecline|conversationDeleteConfirm|conversationPin|conversationUnpin|conversationArchive|conversationRestore|join|leave|end|approve|reject|request|delete)$/.test(a))return 'pending';
+ if(el.type==='submit'||/^(logout|signout|startsearch|cancelsearch|vote|endpair|block|removeAvatar|delete2|postLike|postDelete|postCommentDelete|socialFollow|socialChat|followAccept|followDecline|chatAccept|chatDecline|conversationDeleteConfirm|conversationPin|conversationUnpin|conversationArchive|conversationRestore|join|leave|end|approve|reject|request|delete)$/.test(a))return 'pending';
  if(a==='nav'||d.view||el.tagName==='A')return 'nav';
  if(el.matches?.('select,input[type=checkbox],input[type=radio],[role=switch],[role=tab]')||d.themeMode||d.themeSwatch||d.cxTheme!==undefined||/filter|mode|toggle|category|choose|motionLevel|mic|camera/i.test(a))return 'select';
  if(/close|cancel|back/i.test(a))return 'close';
