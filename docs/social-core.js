@@ -28,7 +28,7 @@ async function refreshNotifications(before=null){
   const r=await rpc('entre_notifications_page',{_before:before});
   const rows=Array.isArray(r?.rows)?r.rows:[];
   const previous=data.notifications[0]?.id||0;if(before)data.notifications=data.notifications.concat(rows).slice(-45);else data.notifications=rows;
-  if(!before&&previous>0&&rows[0]?.id>previous&&document.hidden&&'Notification' in window&&Notification.permission==='granted'){try{new Notification(rows[0]?.kind==='poll'?'entre. • Enquete obrigatória':rows[0]?.kind==='bulletin'?'entre. • Novo aviso oficial':'entre. • Nova atividade',{body:rows[0]?.kind==='poll'?'Uma enquete oficial está aguardando seu voto.':rows[0]?.kind==='bulletin'?'A administração publicou um novo comunicado.':'Você tem uma nova mensagem ou solicitação.',tag:'entre-social'});}catch(e){}}
+  if(!before&&previous>0&&rows[0]?.id>previous&&document.hidden&&'Notification' in window&&Notification.permission==='granted'){try{new Notification(rows[0]?.kind==='poll'?'CONNECT • Enquete obrigatória':rows[0]?.kind==='bulletin'?'CONNECT • Novo aviso oficial':'CONNECT • Nova atividade',{body:rows[0]?.kind==='poll'?'Uma enquete oficial está aguardando seu voto.':rows[0]?.kind==='bulletin'?'A administração publicou um novo comunicado.':'Você tem uma nova mensagem ou solicitação.',tag:'entre-social'});}catch(e){}}
   data.unread=Math.max(0,Math.min(99,Number(r?.unread)||0));data.notiMore=Boolean(r?.has_more);
   document.querySelectorAll('.toolbar-bell .social-unread').forEach(badge=>{badge.textContent=data.unread?String(data.unread):'';});
   if(state.view==='notifications')renderView();

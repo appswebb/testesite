@@ -1,4 +1,4 @@
-/* entre. · Distinct monthly recurring card plan. Never treats Pix as an automatic renewal. */
+/* CONNECT · Distinct monthly recurring card plan. Never treats Pix as an automatic renewal. */
 (function(){
 'use strict';
 const d={config:null,subscription:null,open:false,busy:false,brick:null,error:'',last:''};
@@ -18,7 +18,7 @@ function view(){
  '<button type="button" class="ui-btn btn-dark" data-recurring-action="open" '+(!enabled||d.busy?'disabled':'')+'>'+ico('credit-card',18)+' '+(enabled?'Assinar mensalmente no cartão':'Recorrência aguardando ativação')+'</button>':'')+
  (canCancel?'<button type="button" class="ui-btn btn-outline" data-recurring-action="verify">Verificar última cobrança</button><button type="button" class="recurring-cancel" data-recurring-action="cancel">Cancelar renovação automática</button>':'')+
  '<div id="recurringCardBrick" '+(d.open?'':'hidden')+' class="recurring-card-brick"></div>'+
- '<p class="recurring-premium-note">O cartão é tokenizado pelo Mercado Pago. O entre. não recebe o número completo do cartão. O plano avulso de 30 dias com Pix/cartão continua disponível acima.</p></div></section>';
+ '<p class="recurring-premium-note">O cartão é tokenizado pelo Mercado Pago. O CONNECT não recebe o número completo do cartão. O plano avulso de 30 dias com Pix/cartão continua disponível acima.</p></div></section>';
 }
 async function loadStatus(paint=false){
  if(!state.session?.user)return;

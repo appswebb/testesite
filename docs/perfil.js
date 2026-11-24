@@ -11,7 +11,7 @@
  function setActions(logged){
   actions.replaceChildren();
   actions.append(button("Ir para o site ↗","./","share-primary"));
-  if(logged){actions.append(button("Abrir perfil dentro do entre.","./?profile="+encodeURIComponent(handle),"share-secondary"));}
+  if(logged){actions.append(button("Abrir perfil dentro do CONNECT","./?profile="+encodeURIComponent(handle),"share-secondary"));}
   else{actions.append(button("Entrar na minha conta","./?auth=login&profile="+encodeURIComponent(handle),"share-secondary"));actions.append(button("Criar conta gratuita","./?auth=signup&profile="+encodeURIComponent(handle),"share-secondary"));}
  }
  if(!safe.test(handle)){name.textContent="Link inválido";message("Confira o link compartilhado.",true);setActions(false);return;}
@@ -33,7 +33,7 @@
   if(!res.ok)throw Error(res.status===404?"Este perfil não está disponível.":"Não foi possível abrir este perfil agora.");
   const data=await res.json(),p=data?.profile;
   if(!p||p.username!==handle)throw Error("Este perfil não está disponível.");
-  name.textContent=String(p.display_name||"Pessoa do entre.").slice(0,90);tag.textContent="@"+p.username;bio.textContent=String(p.bio||"Esta pessoa ainda não escreveu uma apresentação.").slice(0,900);
+  name.textContent=String(p.display_name||"Pessoa do CONNECT").slice(0,90);tag.textContent="@"+p.username;bio.textContent=String(p.bio||"Esta pessoa ainda não escreveu uma apresentação.").slice(0,900);
   avatar.setAttribute("aria-label","Foto de "+(p.display_name||"perfil"));
   avatar.textContent=initials(p.display_name);
   if(p.avatar_url&&/^https:\/\/[^\s]+$/.test(p.avatar_url)){
@@ -42,8 +42,8 @@
    img.onerror=()=>{avatar.textContent=initials(p.display_name);message("Perfil carregado. A foto está temporariamente indisponível.");};
    img.src=p.avatar_url;
   }
-  document.title=(p.display_name||"Perfil")+" (@"+p.username+") · entre.";
-  copy.hidden=false;message("Perfil compartilhado com segurança pelo entre.");
+  document.title=(p.display_name||"Perfil")+" (@"+p.username+") · CONNECT";
+  copy.hidden=false;message("Perfil compartilhado com segurança pelo CONNECT");
   copy.onclick=async()=>{
    try{if(navigator.share){await navigator.share({title:document.title,url:location.href});return;}await navigator.clipboard.writeText(location.href);message("Link copiado!");}
    catch(error){if(error?.name!=="AbortError")message("Use a opção compartilhar do navegador.");}
