@@ -30,7 +30,7 @@ test('landing includes original editorial feature structures reauthored for entr
  for(const area of ['conexoes','salas-publicas','transmissoes','comunidade']){
   assert.match(app,new RegExp('id="'+area+'"'));
  }
- for(const x of ['once-extra-card','once-sticker','once-feature-art','auth-step-indicator'])assert(app.includes(x),x);
+ for(const x of ['landing-demo-tile','hero-showcase','once-feature-art','auth-step-indicator'])assert(app.includes(x),x);
  const fidelity=read('docs/once-source-fidelity.css');
  for(const x of ['--ef-display','--ef-script','--ef-regular','@media(max-width:375px)','once-feature-art','once-sticker'])assert(fidelity.includes(x),x);
  assert.doesNotMatch(app,/getonce\.com/i);
