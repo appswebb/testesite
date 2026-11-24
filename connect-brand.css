@@ -187,3 +187,76 @@ button, a, [role="button"] {touch-action: manipulation;}
  .landing-hero .portrait,.landing-hero .orbit,.landing-hero .hero-time {animation:none!important;transform:none!important}
  .landing-hero + .ticker .ticker-track {animation:none!important}
 }
+
+
+/* Editorial homepage V2: a centered headline, panoramic image stage and
+   supporting information below, rather than the previous split-screen hero. */
+.home-editorial .landing-hero {padding:50px 0 40px}
+.home-editorial .hero-grid {display:grid;grid-template-columns:minmax(0,1fr);gap:30px;max-width:1120px}
+.home-editorial .hero-copy {grid-row:1;text-align:center;padding:0;max-width:920px;margin:auto}
+.home-editorial .hero-title {max-width:none;font-size:clamp(52px,7.5vw,104px);line-height:.98;margin:18px 0 0;letter-spacing:-.075em}
+.home-editorial .hero-art {grid-row:2;aspect-ratio:auto;width:100%;height:clamp(360px,42vw,480px);max-width:none;border-radius:32px;background:linear-gradient(120deg,#e9dfff,#f9e8e5 70%,#eee5ff)}
+.home-editorial .hero-art:before {width:min(46%,420px)}
+.home-editorial .orbit {width:min(54%,500px)}
+.home-editorial .portrait {width:clamp(180px,24%,270px);height:72%;border-width:5px}
+.home-editorial .portrait-a {left:calc(50% - clamp(185px,23%,260px));top:16%;transform:rotate(-5deg)}
+.home-editorial .portrait-b {right:calc(50% - clamp(185px,23%,260px));top:10%;transform:rotate(5deg)}
+.home-editorial .hero-time {left:6%;top:auto;bottom:12%;padding:14px 20px}
+.home-editorial .hero-match-note {right:6%;bottom:12%;padding:14px 18px}
+.home-editorial .hero-art:hover .portrait-a {transform:rotate(-5deg)}
+.home-editorial .hero-art:hover .portrait-b {transform:rotate(5deg)}
+.home-editorial .hero-details {grid-row:3;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:36px;align-items:center;padding:0 4px}
+.home-editorial .hero-text {max-width:560px;font-size:16px;margin:0}
+.home-editorial .hero-cta {margin:0;justify-content:flex-end}
+.home-editorial .hero-foot {grid-column:1/-1;margin:16px 0 0}
+.home-editorial .home-principles {display:flex;align-items:center;justify-content:center;gap:clamp(12px,3vw,42px);font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--mute);text-align:center}
+.home-editorial .home-principles b {color:var(--connect-violet);flex:none}
+.home-editorial .how-section {padding:90px 0}
+.home-editorial .how-section>.wrap {display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:clamp(32px,7vw,100px);max-width:1120px}
+.home-editorial .section-intro {display:block;align-self:start;margin:0}
+.home-editorial .section-intro p {margin:20px 0 0}
+.home-editorial .steps-grid {display:grid;grid-template-columns:1fr;gap:0}
+.home-editorial .step-card {display:grid;grid-template-columns:54px minmax(0,1fr);column-gap:18px;min-height:0;padding:24px 0;background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0}
+.home-editorial .step-card:first-child {padding-top:0}
+.home-editorial .step-card:last-child {border-bottom:0;padding-bottom:0}
+.home-editorial .step-card .step-icon {grid-column:1;grid-row:1/4;margin:0;width:50px;height:50px}
+.home-editorial .step-number,.home-editorial .step-card h3,.home-editorial .step-card p {grid-column:2}
+.home-editorial .step-card h3 {margin:6px 0 8px}
+.home-editorial .step-card:hover {transform:none;box-shadow:none}
+.home-editorial #experiencia.manifesto {background:var(--canvas);color:var(--ink);padding:60px 0}
+.home-editorial #experiencia.manifesto:after {display:none}
+.home-editorial #experiencia .manifesto-inner {max-width:1120px;background:var(--connect-deep);color:white;border-radius:30px;padding:clamp(28px,5vw,64px);grid-template-columns:1.1fr .9fr;gap:clamp(24px,5vw,70px)}
+.home-editorial #experiencia h2 {font-size:clamp(35px,4vw,57px)}
+.home-editorial #manifesto.section-pad {padding:25px 0 80px}
+.home-editorial .home-invitation {max-width:1120px;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding-top:35px;border-top:1px solid var(--line)}
+.home-editorial .invitation-action p {margin:0 0 20px!important}
+@media(max-width:760px){
+ .home-editorial .landing-hero {padding:32px 0 28px}
+ .home-editorial .hero-grid {gap:20px}
+ .home-editorial .hero-title {font-size:clamp(40px,9vw,64px);line-height:1.02;margin:14px 0 0}
+ .home-editorial .hero-art {height:clamp(255px,70vw,380px);border-radius:22px}
+ .home-editorial .hero-art:before {width:72%}
+ .home-editorial .orbit {width:84%}
+ .home-editorial .portrait {width:42%;height:68%;border-width:3px}
+ .home-editorial .portrait-a {left:7%;top:21%}
+ .home-editorial .portrait-b {right:7%;top:12%}
+ .home-editorial .hero-time {left:5%;bottom:5%;padding:7px 10px}
+ .home-editorial .hero-match-note {right:5%;bottom:5%;padding:7px 10px}
+ .home-editorial .hero-details {display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:0}
+ .home-editorial .hero-text {font-size:14px;max-width:420px}
+ .home-editorial .hero-cta {justify-content:center;margin:0}
+ .home-editorial .hero-foot {margin:0;justify-content:center}
+ .home-editorial .home-principles {gap:9px;letter-spacing:.04em;font-size:8px}
+ .home-editorial .how-section {padding:48px 0}
+ .home-editorial .how-section>.wrap {grid-template-columns:1fr;gap:26px}
+ .home-editorial .section-intro p {margin:12px 0 0}
+ .home-editorial .step-card {grid-template-columns:44px minmax(0,1fr);gap:0 13px;padding:18px 0}
+ .home-editorial .step-card .step-icon {width:44px;height:44px}
+ .home-editorial #experiencia.manifesto {padding:28px 0}
+ .home-editorial #experiencia .manifesto-inner {grid-template-columns:1fr;gap:20px;border-radius:24px;padding:25px}
+ .home-editorial #manifesto.section-pad {padding:15px 0 45px}
+ .home-editorial .home-invitation {grid-template-columns:1fr;gap:12px;padding-top:24px}
+}
+@media(prefers-reduced-motion:reduce){
+ .home-editorial .portrait-a,.home-editorial .portrait-b {transform:none!important}
+}
