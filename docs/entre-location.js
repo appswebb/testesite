@@ -41,7 +41,7 @@
  function pickerField(key,label,options,placeholder,busy=false,searchable=false){
   const value=fieldValue(key),selected=options.find(([v])=>v===value),expanded=picker===key&&!busy;
   return '<div class="cp-geo-field"><span class="cp-geo-label">'+esc(label)+'</span><button type="button" class="cp-geo-select" data-geo-picker="'+key+'" aria-expanded="'+expanded+'" '+(busy?'disabled':'')+'><span>'+esc(selected?.[1]||value||placeholder)+'</span>'+ico('chevron',16)+'</button>'+
-  (expanded?'<div class="cp-geo-options">'+(searchable?'<input type="search" class="cp-geo-search" data-geo-search aria-label="Buscar '+esc(label.toLowerCase())+'" placeholder="Buscar..." autocomplete="off">':'')+'<div class="cp-geo-list" role="group" aria-label="'+esc(label)+'">'+options.map(([v,n])=>'<button type="button" class="cp-geo-choice" data-geo-key="'+key+'" data-geo-choice="'+esc(v)+'" aria-pressed="'+(value===v)+'"><span>'+esc(n)+'</span>'+(value===v?ico('check',16):'')+'</button>').join('')+'<p class="cp-geo-no-results" hidden>Nenhum resultado.</p></div></div>':'')+'</div>';
+  (expanded?'<div class="cp-geo-options"><div class="cp-geo-picker-top"><strong>'+esc(label)+'</strong><button type="button" data-geo-picker="'+key+'" aria-label="Voltar à seleção">'+ico('back',16)+' Voltar</button></div>'+(searchable?'<input type="search" class="cp-geo-search" data-geo-search aria-label="Buscar '+esc(label.toLowerCase())+'" placeholder="Buscar..." autocomplete="off">':'')+'<div class="cp-geo-list" role="group" aria-label="'+esc(label)+'">'+options.map(([v,n])=>'<button type="button" class="cp-geo-choice" data-geo-key="'+key+'" data-geo-choice="'+esc(v)+'" aria-pressed="'+(value===v)+'"><span>'+esc(n)+'</span>'+(value===v?ico('check',16):'')+'</button>').join('')+'<p class="cp-geo-no-results" hidden>Nenhum resultado.</p></div></div>':'')+'</div>';
  }
  function cityPicker(key,uf,busy){
   if(!uf)return '<div class="cp-geo-field"><span class="cp-geo-label">Cidade</span><button type="button" class="cp-geo-select" disabled>Selecione o estado primeiro</button></div>';
@@ -65,7 +65,7 @@
   const old=document.querySelector('body > .cp-match-filter-sheet .cp-geo-panel');
   if(!old)return;
   old.outerHTML=compactPanel(state.searching);
-  if(focusKey)document.querySelector('[data-geo-picker="'+focusKey+'"]')?.focus({preventScroll:true});
+  if(focusKey){const field=document.querySelector('[data-geo-picker="'+focusKey+'"]');field?.focus({preventScroll:true});if(picker===focusKey){const options=field?.parentElement?.querySelector('.cp-geo-options');options?.scrollIntoView({block:'nearest',behavior:'instant'});}}
  }
  function changeField(key,value){
   picker='';
@@ -132,7 +132,7 @@
   geo.self=data;geo.homeState=data.state;geo.homeCity=data.city;
   toast('Cidade e estado salvos. Você pode buscar pessoas de outras regiões.');
  }
- async function detect(){
+ async function detectRegion(){
   if(!navigator.geolocation)throw Error('O navegador não permite localização. Escolha seu estado e sua cidade manualmente.');
   const coords=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:12000,maximumAge:300000}));
   const lat=coords.coords.latitude,lon=coords.coords.longitude;
@@ -148,9 +148,11 @@
   const stateCode=UFS.some(([uf])=>uf===code)?code:UFS.find(([,name])=>normalize(name)===normalize(address.state))?.[0];
   const name=address.city||address.town||address.village||address.municipality||address.county;
   if(!stateCode||!name)throw Error('Não consegui identificar a cidade. Escolha manualmente.');
-  geo.homeState=stateCode;geo.homeCity=String(name).trim();
-  await citiesFor(stateCode);
-  await save(geo.homeState,geo.homeCity);
+  return {state:stateCode,city:String(name).trim()};
+ }
+ async function detect(){
+  const region=await detectRegion();geo.homeState=region.state;geo.homeCity=region.city;
+  await citiesFor(region.state);await save(geo.homeState,geo.homeCity);
  }
  async function action(type){
   if(type==='geoHomeEdit'||type==='geoHomeClose'){
@@ -188,5 +190,5 @@
    case'target-city':geo.targetCity=el.value;break;
   }
  });
- window.entreGeo={init,panel,compactPanel,action,target,resetPicker:()=>{picker='';geo.homeExpanded=false;},details:()=>({...geo,self:geo.self?{...geo.self}:null})};
+ window.entreGeo={init,panel,compactPanel,action,target,detectRegion,resetPicker:()=>{picker='';geo.homeExpanded=false;},details:()=>({...geo,self:geo.self?{...geo.self}:null})};
 })();
