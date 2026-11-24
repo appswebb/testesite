@@ -1,8 +1,9 @@
 /* Pointer-only 3D depth. Never reads personal data or requests device sensors. */
 (()=>{'use strict';
-const selector='.cn-how-grid article,.cn-demo-grid article,.live-visual-card,.premium-checkout-card,.live-mode';
+const selector='.cn-how-grid article,.cn-demo-grid article,.live-visual-card,.premium-checkout-card,.live-mode,.nx-feature';
 const canTilt=()=>document.documentElement.dataset.motionLevel==='high'&&
- document.body?.classList.contains('motion-force')&&
+ !document.body?.classList.contains('motion-off')&&
+ (document.body?.classList.contains('motion-force')||!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)&&
  window.matchMedia?.('(pointer:fine)').matches===true;
 let current=null,frame=null;
 function reset(el){if(!el)return;el.style.removeProperty('--tilt-x');el.style.removeProperty('--tilt-y');el.style.removeProperty('--lift');}

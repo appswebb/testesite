@@ -20,7 +20,7 @@ function read(){
   const stored=JSON.parse(localStorage.getItem(KEY)||'null');
   if(!stored)return {...DEFAULT};
   // One-time migration of previous factory defaults, without discarding custom choices.
-  if((!stored.style||stored.style==='romance')&&stored.mode!=='light'&&['#D16A8A','#7545F7'].includes(hex(stored.color)))return {...DEFAULT};
+  if(stored.revision!==11&&(!stored.style||stored.style==='romance')&&stored.mode!=='light'&&['#D16A8A','#7545F7'].includes(hex(stored.color)))return {...DEFAULT};
   return {mode:stored?.mode==='custom'?'light':MODES.includes(stored?.mode)?stored.mode:DEFAULT.mode,
    color:hex(stored?.color)||DEFAULT.color,style:STYLES.includes(stored?.style)?stored.style:DEFAULT.style};
  }catch{return {...DEFAULT};}
@@ -58,7 +58,7 @@ function apply(){
  window.dispatchEvent(new CustomEvent('entre:themechange',{detail:{mode:state.mode,accent}}));
 }
 function persist(){
- try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){console.warn('Theme preference not persisted',e);}
+ try{localStorage.setItem(KEY,JSON.stringify({...state,revision:11}));}catch(e){console.warn('Theme preference not persisted',e);}
 }
 function setMode(mode){
  if(!MODES.includes(mode))return false;
