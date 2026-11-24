@@ -138,6 +138,8 @@ jobs:
           run_check node --test tests/vivid-refresh.test.mjs
           run_check node --test tests/live-gallery.test.mjs
           run_check node tests/live-gallery-mobile-audit.cjs
+          run_check node --test tests/connect-live-interactions.test.mjs
+          run_check node tests/live-overlay-mobile-audit.cjs
           run_check node --test tests/room-live-filters.test.mjs
           run_check node --test tests/source-fidelity.test.mjs
           run_check node --test tests/geo-feed-support.test.mjs
