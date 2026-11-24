@@ -5,7 +5,7 @@ const api=window.entreSocial,s=api.data;
 function personCard(p){
  const recent=Date.now()-new Date(p.last_seen).getTime()>90000;const follow=p.follow_status,allowed=p.allow_requests||follow==='accepted'||p.follower_status==='accepted';
  return '<article class="online-person '+(window.entreExtras?.isPremium?.(p.id)?'premium-surface':'')+'"><div class="online-person-head"><span class="person-online-indicator '+(recent?'is-reconnecting':'')+'"></span> '+(recent?'ATIVO RECENTEMENTE':'ONLINE AGORA')+'</div>'+
- '<div class="online-person-content">'+avatar(p,'large')+'<div><h3>'+profileName(p.id,p.display_name,p.username)+(window.entreExtras?.badge?.(p)||'')+', '+(Number(p.age)>0?Number(p.age):'')+'</h3><small>'+esc(genders[p.gender]||'Pessoa')+'</small><small class="person-handle">@'+esc(p.username||'')+'</small></div></div>'+
+ '<div class="online-person-content">'+avatar(p,'large')+'<div class="cp-online-identity"><h3>'+profileName(p.id,p.display_name,p.username)+(window.entreExtras?.badge?.(p)||'')+(Number(p.age)>0?', '+Number(p.age):'')+'</h3>'+(p.username?'<small class="person-handle">'+profileName(p.id,'@'+p.username,p.username)+'</small>':'')+'<small class="cp-online-gender">'+esc(genders[p.gender]||'Pessoa')+'</small></div></div>'+
  '<p class="online-person-bio">'+esc(p.bio||'Sem biografia.')+'</p>'+
  '<div class="online-person-actions">'+(window.connectRelationships?.followButton?.(p.id,follow)||'')+
  '<button type="button" class="ui-btn btn-dark btn-sm" data-action="socialChat" data-id="'+esc(p.id)+'">'+ico('chat',15)+' Conversar</button></div>'+
