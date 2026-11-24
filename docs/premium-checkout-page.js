@@ -7,7 +7,7 @@ const paths={check:'<path d="m5 12 4 4L19 6"/>',lock:'<rect x="5" y="10" width="
 const ico=(name,size=20)=>'<svg viewBox="0 0 24 24" width="'+Number(size)+'" height="'+Number(size)+'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[name]||paths.check)+'</svg>';
 let toastTimer;
 function toast(message){const el=document.getElementById('toast');el.textContent=String(message);el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),4500);}
-function nav(view){location.assign(view==='support'?'./?premium=return#support':'./?premium=return');}
+function nav(view){location.assign(view==='support'?'./?premium=return&checkoutSupport=1':'./?premium=return');}
 function renderView(){if(!state.session?.user||!window.entreExtras)return;app.innerHTML=window.entreExtras.checkoutView();app.setAttribute('aria-busy','false');}
 function unavailable(message,login=false){app.setAttribute('aria-busy','false');app.innerHTML='<div class="pc-start"><h1>'+esc(message)+'</h1><p>'+ (login?'Entre na sua conta do CONNECT para continuar.':'Verifique a conexão e tente novamente.')+'</p><a class="cc-pay-button" href="'+(login?'./?auth=login':'./checkout.html')+'">'+(login?'Entrar no CONNECT':'Tentar novamente')+'</a><a class="pc-text-link" href="./?premium=return">Voltar aos planos</a></div>';}
 document.addEventListener('click',e=>{const btn=e.target.closest('[data-action]');if(!btn)return;switch(btn.dataset.action){case 'premiumCheckout':void window.entreExtras.checkout();break;case 'premiumVerify':void window.entreExtras.verifyPremium();break;case 'premiumCopyPix':void window.entreExtras.copyPix();break;case 'nav':nav(btn.dataset.view);break;}});
