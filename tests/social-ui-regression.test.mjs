@@ -6,7 +6,7 @@ test('Official bulletins live inside notifications behind the header bell',()=>{
  const app=read('app.js');
  assert.doesNotMatch(app,/\['avisos','Avisos','megaphone'\]/);
  assert.match(read('social-notifications.js'),/notifications-official/);
- assert.match(app,/class="toolbar-bell/);
+ assert.match(app,/class="[^"]*\btoolbar-bell\b/);
  assert.match(app,/data-view="notifications"/);
  assert.match(app,/function avisosView\(\)/);
  assert.match(app,/announcement_version/);
