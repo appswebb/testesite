@@ -13,16 +13,21 @@ const pid=v=>typeof v==="string"&&/^pay_[A-Za-z0-9_]+$/.test(v);
 const cid=v=>typeof v==="string"&&/^cus_[A-Za-z0-9_]+$/.test(v);
 const reference=r=>"connect-asaas:"+r.id;
 const table="connect_asaas_payments";
+const ttl=30*60000;
+const expiresAt=row=>new Date(Date.parse(row.created_at)+ttl).toISOString();
+const expired=row=>Number.isFinite(Date.parse(row.created_at))&&Date.now()>=Date.parse(row.created_at)+ttl;
+const cancellable=s=>["PENDING","OVERDUE","creating"].includes(s);
+const identity=(row,p)=>p&&pid(p.id)&&p.externalReference===reference(row)&&p.customer===row.customer_id&&p.billingType===row.method&&Math.round(Number(p.value)*100)===row.amount_cents&&(!row.provider_id||row.provider_id===p.id);
 async function sync(e,db,row,p){
  if(!p||!pid(p.id)||p.externalReference!==reference(row)||p.customer!==row.customer_id||p.billingType!==row.method||Math.round(Number(p.value)*100)!==row.amount_cents||(row.provider_id&&row.provider_id!==p.id))throw Error("payment_identity_mismatch");
  const status=p.deleted===true?"DELETED":String(p.status||"PENDING");
  if(!/^[A-Z_]{2,60}$/.test(status))throw Error("unknown_payment_status");
  const {data:ok,error}=await db.rpc("connect_asaas_sync",{_id:row.id,_provider:p.id,_customer:p.customer,_amount:Math.round(Number(p.value)*100),_method:p.billingType,_status:status});if(error||ok!==true)throw Error("db_sync_failed");
- return {status,payment_id:p.id,amount_cents:row.amount_cents,environment:"production",method:row.method};
+ return {status,payment_id:p.id,amount_cents:row.amount_cents,environment:"production",method:row.method,expires_at:expiresAt(row)};
 }
 async function result(e,db,row,p){
  const out=await sync(e,db,row,p);
- if(["PENDING","OVERDUE"].includes(out.status)){
+ if(["PENDING","OVERDUE"].includes(out.status)&&!expired(row)){
   if(row.method==="PIX"){
    try{const q=await api(e,"/payments/"+p.id+"/pixQrCode");out.pix_code=typeof q.payload==="string"&&q.payload.length<3000?q.payload:null;out.pix_qr_base64=typeof q.encodedImage==="string"&&/^[a-zA-Z0-9+/=]+$/.test(q.encodedImage)&&q.encodedImage.length<250000?q.encodedImage:null;out.expiration=q.expirationDate||null;}catch(_){out.qr_unavailable=true;}
   }else{try{const u=new URL(p.invoiceUrl);if(u.protocol==="https:"&&(u.hostname==="asaas.com"||u.hostname==="www.asaas.com")&&!u.username&&!u.password)out.invoice_url=u.href;}catch(_){}}
@@ -30,11 +35,40 @@ async function result(e,db,row,p){
  return out;
 }
 async function recover(e,db,row){
- if(row.provider_id)return result(e,db,row,await api(e,"/payments/"+row.provider_id));
- if(!row.customer_id)return {status:row.status,environment:"production"};
- const list=await api(e,"/payments?externalReference="+encodeURIComponent(reference(row))+"&limit=2");
- if(list?.data?.length===1)return result(e,db,row,list.data[0]);
- return {status:row.status,environment:"production"};
+ if(row.status==="DELETED"||row.status==="ERROR")return {status:row.status==="DELETED"&&expired(row)?"EXPIRED":row.status,environment:"production",expires_at:expiresAt(row)};
+ let payment=null;
+ if(row.provider_id)payment=await api(e,"/payments/"+row.provider_id);
+ else if(row.customer_id){
+  const list=await api(e,"/payments?externalReference="+encodeURIComponent(reference(row))+"&limit=2");
+  if(list?.data?.length>1||list?.hasMore)throw Error("duplicate_provider_payment");
+  payment=list?.data?.[0]||null;
+ }
+ if(!payment){
+  if(expired(row)&&row.status==="creating"&&!row.provider_id){
+   const {data,error}=await db.from(table).update({status:"ERROR",updated_at:new Date().toISOString()}).eq("id",row.id).eq("status","creating").is("provider_id",null).select("id").maybeSingle();
+   if(error||!data)throw Error("expiration_retry");
+   return {status:"EXPIRED",environment:"production",expires_at:expiresAt(row)};
+  }
+  return {status:row.status,environment:"production",expires_at:expiresAt(row)};
+ }
+ if(!identity(row,payment))throw Error("payment_identity_mismatch");
+ if(expired(row)&&payment.deleted!==true&&["PENDING","OVERDUE"].includes(payment.status)){
+  try{
+   const removed=await api(e,"/payments/"+payment.id,"DELETE");
+   if(removed?.deleted!==true||String(removed.id)!==payment.id)throw Error("expiration_retry");
+  }catch(err){
+   const current=await api(e,"/payments/"+payment.id);
+   if(!identity(row,current))throw Error("payment_identity_mismatch");
+   if(current.deleted!==true&&["PENDING","OVERDUE"].includes(current.status))throw err;
+   return result(e,db,row,current);
+  }
+  // Only the verified provider deletion releases a pending invoice.
+  const out=await sync(e,db,row,{...payment,deleted:true});
+  return {...out,status:"EXPIRED"};
+ }
+ const out=await result(e,db,row,payment);
+ if(out.status==="DELETED"&&expired(row))out.status="EXPIRED";
+ return out;
 }
 Deno.serve(async req=>{
  if(req.method==="OPTIONS")return reply({},200);if(req.method!=="POST")return reply({error:"method_not_allowed"},405);
@@ -51,7 +85,7 @@ Deno.serve(async req=>{
   const {data:row,error:re}=await db.from(table).select("*").eq("user_id",user.id).order("created_at",{ascending:false}).limit(1).maybeSingle();if(re)throw Error("db_read_failed");
   if(action==="status")return reply(row?await recover(e,db,row):{status:"none",environment:"production"});
   if(action!=="pay")return reply({error:"invalid_action"},400);
-  if(row&&!["CONFIRMED","RECEIVED","REFUNDED","REFUND_REQUESTED","REFUND_IN_PROGRESS","PARTIALLY_REFUNDED","CHARGEBACK_REQUESTED","CHARGEBACK_DISPUTE","AWAITING_CHARGEBACK_REVERSAL","DELETED","ERROR","RECEIVED_IN_CASH"].includes(row.status))return reply(await recover(e,db,row));
+  if(row&&!["CONFIRMED","RECEIVED","REFUNDED","REFUND_REQUESTED","REFUND_IN_PROGRESS","PARTIALLY_REFUNDED","CHARGEBACK_REQUESTED","CHARGEBACK_DISPUTE","AWAITING_CHARGEBACK_REVERSAL","DELETED","ERROR","RECEIVED_IN_CASH"].includes(row.status)){const prior=await recover(e,db,row);if(!["EXPIRED","DELETED","ERROR"].includes(prior.status))return reply(prior);}
   const name=String(body.name||"").trim().slice(0,120),doc=String(body.cpf_cnpj||"").replace(/\D/g,""),method=body.method;
   if(!uuid(body.request_id)||name.length<3||![11,14].includes(doc.length)||!["PIX","CREDIT_CARD"].includes(method))return reply({error:"invalid_buyer_data"},400);
   const reservation={id:body.request_id,user_id:user.id,amount_cents:cents,method,status:"creating"};
@@ -66,7 +100,8 @@ Deno.serve(async req=>{
    if(!cid(customer?.id))throw Error("customer_creation_failed");
   }catch(err){await db.from(table).update({status:"ERROR"}).eq("id",reservation.id);throw err;}
   const {error:ce}=await db.from(table).update({customer_id:customer.id}).eq("id",reservation.id);if(ce)throw Error("db_customer_failed");
-  const full={...reservation,customer_id:customer.id};
+  const {data:stored,error:storedError}=await db.from(table).select("created_at").eq("id",reservation.id).single();if(storedError||!stored?.created_at)throw Error("db_read_failed");
+  const full={...reservation,customer_id:customer.id,created_at:stored.created_at};
   const parts=new Intl.DateTimeFormat("en-US",{timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const part=t=>parts.find(p=>p.type===t)?.value;const due=part("year")+"-"+part("month")+"-"+part("day");
   let payment;
   try{payment=await api(e,"/payments","POST",{customer:customer.id,billingType:method,value:cents/100,dueDate:due,description:"CONNECT Premium - 30 dias",externalReference:reference(full)});}

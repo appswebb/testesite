@@ -181,14 +181,19 @@ document.addEventListener('keydown',event=>{
 });
 const price=()=>Number.isInteger(data.premium?.price_cents)&&data.premium.price_cents>0
  ?(data.premium.price_cents/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):null;
-const terminalPayment=['CONFIRMED','RECEIVED','REFUNDED','REFUND_REQUESTED','REFUND_IN_PROGRESS','PARTIALLY_REFUNDED','CHARGEBACK_REQUESTED','CHARGEBACK_DISPUTE','AWAITING_CHARGEBACK_REVERSAL','DELETED','ERROR','RECEIVED_IN_CASH','none'];
+const terminalPayment=['CONFIRMED','RECEIVED','REFUNDED','REFUND_REQUESTED','REFUND_IN_PROGRESS','PARTIALLY_REFUNDED','CHARGEBACK_REQUESTED','CHARGEBACK_DISPUTE','AWAITING_CHARGEBACK_REVERSAL','DELETED','EXPIRED','ERROR','RECEIVED_IN_CASH','none'];
 const paymentPending=status=>Boolean(status&&!terminalPayment.includes(status));
 function invoiceLink(value){try{const u=new URL(value);if(u.protocol==='https:'&&['asaas.com','www.asaas.com'].includes(u.hostname)&&!u.username&&!u.password)return '<a class="cc-pay-button" target="_blank" rel="noopener noreferrer" href="'+esc(u.href)+'">Pagar cartão no Asaas '+ico('arrow',18)+'</a>';}catch(_){}return '';}
+function paymentSeconds(p=data.webPayment){const end=Date.parse(p?.expires_at||'');return Number.isFinite(end)?Math.max(0,Math.ceil((end-Date.now())/1000)):null;}
+function paymentClock(seconds){return seconds===null?'30 minutos':Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');}
 function webPaymentStatusMarkup(){
  const p=data.webPayment||{},status=p.status||'';
  const error=data.webError?'<p role="alert" class="web-pay-error">'+esc(data.webError)+'</p>':'';
  if(['CONFIRMED','RECEIVED'].includes(status))return error+'<div class="web-pay-success">'+ico('check',20)+' Pagamento confirmado pelo Asaas. Consulte seu Premium.</div>';
- if(paymentPending(status))return error+'<div class="web-pay-pending"><strong>'+ico('clock',18)+' '+(status==='OVERDUE'?'Cobrança vencida':'Aguardando confirmação')+'</strong><p>Confirme o pagamento pelo Asaas. Não gere outra cobrança enquanto esta estiver em andamento.</p>'+ (p.pix_qr_base64&&/^[a-zA-Z0-9+/=]+$/.test(p.pix_qr_base64)?'<img class="web-pix-qr" alt="QR Code Pix" src="data:image/png;base64,'+esc(p.pix_qr_base64)+'">':'')+(p.pix_code?'<label for="webPixCode">Pix Copia e Cola</label><textarea id="webPixCode" readonly>'+esc(p.pix_code)+'</textarea><button type="button" class="ui-btn btn-outline" data-action="premiumCopyPix">Copiar código Pix</button>':'')+invoiceLink(p.invoice_url)+(p.qr_unavailable?'<p>QR Code ainda indisponível. Verifique novamente.</p>':'')+'<button type="button" class="ui-btn btn-outline" data-action="premiumVerify">'+ico('refresh',17)+' Verificar pagamento</button></div>';
+ if(status==='EXPIRED'||status==='DELETED')return error+'<div class="web-pay-expired"><strong>'+ico('clock',18)+' Tentativa expirada</strong><p>Escolha Pix ou cartão para iniciar uma nova compra.</p></div>';
+ const remaining=paymentSeconds(p);
+ if(paymentPending(status)&&remaining===0)return error+'<div class="web-pay-pending"><strong>'+ico('clock',18)+' Prazo encerrado</strong><p>Verificando o encerramento da cobrança no Asaas. Aguarde a confirmação para evitar pagamento duplicado.</p><button type="button" class="ui-btn btn-outline" data-action="premiumVerify">Verificar agora</button></div>';
+ if(paymentPending(status))return error+'<div class="web-pay-pending"><strong>'+ico('clock',18)+' '+(status==='OVERDUE'?'Cobrança vencida':'Aguardando confirmação')+'</strong><p>Esta tentativa fica disponível por até 30 minutos desde a criação, mesmo se você sair. Depois, poderá escolher outra forma de pagamento.</p><p class="web-pay-countdown">Tempo restante: <strong id="connectPaymentClock">'+esc(paymentClock(remaining))+'</strong></p>'+ (p.pix_qr_base64&&/^[a-zA-Z0-9+/=]+$/.test(p.pix_qr_base64)?'<img class="web-pix-qr" alt="QR Code Pix" src="data:image/png;base64,'+esc(p.pix_qr_base64)+'">':'')+(p.pix_code?'<label for="webPixCode">Pix Copia e Cola</label><textarea id="webPixCode" readonly>'+esc(p.pix_code)+'</textarea><button type="button" class="ui-btn btn-outline" data-action="premiumCopyPix">Copiar código Pix</button>':'')+invoiceLink(p.invoice_url)+(p.qr_unavailable?'<p>QR Code ainda indisponível. Verifique novamente.</p>':'')+'<button type="button" class="ui-btn btn-outline" data-action="premiumVerify">'+ico('refresh',17)+' Verificar pagamento</button></div>';
  if(status&&status!=='none')return error+'<p class="web-pay-error">Última cobrança: '+esc(status)+'. Nenhum novo acesso foi liberado.</p>';
  return error+(data.webStatusText?'<p>'+esc(data.webStatusText)+'</p>':'');
 }
@@ -252,11 +257,20 @@ async function verifyPremium(){if(data.webChecking||data.webBusy||!state.session
  catch(e){if(state.session?.user?.id===uid&&state.view==='checkout'){data.webError=e.message;refreshWebStatus();}}finally{data.webChecking=false;}
 }
 async function copyPix(){
+ if(paymentSeconds()===0){toast('O prazo terminou. Verificando a cobrança.');void verifyPremium();return;}
  const code=data.webPayment?.pix_code;
  if(!code)return;
  try{await navigator.clipboard.writeText(code);toast('Código Pix copiado.');}
  catch(e){const el=document.getElementById('webPixCode');el?.select();toast('Selecione e copie o código Pix.');}
 }
+let expiredCheckFor='';
+setInterval(()=>{
+ if(state.view!=='checkout'||document.visibilityState!=='visible'||!paymentPending(data.webPayment?.status))return;
+ const remaining=paymentSeconds(),clock=document.getElementById('connectPaymentClock');
+ if(clock)clock.textContent=paymentClock(remaining);
+ if(remaining===0&&expiredCheckFor!==data.webPayment?.expires_at){expiredCheckFor=data.webPayment?.expires_at;refreshWebStatus();void verifyPremium();}
+},1000);
+document.addEventListener('visibilitychange',()=>{if(state.view==='checkout'&&!document.hidden&&paymentPending(data.webPayment?.status)){refreshWebStatus();void verifyPremium();}});
 setInterval(()=>{if(state.view==='checkout'&&document.visibilityState==='visible'&&
  paymentPending(data.webPayment?.status)&&!data.webChecking)
  void verifyPremium().catch(e=>console.warn('Payment verification',e));},12000);
