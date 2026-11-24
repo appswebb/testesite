@@ -75,13 +75,15 @@
     passwordStrength(password,fieldValue('password_confirm'));
     const {error}=await db.auth.updateUser({password});
     if(error)throw error;
-    await db.auth.signOut({scope:'local'});
+    const {error:signOutError}=await db.auth.signOut({scope:'global'});
+    if(signOutError){console.warn('Global session revocation failed');await db.auth.signOut({scope:'local'});}
+
     state.session=null;state.profile=null;state.isAdmin=false;state.mode='login';
     const clean=new URL(window.location.href);
     clean.searchParams.delete('auth');
     window.history.replaceState(null,'',clean.pathname+clean.search);
     render();
-    showFormMessage('Senha alterada. Faça login com seu e-mail e a nova senha.',true);
+    showFormMessage(signOutError?'Senha alterada. Não foi possível revogar todas as sessões agora. Faça login novamente.':'Senha alterada e sessões anteriores revogadas. Faça login novamente.',true);
     return;
    }
    const email=fieldValue('email').trim().toLowerCase();
@@ -106,7 +108,7 @@
    }
    if(mode==='login'){
     const {data,error}=await db.auth.signInWithPassword({email,password});
-    if(error)throw error;
+    if(error){if(error.status===429)throw Error('Muitas tentativas. Aguarde e tente novamente.');if(error.code==='email_not_confirmed')throw Error('Confira o e-mail de confirmação antes de entrar.');throw Error('Não foi possível entrar. Confira seus dados e tente novamente.');}
     await acceptSession(data.session);
    }
   }catch(error){showFormMessage(infoError(error));}
