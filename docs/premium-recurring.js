@@ -12,7 +12,8 @@ function view(){
  (status==='authorized'?'<p>Renovação automática ativa.</p>':'')+
  (status==='cancelled'?'<p>Renovação cancelada. Acesso pago válido até o vencimento.</p>':'')+
  (d.error?'<p role="alert" class="cp-recurring-error">'+esc(d.error)+'</p>':'')+
- (!canCancel&&!d.open?'<label class="cp-recurring-consent"><input id="recurringConsent" type="checkbox"><span>Autorizo a cobrança mensal automática de '+esc(price()||'valor informado')+' no cartão até cancelar.</span></label><button type="button" class="ui-btn btn-dark" data-recurring-action="open" '+(!enabled||d.busy?'disabled':'')+'>Assinar Premium</button>':'')+
+ (!active&&enabled&&!canCancel&&!d.open?'<label class="cp-recurring-consent"><input id="recurringConsent" type="checkbox"><span>Autorizo a cobrança mensal automática de '+esc(price()||'valor informado')+' no cartão até cancelar.</span></label><button type="button" class="ui-btn btn-dark" data-recurring-action="open" '+(!enabled||d.busy?'disabled':'')+'>Assinar Premium</button>':'')+
+ (!enabled&&!canCancel?'<p class="cp-recurring-note">Renovação automática indisponível no momento. Você pode comprar 30 dias acima.</p>':'')+
  (canCancel?'<button type="button" class="ui-btn btn-outline" data-recurring-action="verify">Verificar pagamento</button><button type="button" class="cp-plan-verify" data-recurring-action="cancel">Cancelar renovação</button>':'')+
  '<div id="recurringCardBrick" '+(d.open?'':'hidden')+'></div><small>Pagamento seguro pelo Mercado Pago.</small></div>';
 }
@@ -25,7 +26,7 @@ async function loadStatus(paint=false){
   ]);
   if(!ce&&cfg)d.config=cfg;
   if(!se&&status)d.subscription=status;
-  if(paint&&state.view==='premium')renderView();
+  if(paint&&state.view==='premium'&&!window.entreExtras?.data?.webCheckoutOpen&&!d.open)renderView();
  }catch(error){console.warn('Recurring status unavailable');}
 }
 async function sdk(){
