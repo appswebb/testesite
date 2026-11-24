@@ -664,3 +664,13 @@ html[data-theme] #app .cp-message-deleted .cp-message-body{font-style:italic;opa
  html[data-theme] #app .online-person-actions button{min-height:38px!important;padding:5px!important;font-size:11px!important}
  html[data-theme] #app .online-restriction{font-size:10px!important}
 }
+
+/* Room message actions share the private-chat dialog and visual language. */
+html[data-theme] #app .room-message-content{position:relative;min-width:0;overflow-wrap:anywhere}
+html[data-theme] #app .room-message.is-mine .room-message-content{padding-inline-end:34px!important}
+html[data-theme] #app .cp-room-message-menu{position:absolute;inset:4px 2px auto auto;display:grid!important;place-items:center;width:30px!important;height:34px!important;min-width:30px!important;min-height:34px!important;padding:0!important;margin:0!important;background:transparent!important;color:var(--ui-muted)!important;border:0!important;border-radius:9px!important;box-shadow:none!important;cursor:pointer}
+html[data-theme] #app .cp-room-message-menu:focus-visible{outline:2px solid var(--ui-accent)}
+html[data-theme] #app .cp-room-edited{display:block;color:var(--ui-muted);font-size:10px;margin-top:3px}
+html[data-theme] #app .cp-room-deleted{font-style:italic;color:var(--ui-muted);opacity:.85}
+html[data-theme] #app .room-message-content header time{white-space:nowrap}
+html[data-theme] #app .room-message-content p{white-space:pre-wrap;overflow-wrap:anywhere}
