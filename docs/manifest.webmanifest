@@ -1,17 +1,23 @@
 {
   "id": "/testesite/",
-  "name": "entre. — Conversas que importam",
-  "short_name": "entre.",
-  "description": "Encontros, chats pelo Brasil, Feed e lives. Conheça pessoas reais no entre.",
+  "name": "CONNECT — Conexões reais, no seu tempo",
+  "short_name": "CONNECT",
+  "description": "Conheça pessoas reais, converse ao vivo por cinco minutos e continue a conexão quando ambos quiserem.",
   "lang": "pt-BR",
   "dir": "ltr",
   "start_url": "./?installed=1",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#F7F7FD",
-  "theme_color": "#F7F7FD",
+  "background_color": "#F8F6FD",
+  "theme_color": "#7545F7",
   "orientation": "any",
   "icons": [
+    {
+      "src": "./connect-symbol.svg?v=connect-1",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "./brand-mark.svg?v=brand-e-20261124",
       "sizes": "any",
