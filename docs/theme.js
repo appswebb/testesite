@@ -5,8 +5,10 @@
 'use strict';
 const KEY='entre.appearance.v1';
 const MODES=['light','dark'];
-const DEFAULT={mode:'dark',color:'#7545F7'};
+const DEFAULT={mode:'dark',color:'#D16A8A',style:'romance'};
+const STYLES=['romance','neutral'];
 const PRESETS=[
+ ['#D16A8A','Rosa antigo'],['#A63B5E','Vinho'],
  ['#7757F4','Violeta'],['#2977D5','Azul'],['#F07C55','Coral'],
  ['#AE63CF','Lavanda'],['#DAA520','Dourado'],['#EA5386','Rosa']
 ];
@@ -15,7 +17,7 @@ function read(){
  try{
   const stored=JSON.parse(localStorage.getItem(KEY)||'null');
   return {mode:stored?.mode==='custom'?'light':MODES.includes(stored?.mode)?stored.mode:DEFAULT.mode,
-   color:hex(stored?.color)||DEFAULT.color};
+   color:hex(stored?.color)||DEFAULT.color,style:STYLES.includes(stored?.style)?stored.style:DEFAULT.style};
  }catch{return {...DEFAULT};}
 }
 let state=read();
@@ -29,6 +31,7 @@ function readable(h){
 function apply(){
  const root=document.documentElement;
  root.dataset.theme=state.mode;
+ root.dataset.connectStyle=state.style;
  const accent=state.color;
  const accentOn=readable(accent);
  root.style.setProperty('--ui-accent',accent);
@@ -37,7 +40,7 @@ function apply(){
  root.style.setProperty('--ui-accent-faint',`rgb(${rgb(accent).join(' ')} / .07)`);
  root.style.setProperty('--ui-accent-shadow',`rgb(${rgb(accent).join(' ')} / .24)`);
  const dark=state.mode==='dark';
- const tokens=dark?{'--ui-bg':'#15171b','--ui-panel':'#20232a','--ui-panel-alt':'#2b2f37','--ui-text':'#f5f6f8','--ui-muted':'#b7bdc8','--ui-line':'#393e49'}:{'--ui-bg':'#f5f6f9','--ui-panel':'#ffffff','--ui-panel-alt':'#eef0f4','--ui-text':'#20232a','--ui-muted':'#606978','--ui-line':'#dfe3eb'};
+ const tokens=state.style==='romance'?(dark?{'--ui-bg':'#140F14','--ui-panel':'#211820','--ui-panel-alt':'#2C202A','--ui-text':'#F8EDF0','--ui-muted':'#C0AAB5','--ui-line':'#48303E'}:{'--ui-bg':'#FBF4F4','--ui-panel':'#FFFDFD','--ui-panel-alt':'#F4E7EA','--ui-text':'#30202A','--ui-muted':'#76606A','--ui-line':'#E8D8DF'}):dark?{'--ui-bg':'#15171b','--ui-panel':'#20232a','--ui-panel-alt':'#2b2f37','--ui-text':'#f5f6f8','--ui-muted':'#b7bdc8','--ui-line':'#393e49'}:{'--ui-bg':'#f5f6f9','--ui-panel':'#ffffff','--ui-panel-alt':'#eef0f4','--ui-text':'#20232a','--ui-muted':'#606978','--ui-line':'#dfe3eb'};
  for(const [key,value] of Object.entries(tokens))root.style.setProperty(key,value,'important');
  root.style.setProperty('--ui-theme-surface',tokens['--ui-panel']);root.style.setProperty('--ui-theme-text',tokens['--ui-text']);
  root.style.setProperty('--cn-grad','linear-gradient(145deg,color-mix(in srgb,'+accent+' 85%,white),'+accent+')','important');root.style.setProperty('--cn-ink',accentOn,'important');
@@ -54,6 +57,7 @@ function setMode(mode){
  if(!MODES.includes(mode))return false;
  state.mode=mode;persist();apply();syncControls();return true;
 }
+function setStyle(style){if(!STYLES.includes(style))return false;state.style=style;persist();apply();syncControls();return true;}
 function setColor(color){
  const valid=hex(color);
  if(!valid)return false;
@@ -61,11 +65,11 @@ function setColor(color){
 }
 function renderControls(){
  return '<section class="appearance-panel" aria-labelledby="appearanceTitle">'+
- '<div class="appearance-heading"><div><span class="appearance-eyebrow">A SUA EXPERIÊNCIA</span><h3 id="appearanceTitle">Aparência do aplicativo</h3><p>Escolha o modo e a cor separadamente.</p></div></div>'+
+ '<div class="appearance-heading"><div><span class="appearance-eyebrow">A SUA EXPERIÊNCIA</span><h3 id="appearanceTitle">Aparência do aplicativo</h3><p>Escolha o modo, o estilo e a cor separadamente.</p></div></div>'+
  '<div class="appearance-mode-grid" role="group" aria-label="Selecionar aparência">'+
  '<button type="button" class="appearance-mode" data-theme-mode="light" aria-pressed="'+(state.mode==='light')+'"><span class="appearance-mini light"><i></i><b></b></span><strong>Claro</strong><small>Limpo e suave</small></button>'+
  '<button type="button" class="appearance-mode" data-theme-mode="dark" aria-pressed="'+(state.mode==='dark')+'"><span class="appearance-mini dark"><i></i><b></b></span><strong>Escuro</strong><small>Conforto à noite</small></button>'+
- '</div><div class="appearance-custom-settings" data-theme-custom-panel>'+ 
+ '</div><div class="appearance-style-picker" role="group" aria-label="Estilo visual"><button type="button" data-connect-style="romance" aria-pressed="'+(state.style==='romance')+'">Dark Romance</button><button type="button" data-connect-style="neutral" aria-pressed="'+(state.style==='neutral')+'">Neutro</button></div><div class="appearance-custom-settings" data-theme-custom-panel>'+ 
  '<label for="appearanceColor">Escolha sua cor</label><div class="appearance-color-line">'+
  '<input id="appearanceColor" data-theme-color type="color" value="'+state.color+'" aria-label="Selecionar cor personalizada">'+
  '<output id="appearanceHex" for="appearanceColor">'+state.color+'</output><span class="appearance-color-hint">Visualização instantânea</span></div>'+
@@ -74,6 +78,7 @@ function renderControls(){
  '</div></div></section>';
 }
 function syncControls(){
+ document.querySelectorAll('button[data-connect-style]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.connectStyle===state.style)));
  document.querySelectorAll('[data-theme-mode]').forEach(btn=>{
   const chosen=btn.dataset.themeMode===state.mode;
   btn.setAttribute('aria-pressed',String(chosen));
@@ -85,6 +90,7 @@ function syncControls(){
  document.querySelectorAll('[data-theme-swatch]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.themeSwatch===state.color)));
 }
 document.addEventListener('click',event=>{
+ const style=event.target.closest('button[data-connect-style]');if(style){setStyle(style.dataset.connectStyle);return;}
  const mode=event.target.closest('[data-theme-mode]');
  if(mode){setMode(mode.dataset.themeMode);return;}
  const swatch=event.target.closest('[data-theme-swatch]');
@@ -100,6 +106,6 @@ document.addEventListener('DOMContentLoaded',()=>{
  }catch(e){}
  apply();syncControls();
 },{once:true});
-window.entreTheme={read:()=>({...state}),setMode,setColor,renderControls,syncControls,PRESETS};
+window.entreTheme={read:()=>({...state}),setMode,setStyle,setColor,renderControls,syncControls,PRESETS};
 apply();
 })();
