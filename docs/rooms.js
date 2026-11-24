@@ -164,5 +164,5 @@ document.addEventListener('click',e=>{
  }
 });
 document.addEventListener('click',event=>{if(event.target?.id==='roomsFilterOverlay')closeRoomFilter();});
-window.entreRooms={view,enter,stop:()=>{closeRoomFilter(false);if(s.refreshTimer)clearInterval(s.refreshTimer);s.refreshTimer=null;},roomChange,details:()=>({room:s.room,rows:s.rows.length,filterOpen:s.filterOpen})};
+window.entreRooms={view,enter,refresh:()=>state.view==='rooms'&&!document.hidden?load():Promise.resolve(),stop:()=>{closeRoomFilter(false);if(s.refreshTimer)clearInterval(s.refreshTimer);s.refreshTimer=null;},roomChange,details:()=>({room:s.room,rows:s.rows.length,filterOpen:s.filterOpen})};
 })();
