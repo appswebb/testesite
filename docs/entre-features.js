@@ -23,9 +23,10 @@ async function loadBadges(profiles){
  catch(e){console.warn('Badge status',e);}
 }
 async function loadPosts(more=false){
- if(data.postLoading)return;data.postLoading=true;
+ if(data.postLoading)return;syncFeedOwner();const uid=state.session?.user?.id;data.postLoading=true;feedError='';
  try{
   const rows=await call('entre_posts_feed',{_before:more?data.postBefore:null});
+  if(state.session?.user?.id!==uid)return;
   const arr=Array.isArray(rows)?rows:[];
   data.posts=more?data.posts.concat(arr):arr;
   data.postMore=arr.length===15;
@@ -34,8 +35,8 @@ async function loadPosts(more=false){
   await window.entreMedia?.signPosts?.(data.posts);
   const ids=data.posts.filter(p=>p.premium).map(p=>p.author_id);
   for(const id of ids)data.premiumIds.add(id);
-  if(state.view==='posts')renderView();
- }catch(e){toast(infoError(e),true);}finally{data.postLoading=false;}
+  feedLoaded=true;
+ }catch(e){feedError=infoError(e);toast(feedError,true);}finally{data.postLoading=false;if(state.session?.user?.id===uid&&state.view==='posts')renderView();}
 }
 
 function commentCard(c){
@@ -90,23 +91,43 @@ async function loadCommentPage(more=false){
  finally{data.commentsBusy=false;if(data.commentsPost===post)renderView();}
 }
 
+// Keep the composer draft across feed refreshes and media selection, scoped to the current account.
+let feedDraft='',feedDraftOwner=null,feedLoaded=false,feedError='',feedOwner=null,feedPublishing=false;
+function syncFeedOwner(){
+ const uid=state.session?.user?.id||null;
+ if(feedDraftOwner!==uid){feedDraftOwner=uid;feedDraft='';window.entreMedia?.clearMedia?.();}
+ if(feedOwner!==uid){feedOwner=uid;feedLoaded=false;feedError='';}
+}
+document.addEventListener('input',e=>{if(e.target?.matches?.('#postCreateForm textarea[name="body"]')){syncFeedOwner();feedDraft=e.target.value;const count=document.getElementById('connectFeedCount');if(count)count.textContent=String(feedDraft.length)+'/900';}});
+function feedTime(value){
+ const at=Date.parse(value);if(!Number.isFinite(at))return '';
+ const min=Math.max(0,Math.floor((Date.now()-at)/60000));
+ return min<1?'Agora':min<60?min+' min':min<1440?Math.floor(min/60)+' h':min<10080?Math.floor(min/1440)+' d':new Date(at).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+}
 function postsView(){
- return '<section class="posts-shell"><div class="posts-stream">'+'<section class="cn-feed-composer"><div class="cn-compose-heading">'+avatar(state.profile)+'<div><strong>Criar</strong><small>Compartilhe com a comunidade</small></div></div><form id="postCreateForm" class="post-compose cn-inline-post">'+
- '<textarea name="body" minlength="3" maxlength="900" placeholder="O que você quer publicar?"></textarea>'+ (window.entreMedia?.composeMarkup?.()||'')+
- '<div class="post-compose-footer"><button type="submit" class="ui-btn btn-dark btn-sm">Publicar post '+ico('arrow',15)+'</button></div></form></section>'+
- (data.posts.length?data.posts.map(p=>{
+ syncFeedOwner();
+ const rows=Array.isArray(data.posts)?data.posts:[],first=String(state.profile?.display_name||'').trim().split(/\s+/)[0];
+ return '<section class="posts-shell connect-feed-v3" aria-label="Início da comunidade"><div class="posts-stream">'+
+ '<header class="cf-welcome"><div class="cf-welcome-copy"><span class="cf-eyebrow"><i></i> SUA COMUNIDADE</span><h2>'+(first?'Olá, '+esc(first)+'.':'O que está acontecendo?')+'</h2><p>Compartilhe momentos. Conheça novas pessoas.</p></div><img src="./connect-glass.svg?v=showcase-v17" width="88" height="58" alt="" aria-hidden="true"></header>'+
+ '<div class="cf-quick-links" aria-label="Atalhos"><button type="button" data-action="nav" data-view="connect"><span class="cf-quick-icon">'+ico('bolt',19)+'</span><span><strong>Ao vivo</strong><small>Uma nova conexão</small></span>'+ico('chevron',14)+'</button><button type="button" data-action="nav" data-view="online"><span class="cf-quick-icon">'+ico('users',19)+'</span><span><strong>Descobrir</strong><small>Pessoas online</small></span>'+ico('chevron',14)+'</button></div>'+
+ '<section class="cn-feed-composer"><form id="postCreateForm" class="post-compose cn-inline-post"><div class="cf-compose-top">'+avatar(state.profile)+'<div class="cf-compose-field"><label class="sr-only" for="connectPostBody">Escreva uma publicação</label><textarea id="connectPostBody" name="body" minlength="3" maxlength="900" rows="2" placeholder="O que você quer compartilhar?">'+esc(feedDraft)+'</textarea></div></div>'+
+ '<div class="cf-compose-media">'+(window.entreMedia?.composeMarkup?.()||'')+'</div><div class="post-compose-footer"><span id="connectFeedCount" class="cf-compose-count">'+feedDraft.length+'/900</span><button type="submit" class="ui-btn btn-dark btn-sm" '+(feedPublishing?'disabled':'')+'>'+ (feedPublishing?'Publicando…':'Publicar')+' '+ico('arrow',15)+'</button></div></form></section>'+
+ '<div class="cf-feed-header"><div><small>FEED</small><h3>Publicações recentes</h3></div><button type="button" class="cf-refresh" data-action="postsRefresh" aria-label="Atualizar publicações" title="Atualizar" '+(data.postLoading?'disabled':'')+'>'+ico('refresh',18)+'</button></div>'+
+ (rows.length?rows.map(p=>{
   const person={id:p.author_id,display_name:p.author_name,avatar_path:p.author_avatar,avatar_uploaded_at:p.author_avatar_uploaded_at};
-  const own=p.author_id===state.session?.user?.id;
-  return '<article class="post-card '+(p.premium?'premium-surface':'')+'"><div class="post-card-head">'+avatar(person)+
-  '<div class="post-author"><strong>'+profileName(p.author_id,p.author_name)+badge(person)+'</strong><small>'+new Date(p.created_at).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+(p.edited_at?' · Editada':'')+'</small></div>'+
-  (own?'<button type="button" class="post-remove" data-action="postEdit" data-id="'+Number(p.id)+'" aria-label="Editar publicação">'+ico('edit',16)+'</button><button type="button" class="post-remove" data-action="postDelete" data-id="'+Number(p.id)+'" aria-label="Apagar meu post">'+ico('trash',16)+'</button>':'')+'</div>'+
-  (p.body?'<p class="post-body">'+esc(p.body)+'</p>':'')+(window.entreMedia?.postMarkup?.(p)||'')+'<div class="post-interactions"><button type="button" class="'+(p.liked?'liked':'')+'" data-action="postLike" data-id="'+Number(p.id)+'">'+ico('heart',17)+' '+Number(p.likes||0)+' curtidas</button><span>'+ico('chat',15)+' '+(p.comments?.length||0)+' comentários recentes</span></div>'+
-  '<button type="button" class="post-comments-launch" data-action="postCommentsOpen" data-id="'+Number(p.id)+'">'+ico('chat',18)+' <span>Ver comentários e participar</span>'+ico('arrow',16)+'</button></article>';
- }).join(''):'<div class="social-empty"><h3>Nenhuma publicação ainda.</h3><p>Compartilhe sua primeira publicação.</p></div>')+
- (data.postMore?'<button class="ui-btn btn-outline" data-action="postsMore">Carregar mais posts</button>':'')+'</div></section>'+commentsOverlay();
+  const own=p.author_id===state.session?.user?.id,liked=Boolean(p.liked),count=Math.max(0,Number(p.likes)||0);
+  return '<article class="post-card cf-post '+(p.premium?'premium-surface':'')+'" data-feed-post="'+Number(p.id)+'"><div class="post-card-head">'+avatar(person)+
+  '<div class="post-author"><strong>'+profileName(p.author_id,p.author_name)+badge(person)+'</strong><small title="'+esc(new Date(p.created_at).toLocaleString('pt-BR'))+'">'+esc(feedTime(p.created_at))+(p.edited_at?' · Editada':'')+'</small></div>'+
+  (own?'<details class="cf-post-menu"><summary aria-label="Opções da publicação"><span aria-hidden="true">···</span></summary><div class="cf-post-menu-pop"><button type="button" data-action="postEdit" data-id="'+Number(p.id)+'">'+ico('edit',16)+' Editar</button><button type="button" data-action="postDelete" data-id="'+Number(p.id)+'">'+ico('trash',16)+' Excluir</button></div></details>':'')+'</div>'+
+  (p.body?'<p class="post-body">'+esc(p.body)+'</p>':'')+(window.entreMedia?.postMarkup?.(p)||'')+
+  '<div class="post-interactions cf-post-actions"><button type="button" class="'+(liked?'liked':'')+'" aria-pressed="'+liked+'" aria-label="'+(liked?'Remover curtida':'Curtir publicação')+'" data-action="postLike" data-id="'+Number(p.id)+'">'+ico('heart',20)+' <span>'+count+' '+(count===1?'curtida':'curtidas')+'</span></button><button type="button" class="post-comments-launch" data-action="postCommentsOpen" data-id="'+Number(p.id)+'">'+ico('chat',20)+' <span>Comentar</span></button></div></article>';
+ }).join(''):(data.postLoading||!feedLoaded&&!feedError?'<div class="cf-feed-empty" role="status"><span class="cf-empty-icon">'+ico('refresh',25)+'</span><h3>Carregando publicações…</h3><p>Preparando seu feed.</p></div>':feedError?'<div class="cf-feed-empty" role="status"><span class="cf-empty-icon">'+ico('refresh',25)+'</span><h3>Não foi possível atualizar</h3><p>Tente novamente.</p><button type="button" data-action="postsRefresh">Atualizar feed</button></div>':'<div class="cf-feed-empty"><span class="cf-empty-icon">'+ico('chat',28)+'</span><h3>Toda conversa começa com um oi.</h3><p>Seja a primeira pessoa a compartilhar um momento com a comunidade.</p><button type="button" data-action="feedComposeFocus">Criar publicação '+ico('arrow',15)+'</button></div>'))+
+ (data.postMore?'<button type="button" class="cf-load-more" data-action="postsMore">Ver mais publicações '+ico('chevron',16)+'</button>':'')+'</div></section>'+commentsOverlay();
 }
 async function postAction(a,btn){
  const id=Number(btn.dataset.id);
+ if(a==='postsRefresh'){await loadPosts();return true;}
+ if(a==='feedComposeFocus'){document.getElementById('connectPostBody')?.focus();return true;}
  if(a==='postCommentsOpen'){
   data.commentsPost=id;data.commentsRows=[];data.commentsError='';data.commentsHasMore=false;
   renderView();await loadCommentPage();document.getElementById('commentDialogInput')?.focus();return true;
@@ -142,17 +163,18 @@ async function postAction(a,btn){
   if(!confirm('Apagar este comentário definitivamente?'))return true;
   await call('entre_post_comment_delete',{_comment:id});await loadCommentPage();await loadPosts();toast('Comentário apagado.',false,'delete');return true;
  }
- if(a==='postLike'){await call('entre_post_like',{_post:id});window.connectSound?.play?.('like');await loadPosts();return true;}
+ if(a==='postLike'){if(btn.disabled)return true;btn.disabled=true;try{await call('entre_post_like',{_post:id});window.connectSound?.play?.('like');await loadPosts();}finally{if(btn.isConnected)btn.disabled=false;}return true;}
  return false;
 }
 async function postForm(form){
  const body=form.elements.body?.value?.trim();
  if(form.id==='postCreateForm'){
-  if(window.entreMedia?.pending?.()){
-   await window.entreMedia.publish(body||'');await loadPosts();return true;
-  }
-  if(!body||body.length<3||body.length>900)throw Error('Post precisa ter de 3 a 900 caracteres.');
-  await call('entre_post_create',{_body:body});await loadPosts();toast('Seu post foi publicado.',false,'publish');return true;
+  if(feedPublishing)return true;const uid=state.session?.user?.id;feedPublishing=true;const button=form.querySelector('[type=submit]');if(button)button.disabled=true;
+  try{
+   if(window.entreMedia?.pending?.())await window.entreMedia.publish(body||'');
+   else{if(!body||body.length<3||body.length>900)throw Error('Post precisa ter de 3 a 900 caracteres.');await call('entre_post_create',{_body:body});toast('Seu post foi publicado.',false,'publish');}
+   if(state.session?.user?.id===uid){feedDraft='';const field=document.getElementById('connectPostBody');if(field)field.value='';await loadPosts();}return true;
+  }finally{feedPublishing=false;if(state.session?.user?.id===uid&&state.view==='posts')renderView();else if(button?.isConnected)button.disabled=false;}
  }
  if(form.classList.contains('post-comment-edit-form')){
   if(!body||body.length<2||body.length>420)throw Error('Comentário precisa ter de 2 a 420 caracteres.');
