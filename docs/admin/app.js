@@ -232,6 +232,13 @@ async function load(view){
 }
 async function navigate(view){if(!sections.some(function(s){return s[0]===view;}))return;state.moreOpen=false;state.view=view;renderView();await load(view);}
 function modal(content){document.getElementById("modal-root").innerHTML='<div class="modal-back" id="modal-back"><div class="modal" role="dialog" aria-modal="true" aria-label="Ação administrativa">'+content+'</div></div>';var el=document.querySelector(".modal input,.modal textarea,.modal select");if(el)el.focus();}
+async function openSupportThread(id){
+ const ticket=state.supportTickets.find(t=>Number(t.id)===id);if(!ticket||!state.verified)return;
+ state.modal={type:"support-thread",data:ticket};
+ modal('<h2>Protocolo #'+id+'</h2><p>'+e(ticket.subject)+'</p><div class="cp-thread-list" id="adminSupportThread">Carregando…</div><form id="support-reply-form"><label for="supportReply">Resposta ao usuário</label><textarea id="supportReply" name="body" rows="4" required maxlength="4000"></textarea><label><input type="checkbox" name="resolve"> Marcar como resolvido</label><button type="submit" class="btn-main">Enviar resposta</button></form><button type="button" class="small-btn" data-action="close-modal">Fechar</button>');
+ await refreshSupportThread(id);
+}
+async function refreshSupportThread(id){const rows=await rpc("entre_support_thread",{_ticket:id});if(state.modal?.type!=="support-thread"||Number(state.modal.data.id)!==id)return;const root=document.getElementById("adminSupportThread");if(root){root.innerHTML=rows.map(x=>'<article><strong>'+(x.from_staff?"Equipe CONNECT":"Usuário")+'</strong><p>'+e(x.body)+'</p><small>'+fmt(x.created_at)+'</small></article>').join("")||'<p>Nenhuma resposta ainda.</p>';root.scrollTop=root.scrollHeight;}}
 function closeModal(){state.modal=null;var el=document.getElementById("modal-root");if(el)el.innerHTML="";}
 function openUser(id){
  var u=(state.users.rows||[]).find(function(x){return x.id===id;});if(!u)return;
@@ -279,6 +286,7 @@ document.addEventListener("click",async function(ev){
  if(a==="admin-more"){state.moreOpen=!state.moreOpen;var m=document.getElementById("adminMoreMenu");if(m)m.hidden=!state.moreOpen;var t=document.querySelector(".admin-more-button");if(t)t.setAttribute("aria-expanded",String(state.moreOpen));return;}
  if(a==="close-modal"){closeModal();return;}
  if(a==="refresh"){await load(state.view);toast("Dados atualizados.");return;}
+ if(a==="supportThread"){try{await openSupportThread(Number(n.dataset.id));}catch(err){toast(errorText(err),true);}return;}
  if(a==="evidenceOpen"){
   try{var signed=await db.storage.from("entre-support-evidence").createSignedUrl(n.dataset.path,300);if(signed.error)throw signed.error;if(signed.data?.signedUrl)window.open(signed.data.signedUrl,"_blank","noopener,noreferrer");else toast("Prova indisponível.",true);}catch(err){toast(errorText(err),true);}return;
  }
@@ -331,7 +339,8 @@ document.addEventListener("submit",async function(ev){
  if(form.id==="release-form"){await saveRelease(Boolean(state.settings?.maintenance_enabled),true);return;}if(state.busy)return;
  state.busy=true;var btn=form.querySelector('[type="submit"]');if(btn)btn.disabled=true;
  try{
-  if(form.id==="premium-recurring-settings-form"){
+  if(form.id==="support-reply-form"&&state.modal?.type==="support-thread"){const id=Number(state.modal.data.id);await rpc("entre_support_reply",{_ticket:id,_body:form.elements.body.value,_resolve:form.elements.resolve.checked});form.reset();await refreshSupportThread(id);state.supportTickets=await rpc("entre_admin_support_tickets");toast("Resposta enviada ao protocolo.");}
+  else if(form.id==="premium-recurring-settings-form"){
    var recurring=await rpc("entre_admin_premium_recurring_toggle",{_enabled:form.elements.enabled.checked});state.recurringConfig=recurring;toast("Recorrência atualizada. Verifique webhooks e credenciais antes de ativar.");await load("premium");
   }else if(form.id==="premium-config-form"){
    var config=await rpc("entre_admin_premium_config",window.entreAdminExtras.priceParams(form));state.premiumConfig=config;toast("Configuração Premium salva.");await load("premium");
@@ -376,8 +385,9 @@ async function boot(){
   var allowed=await rpc("entre_admin_check");
   if(allowed!==true){gate(true);return;}
   state.verified=true;shell();await load("overview");
+ db.channel("admin-support-replies").on("postgres_changes",{event:"INSERT",schema:"public",table:"entre_support_replies"},async p=>{if(!state.verified||state.view!=="support")return;try{if(state.modal?.type==="support-thread")await refreshSupportThread(Number(state.modal.data.id));else if(!state.loading&&!state.busy)await load("support");}catch(err){console.warn(errorText(err));}}).subscribe();
   db.auth.onAuthStateChange(function(ev){if(ev==="SIGNED_OUT"){state.user=null;state.verified=false;gate(false);}});
-  setInterval(function(){if(state.verified&&document.visibilityState==="visible"&&state.view==="overview"&&!state.loading&&Date.now()-lastLoad>28000){load("overview");}},30000);
+  setInterval(function(){if(state.verified&&document.visibilityState==="visible"&&["overview","support"].includes(state.view)&&!state.modal&&!state.busy&&!state.loading&&Date.now()-lastLoad>28000){load(state.view);}},30000);
  }catch(err){console.error("entre admin boot",err);gate(false);toast(errorText(err),true);}
 }
 boot();
