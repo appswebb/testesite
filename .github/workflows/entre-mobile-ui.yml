@@ -127,6 +127,7 @@ jobs:
           node --check tests/avatar-mobile-audit.cjs
           failures=0
           run_check() { "$@" || { echo "::error::Failed: $*"; failures=1; }; }
+          run_check node tests/admin-dialog-buttons.cjs
           run_check node --test tests/social-ui-regression.test.mjs
           run_check node --test tests/usernames-regression.test.mjs
           run_check node --test tests/connect-app-vnext.test.mjs
