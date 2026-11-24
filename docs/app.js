@@ -58,7 +58,7 @@ const avatar=(person,size='')=>{
   return '<span class="avatar '+esc(size)+extra+'"'+attrs+'><img loading="eager" decoding="async" referrerpolicy="no-referrer" data-avatar-path="'+esc(person.avatar_path)+'" src="'+esc(url.url)+'" alt="Foto de '+esc(person?.display_name||'perfil')+'">'+mark+'</span>';
  return '<span class="avatar '+esc(size)+extra+'"'+attrs+' style="background:'+colorFor(person?.id)+'">'+esc(initials(person?.display_name))+mark+'</span>';
 };
-const brand=()=>`<a href="#" class="cn-brand" data-action="logo" aria-label="CONNECT início"><img src="./connect-glass.svg?v=3" alt="" width="49" height="26"><span>CONNECT</span></a>`;
+const brand=()=>`<a href="#" class="cn-brand" data-action="logo" aria-label="CONNECT início"><img src="./connect-glass.svg?v=connect-orbit-v8" alt="" width="49" height="26"><span>CONNECT</span></a>`;
 const fmtTime=date=>new Date(date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 const fmtDate=date=>new Date(date).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
 let toastTimer;
@@ -76,7 +76,7 @@ function infoError(e){
  if(/Failed to fetch|NetworkError|network request failed/i.test(m))return 'Sem conexão com o serviço de login. Confira sua internet e tente de novo.';
  return m;
 }
-function landing(){return `
+function landing(){if(window.connectShowcase?.render)return window.connectShowcase.render(brand,ico);return `
 <header class="cn-public-header cn-public-v7"><div class="cn-wrap cn-public-bar">${brand()}<nav><a href="#como-funciona">Como funciona</a><a href="#experiencia">Experiência</a></nav><div class="cn-cta"><button type="button" class="cn-outline" data-action="login">Entrar</button><button type="button" class="cn-primary" data-action="signup">Criar conta</button></div></div></header>
 <main class="cn-landing cn-public-v7"><section class="cn-wrap cn-public-hero"><div class="cn-copy"><span class="cn-public-tag"><i></i> CONHEÇA. CONVERSE. CONECTE-SE.</span><h1>Um encontro.<br>Infinitas <em>possibilidades.</em></h1><p>Conheça alguém novo em cinco minutos, por texto ou vídeo. Continue se a conexão for dos dois.</p><div class="cn-cta"><button type="button" class="cn-primary" data-action="signup">Começar agora ${ico('arrow',18)}</button></div><small>18+ · Encontros privados · Escolha mútua</small></div><div class="cn-art cn-art-fade"><img src="./connect-hero-fade.avif?v=1" width="1200" height="900" fetchpriority="high" alt="Duas pessoas conectadas por uma fita tridimensional"></div></section>
 <section id="como-funciona" class="cn-wrap cn-how-v7"><div class="cn-section-title"><small>COMO FUNCIONA</small><h2>Três passos. Uma conexão.</h2></div><div class="cn-how-grid"><article><b>01</b><span>${ico('chat',30)}</span><h3>Escolha</h3><p>Texto ou vídeo.</p></article><article><b>02</b><span>${ico('clock',30)}</span><h3>Converse</h3><p>Cinco minutos para se conhecer.</p></article><article><b>03</b><span>${ico('heart',30)}</span><h3>Conecte-se</h3><p>Os dois decidem se continuam.</p></article></div></section>
@@ -485,7 +485,7 @@ function connectView(){
  const filters=Object.entries({any:'Todos',woman:'Mulheres',man:'Homens',nonbinary:'Não binárias'}).map(([k,v])=>
   '<button type="button" '+(waiting?'disabled':'')+' data-action="'+(!isPremium&&k!=='any'?'upgradeFilter':'filter')+'" data-value="'+k+'" class="chip '+(state.preference===k?'active':'')+(!isPremium&&k!=='any'?' chip-locked':'')+'">'+(k!=='any'&&!isPremium?ico('lock',12):'')+v+'</button>').join('');
  return '<section class="connect-app-screen connect-action-first" aria-label="Encontros ao vivo">'+
-  '<div class="live-app-card cn-unified-match"><div class="cn-match-art" aria-hidden="true"><span class="cn-match-orbit"></span><span class="cn-match-node cn-match-left">'+ico('user',26)+'</span><img src="./connect-glass.svg" alt="" width="220" height="116"><span class="cn-match-node cn-match-right">'+ico('user',26)+'</span><span class="cn-match-time">'+ico('clock',14)+' 5 min</span></div>'+
+  '<div class="live-app-card cn-unified-match"><div class="cn-match-art" aria-hidden="true"><span class="cn-match-orbit"></span><span class="cn-match-node cn-match-left">'+ico('user',26)+'</span><img src="./connect-glass.svg?v=connect-orbit-v8" alt="" width="220" height="116"><span class="cn-match-node cn-match-right">'+ico('user',26)+'</span><span class="cn-match-time">'+ico('clock',14)+' 5 min</span></div>'+
   '<h3 class="connect-mode-label">Como quer conversar?</h3>'+
   '<div class="live-modes"><button type="button" data-action="liveMode" data-value="chat" aria-pressed="'+(mode==='chat')+'" class="live-mode '+(mode==='chat'?'selected':'')+'" '+(waiting?'disabled':'')+'>'+ico('chat',24)+'<span><strong>Texto</strong><small>Sem câmera</small></span>'+(mode==='chat'?ico('check',20):'')+'</button>'+
   '<button type="button" data-action="liveMode" data-value="video" aria-pressed="'+(mode==='video')+'" class="live-mode '+(mode==='video'?'selected':'')+'" '+(waiting?'disabled':'')+'>'+ico('camera',24)+'<span><strong>Vídeo</strong><small>Com câmera</small></span>'+(mode==='video'?ico('check',20):'')+'</button></div>'+
@@ -858,7 +858,7 @@ function maintenanceView(){
  const preview=maintenanceIsPreview();
  return '<main class="maintenance-screen" id="maintenance-screen" role="main">'
   +'<div class="maint-grain" aria-hidden="true"></div><div class="maint-halo maint-halo-one" aria-hidden="true"></div><div class="maint-halo maint-halo-two" aria-hidden="true"></div>'
-  +'<header class="maint-header"><div class="maint-brand-lockup" aria-label="CONNECT"><img class="maint-brand-symbol" src="./connect-glass.svg?v=3" width="64" height="40" alt=""><span class="maint-brand-name">CONNECT</span></div><span class="maint-top-label">UM NOVO CAPÍTULO</span></header>'
+  +'<header class="maint-header"><div class="maint-brand-lockup" aria-label="CONNECT"><img class="maint-brand-symbol" src="./connect-glass.svg?v=connect-orbit-v8" width="64" height="40" alt=""><span class="maint-brand-name">CONNECT</span></div><span class="maint-top-label">UM NOVO CAPÍTULO</span></header>'
   +'<div class="maint-container"><div class="maint-copy"><div class="maint-eyebrow"><span class="maint-beat"></span> '+(preview?'VISUALIZAÇÃO DA TELA':'MODO ATUALIZAÇÃO ATIVO')+'</div>'
   +'<h1 id="maintenance-title">'+title+'</h1><p class="maint-lead" id="maintenance-message">'+message+'</p>'
   +'<div class="maint-promise"><span class="maint-promise-glyph">✳</span><span>Estamos cuidando de cada detalhe para deixar seus próximos cinco minutos ainda mais especiais.</span></div>'

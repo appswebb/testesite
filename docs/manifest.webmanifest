@@ -8,18 +8,18 @@
   "start_url": "./?installed=1",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#191329",
-  "theme_color": "#191329",
+  "background_color": "#15171b",
+  "theme_color": "#15171b",
   "orientation": "any",
   "icons": [
     {
-      "src": "./connect-app-icon.svg?v=3",
+      "src": "./connect-app-icon.svg?v=connect-orbit-v8",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "./connect-app-icon.svg?v=3",
+      "src": "./connect-app-icon.svg?v=connect-orbit-v8",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "maskable"
