@@ -44,7 +44,7 @@ function bulletinCard(b){
  '<small class="bulletin-published">Publicado em '+fmt(b.created_at)+' · expira em '+fmt(b.expires_at)+'</small></article>';
 }
 function bulletinsView(){
- return heading('AVISOS DA ADMINISTRAÇÃO','Avisos <em>e enquetes.</em>','Comunicados oficiais, espaço para responder e enquetes que precisam de um voto. Tudo fica disponível por 24 horas.')+
+ return heading('AVISOS DA ADMINISTRAÇÃO','Avisos <em>e enquetes.</em>','Comunicados e enquetes da administração.')+
  (d.bulletinError?'<div class="bulletin-error" role="status">'+esc(d.bulletinError)+' <button type="button" data-action="bulletinsRefresh">Tentar novamente</button></div>':'')+
  (!d.bulletinLoaded?'<div class="social-empty"><h3>Carregando avisos…</h3><p>Verificando as publicações ativas.</p></div>':
  d.bulletins.length?'<div class="bulletin-feed">'+d.bulletins.filter(active).map(bulletinCard).join('')+'</div>':
@@ -57,7 +57,7 @@ function pollGateView(){
  '<div class="bulletin-gate-card"><div class="bulletin-gate-brand">entre<span>.</span></div>'+
  '<span class="notice-label">'+ico('megaphone',16)+' ENQUETE OFICIAL · VOTO OBRIGATÓRIO</span>'+
  '<h2 id="bulletinGateTitle">'+esc(poll.title)+'</h2>'+
- (poll.body?'<p>'+esc(poll.body)+'</p>':'<p>Escolha uma opção para continuar usando o entre.</p>')+
+ (poll.body?'<p>'+esc(poll.body)+'</p>':'<p>Escolha uma opção para continuar usando o CONNECT.</p>')+
  '<fieldset class="poll-choices" id="pollChoices"><legend>Escolha uma opção</legend>'+
  safeOptions(poll).map((opt,i)=>'<label class="poll-choice"><input type="radio" name="required-poll-choice" value="'+i+'"><span>'+esc(opt)+'</span></label>').join('')+
  '</fieldset><p class="poll-validation" id="pollValidation" aria-live="polite"></p>'+

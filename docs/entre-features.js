@@ -190,7 +190,7 @@ function webPaymentStatusMarkup(){
 }
 function premiumView(){
  const active=data.premium?.active,enabled=data.premium?.checkout_enabled&&price()&&!data.checkoutBusy;
- return heading('ASSINATURAS','Uma experiência <em>mais completa.</em>','Benefícios, valor e status da sua assinatura em um só lugar.')+
+ return heading('ASSINATURAS','Uma experiência <em>mais completa.</em>','Gerencie seu plano e confira os benefícios.')+
  '<section class="premium-checkout"><div class="premium-pitch"><span class="premium-label">✦ PLANO PREMIUM</span><h3>Mais liberdade para<br><em>se conectar.</em></h3><p>Recursos extras dentro da experiência, sem perder o foco nas conversas reais.</p>'+
  '<div class="premium-perks"><div>'+ico('check',19)+' <span>Filtro Premium de gênero no Ao Vivo</span></div>'+
  '<div>'+ico('star',19)+' <span>Selo de destaque no perfil</span></div>'+
@@ -304,7 +304,7 @@ setInterval(()=>{if(state.view==='premium'&&document.visibilityState==='visible'
  data.webPayment?.payment_id&&['pending','in_process'].includes(data.webPayment.status)&&!data.webChecking)
  void verifyPremium().catch(e=>console.warn('Payment verification',e));},12000);
 function supportView(){
- return heading('CUIDAR DO CONNECT','Central de <em>suporte.</em>','Relate problemas do site ou da sua conta. Imagens são opcionais e ajudam na análise, mas nunca são obrigatórias.')+
+ return heading('CUIDAR DO CONNECT','Central de <em>suporte.</em>','Envie um relato à equipe. Anexos são opcionais.')+
  '<div class="support-access"><div class="support-access-card"><span>SUPORTE PADRÃO</span><h3>Problemas com o site, conta ou pagamento</h3><p>Envie um protocolo para a equipe. O envio para o e-mail de suporte ocorre quando a integração está configurada.</p><a href="#supportTicketForm" class="ui-btn btn-outline">Abrir chamado</a></div><div class="support-access-card premium"><span>SUPORTE PREMIUM</span><h3>WhatsApp direto e prioritário</h3><p>Exclusivo para assinantes com pagamento confirmado.</p>'+(data.premium?.active?'<button type="button" class="ui-btn btn-dark" data-action="premiumWhatsapp">Abrir WhatsApp Premium</button>':'<button type="button" class="ui-btn btn-outline" data-action="nav" data-view="premium">Conhecer Premium</button>')+'</div></div>'+ 
   '<div class="support-layout"><form class="support-ticket-form" id="supportTicketForm">'+ 
  '<div class="field"><label for="supportCategory">O que aconteceu?</label><select name="category" id="supportCategory" required><option value="bug">Erro no site ou aplicativo</option><option value="account">Problema na conta</option><option value="other">Pagamento ou assinatura</option><option value="security">Segurança e privacidade</option><option value="other">Outra dificuldade</option></select></div>'+

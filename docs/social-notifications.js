@@ -7,7 +7,7 @@ function summary(n){
 }
 function notificationsView(){
  const d=api.data,hasItems=d.notifications.length>0;
- return heading('ATIVIDADE ENTRE PESSOAS','Notificações<em>.</em>','Pedidos, mensagens, encontros e avisos oficiais reunidos em um só lugar.')+
+ return heading('ATIVIDADE ENTRE PESSOAS','Notificações<em>.</em>','Pedidos, mensagens e avisos.')+
  '<div class="notification-controls"><strong>'+d.unread+' não lidas</strong>'+
  '<div><button type="button" class="ui-btn btn-outline btn-sm" data-action="notificationsRead"'+(!d.unread?' disabled':'')+'>Marcar como lidas</button>'+
  '<button type="button" class="ui-btn btn-quiet btn-sm notification-clear-all" data-action="notificationsClear"'+(!hasItems?' disabled':'')+'>Limpar tudo</button>'+

@@ -1,13 +1,13 @@
 
 window.entreSocial=(function(){
 'use strict';
-const data={presence:{visible:false,allow_requests:false},online:[],offset:0,hasMore:false,loaded:false,busy:false,follows:[],chats:[],prefs:{},notifications:[],unread:0,notiMore:false,notiBusy:false,filter:'all',started:false,hasEarlier:false};
+const data={presence:{visible:false,allow_requests:false},online:[],offset:0,hasMore:false,loaded:false,onlineError:false,busy:false,follows:[],chats:[],prefs:{},notifications:[],unread:0,notiMore:false,notiBusy:false,filter:'all',started:false,hasEarlier:false};
 async function rpc(name,params){const r=await db.rpc(name,params||{});if(r.error)throw r.error;return r.data;}
 const pref=p=>data.prefs[p.id]||{folder:p.origin==='online'?'online':'live',pinned:false,archived_at:null};
 const isHidden=id=>Boolean(data.prefs[id]?.hidden_at);
 async function loadPrefs(){try{const rows=await rpc('entre_conversation_list');data.prefs={};for(const p of(Array.isArray(rows)?rows:[])){if(p?.pair_id)data.prefs[p.pair_id]=p;}}catch(e){console.warn('Prefs',e);}}
 async function loadOnline(reset=false){
- if(data.busy)return;data.busy=true;
+ if(data.busy)return;data.busy=true;data.onlineError=false;
  try{
   const offset=reset?0:data.offset+data.online.length;if(offset>240){data.hasMore=false;return;}
   const result=await rpc('entre_online_page',{_offset:offset,_limit:12});
@@ -19,7 +19,7 @@ async function loadOnline(reset=false){
    if(data.online.length>36){data.online=data.online.slice(-36);data.offset=offset+people.length-data.online.length;}
   }
   data.hasMore=Boolean(result?.has_more);data.loaded=true;
- }catch(e){data.loaded=true;console.warn('Online page',e);}finally{data.busy=false;}
+ }catch(e){data.loaded=true;data.onlineError=true;console.warn('Online page',e);}finally{data.busy=false;}
 }
 async function refreshInbox(){try{const r=await rpc('entre_social_inbox');data.follows=Array.isArray(r?.follows)?r.follows:[];data.chats=Array.isArray(r?.chats)?r.chats:[];if(state.view==='online')renderView();}catch(e){console.warn('Inbox',e);}}
 async function refreshNotifications(before=null){
@@ -48,6 +48,6 @@ async function init(){
  document.addEventListener('visibilitychange',async()=>{if(document.hidden||!state.session?.user||state.suspension)return;if(data.presence.visible){try{await rpc('entre_online_ping');}catch(e){}}await refreshNotifications();await window.entreSocial?.refreshBulletins?.(state.view!=='avisos');});
  document.addEventListener('change',async e=>{const select=e.target.closest('[data-social-folder]');if(!select)return;try{await updateConversation(select.dataset.socialFolder,{_folder:select.value});toast('Conversa movida.');renderView();}catch(error){toast(infoError(error),true);}});
 }
-async function enter(view){if(!state.session?.user||!state.profile)return;if(view==='online')await Promise.allSettled([loadOnline(true),refreshInbox()]);if(view==='home')await loadOnline(true);if(view==='notifications')await Promise.allSettled([refreshNotifications(),window.entreSocial?.refreshBulletins?.(true)]);if(view==='conversations')await loadPrefs();if(view==='avisos')await window.entreSocial?.refreshBulletins?.(true);renderView();}
+async function enter(view){if(!state.session?.user||!state.profile)return;if(view==='online')await Promise.allSettled([loadOnline(true),refreshInbox()]);if(view==='home')await Promise.allSettled([loadOnline(true),loadPrefs(),refreshInbox(),loadPairs()]);if(view==='notifications')await Promise.allSettled([refreshNotifications(),window.entreSocial?.refreshBulletins?.(true)]);if(view==='conversations')await loadPrefs();if(view==='avisos')await window.entreSocial?.refreshBulletins?.(true);renderView();}
 return{data,rpc,pref,isHidden,init,enter,loadOnline,loadPrefs,refreshInbox,refreshNotifications,updateConversation,isArchived:id=>Boolean(data.prefs[id]?.archived_at)};
 })();
