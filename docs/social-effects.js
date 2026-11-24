@@ -9,12 +9,7 @@ api.showMatchAnimation=function(peer){
  el.className='connect-match-effect';el.innerHTML='<div class="connect-match-core"><img src="./connect-glass.svg?v=clean-v16" alt=""><strong>Vocês se encontraram.</strong><small>Seu encontro de cinco minutos começou.</small></div>';
  document.body.append(el);setTimeout(()=>el.remove(),1450);
 };
-api.showEndAnimation=function(){
- document.getElementById('entre-ended')?.remove();
- const el=document.createElement('div');el.id='entre-ended';el.className='ended-toast';
- el.setAttribute('role','status');el.innerHTML='✓ <span><strong>Encontro encerrado.</strong><small>O chat temporário foi apagado.</small></span>';
- document.body.append(el);setTimeout(()=>el.remove(),1850);
-};
+api.showEndAnimation=function(){toast('Encontro encerrado.',false,'end');};
 
 api.chatToolbar=function(pair){
  if(pair.status!=='connected')return '<div class="chat-origin-bar"><div><strong>'+ico('clock',14)+' Chat ao vivo · temporário</strong><small>Sem salvar, mover ou arquivar. Apenas um match dos dois libera uma conversa permanente.</small></div></div>';

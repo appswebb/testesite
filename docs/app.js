@@ -65,7 +65,7 @@ const fmtDate=date=>new Date(date).toLocaleDateString('pt-BR',{day:'2-digit',mon
 let toastTimer;
 function toast(message,error=false,sound=null){if(error)window.connectSound?.play?.('error');else if(sound)window.connectSound?.play?.(sound);const el=document.getElementById('toast');el.textContent=message;el.style.background=error?'#a64c40':'#272a25';el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),4700)}
 const state={mode:'landing',view:'posts',isAdmin:false,siteSettings:null,session:null,profile:null,avatarUrls:{},avatarPendingFile:null,avatarPreviewUrl:null,pendingCompressedAvatarUrl:null,profileChannel:null,pairs:[],pair:null,peer:null,messages:[],searching:false,preference:'any',activeTab:'all',busy:false,roomReady:false,channel:null,searchLoop:null,timerLoop:null,closedOnce:null,modal:null,signup:null,motionOff:localStorage.getItem('entre.motionOff')==='1',notice:null,suspension:null,liveMode:'chat',liveFiltersOpen:false,profileMenuOpen:false,motionForce:localStorage.getItem('entre.motionForce')==='1',motionLevel:(['light','medium','high'].includes(localStorage.getItem('entre.motionLevel'))?localStorage.getItem('entre.motionLevel'):'medium'),encounterChatMin:false};
-function applyMotion(){const level=['light','medium','high'].includes(state.motionLevel)?state.motionLevel:'medium';document.documentElement.dataset.motionLevel=level;document.body.classList.toggle('motion-off',state.motionOff);document.body.classList.toggle('motion-force',!state.motionOff&&(true));}
+function applyMotion(){const level=['light','medium','high'].includes(state.motionLevel)?state.motionLevel:'medium';document.documentElement.dataset.motionLevel=level;document.body.classList.toggle('motion-off',state.motionOff);document.body.classList.toggle('motion-force',!state.motionOff);}
 function infoError(e){
  const m=String(e?.message||e||'Não foi possível concluir. Tente novamente.');
  if(/invalid login credentials|invalid_credentials/i.test(m))return 'E-mail ou senha incorretos.';
@@ -443,7 +443,7 @@ function encounterMiniMarkup(){
 function compactEncounterView(pair,peer,ownVote,otherVote){
  const video=pair.mode==='video',chatOpen=!video||state.encounterChatMin===false;
  const voteText=ownVote===true?'Aguardando a outra pessoa':otherVote===true?'A outra pessoa quer continuar':'Continuar após o encontro?';
- const decision=ownVote===true?'<span class="ce-vote-wait">'+ico('check',16)+' '+voteText+'</span>':'<span class="ce-vote-label">'+voteText+'</span><div class="ce-vote-buttons"><button type="button" class="ce-control ce-no" data-action="vote" data-value="no" aria-label="Agora não">'+ico('close',17)+'<span>Não</span></button><button type="button" class="ce-control ce-yes" data-action="vote" data-value="yes">'+ico('heart',17)+'<span>Continuar</span></button></div>';
+ const decision=ownVote===true?'<span class="ce-vote-wait">'+ico('check',16)+' '+voteText+'</span>':'<span class="ce-vote-label">'+voteText+'</span><div class="ce-vote-buttons"><button type="button" class="ce-control ce-yes" data-action="vote" data-value="yes">'+ico('heart',17)+'<span>Continuar</span></button></div>';
  return `<section class="ce-session ${video?'ce-video':'ce-text'} ${chatOpen?'ce-chat-open':''}" aria-label="Encontro temporário">
  <header class="ce-head"><div class="ce-person">${avatar(peer)}<div><strong>${esc(peer.display_name)}${peer.age?', '+peer.age:''}</strong><small>${video?'Videochamada':'Chat temporário'}</small></div></div><span class="ce-timer timer-text" aria-label="Tempo restante">05:00</span><button class="ce-control ce-icon" type="button" data-action="nav" data-view="home" title="Minimizar encontro" aria-label="Minimizar encontro"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4H4v4m12 12h4v-4M4 4l6 6m10 10-6-6"/></svg></button><button class="ce-control ce-end ce-icon" type="button" data-action="endpair" aria-label="Encerrar encontro" title="Encerrar encontro">${ico('phone-off',19)}</button></header>
  <div class="ce-workspace">${video?'<div class="ce-stage">'+(window.entreVideo?.markup?.(pair)||'')+'</div>':''}
@@ -669,7 +669,7 @@ async function refreshPair(){
   if(state.channel){db.removeChannel(state.channel);state.channel=null;}
   state.pair=null;state.peer=null;state.messages=[];
   await loadPairs();if(['connect','chat'].includes(state.view))state.view='connect';render();
-  window.connectSound?.play?.('end');
+  toast('Encontro encerrado.',false,'end');
   return;
  }
  if(data.status==='connected'&&prior!=='connected'){window.entreVideo?.cleanup?.();
@@ -704,7 +704,7 @@ function nav(view){
  if(previousView==='rooms'&&view!=='rooms')window.entreRooms?.stop?.();
  if(previousView==='lives'&&view!=='lives'){window.entreLives?.stop?.();if(window.entreLives?.isActive?.())void window.entreLives?.leave?.();}
  if(view!=='connect'){state.liveFiltersOpen=false;document.body.classList.remove('live-filters-open');}
- if(previousView==='premium'&&view!=='premium')void window.entreExtras?.unmountPaymentBrick?.();
+ if(previousView==='premium'&&view!=='premium'){void window.entreExtras?.unmountPaymentBrick?.();void window.entreRecurring?.leave?.();}
  render();
  if(window.entreSocial?.enter&&['online','conversations','avisos','notifications'].includes(view))void window.entreSocial.enter(view);
  if(view==='rooms')void window.entreRooms?.enter?.();

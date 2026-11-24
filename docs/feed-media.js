@@ -7,7 +7,7 @@ const fmtBytes=size=>(size/1024/1024).toFixed(1)+' MB';
 function pending(){return Boolean(media.blob&&media.kind);}
 function composeMarkup(){
  return '<div class="feed-media-tools">'+
- '<label class="feed-add-media" for="postMediaInput">'+ico('camera',16)+' Adicionar mídia'+
+ '<label class="feed-add-media" for="postMediaInput">'+ico('image',18)+' Adicionar mídia'+
  '<input id="postMediaInput" type="file" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm" hidden></label>'+
  (pending()?'<button type="button" class="feed-remove-media" data-action="feedMediaRemove">'+ico('close',15)+' Remover mídia</button>':'')+
  '<small>Foto com recorte · Vídeo MP4/WebM até 25 MB</small></div>'+

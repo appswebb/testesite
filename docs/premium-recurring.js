@@ -90,5 +90,5 @@ document.addEventListener('click',e=>{
  const b=e.target.closest('[data-recurring-action]');if(!b)return;
  void action(b.dataset.recurringAction);
 });
-window.entreRecurring={view,loadStatus,unmount,isOpen:()=>d.open,price};
+window.entreRecurring={view,loadStatus,unmount,isOpen:()=>d.open,price,leave:async()=>{d.open=false;d.error='';await unmount()}};
 })();
