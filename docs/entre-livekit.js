@@ -28,12 +28,10 @@ function attach(){
  const own=document.getElementById('videoSelf'),other=document.getElementById('videoRemote');
  const local=new MediaStream(localTracks());
  if(own) {own.srcObject=local;own.muted=true;own.play().catch(()=>{});}
- if(other){other.srcObject=current.remote;other.muted=false;other.play().catch(()=>status('Toque em Ativar som para ouvir a chamada.'));}
+ if(other&&other.srcObject!==current.remote){other.srcObject=current.remote;window.entreVideo?.applyRemote?.(other);}
  const placeholder=document.getElementById('videoPlaceholder');
  if(placeholder)placeholder.hidden=current.remote.getVideoTracks().length>0;
- const mic=document.getElementById('videoMute'),cam=document.getElementById('videoCamera');
- if(mic){mic.classList.toggle('is-off',!current.mic);mic.setAttribute('aria-pressed',String(!current.mic));mic.title=current.mic?'Silenciar microfone':'Ativar microfone';}
- if(cam){cam.classList.toggle('is-off',!current.camera);cam.setAttribute('aria-pressed',String(!current.camera));cam.title=current.camera?'Desligar câmera':'Ativar câmera';}
+ window.entreVideo?.paintControls?.(current.mic,current.camera);
  status(current.status||'Chamada conectada pelo LiveKit.');
 }
 function cleanup(){
@@ -85,8 +83,8 @@ async function start(pair){
 }
 async function action(type){
  if(!current)return false;
- if(type==='videoMute'){current.mic=!current.mic;await current.room.localParticipant.setMicrophoneEnabled(current.mic);attach();return true;}
- if(type==='videoCamera'){current.camera=!current.camera;await current.room.localParticipant.setCameraEnabled(current.camera);attach();return true;}
+ if(type==='videoMute'){const s=current;if(s.micBusy)return true;s.micBusy=true;try{await s.room.localParticipant.setMicrophoneEnabled(!s.mic);s.mic=!s.mic;}finally{s.micBusy=false;if(current===s)attach()}return true;}
+ if(type==='videoCamera'){const s=current;if(s.cameraBusy)return true;s.cameraBusy=true;try{await s.room.localParticipant.setCameraEnabled(!s.camera);s.camera=!s.camera;}finally{s.cameraBusy=false;if(current===s)attach()}return true;}
  if(type==='videoSound'){const video=document.getElementById('videoRemote');if(video){video.muted=false;await video.play().catch(()=>status('Verifique o volume do dispositivo.'));}return true;}
  if(type==='videoRetry'){const id=state.pair;cleanup();if(id)await window.entreVideo.start(id);return true;}
  return false;

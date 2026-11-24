@@ -3,45 +3,28 @@
 'use strict';
 let session=null;
 const activePair=p=>p?.status==='active'&&p.mode==='video'&&new Date(p.expires_at).getTime()>Date.now();
+const control=(id,action,icon,label,extra='')=>'<button type="button" class="ce-control ce-media-control '+extra+'" id="'+id+'" data-action="'+action+'" aria-label="'+label+'" title="'+label+'">'+ico(icon,19)+'<span>'+label+'</span></button>';
 function markup(pair){
  if(!activePair(pair))return '';
- return `<section class="live-video-panel" aria-label="Vídeo do encontro temporário">
- <div class="live-video-top"><span class="live-video-tag">${ico('camera',15)} VIDEOCHAMADA</span><span class="live-video-note">${ico('lock',13)} Conexão privada entre vocês</span></div>
- <div class="live-video-grid">
-  <div class="video-frame video-remote"><video id="videoRemote" autoplay playsinline></video><div class="video-placeholder" id="videoPlaceholder"><span aria-hidden="true">✦</span><strong>Aguardando conexão de vídeo</strong><small>A câmera da outra pessoa aparece aqui.</small></div><span>Outra pessoa</span></div>
-  <div class="video-frame video-self"><video id="videoSelf" autoplay muted playsinline></video><span>Você</span></div>
- </div>
- <div class="live-video-bottom">
-  <p id="videoConnectionStatus" aria-live="polite">Preparando uma conexão segura…</p>
-  <div class="live-video-controls">
-   <button type="button" class="video-control" data-action="videoMute" id="videoMute" title="Silenciar microfone" aria-label="Silenciar microfone">${ico('mic',19)}<span>Microfone</span></button>
-   <button type="button" class="video-control" data-action="videoCamera" id="videoCamera" title="Desligar câmera" aria-label="Desligar câmera">${ico('camera',19)}<span>Câmera</span></button>
-   <button type="button" class="video-control video-sound" data-action="videoSound" id="videoSound">${ico('volume-2',17)}<span>Ativar som</span></button>
-   <button type="button" class="video-control video-retry" data-action="videoRetry" id="videoRetry">${ico('refresh-cw',16)}<span>Tentar novamente</span></button>
-  </div>
- </div>
- </section>`;
+ return '<div class="ce-video-panel"><div class="ce-video-screen"><video id="videoRemote" autoplay playsinline aria-label="Câmera da outra pessoa"></video><div id="videoPlaceholder" class="ce-video-placeholder">'+ico('camera',30)+'<strong>Conectando vídeo…</strong></div><div class="ce-self"><video id="videoSelf" autoplay muted playsinline aria-label="Sua câmera"></video><span class="ce-self-off" hidden>'+ico('camera',19)+' Câmera desligada</span><small>Você</small></div><span class="ce-live-tag"><i></i> AO VIVO</span></div><div class="ce-video-toolbar">'+control('videoMute','videoMute','mic','Microfone')+control('videoCamera','videoCamera','camera','Câmera')+control('videoSound','videoSound','volume-2','Som')+control('videoRetry','videoRetry','refresh-cw','Reconectar')+'</div><p class="ce-connection" id="videoConnectionStatus" aria-live="polite">Preparando conexão…</p></div>';
 }
 function miniMarkup(pair,peer){
  if(!activePair(pair))return '';
  const name=typeof peer?.display_name==='string'?peer.display_name:'Sua conexão';
- return `<aside class="encounter-floating encounter-floating-video" role="region" aria-label="Videochamada em andamento">
-  <div class="encounter-mini-screen">
-   <video id="videoRemote" autoplay playsinline aria-label="Câmera da outra pessoa"></video>
-   <div class="video-placeholder" id="videoPlaceholder"><span>Conectando vídeo…</span></div>
-   <div class="encounter-mini-self"><video id="videoSelf" autoplay muted playsinline aria-label="Sua câmera"></video></div>
-   <span class="encounter-mini-live"><i aria-hidden="true"></i> AO VIVO</span>
-  </div>
-  <div class="encounter-mini-details"><div><strong>${esc(name)}</strong><small>Termina em <span class="timer-text">05:00</span></small></div>
-   <button type="button" class="encounter-floating-return" data-action="nav" data-view="connect">Voltar ${ico('arrow',14)}</button></div>
-  <div class="encounter-mini-controls"><p id="videoConnectionStatus" aria-live="polite">Chamada em andamento</p>
-   <div><button type="button" class="video-control" id="videoMute" data-action="videoMute" title="Silenciar microfone" aria-label="Silenciar microfone">${ico('mic',16)}</button>
-   <button type="button" class="video-control" id="videoCamera" data-action="videoCamera" title="Desligar câmera" aria-label="Desligar câmera">${ico('camera',16)}</button>
-   <button type="button" class="video-control" id="videoSound" data-action="videoSound" title="Ativar som">${ico('volume-2',16)}</button>
-   <button type="button" class="video-control video-control-end" data-action="endpair" title="Encerrar encontro" aria-label="Encerrar encontro">${ico('phone-off',16)}</button></div>
-  </div>
- </aside>`;
+ return '<aside class="ce-floating encounter-floating-video" data-ce-pair="'+esc(pair.id)+'" role="region" aria-label="Videochamada minimizada"><div class="ce-float-handle" data-ce-drag tabindex="0" role="button" aria-label="Mover janela de vídeo. Use as setas do teclado."><svg width="18" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="8" cy="6" r="1.5"/><circle cx="16" cy="6" r="1.5"/><circle cx="8" cy="12" r="1.5"/><circle cx="16" cy="12" r="1.5"/><circle cx="8" cy="18" r="1.5"/><circle cx="16" cy="18" r="1.5"/></svg><strong>'+esc(name)+'</strong><span class="timer-text">05:00</span></div><div class="ce-mini-video"><video id="videoRemote" autoplay playsinline aria-label="Câmera da outra pessoa"></video><div id="videoPlaceholder" class="ce-video-placeholder">Conectando…</div><div class="ce-mini-self"><video id="videoSelf" autoplay muted playsinline aria-label="Sua câmera"></video><span class="ce-self-off" hidden>'+ico('camera',13)+'</span></div></div><div class="ce-mini-controls">'+control('videoMute','videoMute','mic','Microfone')+control('videoCamera','videoCamera','camera','Câmera')+control('videoSound','videoSound','volume-2','Som')+'<button type="button" class="ce-control ce-end ce-icon" data-action="endpair" aria-label="Encerrar">'+ico('phone-off',16)+'</button></div><button class="ce-float-return" type="button" data-action="nav" data-view="connect">Voltar à chamada '+ico('arrow',15)+'</button><p id="videoConnectionStatus" class="sr-only" aria-live="polite"></p></aside>';
 }
+let soundMuted=false,soundBlocked=false;
+function paintControls(mic,camera){
+ const values=[['videoMute',mic,'Silenciar microfone','Ativar microfone','Microfone','Mudo'],['videoCamera',camera,'Desligar câmera','Ativar câmera','Câmera','Desligada'],['videoSound',!soundMuted&&!soundBlocked,'Silenciar som','Ativar som','Som','Sem som']];
+ for(const [id,on,disable,enable,label,off] of values){const b=document.getElementById(id);if(!b)continue;b.classList.toggle('is-off',!on);b.setAttribute('aria-pressed',String(!on));b.setAttribute('aria-label',on?disable:enable);b.title=on?disable:enable;const t=b.querySelector('span');if(t)t.textContent=on?label:off;}
+ document.querySelectorAll('.ce-self-off').forEach(el=>el.hidden=camera);
+}
+function applyRemote(video){
+ if(!video)return;
+ video.muted=soundMuted;
+ if(!soundMuted)video.play().then(()=>{soundBlocked=false;const b=document.getElementById('videoSound');if(b){b.classList.remove('is-off');b.setAttribute('aria-pressed','false');b.setAttribute('aria-label','Silenciar som');b.title='Silenciar som';const t=b.querySelector('span');if(t)t.textContent='Som'}}).catch(()=>{soundBlocked=true;const b=document.getElementById('videoSound');if(b){b.classList.add('is-off');b.setAttribute('aria-pressed','true');b.setAttribute('aria-label','Ativar som');b.title='Ativar som';const t=b.querySelector('span');if(t)t.textContent='Sem som'}})
+}
+async function toggleSound(){const video=document.getElementById('videoRemote');if(!video)return;soundMuted=soundBlocked?false:!soundMuted;soundBlocked=false;applyRemote(video);if(soundMuted){const b=document.getElementById('videoSound');if(b){b.classList.add('is-off');b.setAttribute('aria-pressed','true');b.setAttribute('aria-label','Ativar som');b.title='Ativar som';const t=b.querySelector('span');if(t)t.textContent='Sem som'}}}
 function status(message){
  const node=document.getElementById('videoConnectionStatus');
  if(node)node.textContent=message;
@@ -53,19 +36,17 @@ function attach(){
  if(local&&local.srcObject!==session.local) local.srcObject=session.local;
  if(remote&&remote.srcObject!==session.remote){
   remote.srcObject=session.remote;
-  remote.muted=false;
-  remote.play().catch(()=>status('Toque em Ativar som para ouvir a outra pessoa.'));
+  applyRemote(remote);
  }
  const placeholder=document.getElementById('videoPlaceholder');
- if(placeholder)placeholder.hidden=session.remote.getTracks().length>0;
- const micEnabled=session.local?.getAudioTracks()[0]?.enabled!==false;
- const cameraEnabled=session.local?.getVideoTracks()[0]?.enabled!==false;
- const mic=document.getElementById('videoMute'),camera=document.getElementById('videoCamera');
- if(mic){mic.classList.toggle('is-off',!micEnabled);mic.setAttribute('aria-pressed',String(!micEnabled));mic.setAttribute('aria-label',micEnabled?'Silenciar microfone':'Ativar microfone');mic.title=micEnabled?'Silenciar microfone':'Ativar microfone';}
- if(camera){camera.classList.toggle('is-off',!cameraEnabled);camera.setAttribute('aria-pressed',String(!cameraEnabled));camera.setAttribute('aria-label',cameraEnabled?'Desligar câmera':'Ativar câmera');camera.title=cameraEnabled?'Desligar câmera':'Ativar câmera';}
+ if(placeholder)placeholder.hidden=session.remote.getVideoTracks().some(t=>t.readyState==='live'&&!t.muted);
+ const micEnabled=session.local?.getAudioTracks().some(t=>t.enabled)===true;
+ const cameraEnabled=session.local?.getVideoTracks().some(t=>t.enabled)===true;
+ paintControls(micEnabled,cameraEnabled);
  status(session.status||'Conectando vídeo…');
 }
 function cleanup(){
+ soundMuted=false;soundBlocked=false;
  window.entreLiveKit?.cleanup?.();
  if(!session)return;
  const old=session;session=null;
@@ -148,6 +129,7 @@ async function start(pair){
  room.status='Conectando chamada privada…';attach();
 }
 async function action(type){
+ if(type==='videoSound'){await toggleSound();return true;}
  if(window.entreLiveKit?.isRunning?.())return await window.entreLiveKit.action(type);
  if(!session&&type!=='videoRetry')return false;
  if(type==='videoRetry'){const pair=state.pair;cleanup();await start(pair);return true;}
@@ -156,5 +138,5 @@ async function action(type){
  if(type==='videoSound'){const video=document.getElementById('videoRemote');if(video){video.muted=false;await video.play().catch(()=>{});}return true;}
  return false;
 }
-window.entreVideo={markup,miniMarkup,start,attach,cleanup,action,isRunning:()=>Boolean(session)||Boolean(window.entreLiveKit?.isRunning?.())};
+window.entreVideo={markup,miniMarkup,start,attach,cleanup,action,paintControls,applyRemote,isRunning:()=>Boolean(session)||Boolean(window.entreLiveKit?.isRunning?.())};
 })();
