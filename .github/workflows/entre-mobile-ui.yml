@@ -4,6 +4,10 @@ on:
     branches: [main]
     paths:
       - 'docs/admin/**'
+      - 'docs/connect-*.js'
+      - 'docs/connect-*.css'
+      - 'supabase/functions/**'
+      - 'tests/**'
       - 'docs/features.css'
       - 'docs/manifest.webmanifest'
       - 'docs/instalar.html'
@@ -121,25 +125,28 @@ jobs:
           for f in docs/social*.js; do node --check "$f"; done
           node --check tests/admin-mobile-audit.cjs
           node --check tests/avatar-mobile-audit.cjs
-          node --test tests/social-ui-regression.test.mjs
-          node --test tests/usernames-regression.test.mjs
-          node --test tests/connect-app-vnext.test.mjs
-          node --test tests/shared-media-reviews.test.mjs
-          node --test tests/community-hub.test.mjs
-          node --test tests/legacy-green-audit.test.mjs
-          node --test tests/action-first.test.mjs
-          node --test tests/vivid-refresh.test.mjs
-          node --test tests/live-gallery.test.mjs
-          node tests/live-gallery-mobile-audit.cjs
-          node --test tests/room-live-filters.test.mjs
-          node --test tests/source-fidelity.test.mjs
-          node --test tests/geo-feed-support.test.mjs
-          node --test tests/encounter-layout.test.mjs
-          node tests/encounter-mobile-audit.cjs
-          node tests/live-sheet-viewport-audit.cjs
-          node tests/community-mobile-audit.cjs
-          node tests/once-redesign-mobile-audit.cjs
-          node tests/theme-motion-audit.cjs
-          node tests/source-fidelity-mobile-audit.cjs
-          node tests/admin-mobile-audit.cjs
-          node tests/avatar-mobile-audit.cjs
+          failures=0
+          run_check() { "$@" || { echo "::error::Failed: $*"; failures=1; }; }
+          run_check node --test tests/social-ui-regression.test.mjs
+          run_check node --test tests/usernames-regression.test.mjs
+          run_check node --test tests/connect-app-vnext.test.mjs
+          run_check node --test tests/shared-media-reviews.test.mjs
+          run_check node --test tests/community-hub.test.mjs
+          run_check node --test tests/legacy-green-audit.test.mjs
+          run_check node --test tests/action-first.test.mjs
+          run_check node --test tests/vivid-refresh.test.mjs
+          run_check node --test tests/live-gallery.test.mjs
+          run_check node tests/live-gallery-mobile-audit.cjs
+          run_check node --test tests/room-live-filters.test.mjs
+          run_check node --test tests/source-fidelity.test.mjs
+          run_check node --test tests/geo-feed-support.test.mjs
+          run_check node --test tests/encounter-layout.test.mjs
+          run_check node tests/encounter-mobile-audit.cjs
+          run_check node tests/live-sheet-viewport-audit.cjs
+          run_check node tests/community-mobile-audit.cjs
+          run_check node tests/once-redesign-mobile-audit.cjs
+          run_check node tests/theme-motion-audit.cjs
+          run_check node tests/source-fidelity-mobile-audit.cjs
+          run_check node tests/admin-mobile-audit.cjs
+          run_check node tests/avatar-mobile-audit.cjs
+          exit "$failures"
