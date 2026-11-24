@@ -12,7 +12,7 @@
   actions.replaceChildren();
   actions.append(button("Ir para o site ↗","./","share-primary"));
   if(logged){actions.append(button("Abrir perfil dentro do entre.","./?profile="+encodeURIComponent(handle),"share-secondary"));}
-  else{actions.append(button("Entrar na minha conta","./?auth=login","share-secondary"));actions.append(button("Criar conta gratuita","./?auth=signup","share-secondary"));}
+  else{actions.append(button("Entrar na minha conta","./?auth=login&profile="+encodeURIComponent(handle),"share-secondary"));actions.append(button("Criar conta gratuita","./?auth=signup&profile="+encodeURIComponent(handle),"share-secondary"));}
  }
  if(!safe.test(handle)){name.textContent="Link inválido";message("Confira o link compartilhado.",true);setActions(false);return;}
  // Guest previews are fully independent of Supabase Auth. Never await
@@ -28,11 +28,12 @@
  })();
  try{
   const endpoint="https://trrakyybnvxpdhxwgjrz.supabase.co/functions/v1/entre-shared-profile?u="+encodeURIComponent(handle);
-  const res=await fetch(endpoint,{headers:{"apikey":"sb_publishable_OJ4wBPPNVBBcrcNl12yonw_hRSlMKsZ","Accept":"application/json"},cache:"no-store"});
+  const ctrl=new AbortController(),timeout=setTimeout(()=>ctrl.abort(),12000);
+  let res;try{res=await fetch(endpoint,{signal:ctrl.signal,headers:{"apikey":"sb_publishable_OJ4wBPPNVBBcrcNl12yonw_hRSlMKsZ","Accept":"application/json"},cache:"no-store"});}finally{clearTimeout(timeout);}
   if(!res.ok)throw Error(res.status===404?"Este perfil não está disponível.":"Não foi possível abrir este perfil agora.");
   const data=await res.json(),p=data?.profile;
   if(!p||p.username!==handle)throw Error("Este perfil não está disponível.");
-  name.textContent=p.display_name||"Pessoa do entre.";tag.textContent="@"+p.username;bio.textContent=p.bio||"Esta pessoa ainda não escreveu uma apresentação.";
+  name.textContent=String(p.display_name||"Pessoa do entre.").slice(0,90);tag.textContent="@"+p.username;bio.textContent=String(p.bio||"Esta pessoa ainda não escreveu uma apresentação.").slice(0,900);
   avatar.setAttribute("aria-label","Foto de "+(p.display_name||"perfil"));
   avatar.textContent=initials(p.display_name);
   if(p.avatar_url&&/^https:\/\/[^\s]+$/.test(p.avatar_url)){
@@ -47,5 +48,5 @@
    try{if(navigator.share){await navigator.share({title:document.title,url:location.href});return;}await navigator.clipboard.writeText(location.href);message("Link copiado!");}
    catch(error){if(error?.name!=="AbortError")message("Use a opção compartilhar do navegador.");}
   };
- }catch(error){name.textContent="Perfil indisponível";tag.textContent="@"+handle;avatar.textContent="?";bio.textContent="Esta conta não pode ser exibida ou o link está incorreto.";message(error.message,true)}
+ }catch(error){name.textContent="Perfil indisponível";tag.textContent="@"+handle;avatar.textContent="?";bio.textContent="Esta conta não pode ser exibida ou o link está incorreto.";message(error?.name==="AbortError"?"A conexão demorou. Atualize e tente novamente.":error.message,true)}
 })();

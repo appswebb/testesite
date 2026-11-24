@@ -9,8 +9,8 @@ const active=()=>typeof state!=='undefined'&&state.view==='posts';
 const person=()=>typeof state!=='undefined'?state.session?.user?.id:null;
 const failText=e=>String(e?.message||'Não foi possível concluir. Verifique a conexão e tente novamente.');
 function markup(){
- const cards=data.rows.map((r,i)=>'<button type="button" class="story-tile" data-story-action="open" data-story-index="'+i+'" aria-label="Ver story de '+safe(r.author_name||'Pessoa')+'"><span class="story-ring">'+safe(String(r.author_name||'P').slice(0,1).toUpperCase())+'</span><strong>'+safe(r.author_name||'Pessoa')+'</strong></button>').join('');
- return '<section class="stories-shell" aria-label="Stories da comunidade"><div class="stories-head"><div><span class="stories-kicker">MOMENTOS DA COMUNIDADE</span><h3>Stories <small>24 horas</small></h3></div><button type="button" data-story-action="compose">+ Novo story</button></div><div class="stories-strip"><button type="button" class="story-tile story-add" data-story-action="compose" aria-label="Criar meu story"><span class="story-ring">+</span><strong>Seu story</strong></button>'+cards+'</div>'+(data.error?'<div class="stories-alert" role="status">Os stories não puderam ser carregados. <button type="button" data-story-action="retry">Tentar novamente</button></div>':!data.rows.length?'<p class="stories-empty-note">'+(data.loading?'Carregando stories…':'Nenhum story publicado ainda. Compartilhe o primeiro momento.')+'</p>':'')+'</section>';
+ const cards=data.rows.map((r,i)=>'<button type="button" class="story-tile" data-story-action="open" data-story-index="'+i+'" aria-label="Ver story de '+safe(r.author_name||'Pessoa')+'"><span class="story-ring">'+(r.media_type==='image'&&data.urls.get(r.media_path)?.until>Date.now()?'<img src="'+safe(data.urls.get(r.media_path).url)+'" alt="" loading="lazy">':safe(String(r.author_name||'P').slice(0,1).toUpperCase()))+'</span><strong>'+safe(r.author_name||'Pessoa')+'</strong></button>').join('');
+ return '<section class="stories-shell" aria-label="Stories da comunidade"><div class="stories-head"><div><span class="stories-kicker">MOMENTOS REAIS</span><h3>Stories <small>24 horas</small></h3></div><button type="button" data-story-action="compose">+ Novo story</button></div><div class="stories-strip"><button type="button" class="story-tile story-add" data-story-action="compose" aria-label="Criar meu story"><span class="story-ring">+</span><strong>Seu story</strong></button>'+cards+'</div>'+(data.error?'<div class="stories-alert" role="status">Os stories não puderam ser carregados. <button type="button" data-story-action="retry">Tentar novamente</button></div>':!data.rows.length?'<p class="stories-empty-note">'+(data.loading?'Carregando stories…':'Nenhum story publicado ainda. Compartilhe o primeiro momento.')+'</p>':'')+'</section>';
 }
 async function refresh(repaint=true,force=false){
  if(!person())return [];
@@ -20,6 +20,12 @@ async function refresh(repaint=true,force=false){
   const {data:rows,error}=await db.rpc('entre_stories_list');
   if(error)throw error;
   data.rows=Array.isArray(rows)?rows:[];
+  const paths=[...new Set(data.rows.filter(x=>x.media_type==='image').map(x=>x.media_path).filter(Boolean))].slice(0,40).filter(path=>!(data.urls.get(path)?.until>Date.now()));
+  if(paths.length)try{
+    const {data:images,error:err}=await db.storage.from(bucket).createSignedUrls(paths,300);
+    if(err)throw err;
+    (images||[]).forEach((item,i)=>{if(item?.signedUrl)data.urls.set(paths[i],{url:item.signedUrl,until:Date.now()+270000});});
+  }catch(err){console.warn('Miniaturas privadas indisponíveis:',err);}
   return data.rows;
  })();
  try{return await data.inFlight;}
