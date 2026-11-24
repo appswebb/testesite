@@ -29,7 +29,7 @@ Deno.serve(async(req:Request)=>{
   if(blocksError)return reply({error:"unavailable"},503);
   if(blocks?.length)return reply({error:"not_allowed"},403);
   if(action==="ban"){
-   if(live.host_id!==user.id||target===user.id||! /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(target||"")))return reply({error:"not_allowed"},403);
+   if(target===user.id||! /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(target||"")))return reply({error:"not_allowed"},403);
    const caller=createClient(supabaseUrl,anon,{auth:{persistSession:false},global:{headers:{Authorization:"Bearer "+bearer}}});
    const {data:restrictions,error:banError}=await caller.rpc("connect_live_moderate",{_live:live_id,_target:target,_action:"ban"});
    if(banError)return reply({error:"moderation_failed"},403);
@@ -40,9 +40,21 @@ Deno.serve(async(req:Request)=>{
   const {data:restriction,error:restrictionError}=await service.from("connect_live_restrictions").select("banned").eq("live_id",live_id).eq("user_id",user.id).maybeSingle();
   if(restrictionError)return reply({error:"unavailable"},503);
   if(restriction?.banned)return reply({error:"live_banned"},403);
-  const publisher=live.host_id===user.id||live.guest_id===user.id;
-  const token=new AccessToken(key,liveSecret,{identity:user.id,name:"Pessoa no entre.",ttl:60});
+  const caller=createClient(supabaseUrl,anon,{auth:{persistSession:false},global:{headers:{Authorization:"Bearer "+bearer}}});
+  if(action==="guest_remove"){
+   if(live.host_id!==user.id||target===user.id||! /^[0-9a-f-]{36}$/i.test(String(target||"")))return reply({error:"not_allowed"},403);
+   const {data:studio,error:removeError}=await caller.rpc("connect_live_studio",{_live:live_id,_action:"guest_remove",_target:target});
+   if(removeError)return reply({error:"moderation_failed"},403);
+   try{const rooms=new RoomServiceClient(liveUrl.replace(/^wss:/,"https:"),key,liveSecret);await rooms.updateParticipant("entre-live-"+live.id,target,{permission:{canPublish:false,canSubscribe:true,canPublishData:false,canUpdateMetadata:false}});}
+   catch(e){console.warn("stage permission update",String(e));return reply({studio,removed:false});}
+   return reply({studio,removed:true});
+  }
+  const {data:guest,error:guestError}=await service.from("connect_live_stage_guests").select("status").eq("live_id",live_id).eq("user_id",user.id).maybeSingle();
+  if(guestError)return reply({error:"unavailable"},503);
+  const publisher=live.host_id===user.id||live.guest_id===user.id||guest?.status==="approved";
+  const {data:profile}=await service.from("entre_profiles").select("display_name").eq("id",user.id).maybeSingle();
+  const token=new AccessToken(key,liveSecret,{identity:user.id,name:String(profile?.display_name||"Pessoa").slice(0,80),ttl:60});
   token.addGrant({roomJoin:true,room:"entre-live-"+live.id,canSubscribe:true,canPublish:publisher,canPublishData:false,canUpdateOwnMetadata:false});
-  return reply({url:liveUrl,token:await token.toJwt(),role:live.host_id===user.id?"host":live.guest_id===user.id?"guest":"viewer",expires_in:60});
+  return reply({url:liveUrl,token:await token.toJwt(),role:live.host_id===user.id?"host":publisher?"guest":"viewer",expires_in:60});
  }catch(e){console.error("entre-camera-live-token",String(e));return reply({error:"token_error"},503)}
 });

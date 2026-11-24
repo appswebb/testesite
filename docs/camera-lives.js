@@ -105,10 +105,84 @@ function card(l){
 const interaction={comments:[],hearts:0,comments_enabled:true,draft:'',timer:null,busy:false,ready:false,error:false};
 const liveNumber=n=>Number(n||0).toLocaleString('pt-BR');
 const moderation={target:null,rows:[],busy:false,open:false};
+const studio={data:{},busy:false,tab:'',timer:null,lastGift:null};
+const isStaff=()=>s.localRole==='host'||studio.data.can_moderate===true||interaction.can_moderate===true;
+const giftKinds={rose:['🌹','Rosa',1],star:['⭐','Estrela',3],fire:['🔥','Fogo',5]};
+const liveGuests=()=>{const rows=[...(studio.data.guests||[])];if(s.active?.guest_id&&!rows.some(x=>x.id===s.active.guest_id))rows.push({id:s.active.guest_id,name:s.active.guest_name||'Convidado',status:'approved'});return rows;};
+function studioButton(action,label,id='',value=''){return '<button type="button" data-live-action="studio-'+action+'" data-id="'+esc(id)+'" data-value="'+esc(value)+'">'+esc(label)+'</button>';}
+function closeStudio(){studio.tab='';document.getElementById('connectLiveStudio')?.remove();}
+function studioPeople(){const users=new Map();for(const q of (s.room?.remoteParticipants?.values()||[]))users.set(q.identity,q.name||'Participante');for(const q of interaction.comments)if(q.user_id)users.set(q.user_id,q.name);for(const q of liveGuests())users.set(q.id,q.name);users.delete(s.active?.host_id);users.delete(state.session?.user?.id);return [...users];}
+function showStudio(){
+ if(!studio.tab||!s.active)return;const stage=document.querySelector('.connect-live-overlay');if(!stage)return;
+ let panel=document.getElementById('connectLiveStudio');if(!panel){panel=document.createElement('section');panel.id='connectLiveStudio';panel.className='connect-live-mod-sheet connect-live-studio-sheet';panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Recursos da transmissão');stage.appendChild(panel);}
+ if(panel.contains(document.activeElement)&&document.activeElement?.matches('input,textarea,select'))return;
+ const d=studio.data,host=s.localRole==='host',staff=isStaff(),guest=liveGuests(),people=studioPeople(),me=state.session?.user?.id;
+ const tabs=[['main','Recursos'],['guests','Convidados'],['gifts','Reações'],['ranking','Ranking'],['match','Batalha']];if(staff)tabs.push(['settings','Moderação']);
+ let content='';
+ if(studio.tab==='main'){
+  content='<p>Ferramentas da transmissão</p>'+tabs.filter(x=>x[0]!=='main').map(([k,n])=>studioButton('tab',n,'',k)).join('');
+ }else if(studio.tab==='guests'){
+  if(host){content='<p>Palco · '+guest.filter(x=>x.status==='approved').length+'/3 convidados</p>'+studioButton('guest_toggle',d.guest_enabled===false?'Abrir pedidos':'Fechar pedidos')+studioButton('layout',d.layout==='focus'?'Usar grade':'Destacar anfitrião','',d.layout==='focus'?'grid':'focus');
+   content+=guest.map(g=>'<div class="connect-live-studio-item"><strong>'+esc(g.name)+' · '+(g.status==='approved'?'No palco':g.status==='invited'?'Convidado':'Pedido')+'</strong>'+(g.status==='pending'?studioButton('guest_approve','Aceitar',g.id)+studioButton('guest_reject','Recusar',g.id):g.status==='approved'?studioButton('guest_remove','Retirar do palco',g.id):studioButton('guest_reject','Cancelar convite',g.id))+'</div>').join('');
+   content+='<p>Convidar espectadores</p>'+people.filter(([id])=>!guest.some(g=>g.id===id)).map(([id,n])=>studioButton('guest_invite','Convidar '+n,id)).join('');
+  }else{content='<p>Participe apenas se quiser compartilhar câmera e microfone.</p>'+ (d.my_guest==='approved'?(s.localRole==='guest'?studioButton('guest_leave','Voltar a assistir'):studioButton('join-stage','Entrar com câmera')):d.my_guest==='invited'?studioButton('guest_accept','Aceitar convite')+studioButton('guest_leave','Recusar convite'):d.my_guest==='pending'?studioButton('guest_leave','Cancelar pedido'):d.guest_enabled===false?'<p>Pedidos fechados.</p>':studioButton('guest_request','Pedir para participar'));}
+ }else if(studio.tab==='gifts'){
+  const recipients=[[s.active.host_id,s.active.host_name||'Anfitrião'],...guest.filter(g=>g.status==='approved').map(g=>[g.id,g.name])].filter(([id])=>id!==me);
+  content='<p>Reações gratuitas, sem cobrança ou saldo financeiro.</p>'+recipients.map(([id,name])=>'<div class="connect-live-studio-item"><strong>'+esc(name)+'</strong><div class="connect-live-gift-options">'+Object.entries(giftKinds).map(([k,v])=>studioButton('gift',v[0]+' '+v[1]+' · '+v[2],id,k)).join('')+'</div></div>').join('');
+ }else if(studio.tab==='ranking'){
+  content='<p>Ranking de apoio nesta live</p>'+((d.ranking||[]).map((r,i)=>'<div class="connect-live-studio-item"><strong>'+String(i+1)+'. '+esc(r.name)+'</strong><span>'+liveNumber(r.points)+' pontos</span></div>').join('')||'<p>Nenhuma reação recebida.</p>');
+ }else if(studio.tab==='match'){
+  const m=d.match;content=m?'<p>'+esc(s.active.host_name||'Anfitrião')+' '+liveNumber(m.host_points)+' × '+liveNumber(m.guest_points)+' '+esc(m.name)+'</p>':'<p>Batalha individual de cinco minutos com reações gratuitas.</p>';
+  if(m?.active){if(host)content+=studioButton('match_end','Encerrar batalha');content+=studioButton('tab','Enviar apoio','','gifts');}
+  else if(host){content+=guest.filter(g=>g.status==='approved').map(g=>studioButton('match_start','Batalhar com '+g.name,g.id)).join('')||'<p>Convide um participante primeiro.</p>';}
+ }else if(studio.tab==='settings'&&staff){
+  content='<p>Palavras bloqueadas (separadas por vírgula)</p><form id="connectLiveWordsForm"><textarea name="words" maxlength="2000" rows="3" placeholder="Digite os termos">'+esc((d.words||[]).join(', '))+'</textarea><button type="submit">Salvar filtro</button></form>'+studioButton('unpin','Remover comentário fixado')+studioButton('moderation','Abrir lista de moderação');
+  if(host)content+='<p>Moderadores</p>'+people.map(([id,n])=>studioButton((d.staff||[]).includes(id)?'staff_remove':'staff_add',((d.staff||[]).includes(id)?'Remover moderador: ':'Tornar moderador: ')+n,id)).join('');
+ }
+ const markup='<header><strong>'+esc(tabs.find(x=>x[0]===studio.tab)?.[1]||'LIVE')+'</strong>'+studioButton('close','Fechar')+'</header><div class="connect-live-studio-tabs">'+tabs.map(([k,n])=>'<button type="button" data-live-action="studio-tab" data-value="'+k+'" aria-pressed="'+String(k===studio.tab)+'">'+esc(n)+'</button>').join('')+'</div><div class="connect-live-mod-body">'+content+'</div>';
+ if(panel.innerHTML!==markup){const scroll=panel.querySelector('.connect-live-mod-body')?.scrollTop||0;panel.innerHTML=markup;const body=panel.querySelector('.connect-live-mod-body');if(body)body.scrollTop=scroll;}
+}
+function paintStudio(){
+ const stage=document.querySelector('.connect-live-overlay');if(!stage||!s.active)return;
+ const grid=document.getElementById('cameraLiveVideos');if(grid){grid.dataset.layout=studio.data.layout||'grid';grid.dataset.count=String(grid.querySelectorAll('.camera-live-video').length);}
+ let strip=document.getElementById('connectLiveStudioStatus');if(!strip){strip=document.createElement('div');strip.id='connectLiveStudioStatus';strip.className='connect-live-studio-status';stage.appendChild(strip);}
+ const d=studio.data,m=d.match,p=d.pinned,g=d.recent_gift;let bits='';
+ if(m){const sec=Math.max(0,Math.ceil((Date.parse(m.ends_at)-Date.now())/1000)),a=Number(m.host_points),b=Number(m.guest_points);bits+='<div class="connect-live-match"><div><span>'+esc(s.active.host_name||'Anfitrião')+' · '+liveNumber(a)+'</span><b>'+(m.active&&sec?Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0'):'Fim')+'</b><span>'+esc(m.name)+' · '+liveNumber(b)+'</span></div><div class="connect-live-score"><i style="width:'+((a+b)?a/(a+b)*100:50)+'%"></i></div></div>';}
+ if(p)bits+='<div class="connect-live-pinned">📌 <b>'+esc(p.name)+'</b> '+esc(p.body)+'</div>';
+ if(d.my_guest==='invited'||(d.my_guest==='approved'&&s.localRole==='viewer'))bits+=studioButton('tab',d.my_guest==='invited'?'Você recebeu um convite':'Você pode entrar no palco','','guests');
+ if(g&&giftKinds[g.kind])bits+='<div class="connect-live-gift-burst">'+giftKinds[g.kind][0]+' '+esc(g.name)+' enviou '+giftKinds[g.kind][1]+'</div>';
+ if(strip.innerHTML!==bits)strip.innerHTML=bits;
+}
+async function studioCall(type='read',id=null,value=null){
+ const live=s.active?.id;if(!live||studio.busy)return false;studio.busy=true;
+ try{let data,error;
+  if(type==='guest_remove'){const r=await db.functions.invoke('entre-camera-live-token',{body:{live_id:live,action:'guest_remove',target:id}});data=r.data?.studio;error=r.error;if(!error&&!r.data?.removed)toast('Retirada salva, mas a revogação do vídeo não foi confirmada.',true);}
+  else{const r=await db.rpc('connect_live_studio',{_live:live,_action:type,_target:id,_value:value});data=r.data;error=r.error;}
+  if(error||!data)throw error||Error('Recurso indisponível');if(s.active?.id!==live)return false;
+  const wasStaff=isStaff();studio.data=data;interaction.can_moderate=data.can_moderate===true;
+  if(wasStaff!==isStaff()&&state.view==='lives'){renderView();attachAll();}
+  if(s.localRole==='guest'&&data.my_guest!=='approved'&&!s.joining){await join(live);return true;}
+  paintStudio();showStudio();return true;
+ }catch(e){if(type!=='read')toast(infoError(e),true);return false;}
+ finally{studio.busy=false;}
+}
+async function studioAction(type,btn){
+ const id=btn.dataset.id||null,value=btn.dataset.value||null;
+ if(type==='close'){closeStudio();return;}
+ if(type==='tab'){closeModeration();studio.tab=value||'main';showStudio();void studioCall();return;}
+ if(type==='moderation'){closeStudio();await moderationAction('mod-list',{dataset:{}});return;}
+ if(type==='join-stage'){const live=s.active?.id;if(live){closeStudio();await join(live);}return;}
+ if(type==='guest_leave'&&s.localRole==='guest'&&s.active?.guest_id===state.session?.user?.id){const {error}=await db.rpc('entre_live_exit',{_live:s.active.id});if(error)throw error;}
+ if(type==='match_start'&&!confirm('Iniciar batalha de 5 minutos com este convidado?'))return;
+ if(await studioCall(type,id,value)){if(type==='guest_accept'){toast('Convite aceito. Entre no palco quando estiver pronto.');}else if(type==='gift'){toast('Reação enviada.');}else if(type!=='read'){toast('Atualizado.');}}
+}
+function resetStudio(){clearInterval(studio.timer);studio.timer=null;studio.data={};interaction.can_moderate=false;closeStudio();}
+function startStudio(){clearInterval(studio.timer);void studioCall();studio.timer=setInterval(()=>{if(s.active&&!document.hidden)void studioCall();},3000);}
+
 function closeModeration(){moderation.open=false;moderation.target=null;document.getElementById('connectLiveModeration')?.remove();}
 function modButton(action,label,id=''){return '<button type="button" data-live-action="'+action+'" data-id="'+esc(id)+'">'+esc(label)+'</button>';}
 function showModeration(){
- if(s.localRole!=='host'||!s.active||!moderation.open)return;
+ if(!isStaff()||!s.active||!moderation.open)return;
  const stage=document.querySelector('.connect-live-overlay');if(!stage)return;
  let sheet=document.getElementById('connectLiveModeration');
  if(!sheet){sheet=document.createElement('section');sheet.id='connectLiveModeration';sheet.className='connect-live-mod-sheet';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-label','Moderação da transmissão');stage.appendChild(sheet);}
@@ -123,7 +197,7 @@ function showModeration(){
  '<p>Participantes e contas com restrições</p>'+([...people].filter(([uid])=>uid!==s.active.host_id).map(([uid,name])=>{const r=moderation.rows.find(x=>x.user_id===uid);return modButton('mod-user',name+(r?.banned?' · Banido':r?.muted_until?' · Silenciado':''),uid);}).join('')||'<p>Nenhum participante disponível.</p>'))+'</div>';
 }
 async function moderationAction(type,button){
- if(s.localRole!=='host'||!s.active)return;
+ if(!isStaff()||!s.active)return;
  const live=s.active.id,id=button.dataset.id||null;
  if(type==='mod-close'){closeModeration();return;}
  if(type==='mod-user'){moderation.target=id;moderation.open=true;showModeration();return;}
@@ -148,7 +222,7 @@ async function moderationAction(type,button){
  }finally{moderation.busy=false;}
 }
 function liveComment(c){
- return '<div class="connect-live-comment" data-live-comment-id="'+esc(c.id)+'"><span><b>'+esc(c.name)+'</b> '+esc(c.body)+'</span>'+(s.localRole==='host'&&c.user_id&&c.user_id!==s.active?.host_id?'<button type="button" data-live-action="mod-user" data-id="'+esc(c.user_id)+'" aria-label="Moderar participante">⋯</button>':'')+(c.can_delete?'<button type="button" data-live-action="comment-delete" data-id="'+esc(c.id)+'" aria-label="Excluir comentário">×</button>':'')+'</div>';
+ return '<div class="connect-live-comment" data-live-comment-id="'+esc(c.id)+'"><span><b>'+esc(c.name)+'</b> '+esc(c.body)+'</span>'+(isStaff()&&c.user_id&&c.user_id!==s.active?.host_id&&c.user_id!==state.session?.user?.id?'<button type="button" data-live-action="mod-user" data-id="'+esc(c.user_id)+'" aria-label="Moderar participante">⋯</button>':'')+ (isStaff()?'<button type="button" data-live-action="studio-pin" data-id="'+esc(c.id)+'" aria-label="Fixar comentário" title="Fixar">⌖</button>':'')+(c.can_delete?'<button type="button" data-live-action="comment-delete" data-id="'+esc(c.id)+'" aria-label="Excluir comentário">×</button>':'')+'</div>';
 }
 function liveMessages(){
  return interaction.comments.length?interaction.comments.map(liveComment).join(''):'<p class="connect-live-hint">'+(interaction.error?'Interações temporariamente indisponíveis.':interaction.ready?'Seja a primeira pessoa a comentar.':'Carregando comentários…')+'</p>';
@@ -194,12 +268,12 @@ function paintInteractions(){
 async function interact(type='read',body=null,id=null){
  const live=s.active?.id;if(!live||interaction.busy)return false;
  interaction.busy=true;
- try{const {data,error}=await db.rpc('connect_live_interact',{_live:live,_action:type,_body:body,_comment:id});if(error)throw error;if(s.active?.id!==live)return false;if(data?.banned){toast('Você foi banido desta live.',true);await leave(false);return false;}interaction.muted=data?.muted===true;interaction.comments=Array.isArray(data?.comments)?data.comments:[];interaction.hearts=data?.hearts||0;interaction.comments_enabled=data?.comments_enabled!==false;interaction.ready=true;interaction.error=false;paintInteractions();return true;}
+ try{const {data,error}=await db.rpc('connect_live_interact',{_live:live,_action:type,_body:body,_comment:id});if(error)throw error;if(s.active?.id!==live)return false;if(data?.banned){toast('Você foi banido desta live.',true);await leave(false);return false;}interaction.muted=data?.muted===true;interaction.can_moderate=data?.can_moderate===true;interaction.comments=Array.isArray(data?.comments)?data.comments:[];interaction.hearts=data?.hearts||0;interaction.comments_enabled=data?.comments_enabled!==false;interaction.ready=true;interaction.error=false;paintInteractions();return true;}
  catch(error){if(s.active?.id===live){interaction.error=true;paintInteractions();if(type!=='read')toast(infoError(error),true);}return false;}
  finally{interaction.busy=false;}
 }
-function stopInteractions(){clearInterval(interaction.timer);interaction.timer=null;interaction.comments=[];interaction.hearts=0;interaction.comments_enabled=true;interaction.draft='';interaction.ready=false;interaction.error=false;lastMessageList=null;interaction.muted=false;closeModeration();moderation.rows=[];}
-function startInteractions(){clearInterval(interaction.timer);void interact();interaction.timer=setInterval(()=>{if(s.active&&!document.hidden){paintInteractions();void interact();}},3000);}
+function stopInteractions(){clearInterval(interaction.timer);interaction.timer=null;interaction.comments=[];interaction.hearts=0;interaction.comments_enabled=true;interaction.draft='';interaction.ready=false;interaction.error=false;lastMessageList=null;interaction.muted=false;closeModeration();moderation.rows=[];resetStudio();}
+function startInteractions(){startStudio();clearInterval(interaction.timer);void interact();interaction.timer=setInterval(()=>{if(s.active&&!document.hidden){paintInteractions();void interact();}},3000);}
 function viewer(){
  if(!s.active)return '';
  const l=s.active,role=s.localRole||'viewer',publisher=role==='host'||role==='guest';
@@ -208,8 +282,9 @@ function viewer(){
  const tools='<div class="camera-live-tools" aria-label="Controles da transmissão">'+
  (role==='host'&&source.guest_requested_by&&!source.guest_id?'<div class="camera-live-invite"><strong>Pedido de participação</strong><button type="button" data-live-action="approve">Aceitar</button><button type="button" data-live-action="reject">Recusar</button></div>':'')+
  (publisher?control('mic','mic',s.mic?'Desligar microfone':'Ligar microfone','class="'+(s.mic?'':'muted')+'" aria-pressed="'+String(!s.mic)+'"')+control('camera','camera',s.camera?'Desligar câmera':'Ligar câmera','class="'+(s.camera?'':'muted')+'" aria-pressed="'+String(!s.camera)+'"'):'')+
- (role==='viewer'&&!source.guest_id?control('request','users',source.requested?'Pedido enviado':'Pedir para participar',source.requested?'disabled':''):'')+
- (role==='host'?control('mod-list','shield','Moderação da live')+control('comments-toggle','chat',interaction.comments_enabled?'Pausar comentários':'Liberar comentários','aria-pressed="'+String(!interaction.comments_enabled)+'"'):'')+
+ (role==='viewer'?'<button type="button" data-live-action="studio-tab" data-value="guests" aria-label="Participar da transmissão" title="Participar">'+ico('users',18)+'</button>':'')+
+ (isStaff()?control('mod-list','shield','Moderação da live')+control('comments-toggle','chat',interaction.comments_enabled?'Pausar comentários':'Liberar comentários','aria-pressed="'+String(!interaction.comments_enabled)+'"'):'')+
+ '<button type="button" data-live-action="studio-tab" data-value="main" aria-label="Mais recursos da live" title="Recursos">'+ico('settings',18)+'</button>'+
  (role==='viewer'&&s.rows.some(x=>x.id!==l.id)?control('next','arrow','Próxima live'):'')+
  '</div>';
  return '<section class="camera-live-stage connect-live-overlay" aria-label="Transmissão ao vivo">'+
@@ -293,7 +368,7 @@ function attach(participant,track,unique){
   frame=document.createElement('div');frame.className='camera-live-video';frame.dataset.liveTrack=id;
   frame.innerHTML='<span class="camera-live-video-name"></span>';
   root.querySelector('.camera-live-wait')?.remove();
-  root.appendChild(frame);
+  root.appendChild(frame);if(participant.identity===s.active?.host_id)frame.classList.add('connect-live-host-frame');paintStudio();
  }
  frame.querySelector('.camera-live-video-name').textContent=participant.identity===s.active?.host_id?(s.active.host_name||'Anfitrião'):participant.identity===s.active?.guest_id?(s.active.guest_name||'Convidado'):(participant.name||'Pessoa');
  const tag=track.kind==='video'?'video':'audio';
@@ -311,7 +386,7 @@ function attachAll(){
  if(!s.room)return;
  const local=s.room.localParticipant;
  for(const pub of local.trackPublications.values())if(pub.track)attach(local,pub.track,local.identity+'-'+pub.kind);
- for(const p of s.room.remoteParticipants.values())for(const pub of p.trackPublications.values())if(pub.track)attach(p,pub.track,p.identity+'-'+pub.kind);
+ for(const p of s.room.remoteParticipants.values())for(const pub of p.trackPublications.values())if(pub.track)attach(p,pub.track,p.identity+'-'+pub.kind);paintStudio();
 }
 async function join(id){
  if(s.joining)return;
@@ -355,6 +430,7 @@ async function disconnect(){
 async function leave(remote=true){
  const id=s.active?.id,role=s.localRole;
  await disconnect();s.active=null;s.localRole=null;
+ if(remote&&id&&role==='guest'){try{await db.rpc('connect_live_studio',{_live:id,_action:'guest_leave'});}catch(e){}}
  if(remote&&id&&(role==='host'||role==='guest')){
   const {error}=await db.rpc('entre_live_exit',{_live:id});if(error)toast(infoError(error),true);else window.connectSound?.play?.('end');
  }else if(remote&&id){window.connectSound?.play?.('end');}
@@ -388,6 +464,7 @@ async function start(form){
  }finally{if(btn?.isConnected)btn.disabled=false;}
 }
 async function action(type,button){
+ if(type.startsWith('studio-')){await studioAction(type.slice(7),button);return;}
  if(['mod-list','mod-close','mod-user','mute5','mute30','mute_live','ban','unban','unmute'].includes(type)){await moderationAction(type,button);return;}
  if(type==='heart'){await interact('heart');return;}
  if(type==='comment-delete'){if(confirm('Excluir este comentário?'))await interact('delete',null,button.dataset.id);return;}
@@ -438,7 +515,7 @@ document.addEventListener('click',event=>{
  void action(button.dataset.liveAction,button).catch(e=>toast(infoError(e),true));
 });
 document.addEventListener('input',event=>{if(event.target?.closest?.('#connectLiveCommentForm'))interaction.draft=event.target.value;});
-document.addEventListener('submit',async event=>{if(event.target?.id!=='connectLiveCommentForm')return;event.preventDefault();const input=event.target.elements.namedItem('comment'),value=input.value.trim();if(!value||interaction.busy)return;const live=s.active?.id;if(await interact('comment',value)&&live===s.active?.id){if(interaction.draft.trim()===value)interaction.draft='';if(input.isConnected&&input.value.trim()===value)input.value='';}});
+document.addEventListener('submit',async event=>{if(event.target?.id==='connectLiveWordsForm'){event.preventDefault();await studioCall('words',null,event.target.elements.namedItem('words').value);toast('Filtro atualizado.');return;}if(event.target?.id!=='connectLiveCommentForm')return;event.preventDefault();const input=event.target.elements.namedItem('comment'),value=input.value.trim();if(!value||interaction.busy)return;const live=s.active?.id;if(await interact('comment',value)&&live===s.active?.id){if(interaction.draft.trim()===value)interaction.draft='';if(input.isConnected&&input.value.trim()===value)input.value='';}});
 function beginPolling(){
  if(s.timer)clearInterval(s.timer);
  s.timer=setInterval(()=>{if(state.view==='lives'&&!document.hidden)void refresh(!s.active);},8000);
@@ -447,5 +524,5 @@ async function enter(){await refresh();beginPolling();}
 function stop(){if(s.timer)clearInterval(s.timer);s.timer=null;}
 window.entreLives={view,enter,stop,leave,refresh,isActive:()=>Boolean(s.active)};
 // Other app updates can replace the active view; reattach tracks only after a replacement.
-let lastGrid=null;new MutationObserver(()=>{const grid=document.getElementById('cameraLiveVideos');if(grid&&grid!==lastGrid){lastGrid=grid;attachAll();paintInteractions();showModeration();}else if(!grid){lastGrid=null;}}).observe(document.body,{childList:true,subtree:true});
+let lastGrid=null;new MutationObserver(()=>{const grid=document.getElementById('cameraLiveVideos');if(grid&&grid!==lastGrid){lastGrid=grid;attachAll();paintInteractions();paintStudio();showModeration();showStudio();}else if(!grid){lastGrid=null;}}).observe(document.body,{childList:true,subtree:true});
 })();

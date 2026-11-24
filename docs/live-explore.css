@@ -446,3 +446,32 @@ html[data-theme] .connect-live-overlay .connect-live-mod-sheet button{display:bl
 html[data-theme] .connect-live-overlay .connect-live-mod-sheet header button{width:auto;flex:none}
 html[data-theme] .connect-live-overlay .connect-live-mod-sheet button[data-live-action="ban"]{color:#ff9ba7!important}
 html[data-theme] .connect-live-overlay .connect-live-comment button[data-live-action="mod-user"]{font-size:20px!important}
+
+/* Studio tools are inside the fixed video viewport; no new page or scrolling shell. */
+.connect-live-studio-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex:none;padding-bottom:6px}
+html[data-theme] .connect-live-overlay .connect-live-studio-tabs button{flex:0 0 auto;width:auto!important;min-height:30px!important;font-size:10px!important;padding:4px 7px!important}
+html[data-theme] .connect-live-overlay .connect-live-studio-tabs button[aria-pressed="true"]{background:#bc3555!important}
+.connect-live-studio-item{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:6px 3px;border-bottom:1px solid #ffffff18}
+.connect-live-studio-item strong{font-size:12px;flex:1 0 100%}
+.connect-live-studio-item span{font-size:11px}
+.connect-live-gift-options{display:flex;flex-wrap:wrap;gap:4px;width:100%}
+html[data-theme] .connect-live-overlay .connect-live-gift-options button{width:auto!important;flex:1 1 auto}
+#connectLiveWordsForm{display:grid;gap:6px}
+html[data-theme] #connectLiveWordsForm textarea{width:100%;box-sizing:border-box;background:#ffffff12!important;color:white!important;border:1px solid #ffffff30!important;border-radius:8px;padding:8px;font-size:16px;resize:vertical;max-height:100px}
+.connect-live-studio-status{position:absolute;z-index:2;top:106px;left:8px;right:8px;display:grid;gap:4px;pointer-events:none;font-size:11px;color:#fff}
+.connect-live-studio-status:empty{display:none}
+.connect-live-studio-status button{pointer-events:auto;justify-self:start;border:0;border-radius:8px;padding:6px 9px;font-size:11px;background:#a9304fe6;color:white}
+.connect-live-match,.connect-live-pinned,.connect-live-gift-burst{background:#08080ebc;border-radius:8px;padding:6px 8px;overflow:hidden;text-shadow:0 1px 3px #000}
+.connect-live-match>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:5px;font-size:10px}
+.connect-live-match span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.connect-live-score{height:5px;margin-top:5px;background:#47a5e8;border-radius:8px;overflow:hidden}
+.connect-live-score i{display:block;height:100%;background:#ea517d;transition:width .2s}
+.connect-live-pinned{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+.connect-live-gift-burst{justify-self:start;font-size:11px;animation:connectLiveCommentIn .25s ease-out}
+html[data-theme] .connect-live-overlay .camera-live-grid[data-count="3"],html[data-theme] .connect-live-overlay .camera-live-grid[data-count="4"]{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-rows:repeat(2,minmax(0,1fr))!important}
+html[data-theme] .connect-live-overlay .camera-live-grid[data-count="3"] .connect-live-host-frame{grid-column:1/-1;grid-row:1}
+html[data-theme] .connect-live-overlay .camera-live-grid[data-layout="focus"][data-count="3"] .connect-live-host-frame,html[data-theme] .connect-live-overlay .camera-live-grid[data-layout="focus"][data-count="4"] .connect-live-host-frame{grid-column:1/-1;grid-row:1}
+html[data-theme] .connect-live-overlay .camera-live-grid[data-layout="focus"][data-count="4"]{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+html[data-theme] .connect-live-overlay .camera-live-grid[data-count="4"][data-layout="grid"] .camera-live-video video{object-fit:contain!important}
+@media(max-height:480px){.connect-live-studio-status{top:72px}.connect-live-studio-status .connect-live-pinned{max-width:65%}}
+@media(prefers-reduced-motion:reduce){.connect-live-gift-burst{animation:none!important}}

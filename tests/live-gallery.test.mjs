@@ -31,7 +31,7 @@ test('filters, thumbnail uploads and start are wired to database with limited si
  assert.match(js,/cacheControl:'300'/);
  const html=read('index.html');
  assert.match(html,/live-explore.css/);
- assert.ok(html.includes('camera-lives.js?v=20261124-live-moderation-v5'));
+ assert.ok(html.includes('camera-lives.js?v=20261124-live-studio-v6'));
  const css=read('live-explore.css');
  assert.match(css,/live-visual-grid/);
  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
