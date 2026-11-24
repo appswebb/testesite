@@ -28,7 +28,7 @@ function view(){
  const current=title(s.room),label=s.room==='br'?'🇧🇷':icon(s.room);
  return '<section class="room-shell rooms-static-shell" aria-label="Salas públicas">'+
  '<header class="rooms-static-header"><div class="rooms-static-title"><h2>Salas</h2><div class="rooms-current-name">'+label+' <strong>'+esc(current)+'</strong></div></div>'+
- '<button type="button" class="rooms-open-filter" data-room-action="filter" aria-haspopup="dialog" aria-controls="roomsFilterOverlay">'+ico('settings',17)+' Estado / cidade</button></header>'+
+ '<button type="button" class="rooms-open-filter" data-room-action="filter" aria-haspopup="dialog" aria-expanded="false" aria-controls="roomsFilterOverlay">'+ico('sliders',18)+' Filtros</button></header>'+
  '<div class="rooms-discussion" id="roomMessages" aria-live="polite" aria-label="Mensagens da sala">'+chatRows()+'</div>'+
  '<form id="roomChatForm" class="room-composer"><label class="sr-only" for="roomText">Sua mensagem na sala</label>'+
  '<input autocomplete="off" id="roomText" maxlength="400" placeholder="Enviar mensagem…" required>'+
@@ -48,7 +48,7 @@ function filterCities(){
 function closeRoomFilter(focus=true){
  document.getElementById('roomsFilterOverlay')?.remove();
  document.body.classList.remove('rooms-filter-open');
- s.filterOpen=false;
+ s.filterOpen=false;document.querySelector('.rooms-open-filter')?.setAttribute('aria-expanded','false');
  if(focus&&state.view==='rooms')document.querySelector('.rooms-open-filter')?.focus();
 }
 function openRoomFilter(){
@@ -56,7 +56,7 @@ function openRoomFilter(){
  closeRoomFilter(false);
  const overlay=document.createElement('div');overlay.id='roomsFilterOverlay';overlay.className='rooms-filter-overlay';
  overlay.innerHTML='<section class="rooms-filter-dialog" role="dialog" aria-modal="true" aria-labelledby="roomsFilterHeading">'+
- '<header class="rooms-filter-heading"><h2 id="roomsFilterHeading">Entrar em uma sala</h2>'+
+ '<header class="rooms-filter-heading"><h2 id="roomsFilterHeading">Filtros</h2>'+
  '<button type="button" data-room-action="closeFilter" aria-label="Fechar filtro">'+ico('close',20)+'</button></header>'+
  '<div class="rooms-filter-body"><button type="button" class="rooms-filter-global" data-room-action="choose" data-room="br">🇧🇷 Chat do Brasil '+ico('arrow',17)+'</button>'+
  '<label for="roomsStateSelect">Estado</label>'+
@@ -68,7 +68,7 @@ function openRoomFilter(){
  '<p id="roomsCityStatus" class="rooms-city-status" role="status"></p>'+
  '<button type="button" class="rooms-filter-action rooms-filter-city" data-room-action="city">Entrar no chat da cidade '+ico('arrow',16)+'</button>'+
  '</div></section>';
- document.body.appendChild(overlay);document.body.classList.add('rooms-filter-open');s.filterOpen=true;
+ document.body.appendChild(overlay);document.body.classList.add('rooms-filter-open');s.filterOpen=true;document.querySelector('.rooms-open-filter')?.setAttribute('aria-expanded','true');
  filterCities();document.getElementById('roomsStateSelect')?.focus();
  if(s.state&&!s.cities.length&&!s.cityLoading)void cities(s.state);
 }
