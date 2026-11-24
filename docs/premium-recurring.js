@@ -94,5 +94,5 @@ document.addEventListener('click',e=>{
  const b=e.target.closest('[data-recurring-action]');if(!b)return;
  void action(b.dataset.recurringAction);
 });
-window.entreRecurring={view,loadStatus,unmount};
+window.entreRecurring={view,loadStatus,unmount,isOpen:()=>d.open};
 })();

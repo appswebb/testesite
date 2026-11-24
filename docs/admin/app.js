@@ -85,7 +85,7 @@ function gate(locked){
  +'<div class="admin-gate-actions"><a class="btn-outline" href="../?site=1">Ir para o site</a><a href="../?site=1" class="admin-gate-help">Precisa cadastrar ou recuperar a senha? Acesse o site.</a></div>'
  +(locked&&state.user?'<p style="font-size:11px;margin-top:18px">Sessão atual: '+e(state.user.email)+'</p>':'')
  +'</div><div class="gate-small">CONNECT · Painel privado · E-mail confirmado e autorizado no Supabase</div></div>'
- +'<div class="gate-art"><div class="gate-orbit"><strong>e.</strong><span>CONTROL</span></div><h2>O controle que uma comunidade real merece.</h2><p>Um painel feito para cuidar de conexões, não invadir conversas.</p></div></div>';
+ +'<div class="gate-art"><img class="cp-admin-emblem" src="../connect-glass.svg?v=original-v12" width="190" height="127" alt=""><h2>Administração CONNECT</h2><p>Acesso autorizado para gerenciar a comunidade.</p></div></div>';
 }
 function navItem(s,compact){return '<button type="button" class="'+(compact?"":"rail-item ")+(state.view===s[0]?"active":"")+'" data-view="'+s[0]+'" aria-label="'+e(s[1])+'">'+ico(s[2],compact?19:19)+'<span>'+e(s[1])+'</span></button>';}
 var mainMobileSections=["overview","users","reports","appeals"];

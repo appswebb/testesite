@@ -39,3 +39,10 @@ html:has(.cp-shared-page){background:var(--ui-bg);color:var(--ui-text)}
 .cp-shared-body .share-primary{background:var(--ui-accent);color:var(--ui-accent-on);border-color:transparent}.cp-shared-body .share-copy{margin-top:10px}.cp-shared-body .share-copy[hidden]{display:none}.cp-shared-body .share-loading{color:var(--ui-muted);font-size:11px;line-height:1.5;margin:12px 0 0;overflow-wrap:anywhere}.cp-shared-body .share-loading.is-error{color:var(--ui-danger,#b72845)}
 .cp-shared-footer{font-size:12px;color:var(--ui-muted);text-align:center;padding:20px 0}.cp-shared-footer a{color:var(--ui-muted)}
 @media(max-width:660px){.cp-plan-grid{grid-template-columns:1fr;gap:12px}.cp-plan{padding:18px}.cp-crop-dialog{padding:15px}.cp-shared-shell{padding:0 13px}.cp-shared-main{margin:20px auto}.cp-shared-body{padding:0 17px 19px}.cp-shared-card{border-radius:19px}.cp-service-card{padding:20px}.cp-service-page{padding:14px}.cp-visitor-body{padding-inline:14px}.cp-crop-controls label{grid-template-columns:70px minmax(0,1fr)}}
+
+html[data-theme] #app .cn-main .profile-page .profile-view-card{padding:0 0 22px!important;align-items:flex-start!important;gap:8px!important;text-align:left!important}
+html[data-theme] #app .cn-main .profile-page .profile-view-card>.cp-banner{margin:0!important;width:100%!important;aspect-ratio:3/1!important}
+html[data-theme] #app .cn-main .profile-page .profile-view-card>.avatar.xlarge{margin:-32px 18px 6px!important;position:relative!important;z-index:2;border:4px solid var(--ui-panel)!important}
+html[data-theme] #app .cn-main .profile-page .profile-view-card>:is(h3,p){margin-inline:18px!important;padding-inline:0!important}
+html[data-theme] #app .cn-main .profile-page .profile-view-card>:is(.profile-handle,.pill,.profile-share){margin-inline:18px!important;max-width:calc(100% - 36px)!important}
+.cp-crop-dialog input[type=range]{height:30px}

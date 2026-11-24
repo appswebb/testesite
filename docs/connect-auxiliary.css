@@ -1,0 +1,42 @@
+/* Neutral auxiliary pages only, independent from the promotional homepage. */
+html[data-theme] body.info-page{background:var(--ui-bg)!important;color:var(--ui-text)!important;font-family:Inter,system-ui,sans-serif!important}
+html[data-theme] body.info-page :is(.info-header,.info-hero,.info-main,.info-footer){background:var(--ui-bg)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important;box-shadow:none!important}
+html[data-theme] body.info-page .info-header{position:static!important}
+html[data-theme] body.info-page .info-header .info-wrap{display:flex!important;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;min-width:0}
+html[data-theme] body.info-page .info-brand{display:flex!important;align-items:center;gap:6px;font:800 18px/1.3 Inter,system-ui,sans-serif!important;letter-spacing:-.03em!important;color:var(--ui-text)!important;white-space:nowrap;text-decoration:none}
+html[data-theme] body.info-page .info-nav{display:flex!important;flex-wrap:wrap;gap:5px!important}
+html[data-theme] body.info-page .info-nav a{color:var(--ui-muted)!important;background:transparent!important;border-radius:10px!important;font-size:12px!important}
+html[data-theme] body.info-page .info-nav a[aria-current=page],html[data-theme] body.info-page .info-nav a:hover{background:var(--ui-panel-alt)!important;color:var(--ui-text)!important}
+html[data-theme] body.info-page .info-hero{padding:clamp(24px,5vw,55px) 0!important}
+html[data-theme] body.info-page .info-hero::after{display:none!important}
+html[data-theme] body.info-page .info-hero h1{font:780 clamp(29px,5vw,49px)/1.13 Inter,system-ui,sans-serif!important;letter-spacing:-.045em!important;color:var(--ui-text)!important;text-shadow:none!important}
+html[data-theme] body.info-page .info-hero h1 em{font:inherit!important;color:var(--ui-text)!important;text-shadow:none!important}
+html[data-theme] body.info-page :is(.info-kicker,.info-hero p,.info-card p,.info-card li,.info-step p,.info-alert p,.info-status){color:var(--ui-muted)!important;font-size:13px!important;line-height:1.65}
+html[data-theme] body.info-page :is(.info-card,.info-step,.info-alert){background:var(--ui-panel)!important;color:var(--ui-text)!important;border:1px solid var(--ui-line)!important;border-radius:17px!important;min-width:0;overflow-wrap:anywhere}
+html[data-theme] body.info-page :is(.info-card h2,.info-section h2,.info-step h3,.info-alert strong,.info-form label){color:var(--ui-text)!important;font-family:Inter,system-ui,sans-serif!important;letter-spacing:-.02em!important}
+html[data-theme] body.info-page .info-step b{background:var(--ui-panel-alt)!important;color:var(--ui-text)!important}
+html[data-theme] body.info-page :is(.info-button,.info-button.coral){background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;border-radius:12px!important;min-height:43px;white-space:normal!important;text-align:center}
+html[data-theme] body.info-page .info-button.coral{background:var(--ui-panel)!important;color:var(--ui-text)!important;border:1px solid var(--ui-line)!important}
+html[data-theme] body.info-page :is(.info-form input,.info-form textarea,.info-form select){background:var(--ui-panel)!important;color:var(--ui-text)!important;border:1px solid var(--ui-line)!important;max-width:100%!important;box-sizing:border-box}
+html[data-theme] body.info-page .info-footer a,html[data-theme] body.info-page .info-section a:not(.info-button){color:var(--ui-text)!important;text-decoration-color:var(--ui-muted)!important}
+html[data-theme] #console .gate{background:var(--ui-bg)!important;color:var(--ui-text)!important}
+html[data-theme] #console :is(.gate-copy,.gate-inner,.gate-art){background:var(--ui-panel)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important}
+html[data-theme] #console .gate-art{background:var(--ui-panel-alt)!important}
+html[data-theme] #console .gate-art::before,html[data-theme] #console .gate-art::after{display:none!important}
+html[data-theme] #console .gate-art h2,html[data-theme] #console .gate-inner h1,html[data-theme] #console .gate-inner h1 em{color:var(--ui-text)!important;text-shadow:none!important}
+html[data-theme] #console :is(.gate-kicker,.gate-small,.gate-inner p,.gate-art p,.admin-gate-help){color:var(--ui-muted)!important}
+.cp-admin-emblem{width:min(190px,70%);height:auto;object-fit:contain}
+html[data-theme] #console .admin-login-form input{box-sizing:border-box;max-width:100%;min-width:0;background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border:1px solid var(--ui-line)!important}
+html[data-theme] #console .admin-login-form .btn-main{background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;min-height:46px}
+html[data-theme] #console .admin-password-toggle{background:var(--ui-panel)!important;color:var(--ui-text)!important}
+html[data-theme] #console .main .topbar-right{gap:7px;flex-wrap:wrap}
+html[data-theme] #app .suspension-screen{background:var(--ui-bg)!important;color:var(--ui-text)!important;min-height:100dvh!important}
+html[data-theme] #app .suspension-glow{display:none!important}
+html[data-theme] #app .suspension-header{display:flex;justify-content:space-between;align-items:center}
+html[data-theme] #app .suspension-card{background:var(--ui-panel)!important;color:var(--ui-text)!important;border:1px solid var(--ui-line)!important;box-shadow:none!important;max-width:520px}
+html[data-theme] #app .suspension-card :is(h1,h1 em,label,.suspension-reason strong){color:var(--ui-text)!important}
+html[data-theme] #app .suspension-card :is(p,small),html[data-theme] #app .suspension-footer{color:var(--ui-muted)!important}
+html[data-theme] #app .suspension-reason{background:var(--ui-panel-alt)!important;border-color:var(--ui-line)!important}
+html[data-theme] #app .suspension-form textarea{box-sizing:border-box;max-width:100%;background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;border:1px solid var(--ui-line)!important}
+html[data-theme] #app .suspension-submit{background:var(--ui-accent)!important;color:var(--ui-accent-on)!important}
+@media(max-width:700px){html[data-theme] body.info-page .info-header .info-wrap{gap:8px!important}html[data-theme] body.info-page .info-nav{order:3;width:100%;overflow-x:auto;flex-wrap:nowrap!important;padding-bottom:5px}html[data-theme] body.info-page .info-nav a{flex:none;font-size:11px!important}html[data-theme] #console .gate-art{display:none!important}html[data-theme] #console .gate-copy{min-width:0!important;padding:20px!important}html[data-theme] #app .suspension-card{width:calc(100% - 24px)!important;padding:18px!important;box-sizing:border-box}}

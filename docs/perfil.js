@@ -10,9 +10,8 @@
  function button(text,href,type){const el=document.createElement("a");el.className=type;el.href=href;el.textContent=text;return el}
  function setActions(logged){
   actions.replaceChildren();
-  actions.append(button("Ir para o site ↗","./","share-primary"));
-  if(logged){actions.append(button("Abrir perfil dentro do CONNECT","./?profile="+encodeURIComponent(handle),"share-secondary"));}
-  else{actions.append(button("Entrar na minha conta","./?auth=login&profile="+encodeURIComponent(handle),"share-secondary"));actions.append(button("Criar conta gratuita","./?auth=signup&profile="+encodeURIComponent(handle),"share-secondary"));}
+  if(logged){actions.append(button("Abrir no CONNECT","./?profile="+encodeURIComponent(handle),"share-primary"));}
+  else{actions.append(button("Entrar na minha conta","./?auth=login&profile="+encodeURIComponent(handle),"share-primary"));actions.append(button("Criar conta gratuita","./?auth=signup&profile="+encodeURIComponent(handle),"share-secondary"));}
  }
  if(!safe.test(handle)){name.textContent="Link inválido";message("Confira o link compartilhado.",true);setActions(false);return;}
  // Guest previews are fully independent of Supabase Auth. Never await

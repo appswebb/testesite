@@ -46,7 +46,7 @@ function scan(){
   if(el.dataset.cpLoading)return;
   const own=el.hasAttribute('data-cp-owner'),handle=el.dataset.cpHandle||'',key=own?owner():'public:'+handle;
   if(!key||(!own&&!HANDLE.test(handle)))return;
-  el.dataset.cpLoading='1';get(key,own?fetchOwner:()=>fetchShared(handle)).then(b=>{if(el.isConnected&&(!own||owner()===key))paint(el,b)}).catch(()=>{if(el.isConnected)delete el.dataset.cpLoading});
+  el.dataset.cpLoading='1';get(key,own?fetchOwner:()=>fetchShared(handle)).then(b=>{if(el.isConnected&&(!own||owner()===key))paint(el,own&&cache.get(key)?.data!==b?cache.get(key)?.data:b)}).catch(()=>{if(el.isConnected)delete el.dataset.cpLoading});
  });
 }
 function refresh(b){
