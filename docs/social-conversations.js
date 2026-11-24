@@ -26,7 +26,7 @@ function row(pair){
  avatar(peer)+'<div class="convo-details"><strong>'+profileName(peer.id,peer.display_name,peer.username)+(window.entreExtras?.badge?.(peer)||'')+'</strong>'+
  '<p>'+(peer.username?'@'+esc(peer.username)+' · ':'')+(archived?'Arquivada':p.pinned?'Fixada · conversa permanente':'Conversa permanente')+'</p>'+
  '<small>Começou em '+(pair.origin==='online'?'Pessoas online':'Chat ao vivo')+'</small></div>'+
- '<span class="conversation-card-arrow">'+ico('chevron',17)+'</span></button>'+conversationMenu(pair)+'</article>';
+ '<span class="cp-chat-count" data-chat-unread="'+esc(pair.id)+'" hidden></span><span class="conversation-card-arrow">'+ico('chevron',17)+'</span></button>'+conversationMenu(pair)+'</article>';
 }
 function conversationsView(){
  const filters=[['all','Todas'],['live','Ao vivo'],['online','Online'],['other','Outras'],['archived','Arquivadas']];
@@ -47,8 +47,8 @@ function profileModal(){
  '<div class="cp-visitor-top"><strong>Perfil</strong><button type="button" class="cp-icon-button" data-action="closemodal" aria-label="Fechar perfil">'+ico('close',20)+'</button></div>'+
  '<div class="cp-banner" data-cp-handle="'+handle+'" aria-label="Banner do perfil"></div><div class="cp-visitor-body"><div class="cp-visitor-avatar">'+avatar(p,'large')+'</div><div class="cp-person-title"><h2 id="socialProfileTitle">'+esc(p.display_name||'Pessoa do CONNECT')+'</h2>'+ (window.entreExtras?.badge?.(p)||'')+'</div>'+
  '<span class="person-handle">'+(handle?'@'+handle:'')+'</span><small class="cp-person-meta">'+esc(p.age||'')+(p.age?' anos · ':'')+esc(genders[p.gender]||'')+'</small>'+
- '<div class="cp-bio"><strong>Sobre</strong><p>'+esc(p.bio||'Esta pessoa ainda não escreveu uma apresentação.')+'</p></div>'+
- '<div class="cp-visitor-actions"><button type="button" class="ui-btn btn-dark" data-action="socialChat" data-id="'+esc(p.id)+'">'+ico('chat',17)+' Conversar</button><button type="button" class="ui-btn btn-outline" data-action="socialFollow" data-id="'+esc(p.id)+'">'+ico('user',17)+' Seguir</button></div>'+
+ (window.connectRelationships?.stats?.(p.id)||'')+'<div class="cp-bio"><strong>Sobre</strong><p>'+esc(p.bio||'Esta pessoa ainda não escreveu uma apresentação.')+'</p></div>'+
+ '<div class="cp-visitor-actions"><button type="button" class="ui-btn btn-dark" data-action="socialChat" data-id="'+esc(p.id)+'">'+ico('chat',17)+' Conversar</button>'+ (window.connectRelationships?.followButton?.(p.id,p.follow_status)||'')+'</div>'+
  (handle?'<button type="button" class="cp-share-link" data-action="copyUsernameLink" data-username="'+handle+'">'+ico('link',17)+' Compartilhar perfil</button>':'')+'</div></div></div>';
 }
 Object.assign(api,{conversationsView,conversationRow:row,conversationMenu,profileModal});
