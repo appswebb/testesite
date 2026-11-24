@@ -1,1 +1,3 @@
-Deno.serve(req=>new Response(JSON.stringify({error:"provider_retired"}),{status:req.method==="OPTIONS"?200:410,headers:{"Content-Type":"application/json","Access-Control-Allow-Origin":"https://appswebb.github.io","Access-Control-Allow-Headers":"authorization,apikey,content-type,x-client-info","Access-Control-Allow-Methods":"POST,OPTIONS"}}));
+// Integrated purchases disabled. Premium is granted manually by an authorized administrator.
+const headers={"Content-Type":"application/json","Cache-Control":"no-store","Access-Control-Allow-Origin":"https://appswebb.github.io","Access-Control-Allow-Headers":"authorization,apikey,content-type,x-client-info","Access-Control-Allow-Methods":"POST,OPTIONS"};
+Deno.serve(req=>new Response(JSON.stringify(req.method==="OPTIONS"?{}:{error:"manual_premium_only",purchase_url:"https://wa.me/5518988234267"}),{status:req.method==="OPTIONS"?200:410,headers}));

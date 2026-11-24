@@ -8,7 +8,7 @@ if(!window.supabase || !window.supabase.createClient){
  app.innerHTML='<div class="preload"><h1>Falha de conexão</h1><p>Atualize a página quando estiver conectado à internet.</p></div>';return;
 }
 var db=window.supabase.createClient(URL,KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
-var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[],supportTickets:[],commentReports:[],premiumConfig:null,recurringConfig:null,moreOpen:false};
+var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[],supportTickets:[],commentReports:[],premiumConfig:null,recurringConfig:null,manualPremiumAccount:null,moreOpen:false};
 var perPage=20, searchTimer=null, toastTimer=null, lastLoad=0;
 var sections=[
  ["overview","Visão geral","layout-dashboard"],
@@ -213,7 +213,7 @@ function renderView(){
  var target=document.getElementById("admin-view");if(!target)return;
  document.querySelectorAll("[data-view]").forEach(function(el){el.classList.toggle("active",el.getAttribute("data-view")===state.view);});
  var loc=document.getElementById("topbar-location");if(loc)loc.textContent=viewTitle();
- target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="appeals"?heading("RECURSOS E MODERAÇÃO","Contestações <em>de suspensão.</em>","Confira as solicitações e analise cada recurso.")+appealsPanel():state.view==="pairs"?pairs():state.view==="bulletins"?heading("COMUNICAÇÃO OFICIAL","Avisos <em>e enquetes.</em>","Gerencie suas publicações por 24 horas.")+window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico}):state.view==="support"?heading("ATENDIMENTO","Suporte <em>e provas.</em>","Protocolos recebidos dos usuários.")+window.entreAdminExtras.supportPage(state.supportTickets,e,fmt,ico,badge):state.view==="premium"?heading("ASSINATURAS","Premium <em>no navegador.</em>","Acompanhe o Premium e a configuração de pagamentos web.")+window.entreAdminExtras.premiumPage(state.premiumConfig,e,ico)+(window.entreAdminExtras.recurringPage?.(state.recurringConfig,e)||""):state.view==="settings"?settings():security());
+ target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="appeals"?heading("RECURSOS E MODERAÇÃO","Contestações <em>de suspensão.</em>","Confira as solicitações e analise cada recurso.")+appealsPanel():state.view==="pairs"?pairs():state.view==="bulletins"?heading("COMUNICAÇÃO OFICIAL","Avisos <em>e enquetes.</em>","Gerencie suas publicações por 24 horas.")+window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico}):state.view==="support"?heading("ATENDIMENTO","Suporte <em>e provas.</em>","Protocolos recebidos dos usuários.")+window.entreAdminExtras.supportPage(state.supportTickets,e,fmt,ico,badge):state.view==="premium"?heading("ASSINATURAS","Premium <em>manual.</em>","Gerencie liberações por e-mail e o valor mensal.")+window.entreAdminExtras.premiumPage(state.premiumConfig,e,ico,state.manualPremiumAccount):state.view==="settings"?settings():security());
 }
 async function load(view){
  state.loading=true;renderView();
@@ -346,8 +346,15 @@ document.addEventListener("submit",async function(ev){
  state.busy=true;var btn=form.querySelector('[type="submit"]');if(btn)btn.disabled=true;
  try{
   if(form.id==="support-reply-form"&&state.modal?.type==="support-thread"){const id=Number(state.modal.data.id);await rpc("entre_support_reply",{_ticket:id,_body:form.elements.body.value,_resolve:form.elements.resolve.checked});form.reset();await refreshSupportThread(id);state.supportTickets=await rpc("entre_admin_support_tickets");toast("Resposta enviada ao protocolo.");}
-  else if(form.id==="premium-recurring-settings-form"){
-   var recurring=await rpc("entre_admin_premium_recurring_toggle",{_enabled:form.elements.enabled.checked});state.recurringConfig=recurring;toast("Recorrência atualizada. Verifique webhooks e credenciais antes de ativar.");await load("premium");
+  else if(form.id==="premium-manual-form"){
+   var email=String(form.elements.email.value||"").trim().toLowerCase(),operation=ev.submitter?.value||"lookup",months=Number(form.elements.months?.value||1);
+   if(operation!=="lookup"){
+    if(state.manualPremiumAccount?.email!==email)throw Error("Busque o e-mail antes de alterar o acesso.");
+    if(!window.confirm(operation==="grant"?"Liberar ou renovar "+months+" mês(es) para "+email+"?":"Revogar o acesso Premium de "+email+" agora?"))return;
+   }
+   state.manualPremiumAccount=null;
+   state.manualPremiumAccount=await rpc("connect_admin_manual_premium",{_email:email,_action:operation,_months:months});
+   toast(operation==="lookup"?"Conta localizada.":operation==="grant"?"Acesso Premium liberado.":"Acesso Premium revogado.");renderView();
   }else if(form.id==="premium-config-form"){
    var config=await rpc("entre_admin_premium_config",window.entreAdminExtras.priceParams(form));state.premiumConfig=config;toast("Configuração Premium salva.");await load("premium");
   }else if(form.id==="bulletin-form"){
