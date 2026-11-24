@@ -119,3 +119,46 @@ html[data-theme] :is(.release-actions .btn-outline,.release-actions .btn-main){b
  html[data-theme] .topbar{flex-wrap:wrap}
  html[data-theme] .data-panel{overflow-x:auto!important}
 }
+
+
+/* Mobile administrative workspace, aligned to CONNECT theme and safe areas. */
+html[data-theme] #console .rail .brand-mark img{width:32px;height:32px;filter:brightness(0)}
+html[data-theme=dark] #console .rail .brand-mark img{filter:brightness(0) invert(1)}
+html[data-theme] #console .stat-grid{gap:10px}
+html[data-theme] #console :is(.stat,.panel,.data-panel,.form-card){min-width:0}
+html[data-theme] #console :is(.stat-label,.panel-desc,.list-main,.person-details,.row-meta,.page-intro){min-width:0;overflow-wrap:anywhere}
+html[data-theme] #console .stat{min-height:120px;padding:16px;border-radius:16px!important}
+html[data-theme] #console .stat strong{font-size:32px;margin-top:12px}
+html[data-theme] #console .stat small{line-height:1.4}
+html[data-theme] #console .topbar-right :is(button,a){min-height:42px}
+html[data-theme] #console .list-row{border-color:var(--ui-line);gap:10px}
+html[data-theme] #console .small-btn.danger{color:var(--ui-danger)!important}
+html[data-theme] #console .admin-more-menu[hidden]{display:none!important}
+@media(max-width:820px){
+ html[data-theme] #console .shell{display:block;min-width:0}
+ html[data-theme] #console .main{padding:12px 14px calc(88px + env(safe-area-inset-bottom,0px))!important;max-width:100%;min-width:0}
+ html[data-theme] #console .topbar{display:flex;align-items:center;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+ html[data-theme] #console .topbar-left{flex:1 1 100%;min-width:0}
+ html[data-theme] #console .topbar-label{font-size:11px;letter-spacing:.06em}
+ html[data-theme] #console .topbar-right{width:100%;display:flex;gap:7px;justify-content:flex-end}
+ html[data-theme] #console .topbar-right .admin-version{display:none}
+ html[data-theme] #console .topbar-right .toolbar-btn{width:42px!important;height:42px!important;min-width:42px!important}
+ html[data-theme] #console .page-intro{margin-bottom:18px}
+ html[data-theme] #console .page-title{font-size:clamp(27px,7vw,38px);line-height:1.12}
+ html[data-theme] #console .stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ html[data-theme] #console .stat-grid .stat:first-child{grid-column:1/-1}
+ html[data-theme] #console .stat .stat-label{font-size:11px}
+ html[data-theme] #console .panel-grid{grid-template-columns:minmax(0,1fr);gap:10px}
+ html[data-theme] #console .panel{padding:16px;border-radius:17px!important}
+ html[data-theme] #console .data-tools{padding:13px;gap:10px}
+ html[data-theme] #console .search-box{width:100%;min-width:0}
+ html[data-theme] #console .list-row{flex-wrap:wrap;align-items:center;padding:12px}
+ html[data-theme] #console .list-main{flex:1 1 100%}
+ html[data-theme] #console .row-meta{min-width:0;text-align:left}
+ html[data-theme] #console .list-row :is(.small-btn,.btn-outline){min-height:40px;white-space:normal;max-width:100%}
+ html[data-theme] #console .admin-bottom-bar{display:flex!important;position:fixed!important;left:0;right:0;bottom:0;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))!important;gap:3px!important;justify-content:space-around;z-index:80;overflow:visible}
+ html[data-theme] #console .admin-bottom-bar button{flex:1 1 0!important;min-width:0!important;max-width:none!important;min-height:49px!important;padding:5px 2px!important;font-size:9px!important;line-height:1.15}
+ html[data-theme] #console .admin-bottom-bar button span{white-space:normal;text-align:center}
+ html[data-theme] #console .admin-more-menu{max-height:calc(100dvh - 90px);overflow-y:auto;bottom:calc(70px + env(safe-area-inset-bottom,0px));max-width:calc(100vw - 24px)}
+}
+@media(max-width:350px){html[data-theme] #console .main{padding-inline:10px!important}html[data-theme] #console .stat{padding:12px}html[data-theme] #console .stat .stat-top{gap:5px;grid-template-columns:28px minmax(0,1fr)}html[data-theme] #console .stat .stat-icon{width:28px;height:28px}}
