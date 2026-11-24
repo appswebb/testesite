@@ -6,7 +6,7 @@ const configured=e=>e.mode==="production"&&!!e.key&&!!e.hook&&e.hook.length>=32&
 const api=async(e,path,method="GET",body=undefined)=>{
  const r=await fetch("https://api.asaas.com/v3"+path,{method,headers:{"access_token":e.key,"Content-Type":"application/json","User-Agent":"CONNECT/1.0"},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(10000)});
  const d=await r.json().catch(()=>null);
- if(!r.ok){const err=new Error("asaas_http_"+r.status);err.http=r.status;throw err;}return d;
+ if(!r.ok){const err=new Error("asaas_http_"+r.status);err.http=r.status;err.codes=Array.isArray(d?.errors)?d.errors.map(x=>String(x?.code||"")).filter(x=>/^[a-zA-Z0-9_-]{1,80}$/.test(x)).slice(0,5):[];throw err;}return d;
 };
 const uuid=v=>typeof v==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 const pid=v=>typeof v==="string"&&/^pay_[A-Za-z0-9_]+$/.test(v);
@@ -70,7 +70,7 @@ Deno.serve(async req=>{
   const parts=new Intl.DateTimeFormat("en-US",{timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const part=t=>parts.find(p=>p.type===t)?.value;const due=part("year")+"-"+part("month")+"-"+part("day");
   let payment;
   try{payment=await api(e,"/payments","POST",{customer:customer.id,billingType:method,value:cents/100,dueDate:due,description:"CONNECT Premium - 30 dias",externalReference:reference(full)});}
-  catch(err){if([400,401,403,422].includes(err.http))await db.from(table).update({status:"ERROR"}).eq("id",full.id);throw err;}
+  catch(err){if([400,401,403,422].includes(err.http))await db.from(table).update({status:"ERROR"}).eq("id",full.id);err.stage="create_payment";throw err;}
   return reply(await result(e,db,full,payment));
- }catch(err){const code=String(err.message||"production_failure");console.warn("asaas_production",/^[a-z0-9_]{1,80}$/.test(code)?code:"production_failure");return reply({error:/^[a-z0-9_]{1,80}$/.test(code)?code:"production_failure"},502);}
+ }catch(err){const code=String(err.message||"production_failure");const safe=/^[a-z0-9_]{1,80}$/.test(code)?code:"production_failure";const codes=Array.isArray(err.codes)?err.codes:[];console.warn("asaas_production",safe,err.stage||"",codes.join(","));return reply({error:safe,provider_codes:codes,stage:err.stage||null},502);}
 });
