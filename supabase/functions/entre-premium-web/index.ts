@@ -40,6 +40,17 @@ Deno.serve(async(req:Request)=>{
   const cents=Number(settings?.monthly_price_cents||0);
   const enabled=settings?.enabled===true&&Number.isSafeInteger(cents)&&cents>=100&&cents<=1000000;
   const productionKeys=access.startsWith("APP_USR-")&&publicKey.startsWith("APP_USR-");
+  if(action==="diagnostics"){
+   const admin=await authorized.rpc("entre_admin_check");
+   if(admin.error||admin.data!==true)return err("forbidden",403);
+   let provider_status=0,pix_available=false,card_available=false;
+   if(access){try{
+    const methods=await fetch("https://api.mercadopago.com/v1/payment_methods",{headers:{"Authorization":"Bearer "+access},signal:AbortSignal.timeout(8000)});
+    provider_status=methods.status;
+    if(methods.ok){const list=await methods.json();if(Array.isArray(list)){pix_available=list.some(x=>x.id==="pix"&&x.status!=="inactive");card_available=list.some(x=>x.payment_type_id==="credit_card"&&x.status!=="inactive");}}
+   }catch(_){}}
+   return json({production_keys:productionKeys,webhook_configured:Boolean(webhookSecret),provider_status,pix_available,card_available,checkout_enabled:enabled,price_cents:cents});
+  }
   if(action==="config")return json({enabled:enabled&&productionKeys&&Boolean(webhookSecret),price_cents:cents,
    public_key:enabled&&productionKeys&&webhookSecret?publicKey:null,mode:"one_time_30_days",
    message:!productionKeys||!webhookSecret?"As chaves Mercado Pago para o checkout web precisam ser configuradas no Supabase.":null});
