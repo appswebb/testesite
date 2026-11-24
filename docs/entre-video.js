@@ -14,6 +14,7 @@ function miniMarkup(pair,peer){
  return '<aside class="ce-floating encounter-floating-video" data-ce-pair="'+esc(pair.id)+'" role="region" aria-label="Videochamada minimizada"><div class="ce-float-handle" data-ce-drag tabindex="0" role="button" aria-label="Mover janela de vídeo. Use as setas do teclado."><svg width="18" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="8" cy="6" r="1.5"/><circle cx="16" cy="6" r="1.5"/><circle cx="8" cy="12" r="1.5"/><circle cx="16" cy="12" r="1.5"/><circle cx="8" cy="18" r="1.5"/><circle cx="16" cy="18" r="1.5"/></svg><strong>'+esc(name)+'</strong><span class="timer-text">05:00</span></div><div class="ce-mini-video"><video id="videoRemote" autoplay playsinline aria-label="Câmera da outra pessoa"></video><div id="videoPlaceholder" class="ce-video-placeholder">Conectando…</div><div class="ce-mini-self"><video id="videoSelf" autoplay muted playsinline aria-label="Sua câmera"></video><span class="ce-self-off" hidden>'+ico('camera',13)+'</span></div></div><div class="ce-mini-controls">'+control('videoMute','videoMute','mic','Microfone')+control('videoCamera','videoCamera','camera','Câmera')+control('videoSound','videoSound','volume-2','Som')+'<button type="button" class="ce-control ce-end ce-icon" data-action="endpair" aria-label="Encerrar">'+ico('phone-off',16)+'</button></div><button class="ce-float-return" type="button" data-action="nav" data-view="connect">Voltar à chamada '+ico('arrow',15)+'</button><p id="videoConnectionStatus" class="sr-only" aria-live="polite"></p></aside>';
 }
 let soundMuted=false,soundBlocked=false;
+function paintRemoteCamera(on,known=false){const video=document.getElementById('videoRemote'),p=document.getElementById('videoPlaceholder');if(video)video.style.visibility=on?'visible':'hidden';if(p){p.hidden=on;p.textContent=known?'Câmera da outra pessoa desligada':'Conectando vídeo…';}}
 function paintControls(mic,camera){
  const values=[['videoMute',mic,'Silenciar microfone','Ativar microfone','Microfone','Mudo'],['videoCamera',camera,'Desligar câmera','Ativar câmera','Câmera','Desligada'],['videoSound',!soundMuted&&!soundBlocked,'Silenciar som','Ativar som','Som','Sem som']];
  for(const [id,on,disable,enable,label,off] of values){const b=document.getElementById(id);if(!b)continue;b.classList.toggle('is-off',!on);b.setAttribute('aria-pressed',String(!on));b.setAttribute('aria-label',on?disable:enable);b.title=on?disable:enable;const t=b.querySelector('span');if(t)t.textContent=on?label:off;}
@@ -39,7 +40,7 @@ function attach(){
   applyRemote(remote);
  }
  const placeholder=document.getElementById('videoPlaceholder');
- if(placeholder)placeholder.hidden=session.remote.getVideoTracks().some(t=>t.readyState==='live'&&!t.muted);
+ const remoteOn=session.peerCamera!==false&&session.remote.getVideoTracks().some(t=>t.readyState==='live'&&!t.muted);paintRemoteCamera(remoteOn,session.peerCamera===false);
  const micEnabled=session.local?.getAudioTracks().some(t=>t.enabled)===true;
  const cameraEnabled=session.local?.getVideoTracks().some(t=>t.enabled)===true;
  paintControls(micEnabled,cameraEnabled);
@@ -66,12 +67,12 @@ async function start(pair){
  if(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection){status('Este navegador não permite videochamadas.');return;}
  const room={pairId:pair.id,remote:new MediaStream(),local:null,pc:null,channel:null,queue:[],status:'Solicitando acesso à câmera e ao microfone…',ready:false,interval:null};
  session=room;attach();
- try{room.local=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true},video:{facingMode:'user',width:{ideal:640},height:{ideal:480}}});}
+ try{room.local=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true},video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30,max:30}}});}
  catch(error){room.status='Câmera ou microfone bloqueados. Verifique as permissões do navegador e toque em Tentar câmera novamente.';status(room.status);return;}
  if(session!==room||!activePair(state.pair)){room.local.getTracks().forEach(t=>t.stop());return;}
  const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]});
- room.pc=pc;room.local.getTracks().forEach(t=>pc.addTrack(t,room.local));
- pc.ontrack=ev=>{if(session!==room)return;const streams=ev.streams||[];if(streams[0])room.remote=streams[0];else room.remote.addTrack(ev.track);room.status='Videochamada conectada.';attach();};
+ room.pc=pc;room.local.getTracks().forEach(t=>{const sender=pc.addTrack(t,room.local);if(t.kind==='video'){const p=sender.getParameters();if(p.encodings?.length){p.encodings[0].maxBitrate=4000000;void sender.setParameters(p).catch(()=>{});}}});room.announceCamera=()=>send({type:'camera-state',enabled:room.local.getVideoTracks().some(t=>t.enabled)});
+ pc.ontrack=ev=>{if(session!==room)return;const streams=ev.streams||[];if(streams[0])room.remote=streams[0];else room.remote.addTrack(ev.track);room.status='Videochamada conectada.';ev.track.onmute=ev.track.onunmute=ev.track.onended=()=>attach();attach();void room.announceCamera?.();};
  pc.onicecandidate=ev=>{if(ev.candidate&&room.ready)void send({type:'ice',candidate:ev.candidate.toJSON()});};
  pc.onconnectionstatechange=()=>{
   if(session!==room)return;
@@ -96,7 +97,7 @@ async function start(pair){
  async function receive(payload){
   if(session!==room||!activePair(state.pair)||!payload)return;
   try{
-   if(payload.type==='ready'&&state.session.user.id===pair.a){await offer();}
+   if(payload.type==='camera-state'&&typeof payload.enabled==='boolean'){room.peerCamera=payload.enabled;attach();return;}if(payload.type==='ready'){void room.announceCamera?.();if(state.session.user.id===pair.a)await offer();}
    if(payload.type==='offer'&&state.session.user.id===pair.b){
     await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
     while(room.queue.length){await pc.addIceCandidate(room.queue.shift());}
@@ -134,9 +135,9 @@ async function action(type){
  if(!session&&type!=='videoRetry')return false;
  if(type==='videoRetry'){const pair=state.pair;cleanup();await start(pair);return true;}
  if(type==='videoMute'){const tracks=session.local?.getAudioTracks()||[];for(const t of tracks)t.enabled=!t.enabled;attach();return true;}
- if(type==='videoCamera'){const tracks=session.local?.getVideoTracks()||[];for(const t of tracks)t.enabled=!t.enabled;attach();return true;}
+ if(type==='videoCamera'){const tracks=session.local?.getVideoTracks()||[];for(const t of tracks)t.enabled=!t.enabled;attach();void session.announceCamera?.();return true;}
  if(type==='videoSound'){const video=document.getElementById('videoRemote');if(video){video.muted=false;await video.play().catch(()=>{});}return true;}
  return false;
 }
-window.entreVideo={markup,miniMarkup,start,attach,cleanup,action,paintControls,applyRemote,isRunning:()=>Boolean(session)||Boolean(window.entreLiveKit?.isRunning?.())};
+window.entreVideo={markup,miniMarkup,start,attach,cleanup,action,paintControls,applyRemote,paintRemoteCamera,isRunning:()=>Boolean(session)||Boolean(window.entreLiveKit?.isRunning?.())};
 })();

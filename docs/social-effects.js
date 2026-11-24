@@ -2,11 +2,11 @@
 (function(){
 const api=window.entreSocial;
 api.showMatchAnimation=function(peer){
- if(state.motionOff||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ if(state.motionOff)return;
  document.getElementById('entre-meeting')?.remove();
  const el=document.createElement('div');
  el.id='entre-meeting';el.className='meet-overlay';el.setAttribute('role','status');
- el.innerHTML='<div class="meet-content"><span>VOCÊS SE ENCONTRARAM</span><div class="meet-stage"><div class="meet-person meet-left">'+esc(initials(state.profile?.display_name))+'</div><span class="meet-spark">♡</span><div class="meet-person meet-right">'+esc(initials(peer?.display_name))+'</div></div><h2>Um novo <em>oi.</em></h2><p>Seu encontro temporário já começou. Vocês têm cinco minutos.</p></div>';
+ el.className='connect-match-effect';el.innerHTML='<div class="connect-match-core"><img src="./connect-glass.svg?v=clean-v16" alt=""><strong>Vocês se encontraram.</strong><small>Seu encontro de cinco minutos começou.</small></div>';
  document.body.append(el);setTimeout(()=>el.remove(),1450);
 };
 api.showEndAnimation=function(){

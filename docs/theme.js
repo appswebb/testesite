@@ -68,7 +68,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('input',e=>{if(e.target.matches?.('[data-theme-color]'))setColor(e.target.value)},true);
 window.addEventListener('storage',e=>{if(e.key===KEY){state=load();apply();syncControls()}});
 document.addEventListener('DOMContentLoaded',()=>{
- try{document.body.classList.toggle('motion-off',localStorage.getItem('entre.motionOff')==='1');document.body.classList.toggle('motion-force',localStorage.getItem('entre.motionForce')==='1'&&localStorage.getItem('entre.motionOff')!=='1')}catch(_){}
+ try{document.body.classList.toggle('motion-off',localStorage.getItem('entre.motionOff')==='1');document.body.classList.toggle('motion-force',localStorage.getItem('entre.motionOff')!=='1')}catch(_){}
  document.querySelectorAll('[data-theme-toggle-slot]').forEach(el=>{el.innerHTML=toggleMarkup()});apply();syncControls();
 },{once:true});
 window.entreTheme={read:()=>({...state}),setScope,setMode,setColor,renderControls,syncControls,toggleMarkup,PRESETS};apply();

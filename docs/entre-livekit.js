@@ -30,7 +30,7 @@ function attach(){
  if(own) {own.srcObject=local;own.muted=true;own.play().catch(()=>{});}
  if(other&&other.srcObject!==current.remote){other.srcObject=current.remote;window.entreVideo?.applyRemote?.(other);}
  const placeholder=document.getElementById('videoPlaceholder');
- if(placeholder)placeholder.hidden=current.remote.getVideoTracks().length>0;
+ const pubs=[...current.room.remoteParticipants.values()].flatMap(p=>[...p.videoTrackPublications.values()]);const cameraOn=pubs.some(p=>p.track&&!p.isMuted&&p.track.mediaStreamTrack?.readyState==='live');window.entreVideo?.paintRemoteCamera?.(cameraOn,pubs.some(p=>p.isMuted)||current.hadVideo&&!cameraOn);if(cameraOn)current.hadVideo=true;
  window.entreVideo?.paintControls?.(current.mic,current.camera);
  status(current.status||'Chamada conectada pelo LiveKit.');
 }
@@ -52,7 +52,7 @@ async function start(pair){
  let room=null,attempt=null;
  try{
   const lk=await sdk();
-  room=new lk.Room({adaptiveStream:true,dynacast:true,stopLocalTrackOnUnpublish:true});
+  room=new lk.Room({adaptiveStream:false,dynacast:true,stopLocalTrackOnUnpublish:true,videoCaptureDefaults:{resolution:{width:1920,height:1080,frameRate:30}},publishDefaults:{videoEncoding:{maxBitrate:4000000,maxFramerate:30},simulcast:true}});
   attempt={pairId:pair.id,room,remote:new MediaStream(),camera:true,mic:true,status:'Conectando com LiveKit…'};
   current=attempt;
   room.on(lk.RoomEvent.TrackSubscribed,(track)=>{
@@ -67,6 +67,7 @@ async function start(pair){
    if(mediaTrack&&attempt.remote.getTracks().includes(mediaTrack))attempt.remote.removeTrack(mediaTrack);
    attempt.status='Reconectando vídeo…';attach();
   });
+  for(const event of [lk.RoomEvent.TrackMuted,lk.RoomEvent.TrackUnmuted,lk.RoomEvent.TrackPublished,lk.RoomEvent.TrackUnpublished,lk.RoomEvent.ParticipantDisconnected].filter(Boolean)){room.on(event,()=>{if(current===attempt)attach()});}
   room.on(lk.RoomEvent.Disconnected,()=>{if(current!==attempt)return;attempt.status='A chamada LiveKit foi desconectada.';attach();});
   room.on(lk.RoomEvent.Reconnecting,()=>{if(current!==attempt)return;attempt.status='Reconectando LiveKit…';attach();});
   room.on(lk.RoomEvent.Reconnected,()=>{if(current!==attempt)return;attempt.status='Conexão LiveKit restaurada.';attach();});
