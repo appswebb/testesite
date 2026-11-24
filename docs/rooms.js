@@ -12,13 +12,13 @@ function chatRows(){
  if(s.loading&&!s.rows.length)return '<div class="rooms-empty">Carregando mensagens…</div>';
  if(!s.rows.length)return '<div class="rooms-empty"><span class="cn-room-empty-icon">'+ico('rooms',32)+'</span><strong>Comece a conversa.</strong><p>Esta sala está tranquila. Seja a primeira pessoa a dar um oi.</p></div>';
  return (s.older?'<button class="rooms-load-more" type="button" data-room-action="more">Mensagens anteriores</button>':'')+
- s.rows.map(r=>'<article class="room-message '+(r.sender===state.session?.user?.id?'is-mine':'')+'"><span class="room-message-avatar"'+profileTarget(r.sender,r.username)+'>'+esc(String(r.display_name||'?').slice(0,1).toUpperCase())+'</span><div class="room-message-content"><header><strong>'+profileName(r.sender,r.display_name,r.username)+'</strong><span>'+profileName(r.sender,'@'+(r.username||'pessoa'),r.username)+'</span><time>'+formatDate(r.created_at)+'</time></header><p>'+esc(r.body)+'</p>'+(r.sender===state.session?.user?.id?'<button type="button" data-room-action="delete" data-id="'+Number(r.id)+'" aria-label="Apagar minha mensagem">Apagar</button>':'')+'</div></article>').join('');
+ s.rows.map(r=>'<article class="room-message '+(r.sender===state.session?.user?.id?'is-mine':'')+'"><span class="room-message-avatar"'+profileTarget(r.sender,r.username)+'>'+esc(String(r.display_name||'?').slice(0,1).toUpperCase())+'</span><div class="room-message-content"><header><strong>'+profileName(r.sender,r.display_name,r.username)+'</strong><span>'+profileName(r.sender,'@'+(r.username||'pessoa'),r.username)+'</span><time>'+formatDate(r.created_at)+'</time></header><p class="'+(r.deleted_at?'cp-room-deleted':'')+'">'+esc(r.body)+'</p>'+(r.edited_at&&!r.deleted_at?'<small class="cp-room-edited">Editada</small>':'')+(r.sender===state.session?.user?.id&&!r.deleted_at?'<button type="button" class="cp-message-menu cp-room-message-menu" data-room-message-menu="'+Number(r.id)+'" aria-label="Opções da mensagem">'+ico('more',16)+'</button>':'')+'</div></article>').join('');
 }
 function paint(scrollToEnd=false){
  const el=document.getElementById('roomMessages');if(!el)return;
  const keepBottom=scrollToEnd||el.scrollHeight-el.scrollTop-el.clientHeight<140;
  const oldTop=el.scrollTop,oldHeight=el.scrollHeight;
- el.innerHTML=chatRows();
+ const markup=chatRows();if(el.dataset.roomMarkup!==markup){el.innerHTML=markup;el.dataset.roomMarkup=markup;}
  if(keepBottom)el.scrollTop=el.scrollHeight;
  else el.scrollTop=oldTop+(el.scrollHeight-oldHeight);
  const cool=document.getElementById('roomCooldown');
@@ -146,7 +146,7 @@ async function send(form){
  try{
   const {error}=await db.rpc('entre_room_send',{_room:s.room,_body:body});
   if(error)throw error;
-  input.value='';window.connectSound?.play?.('send');s.expiresCooldown=Date.now()+5000;
+  input.value='';input.blur();window.connectSound?.play?.('send');s.expiresCooldown=Date.now()+5000;
   await load();
  }catch(e){toast(infoError(e),true);if(/5 segundos/.test(e.message||''))s.expiresCooldown=Date.now()+5000;}
  finally{s.busy=false;if(btn?.isConnected)btn.disabled=false;paint();}
@@ -178,10 +178,8 @@ document.addEventListener('click',e=>{
  if(a==='state'&&UF.some(([uf])=>uf===s.state))roomChange('s:'+s.state.toLowerCase());
  if(a==='city'&&s.city&&s.cities.includes(s.city))roomChange('c:'+s.state.toLowerCase()+':'+clean(s.city));
  if(a==='more')void load(true);
- if(a==='delete'&&confirm('Apagar sua mensagem desta sala?')){
-  void (async()=>{const {error}=await db.rpc('entre_room_delete_my_message',{_id:Number(b.dataset.id)});if(error)toast(infoError(error),true);else await load();})();
- }
+
 });
 document.addEventListener('click',event=>{if(event.target?.id==='roomsFilterOverlay')closeRoomFilter();});
-window.entreRooms={view,enter,refresh:()=>state.view==='rooms'&&!document.hidden?load():Promise.resolve(),stop:()=>{closeRoomFilter(false);if(s.refreshTimer)clearInterval(s.refreshTimer);s.refreshTimer=null;},roomChange,details:()=>({room:s.room,rows:s.rows.length,filterOpen:s.filterOpen})};
+window.entreRooms={view,enter,messageContext:id=>state.view==='rooms'?{room:s.room,message:s.rows.find(r=>String(r.id)===String(id))}:null,applyMutation:(room,row)=>{if(state.view!=='rooms'||room!==s.room)return;const item=s.rows.find(r=>r.id===row.id);if(item)Object.assign(item,row);paint();},refresh:()=>state.view==='rooms'&&!document.hidden?load():Promise.resolve(),stop:()=>{closeRoomFilter(false);if(s.refreshTimer)clearInterval(s.refreshTimer);s.refreshTimer=null;},roomChange,details:()=>({room:s.room,rows:s.rows.length,filterOpen:s.filterOpen})};
 })();
