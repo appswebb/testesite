@@ -24,6 +24,17 @@ Deno.serve(async(req:Request)=>{
    const signed=await sb.storage.from("entre-avatars").createSignedUrl(p.avatar_path,180);
    if(!signed.error&&signed.data?.signedUrl)avatar_url=signed.data.signedUrl;
   }
-  return json({profile:{username:p.username,display_name:p.display_name,bio:String(p.bio||"").slice(0,250),avatar_url}});
+  let banner=null;
+  // Reuse the established public-profile eligibility check above. No other personal data is exposed.
+  const {data:cover,error:coverError}=await sb.from("entre_profile_banners").select("mime,image_base64,zoom,pos_x,pos_y").eq("user_id",p.id).maybeSingle();
+  if(!coverError&&cover){
+   let allowed=cover.mime==="image/jpeg";
+   if(cover.mime==="image/gif"){
+    const {data:premium,error:premiumError}=await sb.rpc("entre_premium_active",{_uid:p.id});
+    allowed=!premiumError&&premium===true;
+   }
+   if(allowed)banner=cover;
+  }
+  return json({profile:{username:p.username,display_name:p.display_name,bio:String(p.bio||"").slice(0,250),avatar_url,banner}});
  }catch(error){console.error("shared-profile",String(error));return json({error:"unavailable"},503)}
 });
