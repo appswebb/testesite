@@ -29,7 +29,7 @@ Object.assign(iconPaths,{
  'refresh-cw':iconPaths.refresh
 });
 Object.assign(iconPaths,{radio:'<circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 5a10 10 0 0 1 0 14M5 19A10 10 0 0 1 5 5"/>',mail:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 6 10 7 10-7"/>','arrow-left':iconPaths.back,play:'<path d="m8 5 12 7-12 7z"/>',image:'<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>'});
-Object.assign(iconPaths,{rooms:'<path d="M3 4h18v13H10l-5 4v-4H3z"/><path d="M7 9h10M7 13h6"/>',sliders:'<path d="M3 6h5m4 0h9M3 12h10m4 0h4M3 18h2m4 0h12"/><circle cx="10" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="7" cy="18" r="2"/>'});
+Object.assign(iconPaths,{rooms:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>',sliders:'<path d="M3 6h5m4 0h9M3 12h10m4 0h4M3 18h2m4 0h12"/><circle cx="10" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="7" cy="18" r="2"/>'});
 const ico=(name, size=20)=>`<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name]||iconPaths.spark}</svg>`;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nameOf=v=>String(v||'').trim().split(' ')[0]||'alguém';
