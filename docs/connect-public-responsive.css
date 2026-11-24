@@ -633,3 +633,34 @@ html[data-theme] #app .cp-voice-draft audio{grid-column:1/-1;max-width:100%;widt
 html[data-theme] #app .cp-voice-state [data-voice-send]{background:var(--ui-accent);color:var(--ui-accent-on);border-color:var(--ui-accent)}
 html[data-theme] #app .enc-media-toolbar [data-chat-media-record][aria-pressed=true]{background:#b82338!important;color:white!important;border-color:#b82338!important}
 @media(prefers-reduced-motion:reduce){.cp-voice-line i,.cp-voice-remote i{animation:none!important}}
+
+
+/* Message action sheet and support threads — CONNECT neutral tokens. */
+html[data-theme] #app :is(.ce-messages,.pair-messages) .bubble-row.mine{gap:5px!important;align-items:center!important}
+html[data-theme] #app :is(.ce-messages,.pair-messages) .bubble-row .bubble{flex:0 1 auto!important}
+html[data-theme] #app .cp-message-menu{display:grid;place-items:center;flex:0 0 30px;width:30px;height:36px;padding:0;border:0;background:transparent;color:var(--ui-muted);border-radius:10px;cursor:pointer}
+html[data-theme] #app .cp-message-menu:focus-visible{outline:2px solid var(--ui-accent)}
+html[data-theme] #app .cp-message-deleted .cp-message-body{font-style:italic;opacity:.75}
+.cp-msg-dialog{box-sizing:border-box;width:min(420px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:14px;border:1px solid var(--ui-line);border-radius:20px;background:var(--ui-panel);color:var(--ui-text);overflow:auto;box-shadow:0 16px 60px #0005}
+.cp-msg-dialog::backdrop{background:#0007;backdrop-filter:blur(3px)}
+.cp-msg-dialog header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.cp-msg-dialog header button{width:40px;min-width:40px;height:40px;display:grid;place-items:center;font-size:22px;padding:0}
+.cp-msg-dialog button{display:flex;align-items:center;gap:9px;width:100%;min-height:44px;margin:6px 0;padding:10px 12px;border-radius:12px;border:1px solid var(--ui-line);background:var(--ui-panel-alt);color:var(--ui-text);font:650 13px/1.4 Inter,system-ui,sans-serif;cursor:pointer}
+.cp-msg-dialog :is([data-msg-delete],[data-msg-confirm]){color:var(--ui-danger,#bc3048)}
+.cp-msg-dialog button[type=submit]{background:var(--ui-accent);color:var(--ui-accent-on)}
+.cp-msg-dialog textarea{box-sizing:border-box;width:100%;padding:10px;border-radius:12px;border:1px solid var(--ui-line);background:var(--ui-panel-alt);color:var(--ui-text);font:inherit;resize:vertical}
+.cp-msg-preview{max-height:100px;overflow:auto;overflow-wrap:anywhere;white-space:pre-wrap;padding:10px;background:var(--ui-panel-alt);border-radius:10px;font-size:13px}
+.cp-thread-list{max-height:35dvh;overflow:auto;overscroll-behavior:contain;display:grid;gap:8px;padding:8px 0}
+.cp-thread-list article{padding:10px;border:1px solid var(--ui-line);border-radius:12px;background:var(--ui-panel-alt);overflow-wrap:anywhere}
+.cp-thread-list article p{white-space:pre-wrap;margin:5px 0;font-size:13px;line-height:1.5}
+.cp-thread-list article small{color:var(--ui-muted);font-size:11px}
+#app .csup-history article button{min-height:42px;justify-self:start;margin-top:4px}
+@media(max-width:760px){
+ html[data-theme] #app .online-person{padding:10px!important;gap:7px!important;min-height:0!important}
+ html[data-theme] #app .online-person .online-person-content{gap:6px!important}
+ html[data-theme] #app .online-person .online-person-content>.avatar{width:52px!important;height:52px!important;min-width:52px!important;max-width:52px!important}
+ html[data-theme] #app .online-person .cp-online-identity{gap:2px!important}
+ html[data-theme] #app .online-person-bio{font-size:11px!important}
+ html[data-theme] #app .online-person-actions button{min-height:38px!important;padding:5px!important;font-size:11px!important}
+ html[data-theme] #app .online-restriction{font-size:10px!important}
+}
