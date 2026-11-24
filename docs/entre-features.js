@@ -190,12 +190,12 @@ function webPaymentStatusMarkup(){
 }
 function premiumView(){
  const active=data.premium?.active,enabled=data.premium?.checkout_enabled&&price()&&!data.checkoutBusy;
- return heading('ENTRE. PREMIUM','Uma experiência <em>mais sua.</em>','Mais opções para se conectar, destaque no perfil e suporte prioritário.')+
- '<section class="premium-checkout"><div class="premium-pitch"><span class="premium-label">✧ ENTRE. PREMIUM</span><h3>Seja notado.<br><em>Conecte-se do seu jeito.</em></h3><p>Personalize quem você encontra, destaque seu perfil e tenha um canal direto de suporte.</p>'+
+ return heading('ASSINATURAS','Uma experiência <em>mais completa.</em>','Benefícios, valor e status da sua assinatura em um só lugar.')+
+ '<section class="premium-checkout"><div class="premium-pitch"><span class="premium-label">✦ PLANO PREMIUM</span><h3>Mais liberdade para<br><em>se conectar.</em></h3><p>Recursos extras dentro da experiência, sem perder o foco nas conversas reais.</p>'+
  '<div class="premium-perks"><div>'+ico('check',19)+' <span>Filtro Premium de gênero no Ao Vivo</span></div>'+
  '<div>'+ico('star',19)+' <span>Selo de destaque no perfil</span></div>'+
  '<div>'+ico('chat',19)+' <span>Atendimento prioritário pelo WhatsApp</span></div></div></div>'+
- '<div class="premium-checkout-card"><span>PREMIUM · 30 DIAS</span><h3>'+(price()||'Valor a definir')+'</h3>'+
+ '<div class="premium-checkout-card"><span>ACESSO POR 30 DIAS · PAGAMENTO ÚNICO</span><h3>'+(price()||'Valor a definir')+'</h3>'+
  '<p>'+(price()?'Pague uma vez pelo navegador com Pix ou cartão. Acesso válido por 30 dias, sem renovação automática nesta opção.':'Defina o preço no painel administrativo para habilitar o checkout.')+'</p>'+
  (active?'<div class="premium-confirmed">'+ico('check',19)+' Sua assinatura está ativa.</div>'+
   '<button type="button" class="ui-btn btn-dark premium-whatsapp" data-action="premiumWhatsapp">'+ico('chat',18)+' WhatsApp prioritário</button>'+
@@ -313,7 +313,7 @@ function supportView(){
  '<div class="field"><label for="supportProof">Anexos (opcionais)</label><input type="file" name="proof" id="supportProof" accept="image/png,image/jpeg,image/webp,application/pdf" multiple><small>Se quiser, anexe até 3 imagens ou PDF (5 MB cada). Não envie senhas, documentos nem dados bancários.</small></div>'+
  '<button class="ui-btn btn-dark" type="submit" '+(data.supportBusy?'disabled':'')+'>Enviar relato '+ico('send',17)+'</button>'+
  '<p class="support-security">'+ico('lock',14)+' As provas ficam em armazenamento privado, acessíveis à equipe autorizada.</p></form>'+
- '<aside class="support-contact"><span class="premium-label">SUPORTE ENTRE.</span><h3>Estamos aqui para ouvir.</h3><p>Seu relato é salvo com um número de protocolo. Envio por e-mail será confirmado apenas quando a integração estiver configurada.</p><strong>Contato da equipe</strong><span>Atendimento por protocolo dentro do aplicativo. O e-mail separado de suporte será configurado pelo administrador.</span>'+
+ '<aside class="support-contact"><span class="premium-label">CENTRAL DE SUPORTE</span><h3>Estamos aqui para ouvir.</h3><p>Seu relato é salvo com um número de protocolo. Envio por e-mail será confirmado apenas quando a integração estiver configurada.</p><strong>Contato da equipe</strong><span>Atendimento por protocolo dentro do aplicativo. O e-mail separado de suporte será configurado pelo administrador.</span>'+
  (data.premium?.active?'<button type="button" class="ui-btn btn-outline" data-action="premiumWhatsapp">WhatsApp Premium '+ico('arrow',16)+'</button>':
  '<button type="button" class="ui-btn btn-outline btn-sm" data-action="nav" data-view="premium">Conhecer suporte Premium</button>')+'</aside></div>'+
  (data.support.length?'<section class="support-history"><h3>Meus protocolos</h3>'+data.support.map(t=>'<div><strong>#'+Number(t.id)+' · '+esc(t.subject)+'</strong><small>'+esc(t.status)+' · '+new Date(t.created_at).toLocaleDateString('pt-BR')+(t.email_status==='sent'?' · E-mail enviado':' · Recebido no sistema')+'</small></div>').join('')+'</section>':'');
