@@ -159,7 +159,7 @@ function settings(){
  releaseShortcut(Boolean(x.maintenance_enabled),"Atualizações do site","Ative a tela de manutenção ou libere a nova versão.")+'<form id="settings-form" class="form-card"><h2 class="section-heading">Experiência e segurança</h2><p class="section-desc">Controle operacional da plataforma. Novas regras são aplicadas sem publicar outra versão do site.</p>'+
  '<div class="setting-item"><div><strong>Permitir novas conexões</strong><small>Se desativado, a busca por novas pessoas será pausada no servidor.</small></div><label class="switch"><input type="checkbox" name="matchmaking" '+(x.matchmaking_enabled?"checked":"")+'><span></span></label></div>'+
  '<div class="setting-item"><div><strong>Aceitar denúncias</strong><small>Habilita o formulário de denúncia entre participantes de conversas.</small></div><label class="switch"><input type="checkbox" name="reporting" '+(x.reporting_enabled?"checked":"")+'><span></span></label></div>'+
- '<div class="setting-item" style="display:block"><strong>Comunicação oficial</strong><p class="section-desc">Avisos com respostas e enquetes obrigatórias, publicados por 24 horas.</p><button type="button" class="btn-main coral" data-view="bulletins">Abrir avisos e enquetes</button></div>'+
+ '<div class="setting-item" style="display:block"><strong>Comunicação oficial</strong><p class="section-desc">Avisos com respostas e enquetes opcionais, publicados por 24 horas.</p><button type="button" class="btn-main coral" data-view="bulletins">Abrir avisos e enquetes</button></div>'+
  '<div class="setting-actions"><button type="submit" class="btn-main" '+(state.busy?"disabled":"")+'>'+ico("check-circle",17)+' Salvar configurações</button></div></form>';
 }
 
@@ -351,7 +351,7 @@ document.addEventListener("submit",async function(ev){
    var config=await rpc("entre_admin_premium_config",window.entreAdminExtras.priceParams(form));state.premiumConfig=config;toast("Configuração Premium salva.");await load("premium");
   }else if(form.id==="bulletin-form"){
    var payload=window.entreAdminBulletins.params(form);
-   if(!window.confirm(payload._kind==="poll"?"Publicar uma enquete OBRIGATÓRIA para todos por 24 horas?":"Publicar este aviso para todos por 24 horas?"))return;
+   if(!window.confirm(payload._kind==="poll"?"Publicar uma enquete opcional para todos por 24 horas?":"Publicar este aviso para todos por 24 horas?"))return;
    var published=await rpc("entre_admin_publish_bulletin",payload);
    toast("Publicado. "+Number(published?.notified||0)+" perfis notificados.");
    await load("bulletins");

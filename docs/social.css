@@ -180,3 +180,21 @@
  .bulletin-card{padding:19px}
  .bulletin-poll-pending .ui-btn{width:100%}
 }
+
+/* Compact optional polls and foreground notifications. */
+.bulletin-optional-vote{display:grid;gap:8px;margin-top:12px}
+.bulletin-optional-vote .poll-choices{display:grid;gap:6px;border:0;padding:0;margin:0;min-width:0}
+.bulletin-optional-vote legend{font-size:11px;color:var(--ui-muted);margin-bottom:6px}
+html[data-theme] .bulletin-optional-vote .poll-choice{border:1px solid var(--ui-line);background:var(--ui-panel-alt);color:var(--ui-text);padding:9px 10px;font-size:12px;border-radius:10px;min-height:36px}
+html[data-theme] .bulletin-optional-vote .poll-choice:has(input:checked){border-color:var(--ui-accent)}
+.bulletin-optional-vote>.ui-btn{justify-self:start}
+html[data-theme] .cn-notification-tabs{display:flex!important;gap:5px!important;min-width:0}
+html[data-theme] .cn-notification-tabs>button{flex:1 1 0!important;min-width:0!important;font-size:12px!important;padding:9px 4px!important;white-space:nowrap}
+html[data-theme] .connect-foreground-notice{position:fixed;z-index:2200;top:calc(8px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(370px,calc(100vw - 24px));box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--ui-line);background:var(--ui-panel);color:var(--ui-text);border-radius:14px;box-shadow:0 5px 24px #0002;animation:connectNoticeIn .18s ease-out}
+.connect-fg-icon{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:var(--ui-panel-alt);color:var(--ui-accent);flex:none}
+html[data-theme] .connect-fg-copy,html[data-theme] .connect-fg-close{background:transparent!important;border:0!important;box-shadow:none!important;color:var(--ui-text)!important;min-height:32px;padding:2px!important;cursor:pointer}
+.connect-fg-copy{display:flex;flex:1;min-width:0;flex-direction:column;align-items:flex-start;text-align:left;gap:2px}
+.connect-fg-copy strong{font-size:12px}.connect-fg-copy small{font-size:11px;color:var(--ui-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.connect-fg-close{flex:none;width:30px}
+@keyframes connectNoticeIn{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
+@media(prefers-reduced-motion:reduce){.connect-foreground-notice{animation:none!important}}

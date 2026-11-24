@@ -23,16 +23,44 @@ async function loadOnline(reset=false){
  }catch(e){data.loaded=true;data.onlineError=true;console.warn('Online page',e);}finally{data.busy=false;}
 }
 async function refreshInbox(){try{const r=await rpc('entre_social_inbox');data.follows=Array.isArray(r?.follows)?r.follows:[];data.chats=Array.isArray(r?.chats)?r.chats:[];if(state.view==='online'&&!document.querySelector('.cn-online-filter[open]'))renderView();}catch(e){console.warn('Inbox',e);}}
+// Foreground-only banners: never replay the offline backlog.
+let foregroundSince=Date.now(),bannerUser=null,bannerReady=false,bannerTimer=0,bannerQueue=[],bannerSeen=new Set();
+const importantKinds=new Set(['poll','bulletin','follow','follow_accepted','chat_request','chat_accepted','message','matched','account_restored','account_suspended','retention','system']);
+function foreground(){return !document.hidden&&navigator.onLine&&Boolean(state.session?.user&&state.profile&&!state.suspension&&!maintenanceIsActive()&&document.querySelector('.cn-shell'));}
+function resetForeground(){foregroundSince=Date.now();bannerQueue=[];clearTimeout(bannerTimer);bannerTimer=0;document.getElementById('connectForegroundNotice')?.remove();}
+document.addEventListener('visibilitychange',resetForeground);
+window.addEventListener('offline',resetForeground);window.addEventListener('online',resetForeground);
+function showForegroundNotice(){
+ if(!foreground()){bannerQueue=[];return;}
+ if(bannerTimer||!bannerQueue.length)return;
+ const n=bannerQueue.shift(),el=document.createElement('aside');el.id='connectForegroundNotice';el.className='connect-foreground-notice';el.setAttribute('role','status');
+ const official=n.kind==='poll'||n.kind==='bulletin';
+ el.innerHTML='<span class="connect-fg-icon">'+ico(official?'megaphone':'bell',19)+'</span><button type="button" class="connect-fg-copy"><strong>'+esc(n.kind==='poll'?'Nova enquete':n.kind==='bulletin'?'Novo aviso':'Notificação')+'</strong><small>'+esc(window.entreSocial?.summary?.(n)||'Você tem uma novidade.')+'</small></button><button type="button" class="connect-fg-close" aria-label="Fechar aviso">'+ico('close',16)+'</button>';
+ const done=()=>{clearTimeout(bannerTimer);bannerTimer=0;el.remove();showForegroundNotice();};
+ el.querySelector('.connect-fg-close').onclick=done;
+ el.querySelector('.connect-fg-copy').onclick=()=>{data.notificationTab=n.kind==='poll'?'polls':n.kind==='bulletin'?'bulletins':'personal';nav('notifications');done();};
+ document.body.appendChild(el);bannerTimer=setTimeout(done,5000);
+}
+function foregroundNotifications(rows,user){
+ if(user!==bannerUser){resetForeground();bannerUser=user;bannerReady=false;bannerSeen.clear();}
+ if(!bannerReady){rows.forEach(n=>bannerSeen.add(n.id));bannerReady=true;return;}
+ const fresh=rows.filter(n=>!bannerSeen.has(n.id)&&!n.read_at&&importantKinds.has(n.kind)&&Date.parse(n.created_at)>=foregroundSince);
+ rows.forEach(n=>bannerSeen.add(n.id));if(bannerSeen.size>300)bannerSeen=new Set(rows.map(n=>n.id));
+ if(!foreground())return;
+ if(fresh.some(n=>n.kind==='poll'||n.kind==='bulletin'))void window.entreSocial?.refreshBulletins?.();
+ bannerQueue.push(...fresh.reverse().slice(-5));bannerQueue=bannerQueue.slice(-5);showForegroundNotice();
+}
 async function refreshNotifications(before=null){
- if(data.notiBusy)return;data.notiBusy=true;
+ if(data.notiBusy||!state.session?.user)return;data.notiBusy=true;const user=state.session.user.id;
  try{
   const r=await rpc('entre_notifications_page',{_before:before});
+  if(state.session?.user?.id!==user)return;
   const rows=Array.isArray(r?.rows)?r.rows:[];
   const previous=data.notifications[0]?.id||0;if(before)data.notifications=data.notifications.concat(rows).slice(-45);else data.notifications=rows;
-  if(!before&&previous>0&&rows[0]?.id>previous&&document.hidden&&'Notification' in window&&Notification.permission==='granted'){try{new Notification(rows[0]?.kind==='poll'?'CONNECT • Enquete obrigatória':rows[0]?.kind==='bulletin'?'CONNECT • Novo aviso oficial':'CONNECT • Nova atividade',{body:rows[0]?.kind==='poll'?'Uma enquete oficial está aguardando seu voto.':rows[0]?.kind==='bulletin'?'A administração publicou um novo comunicado.':'Você tem uma nova mensagem ou solicitação.',tag:'entre-social'});}catch(e){}}
+  if(!before)foregroundNotifications(rows,user);
   data.unread=Math.max(0,Math.min(99,Number(r?.unread)||0));data.notiMore=Boolean(r?.has_more);
   document.querySelectorAll('.toolbar-bell .social-unread').forEach(badge=>{badge.textContent=data.unread?String(data.unread):'';});
-  if(state.view==='notifications'&&data.notificationTab!=='bulletins')renderView();
+  if(state.view==='notifications'&&!['bulletins','polls'].includes(data.notificationTab))renderView();
  }catch(e){console.warn('Notifications',e);}finally{data.notiBusy=false;}
 }
 async function updateConversation(pairId,change){

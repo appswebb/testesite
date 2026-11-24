@@ -4,7 +4,6 @@ const api=window.entreSocial;
 let profileSequence=0,returnFocus=null;
 async function openPerson(id,handle='',name=''){
  if(!state.session?.user||!state.profile||maintenanceIsActive()||state.suspension)return;
- if(window.entreSocial?.requiredPoll?.()&&!activeEncounter()){toast('Primeiro, registre seu voto na enquete oficial.',true);return;}
  const uid=state.session.user.id;
  if(id===uid||(!id&&handle&&handle===state.profile.username)){setConnectMenu(false);nav('profile');return;}
  const request=++profileSequence;
@@ -131,10 +130,10 @@ async function action(type,btn){
  }
  if(type==='notificationsRead'){await call('entre_notifications_read');await api.refreshNotifications();renderView();return true;}
  if(type==='notificationsMore'){await api.refreshNotifications(api.data.notifications.at(-1)?.id||null);renderView();return true;}
- if(type==='notificationTab'){api.data.notificationTab=btn.dataset.value==='bulletins'?'bulletins':'personal';renderView();if(api.data.notificationTab==='bulletins')await api.refreshBulletins?.();return true;}
+ if(type==='notificationTab'){api.data.notificationTab=['bulletins','polls'].includes(btn.dataset.value)?btn.dataset.value:'personal';renderView();if(['bulletins','polls'].includes(api.data.notificationTab))await api.refreshBulletins?.();return true;}
  if(type==='notificationOpen'){
   await call('entre_notifications_read',{_until:Number(id)});
-  if(Number(btn.dataset.bulletin)>0){api.data.notificationTab='bulletins';await api.refreshBulletins?.(true);nav('notifications');}else if(btn.dataset.pair){await loadPairs();await openPair(btn.dataset.pair);}else nav('online');
+  if(Number(btn.dataset.bulletin)>0){api.data.notificationTab=btn.dataset.kind==='poll'?'polls':'bulletins';await api.refreshBulletins?.(true);nav('notifications');}else if(btn.dataset.pair){await loadPairs();await openPair(btn.dataset.pair);}else nav('online');
   await api.refreshNotifications();return true;
  }
  if(type==='notificationsPermission'){

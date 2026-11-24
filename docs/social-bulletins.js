@@ -1,4 +1,4 @@
-/* Official bulletins and mandatory one-vote polls, separate from social messages. */
+/* Official bulletins and optional one-vote polls, separate from social messages. */
 (function(){
 'use strict';
 const api=window.entreSocial, d=api.data;
@@ -12,17 +12,15 @@ async function refreshBulletins(silent=false){
  d.bulletinBusy=true;
  try{
   const response=await api.rpc('entre_bulletins_feed'),next=Array.isArray(response?.items)?response.items:[];
-  const before=d.pendingPoll?.id||null,signature=JSON.stringify(next.map(x=>[x.id,x.my_vote,x.my_reply,x.votes_total]));
-  d.bulletins=next;d.pendingPoll=active(response?.required_poll)?response.required_poll:null;
+  const signature=JSON.stringify(next.map(x=>[x.id,x.my_vote,x.my_reply,x.votes_total]));
+  d.bulletins=next;d.pendingPoll=null;
   d.bulletinSignature=signature;d.bulletinError='';d.bulletinLoaded=true;
-  const after=d.pendingPoll?.id||null;
-  if(before!==after){render();return;}
-  if((state.view==='avisos'||(state.view==='notifications'&&d.notificationTab==='bulletins'))&&!silent&&!document.activeElement?.closest?.('.bulletin-reply-form,.poll-choices'))renderView();
+  if((state.view==='avisos'||(state.view==='notifications'&&['bulletins','polls'].includes(d.notificationTab)))&&!silent&&!document.activeElement?.closest?.('.bulletin-reply-form,.poll-choices'))renderView();
  }catch(e){
   d.bulletinError='Não foi possível atualizar os avisos. Tente novamente.';
   d.bulletinLoaded=true;
   console.warn('Bulletins',e);
-  if((state.view==='avisos'||(state.view==='notifications'&&d.notificationTab==='bulletins'))&&!silent)renderView();
+  if((state.view==='avisos'||(state.view==='notifications'&&['bulletins','polls'].includes(d.notificationTab)))&&!silent)renderView();
  }finally{d.bulletinBusy=false;}
 }
 function voteResults(b){
@@ -39,48 +37,33 @@ function bulletinCard(b){
  '<div class="bulletin-card-top"><span class="notice-label">'+ico(poll?'check':'megaphone',16)+' '+(poll?'ENQUETE OFICIAL':'AVISO DA ADMINISTRAÇÃO')+'</span><small>Disponível por '+remaining+'h</small></div>'+
  '<h3>'+esc(b.title)+'</h3>'+(b.body?'<p class="bulletin-description">'+esc(b.body)+'</p>':'')+
  (poll?(voted?'<div class="bulletin-voted">'+ico('check',17)+' Voto registrado: '+esc(safeOptions(b)[Number(b.my_vote)]||'Opção escolhida')+'</div>'+voteResults(b):
- '<div class="bulletin-poll-pending"><p>Seu voto é necessário para continuar utilizando o site.</p><button type="button" class="ui-btn btn-dark btn-sm" data-action="bulletinVoteJump" data-id="'+Number(b.id)+'">Votar na enquete</button></div>'):
+ '<div class="bulletin-optional-vote"><fieldset class="poll-choices"><legend>Escolha uma opção (opcional)</legend>'+safeOptions(b).map((opt,i)=>'<label class="poll-choice"><input type="radio" name="poll-'+Number(b.id)+'" value="'+i+'"><span>'+esc(opt)+'</span></label>').join('')+'</fieldset><button type="button" class="ui-btn btn-dark btn-sm" data-action="bulletinVote" data-id="'+Number(b.id)+'">Confirmar voto</button></div>'):
  '<div class="bulletin-reply-form"><label for="bulletin-reply-'+Number(b.id)+'">'+(reply?'Sua resposta (pode editar)':'Responder ao aviso')+'</label><textarea id="bulletin-reply-'+Number(b.id)+'" maxlength="800" minlength="3" rows="3" placeholder="Escreva sua resposta para a administração…">'+esc(reply||'')+'</textarea><button type="button" class="ui-btn btn-dark btn-sm" data-action="bulletinReply" data-id="'+Number(b.id)+'">'+(reply?'Atualizar resposta':'Enviar resposta')+'</button></div>')+
  '<small class="bulletin-published">Publicado em '+fmt(b.created_at)+' · expira em '+fmt(b.expires_at)+'</small></article>';
 }
-function bulletinsView(){
- return heading('AVISOS DA ADMINISTRAÇÃO','Avisos <em>e enquetes.</em>','Comunicados e enquetes da administração.')+
+function bulletinsView(kind='notice'){
+ const poll=kind==='poll',name=poll?'enquetes':'avisos',items=d.bulletins.filter(x=>active(x)&&x.kind===kind);
+ return heading(poll?'ENQUETES OFICIAIS':'AVISOS DA ADMINISTRAÇÃO',poll?'Enquetes':'Avisos',poll?'Participe se quiser. Votar é opcional.':'Comunicados da administração.')+
  (d.bulletinError?'<div class="bulletin-error" role="status">'+esc(d.bulletinError)+' <button type="button" data-action="bulletinsRefresh">Tentar novamente</button></div>':'')+
- (!d.bulletinLoaded?'<div class="social-empty"><h3>Carregando avisos…</h3><p>Verificando as publicações ativas.</p></div>':
- d.bulletins.length?'<div class="bulletin-feed">'+d.bulletins.filter(active).map(bulletinCard).join('')+'</div>':
- '<div class="social-empty">'+ico('megaphone',27)+'<h3>Nenhum aviso ativo.</h3><p>Comunicados e enquetes ficam disponíveis por 24 horas.</p></div>');
+ (!d.bulletinLoaded?'<div class="social-empty"><h3>Carregando '+name+'…</h3></div>':items.length?'<div class="bulletin-feed">'+items.map(bulletinCard).join('')+'</div>':'<div class="social-empty">'+ico(poll?'check':'megaphone',27)+'<h3>Nenhum '+(poll?'questionário ativo':'aviso ativo')+'.</h3><p>Publicações disponíveis por 24 horas.</p></div>');
 }
-function pollGateView(){
- const poll=pending();
- if(!poll||state.pair?.status==='active'||maintenanceIsActive()||state.suspension)return '';
- return '<div class="bulletin-gate" id="bulletinGate" role="dialog" aria-modal="true" aria-labelledby="bulletinGateTitle">'+
- '<div class="bulletin-gate-card"><div class="bulletin-gate-brand">CONNECT</div>'+
- '<span class="notice-label">'+ico('megaphone',16)+' ENQUETE OFICIAL · VOTO OBRIGATÓRIO</span>'+
- '<h2 id="bulletinGateTitle">'+esc(poll.title)+'</h2>'+
- (poll.body?'<p>'+esc(poll.body)+'</p>':'<p>Escolha uma opção para continuar usando o CONNECT.</p>')+
- '<fieldset class="poll-choices" id="pollChoices"><legend>Escolha uma opção</legend>'+
- safeOptions(poll).map((opt,i)=>'<label class="poll-choice"><input type="radio" name="required-poll-choice" value="'+i+'"><span>'+esc(opt)+'</span></label>').join('')+
- '</fieldset><p class="poll-validation" id="pollValidation" aria-live="polite"></p>'+
- '<button type="button" class="ui-btn btn-dark bulletin-vote-submit" data-action="bulletinVote" data-id="'+Number(poll.id)+'">Confirmar meu voto '+ico('arrow',17)+'</button>'+
- '<small>Um voto por pessoa. Seu voto não pode ser alterado. Esta enquete termina em '+fmt(poll.expires_at)+'.</small>'+
- '<button type="button" class="bulletin-gate-logout" data-action="logout">Sair da conta</button></div></div>';
-}
+function pollGateView(){return '';}
 async function action(type,btn){
  if(type==='bulletinsRefresh'){await refreshBulletins();return true;}
- if(type==='bulletinVoteJump'){if(state.pair?.status==='active'){toast('Conclua o encontro ao vivo antes de votar.');return true;}render();document.querySelector('#bulletinGate .poll-choice input')?.focus();return true;}
+ if(type==='bulletinVoteJump'){return true;}
  if(type==='bulletinVote'){
-  const poll=pending(),choice=document.querySelector('input[name="required-poll-choice"]:checked');
+  const poll=d.bulletins.find(x=>x.kind==='poll'&&Number(x.id)===Number(btn.dataset.id)&&active(x)),choice=btn.closest('.bulletin-card')?.querySelector('input[name="poll-'+Number(btn.dataset.id)+'"]:checked');
   if(!poll||Number(btn.dataset.id)!==Number(poll.id)){await refreshBulletins();toast('A enquete mudou. Confira a votação.',true);return true;}
-  if(!choice){const note=document.getElementById('pollValidation');if(note)note.textContent='Escolha uma opção antes de continuar.';return true;}
+  if(!choice){toast('Escolha uma opção para votar.');return true;}
   if(btn.disabled)return true;
   btn.disabled=true;const old=btn.innerHTML;btn.textContent='Registrando seu voto…';
   try{
    const response=await api.rpc('entre_bulletin_vote',{_bulletin:Number(poll.id),_option:Number(choice.value)});
    if(response?.status==='expired'){d.pendingPoll=null;toast('Esta enquete já encerrou.');}
-   else if(response?.status==='voted'){d.pendingPoll=null;toast('Voto registrado! Você já pode continuar.');}
+   else if(response?.status==='voted'){d.pendingPoll=null;toast('Voto registrado!');}
    else throw Error('Não foi possível confirmar seu voto.');
    await refreshBulletins(true);
-   render();
+   renderView();
   }catch(e){toast(infoError(e),true);btn.disabled=false;btn.innerHTML=old;}
   return true;
  }
@@ -94,5 +77,5 @@ async function action(type,btn){
  }
  return false;
 }
-Object.assign(api,{bulletinsView,pollGateView,refreshBulletins,bulletinAction:action,requiredPoll:pending});
+Object.assign(api,{bulletinsView,pollGateView,refreshBulletins,bulletinAction:action,requiredPoll:()=>null});
 })();

@@ -4,11 +4,11 @@
 function page(bulletins,helpers){
  const {escape,format,badge,icon}=helpers,items=Array.isArray(bulletins)?bulletins:[];
  return '<section class="admin-bulletin-composer form-card"><h2 class="section-heading">Publicar aviso ou enquete</h2>'+
- '<p class="section-desc">Todos os perfis cadastrados serão notificados. Publicações e respostas duram 24 horas. Em enquete, todos precisam votar para continuar no site.</p>'+
- '<form id="bulletin-form"><div class="field"><label for="bulletin-kind">Tipo</label><select class="form-select" id="bulletin-kind" name="kind"><option value="notice">Aviso com respostas</option><option value="poll">Enquete obrigatória</option></select></div>'+
+ '<p class="section-desc">Todos os perfis cadastrados serão notificados. Publicações e respostas duram 24 horas. O voto é opcional. Usuários que estiverem no aplicativo recebem um aviso temporário.</p>'+
+ '<form id="bulletin-form"><div class="field"><label for="bulletin-kind">Tipo</label><select class="form-select" id="bulletin-kind" name="kind"><option value="notice">Aviso com respostas</option><option value="poll">Enquete opcional</option></select></div>'+
  '<div class="field"><label for="bulletin-title">Título</label><input id="bulletin-title" class="form-input" name="title" minlength="3" maxlength="120" placeholder="Ex.: O que acha do novo design?" required></div>'+
  '<div class="field"><label for="bulletin-body">Mensagem</label><textarea id="bulletin-body" class="form-textarea" name="body" minlength="3" maxlength="1500" placeholder="Escreva seu aviso ou descreva a enquete…" required></textarea></div>'+
- '<div id="bulletinOptionsField" class="field" hidden><label for="bulletin-options">Opções (uma por linha)</label><textarea id="bulletin-options" class="form-textarea" name="options" rows="5" maxlength="650" placeholder="Sim&#10;Não&#10;Talvez"></textarea><small class="form-hint">Entre 2 e 6 opções diferentes, até 100 caracteres cada. Voto único e obrigatório.</small></div>'+
+ '<div id="bulletinOptionsField" class="field" hidden><label for="bulletin-options">Opções (uma por linha)</label><textarea id="bulletin-options" class="form-textarea" name="options" rows="5" maxlength="650" placeholder="Sim&#10;Não&#10;Talvez"></textarea><small class="form-hint">Entre 2 e 6 opções diferentes, até 100 caracteres cada. Voto único e opcional.</small></div>'+
  '<div class="setting-actions"><button type="submit" class="btn-main coral">'+icon('arrow-right',17)+' Publicar por 24 horas</button></div></form></section>'+
  '<section class="data-panel bulletin-admin-list"><div class="data-tools"><div><h3>Publicações ativas</h3><small>Respostas privadas e resultados de enquetes em tempo real (atualize para recarregar).</small></div>'+badge(String(items.length)+' ativa(s)',"neutral")+'</div>'+
  (items.length?items.map(function(b){
