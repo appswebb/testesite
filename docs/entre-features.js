@@ -200,15 +200,14 @@ function premiumView(){
  return '<section class="cp-plan-page"><div class="cp-plan-heading"><h2>Escolha seu plano</h2><p>Dois planos. A mesma comunidade.</p></div><div class="cp-plan-grid">'+
  '<article class="cp-plan"><span class="cp-plan-eyebrow">NORMAL</span><h3>Gratuito</h3><div class="cp-plan-price">R$ 0</div><p>Conheça pessoas e participe da comunidade.</p>'+rows(['Encontros por texto e vídeo','Conversas, posts e salas','Banner de perfil com foto','Temas claro, escuro e cor personalizada'])+
  '<div class="cp-plan-state">'+(active?'Incluído no Premium':ico('check',17)+' Seu plano atual')+'</div></article>'+
- '<article class="cp-plan cp-plan-paid"><span class="cp-plan-eyebrow">'+ico('crown',18)+' PREMIUM</span><h3>Mais possibilidades</h3><div class="cp-plan-price">'+(window.entreRecurring?.price?.()||'Valor a definir')+'<small> / mês</small></div><p>Todos os recursos do Normal, mais:</p>'+rows(['Banner animado em GIF','Filtro de gênero no Ao vivo','Selo de destaque no perfil','Atendimento prioritário pelo WhatsApp'])+
+ '<article class="cp-plan cp-plan-paid"><span class="cp-plan-eyebrow">'+ico('crown',18)+' PREMIUM</span><h3>Mais possibilidades</h3><div class="cp-plan-price">'+(price()||'Valor a definir')+'<small> / mês</small></div><p>Todos os recursos do Normal, mais:</p>'+rows(['Banner animado em GIF','Filtro de gênero no Ao vivo','Selo de destaque no perfil','Atendimento prioritário pelo WhatsApp'])+
  (active?'<div class="cp-plan-state">'+ico('check',17)+' Premium ativo'+(data.premium.paid_until?' · até '+new Date(data.premium.paid_until).toLocaleDateString('pt-BR'):'')+'</div><button type="button" class="ui-btn btn-outline" data-action="premiumWhatsapp">'+ico('chat',17)+' WhatsApp prioritário</button>':'')+
- (window.entreRecurring?.view?.()||'<p>Carregando assinatura mensal…</p>')+
- '<small class="cp-plan-footnote">Cobrança mensal automática no cartão. Cancele a renovação quando quiser.</small></article></div></section>';
+ (!active?'<div class="cp-plan-purchase"><strong>Premium por 30 dias</strong><p>Pagamento único por Pix ou cartão, sem renovação automática.</p><button type="button" class="ui-btn btn-dark" data-action="premiumCheckout" '+(!enabled?'disabled':'')+'>'+(data.checkoutBusy?'Carregando…':'Comprar Premium')+'</button></div>':'')+ (data.webCheckoutOpen?'<div class="cp-web-checkout"><h3>Pagamento seguro</h3><div id="connectPaymentBrick"></div><div id="webPaymentStatus" aria-live="polite">'+webPaymentStatusMarkup()+'</div></div>':data.webError?'<p role="alert" class="web-pay-error">'+esc(data.webError)+'</p>':'')+ (window.entreRecurring?.view?.()||'')+
+ '<small class="cp-plan-footnote">O pagamento único não gera cobranças automáticas.</small></article></div></section>';
 }
 async function openPremiumWhatsapp(){
  if(!data.premium?.active)throw Error('O atendimento prioritário exige Premium ativo.');
- const url=await call('entre_premium_whatsapp');whatsappLink(url,{body:''});
- nav('support');
+ const url=await call('entre_premium_whatsapp');location.assign(whatsappLink(url,{body:'Olá! Sou assinante Premium do CONNECT e gostaria de atendimento.'}));
 }
 async function loadMercadoPagoSDK(){
  if(window.MercadoPago)return;
@@ -271,7 +270,7 @@ async function checkout(){
   data.webConfig=config;data.webCheckoutOpen=true;data.webStatusText='';
   renderView();await renderWebBrick();
  }catch(error){data.webError=infoError(error);data.webCheckoutOpen=false;renderView();toast(data.webError,true);}
- finally{data.checkoutBusy=false;}
+ finally{data.checkoutBusy=false;const btn=document.querySelector('[data-action="premiumCheckout"]');if(btn){btn.disabled=!data.premium?.checkout_enabled;btn.textContent='Comprar Premium';}}
 }
 async function verifyPremium(){
  if(data.webChecking)return;
@@ -307,10 +306,14 @@ function whatsappLink(base,message){
  return base.split('?')[0]+'?text='+encodeURIComponent(message.body);
 }
 function supportView(){
- return '<section class="csup-page"><header class="csup-intro"><h2>Como podemos ajudar?</h2><p>Envie seu relato diretamente à equipe CONNECT. Acompanhe as respostas pelo protocolo.</p></header><form id="supportTicketForm" class="csup-form"><div class="csup-fields"><h3>Novo chamado</h3><div class="field"><label for="supportCategory">Categoria</label><select name="category" id="supportCategory">'+Object.entries(supportCategories).map(([v,label])=>'<option value="'+v+'">'+label+'</option>').join('')+'</select></div><div class="field"><label for="supportSubject">Assunto</label><input name="subject" id="supportSubject" minlength="5" maxlength="120" required placeholder="Resuma o problema"></div><div class="field"><label for="supportDescription">Descrição</label><textarea name="description" id="supportDescription" minlength="20" maxlength="3000" required rows="5" placeholder="Como podemos ajudar?"></textarea></div><div class="field"><label for="supportProof">Provas (opcionais)</label><input name="proof" id="supportProof" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" multiple><small>Até 3 arquivos de 5 MB. Enviados ao painel em armazenamento privado.</small></div><p class="csup-privacy">'+ico('lock',15)+' Não inclua senhas ou dados bancários.</p><button class="ui-btn btn-dark csup-submit" type="submit" '+(data.supportBusy?'disabled':'')+'>Enviar chamado '+ico('arrow',18)+'</button></div></form><section class="csup-history"><h3>Meus protocolos</h3><div id="cpSupportHistory">'+supportHistory()+'</div></section></section>';
+ return '<section class="csup-page"><header class="csup-intro"><h2>Como podemos ajudar?</h2><p>Envie seu relato diretamente à equipe CONNECT. Acompanhe as respostas pelo protocolo.</p></header>'+prioritySupport()+'<form id="supportTicketForm" class="csup-form"><div class="csup-fields"><h3>Novo chamado</h3><div class="field"><label for="supportCategory">Categoria</label><select name="category" id="supportCategory">'+Object.entries(supportCategories).map(([v,label])=>'<option value="'+v+'">'+label+'</option>').join('')+'</select></div><div class="field"><label for="supportSubject">Assunto</label><input name="subject" id="supportSubject" minlength="5" maxlength="120" required placeholder="Resuma o problema"></div><div class="field"><label for="supportDescription">Descrição</label><textarea name="description" id="supportDescription" minlength="20" maxlength="3000" required rows="5" placeholder="Como podemos ajudar?"></textarea></div><div class="field"><label for="supportProof">Provas (opcionais)</label><input name="proof" id="supportProof" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" multiple><small>Até 3 arquivos de 5 MB. Enviados ao painel em armazenamento privado.</small></div><p class="csup-privacy">'+ico('lock',15)+' Não inclua senhas ou dados bancários.</p><button class="ui-btn btn-dark csup-submit" type="submit" '+(data.supportBusy?'disabled':'')+'>Enviar chamado '+ico('arrow',18)+'</button></div></form><button type="button" class="ui-btn btn-outline" data-action="nav" data-view="protocols">Meus protocolos '+ico('arrow',16)+'</button></section>';
 }
-function supportHistory(){const labels={submitted:'Aguardando resposta',reviewing:'Em atendimento',resolved:'Resolvido'};return data.support.length?data.support.map(t=>'<article><strong>#'+Number(t.id)+' · '+esc(t.subject)+'</strong><small>'+esc(labels[t.status]||t.status)+'</small><button class="ui-btn btn-outline" type="button" data-support-thread="'+Number(t.id)+'">Abrir protocolo</button></article>').join(''):'<p class="csup-note">Nenhum protocolo ainda.</p>';}
-async function loadSupport(){try{const rows=await call('entre_my_support_tickets');data.support=Array.isArray(rows)?rows:[];const root=document.getElementById('cpSupportHistory');if(root&&root.innerHTML!==supportHistory())root.innerHTML=supportHistory();}catch(e){console.warn('Support',e);}}
+function prioritySupport(){const active=data.premium?.active===true;return '<article class="csup-priority"><div class="csup-priority-icon">'+ico('crown',24)+'</div><div><small>CONNECT PREMIUM</small><h3>Atendimento prioritário</h3><p>'+(active?'Seu plano inclui suporte pelo WhatsApp.':'Tenha um canal direto de atendimento pelo WhatsApp ao adquirir o Premium.')+'</p></div><button type="button" class="ui-btn btn-dark" '+(active?'data-action="premiumWhatsapp"':'data-action="nav" data-view="premium"')+'>'+(active?'Falar no WhatsApp':'Conhecer Premium')+'</button></article>';}
+function protocolsView(){return '<section class="csup-page"><header class="csup-intro"><h2>Meus protocolos</h2><p>Acompanhe e gerencie seus chamados de suporte.</p></header><button type="button" class="ui-btn btn-dark" data-action="nav" data-view="support">Novo chamado</button><section class="csup-history"><div id="cpSupportHistory">'+supportHistory()+'</div></section></section>';}
+function supportHistory(){const labels={submitted:'Aguardando resposta',reviewing:'Em atendimento',resolved:'Resolvido',cancelled:'Cancelado'};return data.support.length?data.support.map(t=>'<article class="csup-ticket"><strong>#'+Number(t.id)+' · '+esc(t.subject)+'</strong><small class="csup-ticket-status" data-status="'+esc(t.status)+'">'+esc(labels[t.status]||t.status)+'</small><div class="csup-ticket-actions"><button class="ui-btn btn-outline" type="button" data-support-thread="'+Number(t.id)+'">Abrir protocolo</button>'+(['submitted','reviewing'].includes(t.status)?'<button class="ui-btn btn-outline" type="button" data-support-cancel="'+Number(t.id)+'">Cancelar</button>':'')+'</div></article>').join(''):'<p class="csup-note">Nenhum protocolo ainda.</p>';}
+let supportOwner=null,supportSeq=0;
+async function loadSupport(){const uid=state.session?.user?.id;if(!uid)return;if(supportOwner!==uid){data.support=[];supportOwner=uid;}const seq=++supportSeq;try{const rows=await call('entre_my_support_tickets');if(state.session?.user?.id!==uid||seq!==supportSeq)return;data.support=Array.isArray(rows)?rows:[];const root=document.getElementById('cpSupportHistory');if(root&&root.innerHTML!==supportHistory())root.innerHTML=supportHistory();}catch(e){console.warn('Support unavailable');}}
+document.addEventListener('click',async e=>{const b=e.target.closest?.('[data-support-cancel]');if(!b||b.disabled||!confirm('Cancelar este protocolo? O histórico será mantido, mas o atendimento será encerrado.'))return;b.disabled=true;try{await call('connect_support_cancel',{_ticket:Number(b.dataset.supportCancel)});await loadSupport();toast('Protocolo cancelado.');}catch(error){toast(infoError(error),true);}finally{b.disabled=false;}});
 async function submitSupport(form){
  if(data.supportBusy)return;const uid=state.session?.user?.id;if(!uid)throw Error('Entre na sua conta.');
  const category=form.elements.category.value,subject=form.elements.subject.value.trim(),description=form.elements.description.value.trim(),files=[...(form.elements.proof?.files||[])];
@@ -320,14 +323,15 @@ async function submitSupport(form){
  try{const id=await call('entre_support_create',{_category:category==='payment'?'other':category,_subject:subject,_description:description});
  for(const file of files){if(state.session?.user?.id!==uid)throw Error('Sessão alterada.');const ext={'image/png':'png','image/jpeg':'jpg','image/webp':'webp','application/pdf':'pdf'}[file.type];const path=uid+'/'+id+'/'+crypto.randomUUID()+'.'+ext;const r=await db.storage.from('entre-support-evidence').upload(path,file,{contentType:file.type,upsert:false});if(r.error)throw r.error;paths.push(path);}
  await call('entre_support_submit',{_ticket:Number(id),_paths:paths});submitted=true;
- if(state.session?.user?.id===uid){form.reset();await loadSupport();toast('Protocolo #'+id+' enviado à equipe.');}
+ if(state.session?.user?.id===uid){form.reset();await loadSupport();nav('protocols');toast('Protocolo #'+id+' enviado à equipe.');}
  }catch(e){if(!submitted&&paths.length&&state.session?.user?.id===uid)await db.storage.from('entre-support-evidence').remove(paths).catch(()=>{});throw e;}finally{data.supportBusy=false;if(button?.isConnected)button.disabled=false;}
 }
 async function enter(view){
  if(view==='posts')await loadPosts();
  if(view==='premium'){await refreshPremium();await window.entreRecurring?.loadStatus?.();renderView();}
- if(view==='support'){await Promise.all([loadSupport(),refreshPremium()]);renderView();}
+ if(view==='support'){await refreshPremium();if(state.view==='support')renderView();}
+ if(view==='protocols'){data.support=[];await loadSupport();}
 }
-Object.assign(mod,{data,isPremium:premium,badge,loadBadges,refreshPremium,loadPosts,postsView,postAction,postForm,premiumView,checkout,verifyPremium,copyPix,unmountPaymentBrick,openPremiumWhatsapp,supportView,submitSupport,loadSupport,enter});
+Object.assign(mod,{data,isPremium:premium,badge,loadBadges,refreshPremium,loadPosts,postsView,postAction,postForm,premiumView,checkout,verifyPremium,copyPix,unmountPaymentBrick,openPremiumWhatsapp,supportView,protocolsView,submitSupport,loadSupport,enter});
 window.entreExtras=mod;
 })();
