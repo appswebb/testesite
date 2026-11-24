@@ -90,20 +90,21 @@ async function cities(uf){
   if(stamp===s.state){s.cityLoading=false;filterCities();}
  }
 }
+let roomRefreshQueued=false;
 async function load(more=false){
- if(s.loading||s.loadingMore||!state.session)return;
- const room=s.room;
+ if(s.loading||s.loadingMore){if(!more)roomRefreshQueued=true;return;}if(!state.session)return;
+ const room=s.room,user=state.session.user.id;
  if(more)s.loadingMore=true;else s.loading=true;
  try{
   const {data,error}=await db.rpc('entre_room_messages_page',{_room:room,_before:more?s.rows[0]?.id||null:null});
-  if(error)throw error;if(room!==s.room)return;
+  if(error)throw error;if(room!==s.room||state.session?.user?.id!==user)return;
   const next=(data?.items||[]).filter(r=>!r.deleted_at).slice().reverse();
   if(more)s.rows=next.concat(s.rows);
   else s.rows=next;
   s.older=data?.has_more===true;
   paint(!more);
  }catch(error){if(room===s.room)toast(infoError(error),true)}
- finally{s.loading=false;s.loadingMore=false;paint(!more);}
+ finally{s.loading=false;s.loadingMore=false;paint(!more);if(roomRefreshQueued){roomRefreshQueued=false;if(state.view==='rooms'&&!document.hidden)void load();}}
 }
 async function detectRoomRegion(){
  if(s.detecting||!s.filterOpen)return;

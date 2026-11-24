@@ -215,8 +215,9 @@ function renderView(){
  var loc=document.getElementById("topbar-location");if(loc)loc.textContent=viewTitle();
  target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="appeals"?heading("RECURSOS E MODERAÇÃO","Contestações <em>de suspensão.</em>","Confira as solicitações e analise cada recurso.")+appealsPanel():state.view==="pairs"?pairs():state.view==="bulletins"?heading("COMUNICAÇÃO OFICIAL","Avisos <em>e enquetes.</em>","Gerencie suas publicações por 24 horas.")+window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico}):state.view==="support"?heading("ATENDIMENTO","Suporte <em>e provas.</em>","Protocolos recebidos dos usuários.")+window.entreAdminExtras.supportPage(state.supportTickets,e,fmt,ico,badge):state.view==="premium"?heading("ASSINATURAS","Premium <em>manual.</em>","Gerencie liberações por e-mail e o valor mensal.")+window.entreAdminExtras.premiumPage(state.premiumConfig,e,ico,state.manualPremiumAccount):state.view==="settings"?settings():security());
 }
-async function load(view){
- state.loading=true;renderView();
+let adminLoadEpoch=0;
+async function load(view,background=false){
+ const epoch=++adminLoadEpoch;if(!background){state.loading=true;renderView();}
  try{
   if(view==="overview"||view==="settings"||view==="updates"||!state.overview){
    state.overview=await rpc("entre_admin_overview");state.settings=state.overview.settings||state.settings;
@@ -231,8 +232,8 @@ async function load(view){
   if(view==="premium"){state.premiumConfig=await rpc("entre_admin_premium_settings");state.recurringConfig=null;}
   if(view==="security"){state.appeals=await rpc("entre_admin_appeals");state.privacyRequests=await rpc("entre_admin_privacy_requests");}
   state.refreshAt=new Date();lastLoad=Date.now();
- }catch(err){toast(errorText(err),true);}
- finally{state.loading=false;renderView();}
+ }catch(err){if(!background)toast(errorText(err),true);else console.warn(errorText(err));}
+ finally{if(epoch===adminLoadEpoch){state.loading=false;if(state.view===view){if(background&&view==='bulletins'){const wrapper=document.createElement('div');wrapper.innerHTML=window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico});const list=wrapper.querySelector('.bulletin-admin-list'),old=document.querySelector('.bulletin-admin-list');if(list&&old)old.replaceWith(list);else renderView();}else if(!background||!adminEditing())renderView();}}}
 }
 async function navigate(view){if(!sections.some(function(s){return s[0]===view;}))return;state.moreOpen=false;state.view=view;renderView();await load(view);}
 function modal(content){document.getElementById("modal-root").innerHTML='<div class="modal-back" id="modal-back"><div class="modal" role="dialog" aria-modal="true" aria-label="Ação administrativa">'+content+'</div></div>';var el=document.querySelector(".modal input,.modal textarea,.modal select");if(el)el.focus();}
@@ -393,6 +394,11 @@ document.addEventListener("submit",async function(ev){
 });
 document.addEventListener("keydown",function(ev){if(ev.key==="Escape")closeModal();});
 document.addEventListener("click",function(ev){if(ev.target&&ev.target.id==="modal-back")closeModal();});
+let adminSignalChannel=null,adminSupportChannel=null,adminFallback=0,adminRefreshTimer=0,adminRefreshing=false,adminAuthBound=false;const adminDirty=new Set();
+function adminEditing(){const el=document.activeElement;return !!(el?.matches('input,textarea,select,[contenteditable=true]')||document.querySelector('#admin-view form textarea:not([readonly])')?.value?.trim());}
+function stopAdminRealtime(){if(adminSignalChannel)void db.removeChannel(adminSignalChannel);if(adminSupportChannel)void db.removeChannel(adminSupportChannel);adminSignalChannel=null;adminSupportChannel=null;clearInterval(adminFallback);clearTimeout(adminRefreshTimer);adminRefreshTimer=0;adminDirty.clear();}
+function scheduleAdminRefresh(){if(adminRefreshTimer||adminRefreshing||!state.verified||document.hidden)return;adminRefreshTimer=setTimeout(()=>{adminRefreshTimer=0;void flushAdminRefresh();},120);}
+async function flushAdminRefresh(){if(adminRefreshing||!state.verified||document.hidden)return;const view=state.view;const relevant=adminDirty.has('all')||adminDirty.has(view)||view==='overview'&&adminDirty.size>0||view==='updates'&&adminDirty.has('settings')||view==='users'&&adminDirty.has('premium')||view==='security'&&adminDirty.has('appeals');if(!relevant){adminDirty.clear();return;}if(state.busy||state.loading||state.modal||(view!=='bulletins'&&adminEditing())){adminRefreshTimer=setTimeout(()=>{adminRefreshTimer=0;void flushAdminRefresh();},700);return;}adminRefreshing=true;adminDirty.clear();try{await load(view,true);}finally{adminRefreshing=false;if(adminDirty.size)scheduleAdminRefresh();}}
 async function boot(){
  try{
   var s=await db.auth.getSession();if(s.error)throw s.error;
@@ -403,9 +409,11 @@ async function boot(){
   var allowed=await rpc("entre_admin_check");
   if(allowed!==true){gate(true);return;}
   state.verified=true;shell();await load("overview");
- db.channel("admin-support-replies").on("postgres_changes",{event:"UPDATE",schema:"public",table:"entre_support_tickets"},async p=>{if(state.modal?.type==="support-thread"&&Number(state.modal.data.id)===Number(p.new?.id)&&p.new.status==="cancelled"){const form=document.getElementById("support-reply-form");if(form){form.hidden=true;form.querySelectorAll("button,textarea,input").forEach(x=>x.disabled=true);}state.modal.data.status="cancelled";}if(state.verified&&state.view==="support"&&!state.modal&&!state.loading&&!state.busy&&p.new?.status!=="draft")try{await load("support");}catch(err){console.warn(errorText(err));}}).on("postgres_changes",{event:"INSERT",schema:"public",table:"entre_support_replies"},async p=>{if(!state.verified||state.view!=="support")return;try{if(state.modal?.type==="support-thread")await refreshSupportThread(Number(state.modal.data.id));else if(!state.loading&&!state.busy)await load("support");}catch(err){console.warn(errorText(err));}}).subscribe();
-  db.auth.onAuthStateChange(function(ev){if(ev==="SIGNED_OUT"){state.user=null;state.verified=false;gate(false);}});
-  setInterval(function(){if(state.verified&&document.visibilityState==="visible"&&["overview","support"].includes(state.view)&&!state.modal&&!state.busy&&!state.loading&&Date.now()-lastLoad>28000){load(state.view);}},30000);
+ stopAdminRealtime();
+ adminSupportChannel=db.channel("admin-support-replies").on("postgres_changes",{event:"UPDATE",schema:"public",table:"entre_support_tickets"},async p=>{if(state.modal?.type==="support-thread"&&Number(state.modal.data.id)===Number(p.new?.id)&&p.new.status==="cancelled"){const form=document.getElementById("support-reply-form");if(form){form.hidden=true;form.querySelectorAll("button,textarea,input").forEach(x=>x.disabled=true);}state.modal.data.status="cancelled";}if(state.verified&&state.view==="support"&&!state.modal&&!state.loading&&!state.busy&&p.new?.status!=="draft")try{await load("support");}catch(err){console.warn(errorText(err));}}).on("postgres_changes",{event:"INSERT",schema:"public",table:"entre_support_replies"},async p=>{if(!state.verified||state.view!=="support")return;try{if(state.modal?.type==="support-thread")await refreshSupportThread(Number(state.modal.data.id));else if(!state.loading&&!state.busy)await load("support");}catch(err){console.warn(errorText(err));}}).subscribe();
+  adminSignalChannel=db.channel("connect-admin-signal").on("postgres_changes",{event:"UPDATE",schema:"public",table:"connect_admin_signal"},p=>{const kind=p.new?.kind;if(kind){adminDirty.add(kind);scheduleAdminRefresh();}}).subscribe(status=>{if(status==="SUBSCRIBED"){adminDirty.add("all");scheduleAdminRefresh();}});
+  if(!adminAuthBound){adminAuthBound=true;db.auth.onAuthStateChange(function(ev){if(ev==="SIGNED_OUT"){stopAdminRealtime();state.user=null;state.verified=false;gate(false);}});document.addEventListener("visibilitychange",()=>{if(!document.hidden){adminDirty.add("all");scheduleAdminRefresh();}});document.addEventListener("focusout",scheduleAdminRefresh);window.addEventListener("online",()=>{adminDirty.add("all");scheduleAdminRefresh();});}
+  adminFallback=setInterval(()=>{if(state.verified&&!document.hidden){adminDirty.add("all");scheduleAdminRefresh();}},30000);
  }catch(err){console.error("entre admin boot",err);gate(false);toast(errorText(err),true);}
 }
 boot();

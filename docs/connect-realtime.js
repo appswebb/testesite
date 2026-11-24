@@ -26,7 +26,7 @@ async function refreshOnline(){
  if(state.view==='online'&&!document.querySelector('.cn-online-filter[open]')&&before!==after){onlineSignature=after;renderView();}
  }finally{onlineBusy=false;if(onlineQueued){onlineQueued=false;setTimeout(refreshOnline,500)}}
 }
-function presenceEvent(){clearTimeout(presenceTimer);presenceTimer=setTimeout(()=>{void refreshCount();void refreshOnline()},180)}
+function presenceEvent(){if(presenceTimer)return;presenceTimer=setTimeout(()=>{presenceTimer=0;void refreshCount();void refreshOnline()},100)}
 async function ping(force=false){
  if(!member()||pinging||!navigator.onLine||(!force&&Date.now()-lastPing<15000))return;
  const user=uid();pinging=true;
@@ -35,20 +35,27 @@ async function ping(force=false){
 }
 async function refreshPairsList(){if(!member()||pairsLoading||!pairsDirty||state.view!=='conversations'||document.querySelector('.cp-conversation-dialog[open]'))return;pairsLoading=true;pairsDirty=false;const user=uid();try{await loadPairs();if(uid()===user&&state.view==='conversations'&&!document.querySelector('.cp-conversation-dialog[open]'))renderView();}catch(e){pairsDirty=true;}finally{pairsLoading=false}}
 function refreshFeed(){if(!feedDirty||!member()||state.view!=='posts'||document.hidden||state.modal||document.querySelector('#commentsOverlay,.post-compose textarea:focus,.post-compose input:focus')||document.querySelector('#postCreateForm textarea')?.value.trim()||window.scrollY>180||window.entreExtras?.data?.postLoading)return;feedDirty=false;void window.entreExtras?.loadPosts?.();}
-function communityEvent(payload){if(payload.new?.kind==='rooms'){clearTimeout(roomTimer);roomTimer=setTimeout(()=>void window.entreRooms?.refresh?.(),150)}else if(payload.new?.kind==='feed'){feedDirty=true;refreshFeed()}else if(payload.new?.kind==='bulletins'){void refreshOfficial()}}
+function communityEvent(payload){if(payload.new?.kind==='rooms'){if(roomTimer)return;roomTimer=setTimeout(()=>{roomTimer=0;void window.entreRooms?.refresh?.()},60)}else if(payload.new?.kind==='feed'){feedDirty=true;refreshFeed()}else if(payload.new?.kind==='bulletins'){void refreshOfficial()}}
 async function refreshOfficial(){if(!member())return;await Promise.allSettled([api().refreshNotifications(),api().refreshBulletins?.(false,true)]);}
 function pairEvent(){pairsDirty=true;activity();void refreshPairsList()}
-function activity(){clearTimeout(activityTimer);activityTimer=setTimeout(()=>{if(!member())return;void api().refreshNotifications();void window.connectRelationships?.tick?.();if(state.view==='online')void api().refreshInbox();},120)}
+let privateTimer=0,privateKinds=new Set(),privateRunning=false;
+function accountEvent(payload){const kind=payload.new?.kind;if(!['pair','premium'].includes(kind))return;privateKinds.add(kind);schedulePrivate();}
+function schedulePrivate(){if(privateTimer||privateRunning)return;privateTimer=setTimeout(()=>{privateTimer=0;void flushPrivate()},40);}
+async function flushPrivate(){if(privateRunning||!member())return;privateRunning=true;const user=uid(),kinds=new Set(privateKinds);privateKinds.clear();try{if(kinds.has('pair')){pairEvent();if(state.searching)await pollSearch();else if(state.pair?.id)await refreshPair();}if(uid()===user&&kinds.has('premium'))await refreshEntitlement(user);}catch(e){console.warn('Account sync unavailable',e?.message);}finally{privateRunning=false;if(privateKinds.size)schedulePrivate();}}
+async function refreshEntitlement(user){if(!member()||uid()!==user)return;const extras=window.entreExtras,prior=extras?.isPremium?.(user);await extras?.refreshPremium?.();if(uid()!==user)return;const active=extras?.isPremium?.(user);if(!active)state.preference='any';if(active&&onboardingPlanPending()){await finishOnboarding(null);return;}if(prior!==active||state.view==='premium'){if(onboardingPlanPending())render();else if(['premium','connect','profile'].includes(state.view)&&!state.searching&&!activeEncounter())renderView();}if(state.view==='connect')void refreshSearchQuota();}
+function activity(){if(activityTimer)return;activityTimer=setTimeout(()=>{activityTimer=0;if(!member())return;void api().refreshNotifications();void window.connectRelationships?.tick?.();if(state.view==='online')void api().refreshInbox();},120)}
 function subscribe(){
  if(!ready())return;
- if(!publicChannel)publicChannel=db.channel('connect-public-count').on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_presence_signal',filter:'id=eq.1'},presenceEvent).subscribe(status=>{if(status==='SUBSCRIBED')presenceEvent()});
+ if(!publicChannel)publicChannel=db.channel('connect-public-count').on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_presence_signal',filter:'id=eq.1'},presenceEvent).on('postgres_changes',{event:'UPDATE',schema:'public',table:'connect_public_signal',filter:'id=eq.1'},()=>void maintenanceCheck(false)).subscribe(status=>{if(status==='SUBSCRIBED'){presenceEvent();void maintenanceCheck(false);}});
  const user=member()?uid():null;
  if(account===user)return;
  if(accountChannel){void db.removeChannel(accountChannel);accountChannel=null;}
- account=user;lastPing=0;pairsDirty=false;onlineSignature=null;
+ account=user;lastPing=0;pairsDirty=false;onlineSignature=null;privateKinds.clear();
  if(!user)return;
  accountChannel=db.channel('connect-account-'+user)
  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_community_signal'},communityEvent)
+ .on('postgres_changes',{event:'INSERT',schema:'public',table:'connect_account_signal',filter:'user_id=eq.'+user},accountEvent)
+ .on('postgres_changes',{event:'UPDATE',schema:'public',table:'connect_account_signal',filter:'user_id=eq.'+user},accountEvent)
  .on('postgres_changes',{event:'INSERT',schema:'public',table:'entre_notifications',filter:'user_id=eq.'+user},activity)
  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_notifications',filter:'user_id=eq.'+user},activity)
  .on('postgres_changes',{event:'INSERT',schema:'public',table:'entre_messages'},activity)
@@ -57,14 +64,14 @@ function subscribe(){
  .on('postgres_changes',{event:'INSERT',schema:'public',table:'entre_pairs',filter:'b=eq.'+user},pairEvent)
  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_pairs',filter:'a=eq.'+user},pairEvent)
  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'entre_pairs',filter:'b=eq.'+user},pairEvent)
- .subscribe(status=>{if(status==='SUBSCRIBED')pairEvent()});
+ .subscribe(status=>{if(status==='SUBSCRIBED'&&uid()===user){privateKinds.add('pair');privateKinds.add('premium');schedulePrivate();void refreshOfficial();}});
 }
 async function resume(){
  if(!ready()||resuming||!navigator.onLine)return;
  resuming=true;const user=uid();
  try{subscribe();await Promise.allSettled([ping(true),refreshCount()]);if(!member()||uid()!==user)return;
  await Promise.allSettled([api().refreshNotifications(),api().refreshBulletins?.(false,true),window.connectRelationships?.tick?.(),refreshOnline()]);
- if(state.view==='rooms')void window.entreRooms?.refresh?.();if(state.view==='posts'){feedDirty=true;refreshFeed();}
+ void refreshEntitlement(user);if(state.view==='rooms')void window.entreRooms?.refresh?.();if(state.view==='posts'){feedDirty=true;refreshFeed();}
  if(state.pair?.id&&['chat','connect'].includes(state.view)){await refreshPair();if(state.pair?.id){await loadMessages();refreshEncounterMessages();}}
  }catch(e){console.warn('Reconnect sync',e?.message)}finally{resuming=false}
 }

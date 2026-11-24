@@ -50,8 +50,9 @@ function foregroundNotifications(rows,user){
  if(fresh.some(n=>n.kind==='poll'||n.kind==='bulletin'))void window.entreSocial?.refreshBulletins?.();
  bannerQueue.push(...fresh.reverse().slice(-5));bannerQueue=bannerQueue.slice(-5);showForegroundNotice();
 }
+let notificationsQueued=false;
 async function refreshNotifications(before=null){
- if(data.notiBusy||!state.session?.user)return;data.notiBusy=true;const user=state.session.user.id;
+ if(data.notiBusy){if(!before)notificationsQueued=true;return;}if(!state.session?.user)return;data.notiBusy=true;const user=state.session.user.id;
  try{
   const r=await rpc('entre_notifications_page',{_before:before});
   if(state.session?.user?.id!==user)return;
@@ -61,7 +62,7 @@ async function refreshNotifications(before=null){
   data.unread=Math.max(0,Math.min(99,Number(r?.unread)||0));data.notiMore=Boolean(r?.has_more);
   document.querySelectorAll('.toolbar-bell .social-unread').forEach(badge=>{badge.textContent=data.unread?String(data.unread):'';});
   if(state.view==='notifications'&&!['bulletins','polls'].includes(data.notificationTab))renderView();
- }catch(e){console.warn('Notifications',e);}finally{data.notiBusy=false;}
+ }catch(e){console.warn('Notifications',e);}finally{data.notiBusy=false;if(notificationsQueued){notificationsQueued=false;void refreshNotifications();}}
 }
 async function updateConversation(pairId,change){
  const r=await rpc('entre_conversation_update',{_pair:pairId,...change});
