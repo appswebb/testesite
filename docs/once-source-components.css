@@ -320,7 +320,7 @@ html[data-theme] .admin-delete-confirm :is(input,textarea){
 }
 html[data-theme] .admin-delete-confirm .modal-actions{display:flex!important;gap:8px!important;flex-wrap:wrap!important}
 html[data-theme] .admin-delete-confirm .modal-actions button{
- border-radius:999px!important;flex:1 1 180px!important;min-height:45px!important
+ border-radius:12px!important;flex:0 1 auto!important;min-height:44px!important
 }
 html[data-theme] .admin-user-actions{display:flex!important;gap:7px!important;align-items:center!important;flex-wrap:wrap!important}
 html[data-theme] .admin-user-actions button{border-radius:999px!important;min-height:37px!important}
