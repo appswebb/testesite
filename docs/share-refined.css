@@ -5,7 +5,7 @@ html[data-theme] .share-topbar{height:76px!important;border-bottom:1px solid var
 html[data-theme] .share-brand{font-weight:850;letter-spacing:-.06em;color:var(--ui-text)!important}
 html[data-theme] .share-brand .brand-mark{
  width:41px!important;height:41px!important;
- background:transparent url("./brand-mark.svg?v=share-v4") center/contain no-repeat!important;
+ background:transparent url("./brand-mark.svg?v=brand-e-20261124") center/contain no-repeat!important;
  border-radius:13px!important;color:transparent!important;overflow:hidden!important
 }
 html[data-theme] .share-brand .brand-mark span{display:none!important}

@@ -70,7 +70,7 @@ test('updated colorful design covers core app pages without changing billing log
  assert.doesNotMatch(admin,/connect-admin\.css/);
  assert.match(admin,/comment-report-updates\.css/);
  assert.equal(manifest.short_name,'entre.');
- assert.equal(manifest.theme_color,'#F6F7F7');
+ assert.equal(manifest.theme_color,'#F7F7FD');
  assert.match(html,/theme\.js/);
  assert.match(html,/theme\.css/);
  assert.match(read('docs/theme.js'),/entre\.appearance\.v1/);
@@ -80,7 +80,7 @@ test('updated colorful design covers core app pages without changing billing log
  assert.match(read('docs/perfil.html'),/perfil-once\.css/);
  assert.match(app,/aria-label="entre\. início"/);
  assert.doesNotMatch(app,/aria-label="CONNECT início"/);
- assert.match(extras,/ENTRE\. PREMIUM/);
+ assert.match(extras,/PLANO PREMIUM/);
  assert.match(extras,/entre_post_comment_delete/);
  assert.match(extras,/entre-premium-web/);
 });

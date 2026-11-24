@@ -205,3 +205,6 @@ html[data-theme] .encounter-text-fullscreen .decision-bar{flex:0 0 auto!importan
  html[data-theme] .encounter-text-fullscreen .pair-topbar{padding:9px!important;flex-wrap:wrap}
  html[data-theme] .encounter-text-fullscreen .pair-messages{padding:12px!important}
 }
+
+/* The brand glyph is the original continuous-line mark, not legacy ornament. */
+html[data-theme] .brand-glyph,html[data-theme] .brand-mark{background-image:url("./brand-mark.svg?v=brand-e-20261124")!important}
