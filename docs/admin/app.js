@@ -12,18 +12,21 @@ var state={user:null,verified:false,view:"overview",loading:false,busy:false,ove
 var perPage=20, searchTimer=null, toastTimer=null, lastLoad=0;
 var sections=[
  ["overview","Visão geral","layout-dashboard"],
- ["updates","Atualização","refresh-cw"],
+ ["updates","Atualização","activity"],
  ["users","Usuários","users"],
  ["reports","Denúncias","flag"],
  ["pairs","Encontros","heart-handshake"],
  ["appeals","Contestações","alert-circle"],
   ["bulletins","Avisos","message-circle"],
-  ["support","Suporte","circle-help"],
+  ["support","Suporte","headset"],
   ["premium","Premium","crown"],
  ["settings","Configurações","sliders-horizontal"],
  ["security","Segurança","shield-check"]
 ];
 var shapes={
+ "menu":'<path d="M4 6h16M4 12h16M4 18h16"/>',
+ "headset":'<path d="M3 13v-2a9 9 0 0 1 18 0v2M3 13h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H3zM21 13h-2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2zM19 19v1a2 2 0 0 1-2 2h-4"/>',
+ "activity":'<path d="M2 12h5l3-7 4 14 3-7h5"/>',
  "layout-dashboard":'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
  "users":'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
  "flag":'<path d="M4 22V5a2 2 0 0 1 2-2h14l-3 6 3 6H4"/>',
@@ -77,7 +80,7 @@ function toast(msg,bad){if(bad)window.connectSound?.play?.('error');clearTimeout
 async function rpc(name,params){var r=await db.rpc(name,params||{});if(r.error)throw r.error;return r.data;}
 function gate(locked){
  var message=locked?"Esta conta não tem acesso ao painel. Entre com o e-mail autorizado e confirmado.":"Entre com o e-mail e a senha do seu cadastro no CONNECT";
- app.innerHTML='<div class="gate"><div class="gate-copy"><div><a class="brand" style="padding:0" href="../?site=1"><span class="brand-mark"><img src="../connect-app-icon.svg?v=3" alt="" /></span><span><span class="brand-text">CONNECT</span><br><span class="brand-sub">ADMINISTRAÇÃO</span></span></a></div>'
+ app.innerHTML='<div class="gate"><div class="gate-copy"><div><a class="brand" style="padding:0" href="../?site=1"><span class="brand-mark"><img src="../connect-glass.svg?v=showcase-v17" alt="" /></span><span><span class="brand-text">CONNECT</span><br><span class="brand-sub">ADMINISTRAÇÃO</span></span></a></div>'
  +'<div class="gate-inner"><span class="gate-kicker">ACESSO RESTRITO · SUPABASE AUTH</span><h1>Seu site,<br><em>sob controle.</em></h1><p>'+e(message)+'</p>'
  +'<form id="admin-login-form" class="admin-login-form"><label for="admin-email">E-mail</label><input id="admin-email" type="email" name="email" autocomplete="username" inputmode="email" maxlength="254" required placeholder="E-mail da conta cadastrada">'
  +'<label for="admin-password">Senha</label><div class="admin-password-wrap"><input id="admin-password" type="password" name="password" autocomplete="current-password" required placeholder="Sua senha"><button type="button" class="admin-password-toggle" data-admin-password-toggle aria-controls="admin-password" aria-label="Mostrar senha" aria-pressed="false">Mostrar</button></div>'
@@ -85,20 +88,21 @@ function gate(locked){
  +'<div class="admin-gate-actions"><a class="btn-outline" href="../?site=1">Ir para o site</a><a href="../?site=1" class="admin-gate-help">Precisa cadastrar ou recuperar a senha? Acesse o site.</a></div>'
  +(locked&&state.user?'<p style="font-size:11px;margin-top:18px">Sessão atual: '+e(state.user.email)+'</p>':'')
  +'</div><div class="gate-small">CONNECT · Painel privado · E-mail confirmado e autorizado no Supabase</div></div>'
- +'<div class="gate-art"><img class="cp-admin-emblem" src="../connect-glass.svg?v=original-v12" width="190" height="127" alt=""><h2>Administração CONNECT</h2><p>Acesso autorizado para gerenciar a comunidade.</p></div></div>';
+ +'<div class="gate-art"><img class="cp-admin-emblem" src="../connect-glass.svg?v=showcase-v17" width="190" height="127" alt=""><h2>Administração CONNECT</h2><p>Acesso autorizado para gerenciar a comunidade.</p></div></div>';
 }
 function navItem(s,compact){return '<button type="button" class="'+(compact?"":"rail-item ")+(state.view===s[0]?"active":"")+'" data-view="'+s[0]+'" aria-label="'+e(s[1])+'">'+ico(s[2],compact?19:19)+'<span>'+e(s[1])+'</span></button>';}
 var mainMobileSections=["overview","users","reports","appeals"];
 function adminMobileNav(){
  return '<nav class="bottom-nav admin-bottom-bar" aria-label="Navegação administrativa">'+
  sections.filter(function(s){return mainMobileSections.includes(s[0]);}).map(function(s){return navItem(s,true);}).join('')+
- '<button type="button" class="admin-more-button" data-action="admin-more" aria-expanded="'+Boolean(state.moreOpen)+'" aria-controls="adminMoreMenu">'+ico("sliders-horizontal",19)+'<span>Mais</span></button></nav>'+
+ '<button type="button" class="admin-more-button" data-action="admin-more" aria-expanded="'+Boolean(state.moreOpen)+'" aria-controls="adminMoreMenu">'+ico("menu",19)+'<span>Mais</span></button></nav>'+
  '<div class="admin-more-menu" id="adminMoreMenu" '+(state.moreOpen?'':'hidden')+' role="dialog" aria-label="Mais áreas do painel">'+
- '<div class="admin-more-header"><strong>Mais ferramentas</strong><button type="button" class="small-btn" data-action="admin-more">Fechar ×</button></div>'+
+ '<div class="admin-more-header"><strong>Mais ferramentas</strong><button type="button" class="small-btn" data-action="admin-more">'+ico('x',16)+' Fechar</button></div>'+
  '<div class="admin-more-links">'+sections.filter(function(s){return !mainMobileSections.includes(s[0]);}).map(function(s){return navItem(s,true);}).join('')+'</div></div>';
 }
+function adminRail(){const groups=[['Plataforma',['overview','updates']],['Comunidade',['users','pairs','reports','appeals','bulletins']],['Operações',['support','premium','settings','security']]];return groups.map(function(group){return '<div class="rail-group"><div class="rail-label">'+e(group[0])+'</div><div class="rail-links">'+sections.filter(function(x){return group[1].includes(x[0]);}).sort(function(a,b){return group[1].indexOf(a[0])-group[1].indexOf(b[0]);}).map(function(x){return navItem(x,false);}).join('')+'</div></div>';}).join('');}
 function shell(){
- app.innerHTML='<div class="shell"><aside class="rail"><div class="brand"><span class="brand-mark"><img src="../connect-app-icon.svg?v=3" alt="" /></span><div><div class="brand-text">CONNECT</div><div class="brand-sub">ADMINISTRAÇÃO</div></div></div><div class="rail-label">GESTÃO</div><div class="rail-links">'+sections.map(function(s){return navItem(s,false);}).join("")+'</div><div class="rail-spacer"></div><div class="rail-bottom"><div class="admin-identity"><div class="admin-avatar">'+e((state.user&&state.user.email||"A")[0].toUpperCase())+'</div><div><strong>Administrador</strong><small>'+e(state.user&&state.user.email||"")+'</small></div></div><div class="rail-out"><button data-action="signout">'+ico("log-out",13)+' Sair</button></div></div></aside><main class="main"><header class="topbar"><div class="topbar-left"><span class="topbar-label">CONNECT / <span id="topbar-location">'+e(viewTitle())+'</span></span></div><div class="topbar-right">'+(window.entreTheme?.toggleMarkup?.()||'')+'<span class="topbar-live"><span class="pulse"></span> CONECTADO</span><span class="admin-version">Interface v7</span><button class="toolbar-btn" data-action="refresh">'+ico("refresh-cw",16)+' Atualizar</button><a class="toolbar-btn" href="../?site=1">'+ico("external-link",16)+' Ver site</a></div></header><div id="admin-view"></div></main>'+adminMobileNav()+'</div><div id="modal-root"></div>';
+ app.innerHTML='<div class="shell"><aside class="rail"><div class="brand"><span class="brand-mark"><img src="../connect-glass.svg?v=showcase-v17" alt="" /></span><div><div class="brand-text">CONNECT</div><div class="brand-sub">ADMINISTRAÇÃO</div></div></div>'+adminRail()+'<div class="rail-spacer"></div><div class="rail-bottom"><div class="admin-identity"><div class="admin-avatar">'+e((state.user&&state.user.email||"A")[0].toUpperCase())+'</div><div><strong>Administrador</strong><small>'+e(state.user&&state.user.email||"")+'</small></div></div><div class="rail-out"><button data-action="signout">'+ico("log-out",13)+' Sair</button></div></div></aside><main class="main"><header class="topbar"><div class="topbar-left"><div class="admin-top-brand"><img src="../connect-glass.svg?v=showcase-v17" alt="" width="35" height="23"></div><div class="admin-top-context"><small>COMMAND CENTER</small><strong id="topbar-location">'+e(viewTitle())+'</strong></div></div><div class="topbar-right">'+(window.entreTheme?.toggleMarkup?.()||'')+'<span class="topbar-live" title="Sessão administrativa ativa"><span class="pulse"></span><span>Online</span></span><button type="button" class="toolbar-btn admin-icon-action" data-action="refresh" title="Atualizar dados" aria-label="Atualizar dados">'+ico("refresh-cw",19)+'</button><a class="toolbar-btn admin-icon-action" href="../?site=1" title="Abrir aplicativo" aria-label="Abrir aplicativo">'+ico("external-link",19)+'</a><button type="button" class="toolbar-btn admin-icon-action admin-top-exit" data-action="signout" title="Sair" aria-label="Sair">'+ico("log-out",19)+'</button></div></header><div id="admin-view"></div></main>'+adminMobileNav()+'</div><div id="modal-root"></div>';
 }
 function viewTitle(){return (sections.find(function(s){return s[0]===state.view;})||sections[0])[1];}
 function heading(k,title,desc){return '<div class="page-intro"><span class="eyebrow">'+e(k)+'</span><h1 class="page-title">'+title+'</h1><p>'+e(desc)+'</p></div>';}
