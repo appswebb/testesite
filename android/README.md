@@ -35,3 +35,7 @@ Antes de liberar, testar build/lint, telas em dispositivos reais, login/CAPTCHA,
 ## Política de release
 
 Trabalhar em `android-native`. Não alterar workflows do GitHub Actions nem disparar builds ou distribuição sem pedido explícito. A branch contém uma página de instalação preparada, mas sem link fictício de APK. Somente após testes e autorização, publicar os assets de autenticação, o APK release assinado e atualizar o link de instalação com o arquivo real. Não modificar o site de produção inadvertidamente.
+
+### Sincronização web → Android
+
+A branch `main` e os arquivos de produção web não são alterados para gerar o Android. A versão web continua como referência funcional. Somente quando o proprietário solicitar explicitamente “atualiza no Actions”: revisar as diferenças da web desde a última versão Android, migrar as mudanças para os componentes nativos, congelar um commit Android e compilar/testar. Não usar gatilhos de push, synchronize, cron ou publicação automática. Cada execução autorizada pode usar uma branch temporária e PR de compilação isolado, sem merge com main. Artefato debug é de teste; release exige chave persistente, versão incrementada e validação de paridade. Nunca trocar a chave de assinatura entre releases.
