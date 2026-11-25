@@ -59,10 +59,10 @@ async function action(type,btn){
  try{
  if(type.startsWith('bulletin')&&api.bulletinAction)return await api.bulletinAction(type,btn);
  if(type==='onlineVisibility'||type==='onlineDirect'){
+  if(!api.data.presenceReady||btn.disabled)return true;const owner=state.session?.user?.id;btn.disabled=true;
   const p=api.data.presence;
   const v=type==='onlineVisibility'?!p.visible:!!p.visible,d=type==='onlineDirect'?!p.allow_requests:!!p.allow_requests;
-  const result=await call('entre_online_settings',{_visible:v,_allow_requests:d});
-  api.data.presence={...p,...result};renderView();return true;
+  try{const result=await call('entre_online_settings',{_visible:v,_allow_requests:d});if(state.session?.user?.id===owner){api.data.presence={...p,...result};api.data.presenceReady=true;if(state.view==='settings')renderView();void window.connectRealtime?.refreshCount?.(true);}return true;}finally{if(btn.isConnected)btn.disabled=false;}
  }
  if(type==='onlineMore'||type==='onlineRestart'){await api.loadOnline(type==='onlineRestart');renderView();return true;}
  if(type==='profileOpen'){

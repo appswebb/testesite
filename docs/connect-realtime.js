@@ -37,7 +37,7 @@ function presenceEvent(){countDirty=true;onlineDirty=true;if(!visible()||presenc
 async function ping(force=false){
  if(!member()||onboardingPlanPending()||(!visible()&&!essential())||pinging||!navigator.onLine||(!force&&Date.now()-lastPing<29000))return;
  const user=uid();pinging=true;
- try{const r=await api().rpc('entre_online_ping');if(uid()===user){lastPing=Date.now();if(typeof r?.visible==='boolean')api().data.presence=r;}}
+ try{const r=await api().rpc('entre_online_ping');if(uid()===user){lastPing=Date.now();if(typeof r?.visible==='boolean'){api().data.presence=r;api().data.presenceReady=true;}}}
  catch(e){console.warn('Presence heartbeat unavailable',e?.message)}finally{pinging=false}
 }
 async function refreshPairsList(){if(!member()||!visible()||pairsLoading||!pairsDirty||state.view!=='conversations'||document.querySelector('.cp-conversation-dialog[open]'))return;if(Date.now()-lastPairsRefresh<1500){if(!pairsTimer)pairsTimer=setTimeout(()=>{pairsTimer=0;void refreshPairsList()},1500-(Date.now()-lastPairsRefresh));return;}lastPairsRefresh=Date.now();pairsLoading=true;pairsDirty=false;const user=uid();let failed=false;try{await loadPairs();if(uid()===user&&state.view==='conversations'&&!document.querySelector('.cp-conversation-dialog[open]'))renderView(true);}catch(e){pairsDirty=true;failed=true;}finally{pairsLoading=false;if(!failed&&pairsDirty&&member()&&visible()&&state.view==='conversations'&&!pairsTimer)pairsTimer=setTimeout(()=>{pairsTimer=0;void refreshPairsList()},1500);}}
