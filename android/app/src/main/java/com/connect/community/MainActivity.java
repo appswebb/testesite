@@ -29,7 +29,8 @@ public final class MainActivity extends Activity {
  private int fg,bg,panel,muted,line; private boolean dark,foreground,busy,searching,cancelling;
  private String uid="",page="posts",pairId="",room="br",preference="any";
  private JSONObject profile,premium,settings;
- private long requestGeneration,challengeAt,registrationTouch;
+ private long requestGeneration,challengeAt,registrationTouch,guardAt;
+ private boolean signupConsent;
  private String challengeState,pendingEmail,pendingPassword;private boolean pendingSignup;
  private static final String[] ROUTES={"posts","connect","rooms","conversations","online","notifications","premium","profile","settings","chat"};
  interface Work<T>{T run()throws Exception;}
@@ -68,16 +69,17 @@ public final class MainActivity extends Activity {
   if(busy||isFinishing())return;busy=true;long generation=++requestGeneration;
   if(status!=null)status.setText("Carregando…");
   io.execute(()->{try{T v=work.run();main.post(()->{if(isDestroyed()||generation!=requestGeneration)return;busy=false;if(status!=null)status.setText("");result.done(v);});}
-   catch(Exception ex){main.post(()->{if(isDestroyed()||generation!=requestGeneration)return;busy=false;String msg=ex instanceof ConnectApi.ApiException?ex.getMessage():ex instanceof Gate?ex.getMessage():"Não foi possível concluir. Confira sua conexão e tente novamente.";if(ex instanceof Gate){searching=false;gate(msg);}else if(ex instanceof ConnectApi.ApiException&&((ConnectApi.ApiException)ex).invalidSession()&&!api.hasSession()){uid="";profile=null;auth(false,"Sua sessão expirou. Entre novamente.");}else notice(msg);});}});
+   catch(Exception ex){main.post(()->{if(isDestroyed()||generation!=requestGeneration)return;busy=false;String msg=ex instanceof ConnectApi.ApiException?ex.getMessage():ex instanceof Gate?ex.getMessage():"Não foi possível concluir. Confira sua conexão e tente novamente.";if(ex instanceof Gate){searching=false;gate(msg);}else if(ex instanceof ConnectApi.ApiException&&((ConnectApi.ApiException)ex).invalidSession()&&!api.hasSession()){uid="";profile=null;auth(false,"Sua sessão expirou. Entre novamente.");}else {if(cancelling){cancelling=false;searching=true;encounters();}notice(msg);}});}});
  }
  private static class Gate extends Exception{Gate(String m){super(m);}}
  private void guard()throws Exception{
+  if(guardAt>0&&SystemClock.elapsedRealtime()-guardAt<30000)return;
   settings=api.settings();if(!settings.has("maintenance_enabled")||settings.optBoolean("maintenance_enabled",true))throw new Gate("Estamos atualizando o CONNECT. "+settings.optString("maintenance_message","Tente novamente mais tarde."));
-  if(!uid.isEmpty()){JSONObject s=(JSONObject)api.rpc("entre_my_suspension",null);if(s.optBoolean("suspended"))throw new Gate("Conta suspensa. "+s.optString("reason",""));}
+  if(!uid.isEmpty()){JSONObject s=(JSONObject)api.rpc("entre_my_suspension",null);if(s.optBoolean("suspended"))throw new Gate("Conta suspensa. "+s.optString("reason",""));}guardAt=SystemClock.elapsedRealtime();
  }
  private void gate(String msg){screen("Acesso indisponível",msg,false);button(body,"Verificar novamente",true,this::startup);button(body,"Sair",false,this::logout);}
  private void startup(){
-  screen("Seu próximo oi.","Conectando à comunidade.",false);
+  guardAt=0;screen("Seu próximo oi.","Conectando à comunidade.",false);
   button(body,"Tentar novamente",false,this::startup);
   task(()->{api.restore();settings=api.settings();if(!settings.has("maintenance_enabled")||settings.optBoolean("maintenance_enabled",true))throw new Gate("Estamos em manutenção.");
    if(!api.hasSession())return "login";
@@ -88,7 +90,7 @@ public final class MainActivity extends Activity {
     if("expired".equals(resume.optString("status"))){api.clear();uid="";profile=null;return "expired";}
     registrationTouch=System.currentTimeMillis();
    }
-   if(profile==null)return "profile";
+   if(profile==null){signupConsent=Boolean.TRUE.equals(api.rpc("connect_signup_consent_status",null));return "profile";}
    JSONObject legal=(JSONObject)api.rpc("connect_account_data",null);
    if(!legal.optBoolean("accepted"))return "legal";
    premium=(JSONObject)api.rpc("entre_premium_overview",null);
@@ -131,19 +133,19 @@ public final class MainActivity extends Activity {
   pendingEmail=null;pendingPassword=null;challengeState=null;intent.setData(null);
   task(()->{if(signup)return api.signup(em,pass,captcha);api.login(em,pass,captcha);return true;},ok->{if(ok)startup();else auth(false,"Confirme seu e-mail e entre para continuar. O cadastro provisório expira após 30 minutos sem atividade.");});
  }
- private void touch()throws Exception{JSONObject r=(JSONObject)api.rpc("connect_resume_registration",null);if("expired".equals(r.optString("status"))){api.clear();throw new Gate("Cadastro expirado. Crie uma nova conta.");}}
+ private void touch()throws Exception{JSONObject r=(JSONObject)api.rpc("connect_resume_registration",null);if("expired".equals(r.optString("status"))){api.clear();throw new Gate("Cadastro expirado. Crie uma nova conta.");}registrationTouch=System.currentTimeMillis();}
  private void profileForm(){
   screen("Seu perfil","02 · Perfil     03 · Plano",false);
   LinearLayout c=card(body);
   EditText name=field(c,"Seu nome",InputType.TYPE_CLASS_TEXT,""),handle=field(c,"Nome de usuário",InputType.TYPE_CLASS_TEXT,""),age=field(c,"Idade",InputType.TYPE_CLASS_NUMBER,"");
   Spinner genders=new Spinner(this);genders.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Homem","Mulher","Outro"}));add(c,genders,8);
-  CheckBox adult=check(c,"Declaro que tenho 18 anos ou mais."),terms=check(c,"Aceito os Termos de uso e a Política de privacidade.");
+  CheckBox adult=signupConsent?null:check(c,"Declaro que tenho 18 anos ou mais."),terms=signupConsent?null:check(c,"Aceito os Termos de uso e a Política de privacidade.");
   button(c,"Concluir perfil",true,()->{
    String n=name.getText().toString().trim(),h=handle.getText().toString().trim().toLowerCase(Locale.ROOT);
    int years;try{years=Integer.parseInt(age.getText().toString());}catch(Exception e){years=0;}
-   if(n.length()<2||n.length()>42||!h.matches("[a-z][a-z0-9_]{2,19}")||years<18||years>100||!adult.isChecked()||!terms.isChecked()){notice("Confira os dados, a idade e os termos.");return;}
+   if(n.length()<2||n.length()>42||!h.matches("[a-z][a-z0-9_]{2,19}")||years<18||years>100||(!signupConsent&&(!adult.isChecked()||!terms.isChecked()))){notice("Confira os dados, a idade e os termos.");return;}
    final int y=years;String gender=new String[]{"man","woman","other"}[genders.getSelectedItemPosition()];
-   task(()->{guard();touch();api.insert("entre_profiles",obj("id",uid,"display_name",n,"username",h,"age",y,"gender",gender,"preference","any"));api.rpc("connect_accept_legal",obj("_terms","2026-11-25","_privacy","2026-11-25","_adult",true));return true;},ok->startup());
+   task(()->{guard();touch();api.insert("entre_profiles",obj("id",uid,"display_name",n,"username",h,"age",y,"gender",gender,"preference","any"));if(!signupConsent)api.rpc("connect_accept_legal",obj("_terms","2026-11-25","_privacy","2026-11-25","_adult",true));return true;},ok->startup());
   });button(body,"Sair",false,this::logout);
  }
  private void legalForm(){
@@ -225,6 +227,7 @@ public final class MainActivity extends Activity {
   String pair=pairId;task(()->{guard();JSONArray ps=api.rows("entre_pairs?select=id,status,expires_at,mode,a,b&id=eq."+ConnectApi.enc(pair));JSONObject p=ps.optJSONObject(0);if(p==null||"closed".equals(p.optString("status")))return obj("closed",true);return obj("pair",p,"messages",api.rows("entre_messages?select=id,body,sender_id,created_at&pair_id=eq."+ConnectApi.enc(pair)+"&deleted_at=is.null&order=id.desc&limit=40"));},data->{
    if(data.optBoolean("closed")){pairId="";open("conversations");notice("Conversa indisponível.");return;}
    JSONObject p=data.optJSONObject("pair");if(p==null)return;
+   if("active".equals(p.optString("status"))&&"video".equals(p.optString("mode"))){screen("Videochamada","A chamada pertence à versão web. O suporte nativo a vídeo ainda não está disponível nesta versão de desenvolvimento.",true);button(body,"Voltar",false,()->open("connect"));return;}
    if("active".equals(p.optString("status"))){
     label(list,"Encontro temporário · termina às "+p.optString("expires_at"),11,false);
     button(list,"Continuar depois do encontro",true,()->task(()->{guard();return api.rpc("entre_vote",obj("_pair",pair,"_accept",true));},v->chat()));
