@@ -68,29 +68,23 @@ html[data-theme] #app .cx-plan-offer .cx-continue-free{margin-top:13px!important
  #app .cx-auth-steps strong{font-size:10px!important}
 }
 
-/* Step-by-step registration: preserve native fields and current theme. */
-#app .cx-wizard-progress{display:grid;gap:8px;margin:12px 0 18px}
-#app .cx-wizard-progress-line{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--ui-muted);font-size:12px}
-#app .cx-wizard-progress-line strong{color:var(--ui-text);font-weight:750}
-#app .cx-wizard-track{height:5px;background:var(--ui-panel-alt);border-radius:99px;overflow:hidden}
-#app .cx-wizard-track span{display:block;height:100%;border-radius:99px;background:var(--ui-accent,#111);transition:width .2s ease}
-#app .cx-wizard-stage{display:grid;gap:12px;min-width:0;padding:4px 0 14px}
-#app .cx-wizard-stage[hidden],#app .cx-wizard-actions [hidden],#app .cx-profile-grid[hidden]{display:none!important}
-#app .cx-wizard-stage>.field{width:100%;min-width:0;margin:0}
-#app .cx-wizard-stage .cx-onboard-media{margin:0 0 8px}
-#app .cx-wizard-actions{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:3px 0 10px}
-#app .cx-wizard-actions:has(>button[hidden]):has(>button:not([hidden])){justify-content:flex-end}
-#app .cx-wizard-actions:has(>button[hidden]+button[hidden]){display:none}
-#app .cx-wizard-actions .ui-btn{min-height:38px!important;padding:8px 14px!important;width:auto!important;font-size:12px!important}
-#app .cx-wizard-skip{border:0;background:none;color:var(--ui-muted);font-weight:650;font-size:12px;min-height:38px;padding:6px;cursor:pointer}
-#app .cx-wizard-optional{display:flex;justify-content:space-between;font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--ui-muted);margin-bottom:12px}
-#app .cx-wizard-interest-content .cx-interest-grid{display:flex;flex-wrap:wrap;gap:8px}
-#app .cx-wizard-interest-content .cx-interest-grid span{font-size:13px;padding:9px 13px}
-#app .cx-wizard-note{font-size:12px;line-height:1.5;color:var(--ui-muted);margin:14px 0 2px}
-#app .cx-wizard-discovery-content{display:grid;gap:12px}
-#app .cx-wizard-visibility{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--ui-line);border-radius:14px;padding:12px;background:var(--ui-panel-alt)}
-#app .cx-wizard-visibility input{width:18px!important;height:18px!important;min-width:18px!important;min-height:18px!important;flex:none;accent-color:var(--ui-accent);margin:2px 0 0;padding:0!important;appearance:auto!important}
-#app .cx-wizard-visibility strong,#app .cx-wizard-visibility small{display:block;font-size:13px;line-height:1.45;color:var(--ui-text)}
-#app .cx-wizard-visibility small{font-size:11px;color:var(--ui-muted);margin-top:3px}
-#app .cx-wizard-stage .form-grid{min-width:0}
-@media(max-width:420px){#app .cx-wizard-progress{margin:8px 0 14px}#app .cx-wizard-stage{gap:10px;padding-bottom:10px}#app .cx-wizard-interest-content .cx-interest-grid span{font-size:12px;padding:8px 10px}}
+/* Optional discovery preferences, inline in the traditional profile form. */
+#app .cx-signup-discovery{margin:12px 0;border:1px solid var(--ui-line);border-radius:14px;background:var(--ui-panel);min-width:0}
+#app .cx-signup-discovery summary{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;list-style:none;padding:12px}
+#app .cx-signup-discovery summary::-webkit-details-marker{display:none}
+#app .cx-signup-discovery summary:after{content:'+';font-size:18px;color:var(--ui-muted);line-height:1}
+#app .cx-signup-discovery[open] summary:after{content:'−'}
+#app .cx-signup-discovery summary>span:first-child{flex:1;min-width:0}
+#app .cx-signup-discovery summary strong,#app .cx-signup-discovery summary small{display:block;line-height:1.35}
+#app .cx-signup-discovery summary strong{font-size:13px;color:var(--ui-text)}
+#app .cx-signup-discovery summary small,#app .cx-signup-count{font-size:11px;color:var(--ui-muted)}
+#app .cx-signup-discovery-body{display:grid;gap:11px;padding:0 12px 12px;min-width:0}
+#app .cx-signup-discovery-body p{font-size:11px;line-height:1.4;margin:0;color:var(--ui-muted)}
+#app .cx-signup-discovery .cx-interest-grid{gap:6px}
+#app .cx-signup-discovery .cx-interest-grid input{position:absolute!important;width:1px!important;height:1px!important;min-height:0!important;min-width:0!important;max-width:1px!important;padding:0!important;margin:0!important;opacity:0}
+#app .cx-signup-discovery .cx-interest-grid span{font-size:12px;padding:7px 10px}
+#app .cx-signup-discovery-visibility{display:flex;gap:8px;align-items:flex-start;padding:9px;border:1px solid var(--ui-line);border-radius:10px}
+#app .cx-signup-discovery-visibility input{width:17px!important;height:17px!important;min-width:17px!important;min-height:17px!important;max-width:17px!important;padding:0!important;margin:2px 0 0!important;flex:none;appearance:auto!important;accent-color:var(--ui-accent)}
+#app .cx-signup-discovery-visibility strong,#app .cx-signup-discovery-visibility small{display:block;line-height:1.4}
+#app .cx-signup-discovery-visibility strong{font-size:12px;color:var(--ui-text)}
+#app .cx-signup-discovery-visibility small{font-size:11px;color:var(--ui-muted)}
