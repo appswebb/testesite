@@ -1,6 +1,13 @@
 /* Public key only; token verification is enforced by Supabase Auth. */
 (()=>{
  'use strict';
+ // Temporary operator-controlled pause. Disable CAPTCHA in Supabase Auth before deploying this flag.
+ // Re-enable the server requirement and this flag together when restoring bot protection.
+ const TURNSTILE_ENABLED=false;
+ if(!TURNSTILE_ENABLED){
+  window.connectTurnstile={markup:()=>'',consume:async()=>undefined,reset:()=>{},enabled:false};
+  return;
+ }
  const SITE_KEY='0x4AAAAAAGRXhO7YaQ_j10mr';
  const selector='#authForm[data-form="login"],#authForm[data-form="signup"],#authForm[data-form="forgot"],#admin-login-form,#deleteEmailForm';
  let current=null,loading=null;
