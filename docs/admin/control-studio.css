@@ -1,0 +1,166 @@
+/* CONNECT Control Studio — administration-only design system. */
+html[data-theme] body.admin-saas #console{
+ --studio-canvas:#f4f6fa;--studio-panel:#fff;--studio-subtle:#f7f8fc;--studio-ink:#192235;--studio-muted:#687389;--studio-border:#e2e7ef;--studio-accent:#4358d8;--studio-accent-soft:#eef0ff;--studio-shadow:0 2px 4px #1f2a4410;
+ --ui-bg:var(--studio-canvas);--ui-panel:var(--studio-panel);--ui-panel-alt:var(--studio-subtle);--ui-text:var(--studio-ink);--ui-muted:var(--studio-muted);--ui-line:var(--studio-border);--ui-accent:var(--studio-accent);--ui-accent-on:#fff;--ui-accent-soft:var(--studio-accent-soft);--ui-accent-faint:var(--studio-subtle);--ui-accent-shadow:#4358d828;--ui-card-shadow:var(--studio-shadow);
+ font-family:Inter,system-ui,sans-serif;font-feature-settings:"tnum";min-height:100dvh;background:var(--studio-canvas);color:var(--studio-ink)
+}
+html[data-theme="dark"] body.admin-saas #console{--studio-canvas:#10141c;--studio-panel:#191f2b;--studio-subtle:#222a38;--studio-ink:#f0f3fa;--studio-muted:#a0acc0;--studio-border:#303b4d;--studio-accent:#9baaff;--studio-accent-soft:#2a3357;--studio-shadow:none;--ui-accent-on:#10141c}
+html[data-theme] body.admin-saas{background:var(--ui-bg);min-width:280px}
+html[data-theme] body.admin-saas #console .shell{grid-template-columns:244px minmax(0,1fr);min-height:100dvh;background:var(--studio-canvas)!important;align-items:start}
+html[data-theme] body.admin-saas #console .rail{position:sticky;top:0;height:100dvh;padding:20px 14px 14px!important;background:var(--studio-panel)!important;border-right:1px solid var(--studio-border)!important;scrollbar-width:thin;gap:0}
+html[data-theme] body.admin-saas #console .rail .brand{padding:3px 9px 22px!important;gap:10px!important}
+html[data-theme] body.admin-saas #console .rail .brand-mark{width:37px!important;min-width:37px!important;height:30px!important}
+html[data-theme] body.admin-saas #console .rail .brand-text{font:800 20px/1 Sora,Inter,sans-serif!important;letter-spacing:-.06em!important}
+html[data-theme] body.admin-saas #console .rail .brand-sub{font:700 9px/1.8 Inter,sans-serif!important;letter-spacing:.16em!important}
+html[data-theme] body.admin-saas #console .rail-group{margin:0 0 15px}
+html[data-theme] body.admin-saas #console .rail-label{font-size:9px!important;text-transform:uppercase;letter-spacing:.15em!important;margin:8px 0 5px!important;padding:0 10px!important;color:var(--studio-muted)!important}
+html[data-theme] body.admin-saas #console .rail .rail-item{font:550 12px/1.4 Inter,sans-serif!important;min-height:38px!important;padding:9px 10px!important;gap:10px!important;border-radius:8px!important;color:var(--studio-muted)!important;border:1px solid transparent!important}
+html[data-theme] body.admin-saas #console .rail .rail-item:hover{background:var(--studio-subtle)!important;color:var(--studio-ink)!important}
+html[data-theme] body.admin-saas #console .rail .rail-item.active{background:var(--studio-accent-soft)!important;color:var(--studio-accent)!important;font-weight:700!important;border-color:transparent!important}
+html[data-theme] body.admin-saas #console .rail .rail-item.active:before{width:3px;top:9px;bottom:9px;background:var(--studio-accent)}
+html[data-theme] body.admin-saas #console .rail .rail-item svg{width:17px!important;height:17px!important}
+html[data-theme] body.admin-saas #console .rail-bottom{padding:14px 6px 0!important}
+html[data-theme] body.admin-saas #console .main{width:100%;max-width:1600px!important;padding:0 clamp(18px,2.8vw,44px) 52px!important;margin:0 auto;background:var(--studio-canvas)!important}
+html[data-theme] body.admin-saas #console .topbar{background:var(--studio-canvas)!important;min-height:70px;margin:0!important;padding:12px 0!important;border-bottom:1px solid var(--studio-border)!important}
+html[data-theme] body.admin-saas #console .admin-top-context{gap:5px}
+html[data-theme] body.admin-saas #console .admin-top-context small{font:700 9px/1 Inter,sans-serif;letter-spacing:.12em;color:var(--studio-muted)}
+html[data-theme] body.admin-saas #console .admin-top-context strong{font:650 16px/1.2 Inter,sans-serif;letter-spacing:-.035em}
+html[data-theme] body.admin-saas #console .topbar-right .admin-icon-action,html[data-theme] body.admin-saas #console .topbar-right .connect-mode-toggle{width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;border-radius:9px!important;background:var(--studio-panel)!important}
+html[data-theme] body.admin-saas #console .topbar-right .saas-command{order:-1}
+html[data-theme] body.admin-saas #console .topbar-live{background:transparent!important;border:0!important;font-weight:600!important}
+#console .saas-sync{min-height:33px;padding:10px 0 7px;display:flex;justify-content:flex-end;color:var(--studio-muted);font-size:10px;line-height:1.4;font-weight:500;text-align:right}
+#console #admin-view{min-width:0}
+#console .saas-page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin:9px 0 23px}
+#console .saas-kicker{display:block;font:700 9px/1.35 Inter,sans-serif;letter-spacing:.14em;color:var(--studio-muted);text-transform:uppercase}
+#console .saas-page-head h1{font:750 clamp(27px,3vw,39px)/1.1 Sora,Inter,sans-serif;letter-spacing:-.06em;margin:6px 0 8px;color:var(--studio-ink)}
+#console .saas-page-head p{font-size:13px;line-height:1.55;margin:0;color:var(--studio-muted);max-width:580px}
+#console .saas-shortcut{flex:none;white-space:nowrap!important}
+#console .saas-overview-status{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;background:var(--studio-panel);border:1px solid var(--studio-border);border-radius:12px;margin:0 0 16px;box-shadow:var(--studio-shadow)}
+#console .saas-overview-status>div{display:flex;align-items:center;gap:12px;min-width:0;flex-wrap:wrap}
+#console .saas-overview-copy{font-size:11px;color:var(--studio-muted)}
+#console .saas-status{display:inline-flex;align-items:center;gap:6px;font:650 11px/1.3 Inter,sans-serif;color:var(--studio-muted);white-space:nowrap}
+#console .saas-status i{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+#console .saas-status.is-ok{color:#137d5d}
+#console .saas-status.is-warn{color:#a76317}
+html[data-theme="dark"] #console .saas-status.is-ok{color:#60d8ac}
+html[data-theme="dark"] #console .saas-status.is-warn{color:#f0bb69}
+#console .saas-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 16px}
+#console button.saas-metric{position:relative;appearance:none;display:flex!important;flex-direction:column;justify-content:space-between;align-items:stretch!important;text-align:left;width:100%;min-width:0;min-height:125px;height:auto!important;max-height:none!important;padding:15px!important;border:1px solid var(--studio-border)!important;border-radius:12px!important;box-shadow:var(--studio-shadow)!important;background:var(--studio-panel)!important;color:var(--studio-ink)!important;gap:8px;cursor:pointer;transition:border-color .16s,transform .16s}
+#console button.saas-metric:hover{border-color:var(--studio-accent)!important;transform:translateY(-2px)}
+#console .saas-metric-top{display:flex;align-items:center;justify-content:space-between;gap:7px;font:600 11px/1.4 Inter,sans-serif;color:var(--studio-muted);min-width:0}
+#console .saas-metric-top i{display:grid;place-items:center;width:31px;height:31px;flex:none;border-radius:8px;background:var(--studio-subtle);color:var(--studio-muted)}
+#console .saas-metric.tone-blue .saas-metric-top i{background:#e9efff;color:#3452c0}
+#console .saas-metric.tone-green .saas-metric-top i{background:#dcf6ed;color:#087b5b}
+#console .saas-metric.tone-violet .saas-metric-top i{background:#f0eaff;color:#6d48b8}
+#console .saas-metric.tone-amber .saas-metric-top i{background:#fff1df;color:#ab671b}
+html[data-theme="dark"] #console .saas-metric.tone-blue .saas-metric-top i{background:#26375c;color:#b4c8ff}
+html[data-theme="dark"] #console .saas-metric.tone-green .saas-metric-top i{background:#183d35;color:#76e4bc}
+html[data-theme="dark"] #console .saas-metric.tone-violet .saas-metric-top i{background:#3b2a57;color:#d5baff}
+html[data-theme="dark"] #console .saas-metric.tone-amber .saas-metric-top i{background:#4c3821;color:#ffd198}
+#console .saas-metric>strong{font:700 clamp(25px,2.6vw,35px)/1.12 Sora,Inter,sans-serif;letter-spacing:-.06em;color:var(--studio-ink);overflow-wrap:anywhere}
+#console .saas-metric-foot{display:flex;align-items:center;justify-content:space-between;gap:5px;font:500 10px/1.4 Inter,sans-serif;color:var(--studio-muted)}
+#console .saas-dashboard-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,1fr);gap:14px;margin-bottom:14px;align-items:stretch}
+#console .saas-panel{min-width:0;min-height:0;background:var(--studio-panel);border:1px solid var(--studio-border);border-radius:14px;padding:18px;box-shadow:var(--studio-shadow)}
+#console .saas-panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin:0 0 18px}
+#console .saas-panel-head h2,#console .saas-directory h2{font:700 16px/1.25 Sora,Inter,sans-serif;letter-spacing:-.035em;color:var(--studio-ink);margin:6px 0 3px}
+#console .saas-panel-head p{font-size:11px;line-height:1.5;color:var(--studio-muted);margin:0}
+#console .saas-panel-head>svg{color:var(--studio-muted)}
+#console .saas-period{border:1px solid var(--studio-border);border-radius:7px;padding:6px 9px;white-space:nowrap;font-size:10px;color:var(--studio-muted)}
+#console .saas-chart{height:171px;display:flex;align-items:stretch;justify-content:space-between;gap:clamp(5px,1.4vw,17px);padding-top:3px}
+#console .saas-bar-col{min-width:0;flex:1;display:grid;grid-template-rows:18px minmax(0,1fr) 17px;gap:6px;text-align:center;font-size:10px;color:var(--studio-muted)}
+#console .saas-bar-value{font-weight:650;color:var(--studio-ink)}
+#console .saas-bar-track{min-width:0;position:relative;display:flex;align-items:flex-end;background:var(--studio-subtle);border-radius:6px;overflow:hidden}
+#console .saas-bar-track>div{width:100%;background:var(--studio-accent);border-radius:6px 6px 0 0;min-height:0}
+#console .saas-health-row{width:100%;display:flex!important;align-items:center!important;justify-content:space-between;gap:10px;padding:13px 0!important;min-height:43px!important;text-align:left;color:var(--studio-ink)!important;background:transparent!important;border:0!important;border-bottom:1px solid var(--studio-border)!important;border-radius:0!important;font:550 12px/1.4 Inter,sans-serif!important}
+#console .saas-health-row:last-child{border-bottom:0!important}
+#console .saas-health-row>span:first-child{flex:1;min-width:0}
+#console .saas-health-row>svg{color:var(--studio-muted)}
+#console .saas-health-row:hover{color:var(--studio-accent)!important}
+#console .saas-inbox{margin-bottom:18px}
+#console .saas-priorities{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+#console .saas-priorities .saas-metric{min-height:111px;background:var(--studio-subtle)!important;box-shadow:none!important;padding:12px!important}
+#console .saas-priorities .saas-metric>strong{font-size:25px}
+#console .saas-directory{margin:0 0 20px;min-width:0}
+#console .saas-directory>h2{margin:0 0 11px;font-size:14px}
+#console .saas-module-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#console button.saas-module{display:flex!important;align-items:center!important;text-align:left;gap:11px;min-width:0;width:100%;min-height:75px;height:auto!important;padding:12px!important;background:var(--studio-panel)!important;color:var(--studio-ink)!important;border:1px solid var(--studio-border)!important;border-radius:11px!important;box-shadow:var(--studio-shadow)!important;cursor:pointer}
+#console button.saas-module:hover{border-color:var(--studio-accent)!important}
+#console .saas-module[hidden]{display:none!important}
+#console .saas-module-icon{width:35px;height:35px;border-radius:9px;display:grid;place-items:center;flex:none;background:var(--studio-accent-soft);color:var(--studio-accent)}
+#console .saas-module>span:nth-child(2){min-width:0;flex:1;display:grid;gap:5px}
+#console .saas-module strong{font:650 12px/1.3 Inter,sans-serif;overflow-wrap:anywhere}
+#console .saas-module small{font:400 10px/1.45 Inter,sans-serif;color:var(--studio-muted);overflow-wrap:anywhere}
+#console .saas-module>svg{flex:none;color:var(--studio-muted)}
+#console .saas-inline-note{display:flex;align-items:flex-start;gap:10px;background:var(--studio-accent-soft);border:1px solid var(--studio-border);border-radius:10px;padding:12px;color:var(--studio-ink);font:500 12px/1.6 Inter,sans-serif;margin:12px 0 20px}
+#console .saas-inline-note svg{color:var(--studio-accent);flex:none}
+#console .saas-empty{color:var(--studio-muted);font-size:12px;margin:auto}
+#console .saas-command-results{max-height:min(45dvh,390px);overflow:auto;display:grid;gap:6px;overscroll-behavior:contain;padding:2px}
+#console .saas-command-results .saas-module{min-height:62px;padding:9px!important;box-shadow:none!important}
+html[data-theme] body.admin-saas #console .page-intro{margin:8px 0 20px!important}
+html[data-theme] body.admin-saas #console .page-intro .page-title{font:750 clamp(26px,3vw,35px)/1.15 Sora,Inter,sans-serif!important;letter-spacing:-.055em!important}
+html[data-theme] body.admin-saas #console :is(.panel,.form-card,.data-panel,.release-entry,.support-admin-ticket,.bulletin-card){border-radius:12px!important;box-shadow:var(--studio-shadow)!important;border-color:var(--studio-border)!important}
+html[data-theme] body.admin-saas #console .data-tools{padding:15px!important}
+html[data-theme] body.admin-saas #console .list-row{padding:13px 15px!important;border-color:var(--studio-border)!important}
+html[data-theme] body.admin-saas #console .data-panel .list-row:nth-child(2n){background:var(--studio-subtle)}
+html[data-theme] body.admin-saas #console :is(.btn-main,.btn-outline,.small-btn,.quick,.chip){min-height:36px;border-radius:8px!important;font:600 12px/1.4 Inter,sans-serif!important}
+html[data-theme] body.admin-saas #console .btn-main:not(.danger){background:var(--studio-accent)!important;color:var(--ui-accent-on)!important}
+html[data-theme] body.admin-saas #console .btn-main:not(.danger) svg{stroke:currentColor!important}
+html[data-theme] body.admin-saas #console .small-btn.danger{color:var(--ui-danger)!important}
+html[data-theme] body.admin-saas #console #modal-root .modal{border-radius:15px!important}
+html[data-theme] body.admin-saas #console .gate{background:var(--studio-canvas)!important;color:var(--studio-ink)!important}
+html[data-theme] body.admin-saas #console .gate .gate-copy{background:var(--studio-panel)!important}
+html[data-theme] body.admin-saas #console .gate .gate-art{background:radial-gradient(ellipse at 45% 35%,#425ba6 0%,#223457 45%,#172236 100%)!important;color:#fff!important}
+html[data-theme] body.admin-saas #console .gate .gate-art :is(h2,p){color:#f2f5ff!important}
+@media(max-width:1250px){#console .saas-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#console .saas-metrics{gap:9px}#console button.saas-metric{padding:12px!important}}
+@media(max-width:980px){
+ html[data-theme] body.admin-saas #console .shell{grid-template-columns:minmax(0,1fr)}
+ html[data-theme] body.admin-saas #console .main{padding:0 15px calc(92px + env(safe-area-inset-bottom))!important}
+ html[data-theme] body.admin-saas #console .topbar{min-height:58px;padding:10px 0!important}
+ html[data-theme] body.admin-saas #console .topbar-right .admin-icon-action,html[data-theme] body.admin-saas #console .topbar-right .connect-mode-toggle{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important}
+ html[data-theme] body.admin-saas #console .topbar-right .admin-top-exit{display:none!important}
+ html[data-theme] body.admin-saas #console .admin-bottom-bar{left:8px!important;right:8px!important;bottom:max(7px,env(safe-area-inset-bottom))!important;border-radius:13px!important;background:var(--studio-panel)!important}
+ html[data-theme] body.admin-saas #console .admin-more-menu{bottom:74px!important;max-height:calc(100dvh - 92px)!important}
+ #console .saas-sync{min-height:26px;padding:7px 0 5px;font-size:9px}
+ #console .saas-page-head{margin:6px 0 15px;gap:12px}
+ #console .saas-page-head h1{font-size:29px}
+ #console .saas-page-head p{font-size:12px}
+ #console .saas-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #console .saas-metric>strong{font-size:27px}
+ #console .saas-dashboard-grid{grid-template-columns:minmax(0,1fr)}
+ #console .saas-priorities{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #console .saas-panel{padding:14px}
+ #console .saas-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #console .saas-overview-status{padding:10px 11px;gap:8px}
+ #console .saas-overview-status>div{gap:4px}
+ #console .saas-overview-copy{display:none}
+}
+@media(max-width:540px){
+ #console .saas-page-head{display:block}
+ #console .saas-shortcut{margin-top:12px}
+ #console .saas-metrics{gap:8px;margin-bottom:12px}
+ #console button.saas-metric{min-height:112px;padding:11px!important;border-radius:10px!important}
+ #console .saas-metric-top{font-size:10px;gap:5px}
+ #console .saas-metric-top i{width:27px;height:27px}
+ #console .saas-metric-top i svg{width:15px;height:15px}
+ #console .saas-metric>strong{font-size:24px}
+ #console .saas-metric-foot{font-size:9px}
+ #console .saas-module-grid{grid-template-columns:minmax(0,1fr)}
+ #console .saas-module{min-height:64px!important}
+ #console .saas-panel-head{margin-bottom:13px}
+ #console .saas-period{font-size:9px;padding:5px 6px}
+ #console .saas-chart{height:143px}
+ #console .saas-overview-status .small-btn{font-size:10px!important;padding:7px 8px!important;min-height:32px!important}
+ #console .saas-status{font-size:10px}
+}
+@media(max-width:360px){
+ html[data-theme] body.admin-saas #console .main{padding-inline:10px!important}
+ html[data-theme] body.admin-saas #console .topbar-right{gap:5px!important}
+ html[data-theme] body.admin-saas #console .topbar-right .admin-icon-action,html[data-theme] body.admin-saas #console .topbar-right .connect-mode-toggle{width:30px!important;height:30px!important;min-width:30px!important;min-height:30px!important}
+ html[data-theme] body.admin-saas #console .topbar-right a.admin-icon-action{display:none!important}
+ #console .saas-metric-top i{width:24px;height:24px}
+ #console .saas-metric-foot svg{display:none}
+ #console .saas-panel{padding:11px}
+ #console .saas-overview-status{flex-wrap:wrap}
+}
+@media(max-height:500px) and (max-width:980px){html[data-theme] body.admin-saas #console .topbar{position:relative!important}#console .saas-command-results{max-height:35dvh}}
+@media(prefers-reduced-motion:reduce){#console .saas-metric,#console .saas-module{transition:none!important;transform:none!important}}
