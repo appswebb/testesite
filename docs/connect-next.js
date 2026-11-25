@@ -65,7 +65,7 @@ async function publish(form){
  if(alive(id,'moments')&&form.isConnected){form.reset();status.textContent='Publicado!';$('cxMomentComposer').open=false;await loadMoments();toast('Moment publicado por até 24 horas.');}
  }catch(e){if(reservation&&uid()===id)try{await rpc('connect_moment_remove',{_id:reservation.id})}catch(_){}if(form.isConnected)status.textContent=e.message||'Não foi possível publicar.';}finally{working=false;if(button.isConnected)button.disabled=false;}
 }
-function dialog(title,body){activeDialog?.close?.();activeDialog?.remove();const d=document.createElement('dialog');d.className='cx-next-dialog';d.innerHTML='<header><strong>'+safe(title)+'</strong><button type="button" data-cx-next="close-dialog" aria-label="Fechar">×</button></header>'+body;document.body.append(d);activeDialog=d;d.addEventListener('close',()=>{if(activeDialog===d)activeDialog=null;d.remove()},{once:true});d.showModal();return d;}
+function dialog(title,body){activeDialog?.close?.();activeDialog?.remove();const d=document.createElement('dialog');d.className='cx-next-dialog';d.dataset.cxView=state.view;d.dataset.cxPair=state.pair?.id||'';d.innerHTML='<header><strong>'+safe(title)+'</strong><button type="button" data-cx-next="close-dialog" aria-label="Fechar">×</button></header>'+body;document.body.append(d);activeDialog=d;d.addEventListener('close',()=>{if(activeDialog===d)activeDialog=null;d.remove()},{once:true});d.showModal();return d;}
 async function comments(m){
  const account=uid(),d=dialog('Comentários','<div id="cxMomentComments" class="cx-next-comments">Carregando…</div><form id="cxMomentCommentForm" data-id="'+safe(m.id)+'"><input name="body" required minlength="2" maxlength="300" placeholder="Escreva um comentário"><button class="cx-next-btn" type="submit">Enviar</button></form>');await refreshComments(m.id,d,account);
 }
@@ -78,6 +78,7 @@ async function loadDiscover(settings=true){
  }catch(e){if(alive(account,'discover')&&epoch===ticket){$('cxDiscoverPeople').textContent='Não foi possível carregar. Tente novamente.';if(settings)$('cxDiscoverySettings').textContent='Preferências indisponíveis.';}}
 }
 function afterRender(){
+ if(activeDialog&&(activeDialog.dataset.cxView!==state.view||activeDialog.dataset.cxPair!==(state.pair?.id||''))){activeDialog.close();activeDialog=null;}
  const next=$('cxMoments')||$('cxDiscover'),id=uid();
  if(owner!==id){dispose();owner=id;muted=true;}
  if(next===host)return;dispose();host=next;if(!next)return;
@@ -88,6 +89,8 @@ document.addEventListener('click',async e=>{
  const b=e.target.closest?.('[data-cx-next]');if(!b||b.disabled)return;
  const action=b.dataset.cxNext,card=b.closest('.cx-moment'),m=rows.find(r=>r.id===card?.dataset.momentId),account=uid();
  try{
+ if(action==='extend'){const pair=state.pair?.id;if(!pair)return;b.disabled=true;const result=await rpc('connect_encounter_extend',{_pair:pair});if(uid()!==account||state.pair?.id!==pair)return;await refreshPair();if(result.status==='waiting')toast('Pedido enviado. A extensão depende do aceite da outra pessoa.');else toast('Mais cinco minutos para vocês!');return;}
+ if(action==='chat-search'){if(state.pair?.status!=='connected')return;dialog('Pesquisar mensagens','<form id="cxChatSearch" data-pair="'+safe(state.pair.id)+'"><input name="query" minlength="2" maxlength="80" required placeholder="Buscar nesta conversa"><button type="submit" class="cx-next-btn">Pesquisar</button></form><div id="cxSearchResults" class="cx-next-comments"><p>Digite uma palavra para pesquisar o histórico disponível.</p></div>');return;}
  if(action==='ice'){const input=$('messageInput');if(input&&!input.value){input.value=questions[Math.floor(Math.random()*questions.length)];input.dispatchEvent(new Event('input',{bubbles:true}));input.focus({preventScroll:true});}else if(input)toast('Envie ou apague sua mensagem antes de escolher uma sugestão.');return;}
  if(action==='upload-toggle'){const d=$('cxMomentComposer');if(d){d.open=!d.open;if(d.open)d.scrollIntoView({block:'nearest'});}return;}
  if(action==='refresh'){await loadMoments();return;}
@@ -105,15 +108,17 @@ document.addEventListener('click',async e=>{
  }catch(e){toast(e.message||'Não foi possível concluir.',true);}finally{if(b.isConnected)b.disabled=false;}
 });
 document.addEventListener('submit',async e=>{
- const form=e.target;if(!['cxMomentUpload','cxDiscoveryForm','cxMomentCommentForm','cxMomentReport'].includes(form.id))return;e.preventDefault();
+ const form=e.target;if(!['cxMomentUpload','cxDiscoveryForm','cxMomentCommentForm','cxMomentReport','cxChatSearch'].includes(form.id))return;e.preventDefault();
  if(form.id==='cxMomentUpload'){await publish(form);return;}
  const b=form.querySelector('button[type=submit]');if(b.disabled)return;b.disabled=true;
  try{
+ if(form.id==='cxChatSearch'){const d=activeDialog,account=uid(),pair=form.dataset.pair;const result=await rpc('connect_chat_search',{_pair:pair,_query:form.elements.query.value});if(uid()===account&&state.pair?.id===pair&&d?.isConnected){d.querySelector('#cxSearchResults').innerHTML=result.length?result.map(m=>'<article><strong>'+(m.sender_id===account?'Você':'Contato')+' · '+safe(new Date(m.created_at).toLocaleString('pt-BR'))+'</strong><p>'+safe(m.body)+'</p></article>').join(''):'<p>Nenhuma mensagem encontrada.</p>';}return;}
  if(form.id==='cxDiscoveryForm'){const selected=[...form.querySelectorAll('input[name=interest]:checked')].map(x=>x.value);if(selected.length>8)throw Error('Escolha até 8 interesses.');await rpc('connect_discovery_save',{_interests:selected,_goal:form.elements.goal.value,_visible:form.elements.visible.checked});toast('Preferências salvas.');if(state.view==='discover')await loadDiscover(false);}
  if(form.id==='cxMomentCommentForm'){const d=activeDialog;await rpc('connect_moment_comment',{_id:form.dataset.id,_body:form.elements.body.value});if(d?.isConnected){form.reset();await refreshComments(form.dataset.id,d,uid());}}
  if(form.id==='cxMomentReport'){await rpc('connect_moment_report',{_id:form.dataset.id,_reason:form.elements.reason.value});activeDialog?.close();toast('Denúncia enviada.');if(state.view==='moments')await loadMoments();}
  }catch(e){toast(e.message||'Não foi possível concluir.',true);}finally{if(b.isConnected)b.disabled=false;}
 });
-const appRoot=document.getElementById('app');if(appRoot)new MutationObserver(()=>{if(host&&!host.isConnected)dispose();}).observe(appRoot,{childList:true,subtree:true});
-window.connectNext={momentsView,discoverView,afterRender};
+const appRoot=document.getElementById('app');if(appRoot)new MutationObserver(()=>{if(host&&!host.isConnected)dispose();if(activeDialog&&typeof state!=='undefined'&&(state.suspension||maintenanceIsActive()||!state.session)){activeDialog.close();activeDialog=null;}}).observe(appRoot,{childList:true,subtree:true});
+function extensionMarkup(pair){if(pair.extended_at)return '<span class="cx-extension-note">+5 min</span>';const mine=pair.a===uid()?pair.extension_a:pair.extension_b,other=pair.a===uid()?pair.extension_b:pair.extension_a;return '<button type="button" class="cx-ice cx-extension" data-cx-next="extend" '+(mine?'disabled':'')+'>'+ (mine?'Aguardando +5 min':other?'Aceitar +5 min':'+5 min')+'</button>'}
+window.connectNext={momentsView,discoverView,afterRender,extensionMarkup};
 })();
