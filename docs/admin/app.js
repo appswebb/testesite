@@ -291,13 +291,14 @@ function renderView(){
 }
 let adminLoadEpoch=0;
 async function load(view,background=false){
+ if(!state.verified||state.view!==view)return;
  const epoch=++adminLoadEpoch,owner=state.user?.id;const patch={};
  const requestQuery=view==="premium"?state.planSearch:view==="users"?state.search:null,requestFilter=state.planFilter,requestPage=view==="premium"?state.planPage:state.userPage;
  const valid=()=>epoch===adminLoadEpoch&&state.user?.id===owner&&state.verified&&state.view===view&&(view!=="premium"||(state.planSearch===requestQuery&&state.planFilter===requestFilter&&state.planPage===requestPage))&&(view!=="users"||(state.search===requestQuery&&state.userPage===requestPage));
  let partialError=null;
  if(!background){state.loading=true;state.loadError=null;renderView();}
  try{
-  if(view==="overview"||view==="monitor"||view==="settings"||view==="updates"||view==="modules"||!state.overview){
+  if(view==="overview"||view==="monitor"||view==="settings"||view==="updates"||view==="modules"){
    patch.overview=await rpc("entre_admin_overview");if(!valid())return;patch.settings=patch.overview?.settings||state.settings;
    if(view==="overview")patch.appeals=await rpc("entre_admin_appeals");
    if(view==="overview"||view==="monitor"){try{patch.community=await rpc("connect_admin_community_metrics");patch.communityUnavailable=false;}catch(_){patch.community=null;patch.communityUnavailable=true;}}
