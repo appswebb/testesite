@@ -72,6 +72,7 @@ final class ConnectApi {
  }
  synchronized JSONObject user()throws Exception{try{return (JSONObject)http("GET","/auth/v1/user",null,token(),null);}catch(ApiException ex){if(ex.invalidSession())clear();throw ex;}}
  synchronized Object rpc(String name,JSONObject args)throws Exception{return http("POST","/rest/v1/rpc/"+name,args==null?new JSONObject():args,token(),null);}
+ synchronized JSONObject release()throws Exception{return (JSONObject)http("POST","/rest/v1/rpc/connect_android_release",new JSONObject(),null,null);}
  synchronized JSONObject settings()throws Exception{return (JSONObject)http("POST","/rest/v1/rpc/entre_public_settings",new JSONObject(),null,null);}
  synchronized JSONArray rows(String query)throws Exception{return (JSONArray)http("GET","/rest/v1/"+query,null,token(),null);}
  synchronized Object insert(String table,JSONObject data)throws Exception{return http("POST","/rest/v1/"+table,data,token(),"return=representation");}
