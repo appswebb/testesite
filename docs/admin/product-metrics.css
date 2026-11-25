@@ -1,0 +1,1 @@
+.cam-admin{margin:16px 0}.cam-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}.cam-stats article{padding:12px;border:1px solid var(--line,#8883);border-radius:12px}.cam-stats strong,.cam-stats small{display:block}.cam-stats strong{font-size:23px;margin-top:6px}

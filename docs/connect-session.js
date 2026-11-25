@@ -2,7 +2,7 @@
 (()=>{
 'use strict';
 const prefix='connect.session.v1.',ttl=1800000;
-const views=new Set(['posts','moments','discover','connect','rooms','lives','conversations','search','premium','settings','profile','chat','notifications','support','protocols','soon','shareapp','checkout','partnerships']);
+const views=new Set(['posts','discover','connect','rooms','lives','conversations','search','premium','settings','profile','chat','notifications','support','protocols','soon','shareapp','checkout','partnerships']);
 const uid=()=>typeof state==='undefined'?null:state.session?.user?.id||null;
 const get=(store,key)=>{try{return JSON.parse(store.getItem(prefix+key)||'null')}catch(_){return null}};
 const put=(store,key,value)=>{try{store.setItem(prefix+key,JSON.stringify(value))}catch(_){}};
@@ -13,7 +13,7 @@ function rememberPage(){
  const key='page.'+id;const previous=get(sessionStorage,key);if(JSON.stringify(previous)===JSON.stringify(page))return;
  put(sessionStorage,key,page);put(localStorage,key,page);
 }
-function readPage(id){const p=get(sessionStorage,'page.'+id)||get(localStorage,'page.'+id);return p?.view==='online'?{...p,view:'discover'}:p&&views.has(p.view)?p:null}
+function readPage(id){const p=get(sessionStorage,'page.'+id)||get(localStorage,'page.'+id);return ['online','moments'].includes(p?.view)?{...p,view:'discover'}:p&&views.has(p.view)?p:null}
 function clearDraft(id){if(id)remove(localStorage,'draft.'+id);}
 function readDraft(id){const p=get(localStorage,'draft.'+id);if(!p||!Number.isFinite(p.at)||Date.now()-p.at>=ttl){clearDraft(id);return null}return p.fields||null}
 function saveDraft(form){const id=uid();if(!id||state.profile||form?.dataset.form!=='profileSetup')return;const fields={};for(const name of ['username','display_name','age','gender'])fields[name]=String(form.elements.namedItem(name)?.value||'').slice(0,100);fields.step=Number(form.dataset.wizardStep||0);fields.interests=[...form.querySelectorAll('input[name=interest]:checked')].map(x=>x.value).slice(0,8);fields.goal=String(form.elements.namedItem('discovery_goal')?.value||'conversar');fields.visible=form.elements.namedItem('discovery_visible')?.checked===true;state.signup=fields;put(localStorage,'draft.'+id,{at:Date.now(),fields});}

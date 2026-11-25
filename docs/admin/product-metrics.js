@@ -1,0 +1,4 @@
+(()=>{'use strict';
+function metrics(m,e){if(!m)return '<section class="form-card"><h2>Métricas do produto</h2><p>Dados indisponíveis.</p></section>';const rate=m.encounters_7d?((m.matches_7d/m.encounters_7d)*100).toFixed(1)+'%':'—';const cards=[['Presença recente (24h)',m.active_presence_24h],['Perfis novos (7 dias)',m.profiles_7d],['Encontros registrados (7 dias)',m.encounters_7d],['Matches registrados (7 dias)',m.matches_7d],['Taxa nos registros disponíveis',rate],['Descoberta ativada',m.discovery_opt_in]];return '<section class="cam-admin"><h2>Inteligência do produto</h2><p>Indicadores agregados dos registros disponíveis; presença recente não é DAU histórico.</p><div class="cam-stats">'+cards.map(([k,v])=>'<article><small>'+e(k)+'</small><strong>'+e(v)+'</strong></article>').join('')+'</div></section>'}
+window.connectAdminProduct={metrics};
+})();
