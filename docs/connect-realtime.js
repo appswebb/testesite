@@ -1,13 +1,13 @@
 /* Realtime presence, account activity, and recovery after a mobile browser pause. */
 (()=>{
 'use strict';
-let onlineSignature=null,feedDirty=false,roomTimer=0,accountTotal=null,accountTotalAt=0,accountTotalBusy=false;let pairsDirty=false,pairsLoading=false;let publicChannel=null,accountChannel=null,account=null,count=null,countAt=0,started=false,pinging=false,counting=false,onlineBusy=false,onlineQueued=false,activityTimer=0,presenceTimer=0,resuming=false,lastPing=0,lastResume=0,lastOnline=0,lastEntitlement=0,countDirty=false,onlineDirty=false,accountChangedAt=0;
+let onlineSignature=null,feedDirty=false,roomTimer=0,accountTotal=null,accountTotalAt=0,accountTotalBusy=false;let pairsDirty=false,pairsLoading=false;let publicChannel=null,accountChannel=null,account=null,count=null,countAt=0,started=false,pinging=false,counting=false,onlineBusy=false,onlineQueued=false,activityTimer=0,presenceTimer=0,resuming=false,lastPing=0,lastResume=0,lastOnline=0,lastEntitlement=0,countDirty=false,onlineDirty=false,counterFrame=0;
 const ready=()=>typeof db!=='undefined'&&typeof state!=='undefined';
 const uid=()=>ready()?state.session?.user?.id:null;
 const member=()=>uid()&&state.profile&&!state.suspension&&!maintenanceIsActive()&&!window.connectAccountData?.pending?.();
 const visible=()=>!document.hidden;
 const hasCounters=()=>Boolean(document.querySelector('[data-connect-online-count],[data-connect-account-count]'));
-const essential=()=>ready()&&(state.searching||Boolean(state.pair?.status==='active')||Boolean(window.entreLives?.details?.()?.active));
+const essential=()=>ready()&&(state.searching||Boolean(state.pair?.status==='active')||Boolean(window.entreLives?.isActive?.()));
 const api=()=>window.entreSocial;
 function paint(){
  const fresh=count!==null&&Date.now()-countAt<90000;
@@ -33,7 +33,7 @@ async function refreshOnline(force=false){
  if(state.view==='online'&&!document.querySelector('.cn-online-filter[open]')&&before!==after){onlineSignature=after;renderView();}
  }finally{onlineBusy=false;if(onlineQueued){onlineQueued=false;setTimeout(()=>void refreshOnline(),500)}}
 }
-function presenceEvent(){countDirty=true;onlineDirty=true;if(!visible()||presenceTimer)return;const delay=Math.max(750,3000-(Date.now()-Math.min(countAt,lastOnline||countAt)));presenceTimer=setTimeout(()=>{presenceTimer=0;if(!visible())return;if(countDirty&&Date.now()-countAt>=3000)void refreshCount(true);if(onlineDirty&&Date.now()-lastOnline>=3000)void refreshOnline(true)},delay)}
+function presenceEvent(){countDirty=true;onlineDirty=true;if(!visible()||presenceTimer)return;const delay=Math.max(750,3000-(Date.now()-Math.max(hasCounters()?countAt:0,state.view==='online'?lastOnline:0)));presenceTimer=setTimeout(()=>{presenceTimer=0;if(!visible())return;if(countDirty&&Date.now()-countAt>=3000)void refreshCount(true);if(onlineDirty&&Date.now()-lastOnline>=3000)void refreshOnline(true)},delay)}
 async function ping(force=false){
  if(!member()||(!visible()&&!essential())||pinging||!navigator.onLine||(!force&&Date.now()-lastPing<30000))return;
  const user=uid();pinging=true;
@@ -71,15 +71,15 @@ async function resume(){
  if(!ready()||resuming||!navigator.onLine||(!visible()&&!essential()))return;
  resuming=true;const user=uid();
  try{subscribe();await Promise.allSettled([ping(),refreshCount()]);if(!member()||uid()!==user)return;
- if(visible())await Promise.allSettled([api().refreshNotifications(),api().refreshBulletins?.(false,true),window.connectRelationships?.tick?.(),refreshOnline()]);
+ if(visible()){pairsDirty=true;await Promise.allSettled([api().refreshNotifications(),api().refreshBulletins?.(false,true),window.connectRelationships?.tick?.(),refreshOnline(),refreshPairsList()]);}
  void refreshEntitlement(user);if(state.view==='rooms')void window.entreRooms?.refresh?.();if(state.view==='posts'){feedDirty=true;refreshFeed();}
  if(state.pair?.id&&['chat','connect'].includes(state.view)){await refreshPair();if(state.pair?.id){await loadMessages();refreshEncounterMessages();}}
  }catch(e){console.warn('Reconnect sync',e?.message)}finally{resuming=false}
 }
 function onResume(){if(document.hidden||Date.now()-lastResume<3000)return;lastResume=Date.now();void resume()}
 function start(){if(started)return;started=true;
- const root=document.getElementById('app');if(root)new MutationObserver(paint).observe(root,{childList:true,subtree:true});
- setInterval(()=>{if(!ready())return;subscribe();if(!visible()&&!essential())return;void ping();if(visible()){void refreshCount();void refreshOnline();void refreshPairsList();refreshFeed();if(member())void refreshEntitlement(uid());paint()}},30000);
+ const root=document.getElementById('app');if(root)new MutationObserver(()=>{paint();if(!counterFrame&&ready()&&visible()&&hasCounters()&&(!countAt||Date.now()-countAt>=30000)){counterFrame=requestAnimationFrame(()=>{counterFrame=0;void refreshCount();});}}).observe(root,{childList:true,subtree:true});
+ setInterval(()=>{if(!ready())return;subscribe();if(!visible()&&!essential())return;void ping();if(visible()){void refreshCount();void refreshOnline();void refreshPairsList();refreshFeed();if(member()&&['premium','connect'].includes(state.view)&&Date.now()-lastEntitlement>=120000)void refreshEntitlement(uid());paint()}},30000);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)onResume()});
  window.addEventListener('focus',onResume);window.addEventListener('pageshow',onResume);window.addEventListener('online',onResume);
  const boot=setInterval(()=>{if(ready()){clearInterval(boot);void resume()}},200);
