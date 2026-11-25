@@ -20,6 +20,11 @@ final class ConnectIcon extends View {
  case "mail":rect(canvas,3,5,21,19,2.5f);line(canvas,3,6,12,13,21,6);break;
  case "lock":rect(canvas,5,10,19,21,3);canvas.drawArc(8,3,16,15,180,180,false,p);line(canvas,8,9,8,10);line(canvas,16,9,16,10);circle(canvas,12,15,1);break;
  case "eye":case "eye-off":{Path eye=new Path();eye.moveTo(2,12);eye.quadTo(12,-1,22,12);eye.quadTo(12,25,2,12);canvas.drawPath(eye,p);circle(canvas,12,12,3);if("eye-off".equals(kind))line(canvas,3,3,21,21);break;}
+ case "radio-on":circle(canvas,12,12,8);p.setStyle(Paint.Style.FILL);circle(canvas,12,12,4.5f);break;
+ case "check-circle":circle(canvas,12,12,9);line(canvas,7,12,10.5f,15.5f,17,8.5f);break;
+ case "globe":circle(canvas,12,12,9);canvas.drawOval(8,3,16,21,p);line(canvas,3,12,21,12);break;
+ case "building":rect(canvas,5,3,19,21,1.5f);line(canvas,3,21,21,21);for(int y=7;y<=15;y+=4){line(canvas,9,y,10,y);line(canvas,14,y,15,y);}line(canvas,10,21,10,17,14,17,14,21);break;
+ case "cloud":{p.setStyle(Paint.Style.FILL);Path cloud=new Path();cloud.moveTo(3,18);cloud.cubicTo(-1,13,3,9,7,10);cloud.cubicTo(7,3,18,3,19,11);cloud.cubicTo(25,11,25,18,20,18);cloud.close();canvas.drawPath(cloud,p);break;}
  case "home":line(canvas,3,10,12,3,21,10,21,21,15,21,15,14,9,14,9,21,3,21,3,10);break;
  case "bolt":line(canvas,13,2,4,13,11,13,10,22,20,10,13,10,13,2);break;
  case "rooms":rect(canvas,3,3,21,21,3);line(canvas,8,3,8,21);line(canvas,8,11,21,11);break;
