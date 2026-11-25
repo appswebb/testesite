@@ -26,7 +26,7 @@ Deno.serve(async (request:Request)=>{
    if(!Array.isArray(files)||files.length===0)break;
    const groups=new Map<string,string[]>();
    for(const f of files){
-    if(!f||!['entre-avatars','connect-media','connect-chat'].includes(f.bucket)||typeof f.path!=='string'||!f.path||f.path.length>700)continue;
+    if(!f||!['entre-avatars','connect-media','connect-chat','entre-chat-media','entre-story-media','entre-live-covers','entre-post-media'].includes(f.bucket)||typeof f.path!=='string'||!f.path||f.path.length>700)continue;
     groups.set(f.bucket,[...(groups.get(f.bucket)||[]),f.path]);
    }
    if(groups.size===0)break;
@@ -53,7 +53,20 @@ Deno.serve(async (request:Request)=>{
    supportDeleted+=safe.length;
    if(paths.length<100)break;
   }
+  // Moments expire in the database first; remove physical objects through Storage API.
+  let momentsDeleted=0;
+  for(let i=0;i<3;i++){
+   const candidates=await rpc('connect_moment_cleanup_candidates') as string[];
+   if(!Array.isArray(candidates)||!candidates.length)break;
+   const safe=candidates.filter(p=>typeof p==='string'&&/^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(mp4|webm)$/i.test(p));
+   if(!safe.length)break;
+   const response=await fetch(SUPABASE_URL+'/storage/v1/object/connect-moments',{method:'DELETE',headers:authHeaders,body:JSON.stringify({prefixes:safe})});
+   if(!response.ok){failures.push({bucket:'connect-moments',status:response.status});break;}
+   momentsDeleted+=safe.length;
+   if(candidates.length<100)break;
+  }
+  const momentRowsCleared=await rpc('connect_moment_cleanup_rows');
   const profileRefsCleared=await rpc('entre_media_cleanup_profile_refs');
-  return respond({ok:failures.length===0,deleted,supportDeleted,profileRefsCleared,failures},failures.length?502:200);
+  return respond({ok:failures.length===0,deleted,supportDeleted,momentsDeleted,momentRowsCleared,profileRefsCleared,failures},failures.length?502:200);
  }catch(e){console.error('Media retention error:',e);return respond({ok:false,error:'retention_run_failed'},500);}
 });
