@@ -8,8 +8,8 @@ function personCard(p){
  '<div class="cx-online-body"><div class="online-person-content">'+avatar(p,'large')+'<div class="cp-online-identity"><h3>'+profileName(p.id,p.display_name,p.username)+(window.entreExtras?.badge?.(p)||'')+'</h3>'+(p.username?'<small class="person-handle">'+profileName(p.id,'@'+p.username,p.username)+'</small>':'')+'<div class="cx-online-meta"><span>'+esc(genders[p.gender]||'Pessoa')+'</span>'+(Number(p.age)>0?'<span>'+Number(p.age)+' anos</span>':'')+'</div></div></div>'+
  (p.bio?'<p class="online-person-bio">'+esc(p.bio)+'</p>':'<p class="online-person-bio cx-online-no-bio">Sem biografia</p>')+
  '<div class="online-person-actions">'+(window.connectRelationships?.followButton?.(p.id,follow)||'')+
- '<button type="button" class="ui-btn '+(allowed?'btn-dark':'btn-outline')+' btn-sm" data-action="socialChat" data-id="'+esc(p.id)+'" '+(!allowed?'disabled':'')+'>'+ico(allowed?'chat':'lock',15)+' Conversar</button></div>'+
- (!allowed?'<small class="online-restriction">'+ico('lock',12)+' Conversa após aceitar sua solicitação.</small>':'')+'</div></article>';
+ '<button type="button" class="ui-btn '+(allowed?'btn-dark':'btn-outline')+' btn-sm" data-action="socialChat" data-id="'+esc(p.id)+'" '+(!allowed?'disabled':'')+'>'+ico(allowed?'chat':'lock',15)+' Solicitar conversa</button></div>'+
+ (!allowed?'<small class="online-restriction">'+ico('lock',12)+' Pedidos de desconhecidos bloqueados.</small>':'')+'</div></article>';
 }
 function inbox(){
  if(!s.follows.length&&!s.chats.length)return '';

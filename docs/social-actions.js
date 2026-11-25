@@ -77,14 +77,15 @@ async function action(type,btn){
  if(type==='socialChat'){
   const r=await call('entre_chat_request',{_target:id});
   if(r?.status==='blocked'){toast(r.message||'Não aceita solicitações de estranhos.',true);return true;}
+  if(r?.status==='incoming'){state.modal=null;toast('Esta pessoa já enviou um pedido. Veja suas notificações.');nav('notifications');return true;}
   if(r?.status==='open'&&r.pair_id){state.modal=null;await loadPairs();await openPair(r.pair_id);}
-  else toast(r?.status==='pending'?'Convite enviado. Aguarde o aceite.':'Solicitação indisponível.',r?.status!=='pending');
+  else toast(r?.status==='pending'?(r.already_pending?'Pedido pendente. Aguarde o aceite.':'Pedido enviado. Aguarde o aceite.'):'Solicitação indisponível.',r?.status!=='pending');
   return true;
  }
  if(type==='followAccept'||type==='followDecline'){
   const r=await call('entre_follow_respond',{_follower:id,_accept:type==='followAccept'});
   await api.refreshInbox();
-  if(r?.pair_id){await loadPairs();toast('Solicitação aceita. Já podem conversar!',false,'match');}else toast('Solicitação recusada.',false,'end');
+  if(r?.status==='accepted')toast('Seguidor aceito. Para conversar, é necessário um pedido separado.',false,'success');else toast('Solicitação recusada.',false,'end');
   renderView();return true;
  }
  if(type==='chatAccept'||type==='chatDecline'){
