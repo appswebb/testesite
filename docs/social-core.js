@@ -73,10 +73,9 @@ function resetAccount(){const owner=state.session?.user?.id||null;if(socialOwner
 async function init(){
  resetAccount();const owner=state.session?.user?.id;if(!owner||!state.profile||initializedOwner===owner)return;initializedOwner=owner;
  await window.connectRealtime?.resume?.();
- await Promise.allSettled([loadPrefs(),refreshInbox(),refreshNotifications(),window.entreSocial?.refreshBulletins?.(true)]);
+ await Promise.allSettled([loadPrefs(),refreshInbox(),...(!window.connectRealtime?[refreshNotifications(),window.entreSocial?.refreshBulletins?.(true)]:[])]);
  if(data.started)return;data.started=true;
- setInterval(async()=>{if(!state.session?.user||state.suspension||maintenanceIsActive())return;await refreshNotifications();if(state.view==='online'&&!document.hidden)await refreshInbox();if(!document.hidden)await window.entreSocial?.refreshBulletins?.(!['avisos','notifications'].includes(state.view));},30000);
- document.addEventListener('visibilitychange',async()=>{if(document.hidden||!state.session?.user||state.suspension)return;await refreshNotifications();await window.entreSocial?.refreshBulletins?.(state.view!=='avisos');});
+ setInterval(async()=>{if(document.hidden||!state.session?.user||state.suspension||maintenanceIsActive()||window.connectAccountData?.pending?.())return;await refreshNotifications();if(state.view==='online'&&!document.hidden)await refreshInbox();if(!document.hidden)await window.entreSocial?.refreshBulletins?.(!['avisos','notifications'].includes(state.view));},60000);
  document.addEventListener('change',async e=>{const select=e.target.closest('[data-social-folder]');if(!select)return;try{await updateConversation(select.dataset.socialFolder,{_folder:select.value});toast('Conversa movida.');renderView();}catch(error){toast(infoError(error),true);}});
 }
 async function enter(view){if(!state.session?.user||!state.profile)return;if(view==='online')await Promise.allSettled([loadOnline(true),refreshInbox()]);if(view==='notifications')await Promise.allSettled([refreshNotifications(),window.entreSocial?.refreshBulletins?.(true)]);if(view==='conversations')await loadPrefs();if(view==='avisos')await window.entreSocial?.refreshBulletins?.(true);renderView();}
