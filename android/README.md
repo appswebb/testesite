@@ -1,30 +1,37 @@
-# CONNECT Android — native client (development branch)
+# CONNECT Android · cliente nativo
 
-**Status: pre-release / not installable yet.** This is a native Android project, not a WebView, TWA or PWA wrapper. Do not replace the published web app or distribute this build until the release gates below pass.
+**Status: código em desenvolvimento, ainda não compilado nem aprovado para distribuição.** O aplicativo usa Activity/View do Android (Java), Kotlin para LiveKit, HTTPS e WebSocket para Supabase. Não existe WebView, PWA ou shell HTML na interface. O site e o painel atuais permanecem independentes.
 
-## Build manually
+## Compilação manual e publicação
 
-- Android Studio with Android SDK Platform 35, build tools 34.0.0, JDK 17.
-- Android Gradle Plugin 8.7.3, Gradle 8.9; min Android 8 (API 26).
-- Open the `android/` directory as a Gradle project. With Gradle 8.9 installed, run `gradle :app:assembleDebug :app:lintDebug` from this directory. Debug APK path: `app/build/outputs/apk/debug/app-debug.apk` after successful build.
-- Debug APK is for testing only. Generate a signed release APK in Android Studio via Build > Generate Signed App Bundle / APK. Keep the release keystore outside GitHub, back it up securely and reuse it for updates. Increase versionCode for each release.
-- Application ID: `com.connect.community` (choose a final unique identifier before the first signed release).
+- Abra a pasta `android/` no Android Studio. JDK 17, Android SDK Platform 35, Build Tools 34.0.0, Gradle 8.9 e Android Gradle Plugin 8.7.3. Android mínimo API 26.
+- Dependências fixadas: Kotlin 1.9.25, LiveKit Android 2.11.1, coroutines 1.8.1, OkHttp 4.12.0.
+- Com o Gradle instalado, execute `gradle :app:assembleDebug :app:lintDebug`. O APK de testes será gerado em `app/build/outputs/apk/debug/app-debug.apk` somente após sucesso.
+- Para distribuir, gere um APK release assinado no Android Studio. Guarde a chave de assinatura de forma segura, fora do repositório. Use a mesma chave e o mesmo applicationId nas atualizações, incrementando versionCode.
+- Não distribua um APK de debug como release oficial. Confirme o identificador final `com.connect.community` antes da primeira assinatura.
 
-## Integration
+## Integração com a produção
 
-Uses the existing Supabase HTTPS APIs and the existing **publishable** key, with server RLS and RPC authorization. The session is encrypted using AES-GCM and Android Keystore; no passwords or refresh tokens in navigation preferences. The native app does not use WebView. The external browser is used only for the genuine Turnstile security challenge, legal documents, web-based password recovery and WhatsApp purchase. The CAPTCHA page must be hosted at the authorized domain before testing auth. Its callback is bound to a random in-memory nonce, valid for five minutes; no password or session token is passed to the browser. The CAPTCHA token is still validated by Supabase. A verified Android App Link is recommended before production, rather than relying on a custom scheme.
+Usa o mesmo Supabase do CONNECT e somente a chave pública publishable. RLS e RPCs já existentes controlam acesso, moderação, retenção e Premium. Não foi criado outro banco. As sessões são criptografadas com AES-GCM/Android Keystore e renovadas pelo servidor.
 
-Implemented source: native account forms, registration resume via server, legal consent, profile creation, manual Premium offer/free completion, persistent session/navigation, text feed and likes, global room text, permanent conversations and text send, text matchmaking and cancellation, notifications/official notices, online directory, settings/theme. The backend remains shared, including server-side retention and quota.
+O navegador é aberto somente para o CAPTCHA Cloudflare (página isolada `docs/android-captcha.html`), documentos legais, fluxo externo de recuperação/compra e confirmação por e-mail. Não renderiza nenhuma tela principal do aplicativo. O CAPTCHA deve ser publicado no domínio autorizado antes dos testes de login; o retorno usa nonce aleatório mantido em memória, não envia senha nem sessão ao navegador. Revisar App Links verificados antes da distribuição.
 
-## Required before publication
+## Código implementado nesta branch
 
-- Compile, lint and run on Android 8+ and recent Android devices; test keyboard/insets, light/dark, relaunch and revoked sessions.
-- Host the isolated CAPTCHA page at the authorized origin and verify challenge return, sign-up/email confirmation, login, token rotation, registration expiration and plan completion.
-- Test with two separate test accounts; verify security, RLS, mandatory notices, moderation, conversations, quotas, cancellation races, expiry and no duplicates. Use a test environment where possible.
-- Complete parity: Realtime and reconnection for conversations and rooms, LiveKit calls/lives, stories, uploads/crop/compression/media retention, location filters, follows/requests, reporting/blocking, public profile links, notification delivery/read cursors, support, preference synchronization and all other existing product features. Current screen implementation is an early native client, not a complete replacement.
-- Verify remaining backend behavior, release signing, package ID and update compatibility.
-- Only after an explicitly authorized release: publish the CAPTCHA assets and signed APK; update the staged installation page with the real verified HTTPS APK link and version. Keep the site/admin available.
+- Cadastro, consentimento, perfil, escolha de plano e retomada de inscrição; sessão criptografada e última tela por conta.
+- Feed, likes, edição/exclusão, comentários e stories; seleção de mídia pelo Android, compressão WebP e visualização via URL assinada.
+- Conversas permanentes, texto, edição/exclusão, mídia, leitura, fixação/arquivamento, bloqueio e denúncia.
+- Busca por texto/vídeo, gênero Premium e campos de localização gratuitos; cancelamento coordenado com servidor, cronômetro, match e encerramento.
+- SDK Android LiveKit para videochamadas e lives, permissões de câmera/microfone, controle de áudio/vídeo, pedidos de convidado, comentários e corações.
+- Sala global/estadual/municipal, busca de pessoas, solicitações de seguir e conversar, notificações e avisos, suporte, preferências sincronizadas, perfil e visitas.
+- Canal WebSocket Realtime autenticado e recarregamento de conversa/sala, presença limitada ao primeiro plano e verificações periódicas de manutenção.
 
-## Release policy
+## Pendências obrigatórias e limites
 
-The Android source is kept on `android-native` pending review. No GitHub Actions workflow is added or edited. Do not dispatch builds or publish updates automatically when code changes. Build and publish only after explicit user request. Existing GitHub Actions settings are not changed by this project.
+O código ainda **não foi compilado**. O ambiente usado para implementação não dispõe de Gradle/SDK Android e não conseguiu baixar os componentes por rede. Validação realizada: inspeção estática de delimitadores, ausência de WebView e correspondência de 65 RPCs literais com funções existentes e permissões authenticated no banco. Isso não demonstra execução bem-sucedida.
+
+Antes de liberar, testar build/lint, telas em dispositivos reais, login/CAPTCHA, sessão expirada, RLS, encerramento e reconexão, mídia, chamadas entre Android e navegador, eventos Realtime, cancelamento concorrente e fluxo completo de cadastro. Completar paridade das funções restantes: recorte interativo de todas as imagens (atualmente compressão e corte central de avatar), gravação de voz, edição/denúncia de todos os tipos de conteúdo, banner GIF, controle completo de lives/co-stream, filtros de localização com seleção oficial e detecção automática, notificações push em segundo plano, exclusão de conta com confirmação e demais fluxos de configurações e moderação do site. Revisar UX e acessibilidade. Não declarar equivalência integral ao site até concluir esses pontos.
+
+## Política de release
+
+Trabalhar em `android-native`. Não alterar workflows do GitHub Actions nem disparar builds ou distribuição sem pedido explícito. A branch contém uma página de instalação preparada, mas sem link fictício de APK. Somente após testes e autorização, publicar os assets de autenticação, o APK release assinado e atualizar o link de instalação com o arquivo real. Não modificar o site de produção inadvertidamente.
