@@ -95,6 +95,7 @@ function openRoomFilter(kind){
  if(kind==='national')body='<label for="roomsCountrySelect">País</label><select id="roomsCountrySelect" '+(world().scope==='country'?'disabled':'')+'>'+window.connectWorld.countries(picker.country)+'</select>'+(world().scope==='country'?'<p class="rooms-city-status">Seu alcance está limitado ao seu país. Altere em Configurações para acessar outros países.</p>':'')+'<button type="button" class="rooms-filter-action" data-room-action="confirm-national" '+(!picker.country?'disabled':'')+'>Entrar no chat do país '+ico('arrow',16)+'</button>';
  if(kind==='state')body='<label for="roomsStateSelect">Estado (Brasil)</label><select id="roomsStateSelect">'+ufOptions(picker.uf)+'</select><button type="button" class="rooms-filter-action" data-room-action="confirm-state" '+(!picker.uf?'disabled':'')+'>Entrar no chat do estado '+ico('arrow',16)+'</button>';
  if(kind==='city')body='<label for="roomsStateSelect">Estado de referência (Brasil)</label><select id="roomsStateSelect">'+ufOptions(picker.uf)+'</select><label for="roomsCitySelect">Cidade</label><select id="roomsCitySelect" aria-describedby="roomsCityStatus" disabled><option>Selecione o estado primeiro</option></select><p id="roomsCityStatus" class="rooms-city-status" role="status"></p><button type="button" class="rooms-filter-action" data-room-action="confirm-city" disabled>Entrar no chat da cidade '+ico('arrow',16)+'</button>';
+ if(kind!=='national'&&window.entreGeo?.detectRegion)body='<button type="button" class="rooms-auto-detect" data-room-action="detect-slot">'+ico('compass',18)+' <span><strong>Detectar '+(kind==='state'?'meu estado':'minha cidade')+'</strong><small>Usar localização do dispositivo</small></span></button><p id="roomsDetectStatus" class="rooms-city-status" role="status"></p>'+body;
  overlay.innerHTML='<section class="rooms-filter-dialog" role="dialog" aria-modal="true" aria-labelledby="roomsFilterHeading"><header class="rooms-filter-heading"><div><small class="cr-filter-kicker">CANAL '+({national:'NACIONAL',state:'ESTADUAL',city:'MUNICIPAL'})[kind]+'</small><h2 id="roomsFilterHeading">'+label+'</h2></div><button type="button" data-room-action="closeFilter" aria-label="Fechar">'+ico('close',20)+'</button></header><div class="rooms-filter-body">'+body+'</div></section>';
  document.body.appendChild(overlay);document.body.classList.add('rooms-filter-open');s.filterOpen=true;overlay.querySelector('select:not([disabled]),button')?.focus();
  if(kind==='city'&&picker.uf)void cities(picker.uf);
@@ -107,6 +108,22 @@ async function cities(uf){
  finally{if(picker===selected&&stamp===cityRequest){selected.loading=false;filterCities();}}
 }
 
+async function detectSlot(btn){
+ const selected=picker,status=document.getElementById('roomsDetectStatus');
+ if(!selected||selected.kind==='national'||btn.disabled)return;
+ btn.disabled=true;if(status)status.textContent='Detectando localização…';
+ try{
+  const region=await window.entreGeo.detectRegion();
+  if(picker!==selected)return;
+  if(!validState(region.state))throw Error('Estado indisponível.');
+  selected.uf=region.state;selected.city='';selected.cities=[];const uf=document.getElementById('roomsStateSelect');if(uf)uf.value=selected.uf;
+  if(selected.kind==='state'){const confirm=document.querySelector('[data-room-action="confirm-state"]');if(confirm)confirm.disabled=false;if(status)status.textContent='Estado encontrado. Confirme para entrar.';return;}
+  const stamp=selected.uf;await cities(stamp);if(picker!==selected||selected.uf!==stamp)return;
+  selected.city=selected.cities.find(n=>clean(n)===clean(region.city))||'';filterCities();
+  if(status)status.textContent=selected.city?'Cidade encontrada. Confirme para entrar.':'Selecione sua cidade na lista.';
+ }catch(error){if(picker===selected&&status)status.textContent=error?.message||'Localização indisponível. Escolha manualmente.';}
+ finally{if(btn.isConnected)btn.disabled=false;}
+}
 let roomRefreshQueued=false;
 async function load(more=false){
  if(s.loading||s.loadingMore){if(!more)roomRefreshQueued=true;return;}if(!state.session)return;
@@ -161,6 +178,7 @@ document.addEventListener('click',e=>{
  if(a.startsWith('quick-')){openSlot(a.slice(6));return;}
  if(a==='edit'){openRoomFilter(b.dataset.kind);return;}
  if(a==='closeFilter'){closeRoomFilter();return;}
+ if(a==='detect-slot'){void detectSlot(b);return;}
  if(a==='confirm-national'&&picker?.kind==='national'&&picker.country&&/^[A-Z]{2}$/.test(picker.country)){const country=picker.country;selectSlot('national',{country,key:national(country)});}
  if(a==='confirm-state'&&picker?.kind==='state'&&validState(picker.uf)){const uf=picker.uf;selectSlot('state',{uf,key:'s:'+uf.toLowerCase()});}
  if(a==='confirm-city'&&picker?.kind==='city'&&picker.cities.includes(picker.city)){const {uf,city}=picker;selectSlot('city',{uf,name:city,key:'c:'+uf.toLowerCase()+':'+clean(city)});}
