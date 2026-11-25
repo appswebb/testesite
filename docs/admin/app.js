@@ -8,7 +8,7 @@ if(!window.supabase || !window.supabase.createClient){
  app.innerHTML='<div class="preload"><h1>Falha de conexão</h1><p>Atualize a página quando estiver conectado à internet.</p></div>';return;
 }
 var db=window.supabase.createClient(URL,KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
-var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[],supportTickets:[],commentReports:[],premiumConfig:null,recurringConfig:null,manualPremiumAccount:null,observability:null,planDirectory:null,planSearch:'',planFilter:'all',planPage:0,moreOpen:false,community:null,communityUnavailable:false,loadError:null,platformControls:null,contentKind:"posts",contentPage:0,contentData:null};
+var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,banPage:0,banHistory:null,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[],supportTickets:[],commentReports:[],premiumConfig:null,recurringConfig:null,manualPremiumAccount:null,observability:null,planDirectory:null,planSearch:'',planFilter:'all',planPage:0,moreOpen:false,community:null,communityUnavailable:false,loadError:null,platformControls:null,contentKind:"posts",contentPage:0,contentData:null};
 var perPage=20, planSearchTimer=null, searchTimer=null, toastTimer=null, lastLoad=0;
 var sections=[
  ["overview","Visão geral","layout-dashboard"],
@@ -190,12 +190,20 @@ function openCommand(){
  state.modal={type:"command"};
  modal('<div class="saas-command-dialog"><h2>Localizar ferramenta</h2><p>Pesquise pelo nome ou pela função desejada.</p><div class="field"><label for="admin-module-search">Ferramenta</label><input id="admin-module-search" placeholder="Ex.: usuários, manutenção, Premium…" autocomplete="off"></div><div class="saas-command-results">'+sections.map(s=>moduleTile(s)).join("")+'</div><div class="modal-actions"><button class="btn-outline" type="button" data-action="close-modal">Fechar</button></div></div>');
 }
+function banHistory(){
+ const d=state.banHistory;
+ if(!d)return '<section class="form-card"><h2>Histórico de banimentos</h2><p>Consultando registros de moderação…</p></section>';
+ const rows=d.rows||[];
+ return '<section class="data-panel cb-ban-history"><div class="data-tools"><div><h3>Histórico de banimentos</h3><small>'+e(d.active)+' ativos · '+e(d.total)+' registros</small></div>'+badge('MODERAÇÃO')+'</div><p class="cb-ban-info">Registros preservados mesmo após excluir a conta. IP de sessão recente, quando disponível, e e-mail vinculados ao bloqueio. A prevenção de novos cadastros depende do Auth Hook ativado no Supabase.</p>'+
+ (rows.length?rows.map(h=>'<article class="cb-ban-row"><div class="cb-ban-identity"><strong>'+e(h.display_name||'Conta sem perfil')+'</strong><small>'+e(h.username?'@'+h.username:h.user_id)+' · '+(h.account_exists?'Conta existente':'Conta excluída')+'</small></div><div class="cb-ban-meta">'+badge(h.active?'BANIMENTO ATIVO':'REATIVADO',h.active?'warn':'neutral')+' '+badge(h.ip_blocked?'IP NA LISTA':h.ip_released_at?'IP LIBERADO':'SEM IP',h.ip_blocked?'warn':'neutral')+'</div><p>'+e(h.reason||'Sem motivo informado')+'</p><small>Banimento: '+e(fmt(h.banned_at))+(h.released_at?' · Liberado: '+e(fmt(h.released_at)):'')+'</small>'+(h.active?'<div class="cb-ban-actions">'+(h.ip_blocked?'<button type="button" class="small-btn" data-action="ban-release-ip" data-id="'+Number(h.id)+'">Liberar somente IP</button>':'')+'<button type="button" class="small-btn" data-action="ban-release-all" data-id="'+Number(h.id)+'">Revogar banimento</button></div>':'')+'</article>').join(''):empty('Nenhum banimento registrado','Os próximos banimentos aparecerão aqui.'))+
+ '<div class="table-footer"><span>Página '+(state.banPage+1)+'</span><div><button type="button" class="small-btn" data-action="ban-prev" '+(state.banPage<=0?'disabled':'')+'>Anterior</button> <button type="button" class="small-btn" data-action="ban-next" '+((state.banPage+1)*20>=d.total?'disabled':'')+'>Próxima</button></div></div></section>';
+}
 function users(){
  var arr=state.loading?[]:state.users.rows||[],total=state.users.total||0;
  return heading("GERENCIAMENTO","Usuários","Pesquise usuários cadastrados e controle suspensão ou exclusão definitiva.")+
  '<section class="data-panel"><div class="data-tools"><div><h3>Contas cadastradas</h3><small>'+e(total)+' registro(s)</small></div><label class="search-box">'+ico("search",17)+'<input id="user-search" placeholder="Nome, @usuário ou e-mail…" aria-label="Pesquisar usuários" autocomplete="off" maxlength="120" value="'+e(state.search)+'"></label></div>'+
  (state.loading?'<p class="plan-empty" role="status">Consultando usuários…</p>':arr.length?arr.map(function(u){return '<div class="list-row"><div class="list-main">'+person(u.display_name||u.email,(u.username?"@"+u.username+" · ":"")+(u.email||""),u.admin)+'</div><div class="row-meta">'+fmt(u.created_at)+'</div>'+badge(u.admin?"ADMIN":u.banned?"SUSPENSO":"ATIVO",u.banned?"warn":u.admin?"":"neutral")+'<div class="admin-user-plan">'+window.entreAdminExtras.planBadge(u.plan_status,e,ico)+(u.plan_manageable?'<button type="button" class="small-btn" data-action="plan-manage" data-id="'+e(u.id)+'">Gerenciar plano</button>':'')+'</div><div class="admin-user-actions"><button class="small-btn '+(u.banned?"":"danger")+'" data-action="edit-user" data-id="'+e(u.id)+'">'+(u.admin?"Detalhes":u.banned?"Reativar":"Suspender")+'</button>'+(!u.admin?'<button type="button" class="small-btn user-delete-action" data-action="delete-user" data-id="'+e(u.id)+'">Excluir conta</button>':'')+'</div></div>';}).join(""):empty("Nenhuma conta encontrada","Ajuste os termos de busca ou aguarde novos cadastros."))+
- '<div class="table-footer"><span>Página '+(state.userPage+1)+' · '+e(total)+' usuário(s)</span><div style="display:flex;gap:8px"><button class="small-btn" data-action="prev-users" '+(state.userPage<=0?"disabled":"")+'>'+ico("chevron-left",13)+' Anterior</button><button class="small-btn" data-action="next-users" '+((state.userPage+1)*perPage>=total?"disabled":"")+'>Próxima '+ico("chevron-right",13)+'</button></div></div></section>';
+ '<div class="table-footer"><span>Página '+(state.userPage+1)+' · '+e(total)+' usuário(s)</span><div style="display:flex;gap:8px"><button class="small-btn" data-action="prev-users" '+(state.userPage<=0?"disabled":"")+'>'+ico("chevron-left",13)+' Anterior</button><button class="small-btn" data-action="next-users" '+((state.userPage+1)*perPage>=total?"disabled":"")+'>Próxima '+ico("chevron-right",13)+'</button></div></div></section>'+banHistory();
 }
 var reasonNames={harassment:"Assédio / comportamento abusivo",hate:"Discurso de ódio",spam:"Spam / golpes",underage:"Suspeita de menor de idade",fake:"Perfil falso",other:"Outro motivo"};
 function retentionControl(area,row){
@@ -307,7 +315,7 @@ async function load(view,background=false){
   if(view==="monitor"){try{patch.productMetrics=await rpc("connect_admin_product_metrics");}catch(_){patch.productMetrics=null;}try{patch.observability=await rpc("connect_admin_observability");}catch(_){patch.observability=null;}}
   if(view==="modules"){patch.platformControls=await rpc("connect_admin_platform_controls");}
    if(view==="content"){patch.contentData=await rpc("connect_admin_content_page",{_kind:state.contentKind,_limit:25,_offset:state.contentPage*25});}
-  if(view==="users")patch.users=await rpc("entre_admin_users",{_query:state.search,_limit:perPage,_offset:state.userPage*perPage});
+  if(view==="users"){const results=await Promise.all([rpc("entre_admin_users",{_query:state.search,_limit:perPage,_offset:state.userPage*perPage}),rpc("connect_admin_ban_history",{_limit:20,_offset:state.banPage*20})]);patch.users=results[0];patch.banHistory=results[1];}
   if(view==="appeals")patch.appeals=await rpc("entre_admin_appeals");
   if(view==="reports"){const results=await Promise.all([rpc("entre_admin_reports",{_status:state.reportStatus,_limit:100}),rpc('entre_admin_comment_reports')]);patch.reports=results[0];patch.commentReports=results[1]||[];}
   if(view==="pairs")patch.pairs=await rpc("entre_admin_pairs",{_limit:60});
@@ -344,7 +352,7 @@ function openUser(id){
  var u=(state.users.rows||[]).find(function(x){return x.id===id;});if(!u)return;
  state.modal={type:"user",data:u};
  var body='<h2>'+e(u.display_name||"Conta")+'</h2><p>'+e(u.email)+'</p><div class="health-row"><strong>Cadastro</strong><span>'+fmt(u.created_at)+'</span></div><div class="health-row"><strong>Último login</strong><span>'+fmt(u.last_sign_in_at)+'</span></div><div class="health-row"><strong>Forma de acesso</strong>'+badge("E-MAIL")+'</div><div class="health-row"><strong>Situação</strong>'+badge(u.banned?"SUSPENSO":u.admin?"ADMIN":"ATIVO",u.banned?"warn":"")+'</div>';
- if(!u.admin){body+='<form id="ban-form"><div class="field"><label for="ban-reason">Motivo da '+(u.banned?"reativação":"suspensão")+'</label><textarea class="form-textarea" id="ban-reason" name="reason" maxlength="300" placeholder="Informe um motivo para a equipe.">'+e(u.ban_reason||"")+'</textarea></div><p>'+(u.banned?"Reativar libera a conta para novas conversas.":"Suspender bloqueia novas conexões e o envio de mensagens. Conversas ativas serão encerradas.")+'</p><div class="modal-actions"><button type="button" class="btn-outline" data-action="close-modal">Cancelar</button><button type="submit" class="btn-main '+(u.banned?"":"danger")+'">'+(u.banned?"Reativar conta":"Confirmar suspensão")+'</button></div></form>';}
+ if(!u.admin){body+='<form id="ban-form"><div class="field"><label for="ban-reason">Motivo da '+(u.banned?"reativação":"suspensão")+'</label><textarea class="form-textarea" id="ban-reason" name="reason" maxlength="300" placeholder="Informe um motivo para a equipe.">'+e(u.ban_reason||"")+'</textarea></div><p>'+(u.banned?"Reativar libera a conta para novas conversas.":"Suspender bloqueia novas conexões e mensagens, encerra encontros e preserva o registro. O IP da sessão recente, quando disponível, entra na lista de bloqueio de cadastro.")+'</p><div class="modal-actions"><button type="button" class="btn-outline" data-action="close-modal">Cancelar</button><button type="submit" class="btn-main '+(u.banned?"":"danger")+'">'+(u.banned?"Reativar conta":"Confirmar suspensão")+'</button></div></form>';}
  else body+='<div class="modal-actions"><button class="btn-outline" data-action="close-modal">Fechar</button></div>';
  modal(body);
 }
@@ -353,7 +361,7 @@ function openDeleteUser(id){
  if(!u||u.admin||u.id===state.user?.id){toast("Não é possível excluir um administrador.",true);return;}
  state.modal={type:"delete-user",data:u};
  modal('<div class="admin-delete-confirm"><span class="admin-critical-label">AÇÃO DEFINITIVA</span><h2>Excluir esta conta?</h2>'+
- '<p>Isso exclui o cadastro, o login e os dados relacionados do aplicativo. Não é o mesmo que suspender. Esta ação não pode ser desfeita.</p>'+
+ '<p>Isso exclui o cadastro, o login e os dados relacionados. Se houver banimento ativo, seu registro de segurança permanece até revogação. Excluir não é o mesmo que suspender.</p>'+
  '<p class="admin-target-email">'+e(u.email)+'</p>'+
  '<form id="admin-delete-user-form"><label class="field" for="adminDeleteConfirm">Para confirmar, digite <strong>EXCLUIR '+e(u.email.toLowerCase())+'</strong></label>'+
  '<input id="adminDeleteConfirm" name="confirmation" autocomplete="off" required placeholder="EXCLUIR '+e(u.email.toLowerCase())+'">'+
@@ -458,6 +466,14 @@ document.addEventListener("click",async function(ev){
  if(a==="plan-filter"){if(!state.verified||state.busy||!["all","premium","free","expired","revoked","pending"].includes(n.dataset.plan))return;clearTimeout(planSearchTimer);state.planFilter=n.dataset.plan;state.planPage=0;await load("premium");return;}
  if(a==="plan-prev"&&state.planPage>0){state.planPage--;await load("premium");return;}
  if(a==="plan-next"&&(state.planPage+1)*perPage<(state.planDirectory?.total||0)){state.planPage++;await load("premium");return;}
+ if(a==="ban-prev"||a==="ban-next"){if(!state.verified||state.busy||state.view!=="users")return;if(a==="ban-prev"&&state.banPage>0)state.banPage--;else if(a==="ban-next"&&(state.banPage+1)*20<(state.banHistory?.total||0))state.banPage++;else return;await load("users");return;}
+ if(a==="ban-release-ip"||a==="ban-release-all"){
+  if(!state.verified||state.busy||state.view!=="users")return;
+  const id=Number(n.dataset.id),row=state.banHistory?.rows?.find(x=>Number(x.id)===id&&x.active),only=a==="ban-release-ip";
+  if(!row||(only&&!row.ip_blocked))return;
+  if(!confirm(only?"Liberar este IP, mantendo o banimento e o bloqueio do e-mail?":"Revogar o banimento e liberar o cadastro? A conta, se existir, será reativada."))return;
+  state.busy=true;n.disabled=true;try{const result=await rpc("connect_admin_release_ban",{_id:id,_ip_only:only,_reason:only?"IP liberado manualmente":"Banimento revogado pelo painel"});if(!result)throw Error("Registro não está ativo.");toast(only?"IP liberado.":"Banimento revogado.");await load("users");}catch(err){toast(errorText(err),true);}finally{state.busy=false;if(n.isConnected)n.disabled=false;}return;
+ }
  if(a==="edit-user"){openUser(n.dataset.id);return;}
  if(a==="delete-user"){openDeleteUser(n.dataset.id);return;}
  if(a==="review"){openReport(n.dataset.id);return;}
