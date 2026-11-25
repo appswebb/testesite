@@ -100,3 +100,6 @@ html[data-theme] #app .cr-rooms .cn-room-empty-icon{flex:none;width:48px!importa
 
 /* Four compact international shortcuts on narrow viewports. */
 @media(max-width:480px){html[data-theme] #app .cr-shortcuts:has(>:nth-child(4)) .cr-shortcut{min-width:0!important;padding:5px!important;gap:3px!important;flex-direction:column!important;align-items:flex-start!important}.cr-shortcuts:has(>:nth-child(4)) .cr-shortcut-copy small{font-size:9px!important;max-width:100%}.cr-shortcuts:has(>:nth-child(4)) .cr-shortcut-copy strong{font-size:10px!important}}
+
+/* Per-channel settings: no shared filter; keep the viewport locked. */
+html[data-theme] #app .cr-rooms .cr-edit-channel{width:auto!important;min-width:0!important;padding:0 9px!important;display:flex!important;gap:5px;align-items:center;font-size:11px!important;flex:none} .cr-edit-channel span{white-space:nowrap}.cr-rooms .cr-title{width:100%}.cr-shortcut-copy{max-width:100%}.cr-shortcut-copy small{max-width:100%}
