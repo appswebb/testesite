@@ -2,7 +2,7 @@
 (()=>{
 'use strict';
 const api=window.entreSocial;
-let sessionId=null, unread={}, running=false, lastMark='', lastSummary=null, modal=null, currentKind='followers', offset=0, generation=0;
+let sessionId=null, unread={}, running=false, pendingTick=false, readTimer=0, lastMark='', lastSummary=null, modal=null, currentKind='followers', offset=0, generation=0;
 const uid=()=>typeof state==='undefined'?null:state.session?.user?.id;
 const reset=()=>{if(sessionId!==uid()){sessionId=uid();unread={};lastMark='';lastSummary=null;generation++;if(modal){modal.remove();modal=null;}}};
 const rpc=(name,args={})=>api.rpc(name,args);
@@ -12,18 +12,19 @@ function paintUnread(){
  document.querySelectorAll('[data-chat-unread]').forEach(el=>{const n=Number(unread[el.dataset.chatUnread]||0);el.hidden=!n;if(el.textContent!==fmt(n))el.textContent=fmt(n)});
  document.querySelectorAll('[data-chat-unread-total]').forEach(el=>{const n=total();el.hidden=!n;if(el.textContent!==fmt(n))el.textContent=fmt(n)});
 }
-async function markRead(){
- if(!uid()||document.hidden||state.view!=='chat'||state.pair?.status!=='connected'||state.modal)return;
- const list=document.getElementById('messageList');if(!list||list.scrollHeight-list.scrollTop-list.clientHeight>110)return;
- const id=state.pair.id,last=state.messages.at(-1)?.id;if(!last)return;
- const key=uid()+':'+id+':'+last;if(lastMark===key)return;
- await rpc('entre_chat_mark_read',{_pair:id,_last:last});if(uid()&&state.pair?.id===id)lastMark=key;
+function unreadCursor(){
+ if(!uid()||document.hidden||state.view!=='chat'||state.pair?.status!=='connected'||state.modal)return null;
+ const list=document.getElementById('messageList');if(!list||list.scrollHeight-list.scrollTop-list.clientHeight>110)return null;
+ const id=state.pair.id,last=state.messages.at(-1)?.id;if(!last)return null;
+ const key=uid()+':'+id+':'+last;return lastMark===key?null:{id,last,key,user:uid()};
 }
+async function markRead(){const cursor=unreadCursor();if(!cursor)return;await rpc('entre_chat_mark_read',{_pair:cursor.id,_last:cursor.last});if(uid()===cursor.user&&state.pair?.id===cursor.id)lastMark=cursor.key;}
+function scheduleRead(){if(readTimer||!unreadCursor())return;readTimer=setTimeout(()=>{readTimer=0;if(unreadCursor())void tick();},250);}
 async function tick(){
- reset();if(!uid()||!state.profile||state.suspension||maintenanceIsActive()||running||document.hidden)return;
+ reset();if(!uid()||!state.profile||state.suspension||maintenanceIsActive()||document.hidden||window.connectAccountData?.pending?.())return;if(running){pendingTick=true;return;}
  const user=uid();running=true;
  try{await markRead();const result=await rpc('entre_chat_unread');if(uid()!==user)return;unread=result||{};paintUnread();}
- catch(error){console.warn('Unread refresh unavailable',error?.message)}finally{running=false}
+ catch(error){console.warn('Unread refresh unavailable',error?.message)}finally{running=false;if(pendingTick){pendingTick=false;setTimeout(()=>void tick(),150);}}
 }
 function followButton(id,status){return '<button type="button" class="ui-btn btn-outline btn-sm" data-cp-follow="'+esc(id)+'" data-cp-follow-status="'+esc(status||'')+'">'+(status==='accepted'?'Seguindo':status==='pending'?'Cancelar pedido':'Seguir')+'</button>'}
 function stats(id,own=false){return '<div class="cp-follow-stats" data-cp-stats="'+esc(id)+'">'+(own?'<button type="button" data-cp-list="followers"><strong>–</strong><span>Seguidores</span></button><button type="button" data-cp-list="following"><strong>–</strong><span>Seguindo</span></button><button type="button" data-cp-list="pending_in"><strong>•</strong><span>Solicitações</span></button>':'<div><strong>–</strong><span>Seguidores</span></div><div><strong>–</strong><span>Seguindo</span></div>')+'</div>'}
@@ -34,7 +35,7 @@ async function fillStats(el){
   const card=el.closest('.cp-visitor');const b=card?.querySelector('[data-cp-follow]');if(b){b.dataset.cpFollowStatus=data.outgoing||'';b.textContent=data.outgoing==='accepted'?'Seguindo':data.outgoing==='pending'?'Cancelar pedido':'Seguir';b.disabled=false;}
  }catch(error){delete el.dataset.loading;console.warn('Relationship summary unavailable',error?.message)}
 }
-function scan(){reset();if(!uid())return;document.querySelectorAll('[data-cp-stats]').forEach(fillStats);paintUnread();}
+function scan(){reset();if(!uid())return;document.querySelectorAll('[data-cp-stats]').forEach(fillStats);paintUnread();scheduleRead();}
 const labels={followers:'Seguidores',following:'Seguindo',pending_in:'Recebidas',pending_out:'Enviadas'};
 function closeList(){generation++;if(modal){const el=modal;modal=null;el.remove()}}
 function listMarkup(){return '<div class="cp-list-head"><strong>Conexões</strong><button type="button" data-cp-list-close aria-label="Fechar">'+ico('close',20)+'</button></div><nav class="cp-list-tabs" aria-label="Conexões">'+Object.entries(labels).map(([k,v])=>'<button type="button" data-cp-list="'+k+'" aria-pressed="'+(k===currentKind)+'">'+v+'</button>').join('')+'</nav><div class="cp-list-body" aria-live="polite"></div><div class="cpv-pagination"><button type="button" data-cp-list-prev hidden>Anterior</button><span data-cp-list-page></span><button class="cp-list-more" type="button" data-cp-list-more hidden>Próxima</button></div>'}
@@ -77,6 +78,6 @@ document.addEventListener('click',async e=>{
 },true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal)closeList()});
 let frame=0;function schedule(){if(!frame)frame=requestAnimationFrame(()=>{frame=0;scan()})}
-document.addEventListener('DOMContentLoaded',()=>{const root=document.getElementById('app');if(root)new MutationObserver(schedule).observe(root,{childList:true,subtree:true});setInterval(()=>void tick(),5000);document.addEventListener('visibilitychange',()=>void tick());schedule();},{once:true});
+document.addEventListener('DOMContentLoaded',()=>{const root=document.getElementById('app');if(root)new MutationObserver(schedule).observe(root,{childList:true,subtree:true});setInterval(()=>void tick(),30000);document.addEventListener('scroll',e=>{if(e.target?.id==='messageList')scheduleRead();},true);schedule();},{once:true});
 window.connectRelationships={stats,followButton,shareView,tick,unread:()=>unread,total};
 })();
