@@ -102,7 +102,7 @@ function adminMobileNav(){
  '<button type="button" class="admin-more-button" data-action="admin-more" aria-expanded="'+Boolean(state.moreOpen)+'" aria-controls="adminMoreMenu">'+ico("menu",19)+'<span>Mais</span></button></nav>'+
  '<div class="admin-more-menu" id="adminMoreMenu" '+(state.moreOpen?'':'hidden')+' role="dialog" aria-label="Mais áreas do painel">'+
  '<div class="admin-more-header"><strong>Mais ferramentas</strong><button type="button" class="small-btn" data-action="admin-more">'+ico('x',16)+' Fechar</button></div>'+
- '<div class="admin-more-links">'+sections.filter(function(s){return !mainMobileSections.includes(s[0]);}).map(function(s){return navItem(s,true);}).join('')+'</div></div>';
+ '<div class="admin-more-links">'+sections.filter(function(s){return !mainMobileSections.includes(s[0]);}).map(function(s){return navItem(s,true);}).join('')+'<button type="button" data-action="signout">'+ico("log-out",19)+'<span>Sair</span></button><a class="saas-mobile-open" href="../?site=1">'+ico("external-link",19)+'<span>Abrir aplicativo</span></a></div></div>';
 }
 function adminRail(){const groups=[['Workspace',['overview','monitor','modules']],['Comunidade',['users','pairs','reports','appeals']],['Relacionamento',['bulletins','support','premium']],['Sistema',['updates','settings','security']]];return groups.map(function(group){return '<div class="rail-group"><div class="rail-label">'+e(group[0])+'</div><div class="rail-links">'+sections.filter(function(x){return group[1].includes(x[0]);}).sort(function(a,b){return group[1].indexOf(a[0])-group[1].indexOf(b[0]);}).map(function(x){return navItem(x,false);}).join('')+'</div></div>';}).join('');}
 function shell(){
@@ -463,7 +463,7 @@ async function boot(){
   state.user=verified.data.user;
   var allowed=await rpc("entre_admin_check");
   if(allowed!==true){gate(true);return;}
-  state.verified=true;shell();await load("overview");
+  state.verified=true;state.view="overview";state.moreOpen=false;state.modal=null;state.community=null;state.overview=null;state.loadError=null;state.refreshAt=null;shell();await load("overview");
  stopAdminRealtime();
  adminSupportChannel=db.channel("admin-support-replies").on("postgres_changes",{event:"UPDATE",schema:"public",table:"entre_support_tickets"},async p=>{if(state.modal?.type==="support-thread"&&Number(state.modal.data.id)===Number(p.new?.id)&&p.new.status==="cancelled"){const form=document.getElementById("support-reply-form");if(form){form.hidden=true;form.querySelectorAll("button,textarea,input").forEach(x=>x.disabled=true);}state.modal.data.status="cancelled";}if(state.verified&&state.view==="support"&&!state.modal&&!state.loading&&!state.busy&&p.new?.status!=="draft")try{await load("support");}catch(err){console.warn(errorText(err));}}).on("postgres_changes",{event:"INSERT",schema:"public",table:"entre_support_replies"},async p=>{if(!state.verified||state.view!=="support")return;try{if(state.modal?.type==="support-thread")await refreshSupportThread(Number(state.modal.data.id));else if(!state.loading&&!state.busy)await load("support");}catch(err){console.warn(errorText(err));}}).subscribe();
   adminSignalChannel=db.channel("connect-admin-signal").on("postgres_changes",{event:"UPDATE",schema:"public",table:"connect_admin_signal"},p=>{const kind=p.new?.kind;if(kind){adminDirty.add(kind);scheduleAdminRefresh();}}).subscribe(status=>{if(status==="SUBSCRIBED"){adminDirty.add("all");scheduleAdminRefresh();}});
