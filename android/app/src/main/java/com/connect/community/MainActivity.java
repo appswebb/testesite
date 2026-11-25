@@ -31,7 +31,7 @@ public final class MainActivity extends Activity {
  private JSONObject profile,premium,settings,currentPair;
  private NativeVideo video; private final NativeRealtime realtime=new NativeRealtime(); private String matchMode="chat",targetState="",targetCity="",liveId=""; private boolean livePublisher,dirty,mediaPicker,videoActive,cancelPending,restricted; private long lastPoll; private JSONObject accountPrefs; private LinearLayout liveMessages; private String mediaTarget="",mediaCaption="",mediaPair=""; private String draftChat=""; private final Map<String,String> chatDrafts=new HashMap<>(); private String draftPair=""; private long lastSync,lastChat,lastPresence,lastRoom; private LinearLayout chatList,roomList; private EditText chatInput; private TextView countdown; private FrameLayout videoFrame; private Runnable permissionAction;
  private long requestGeneration,challengeAt,registrationTouch,guardAt;
- private boolean signupConsent;
+ private boolean signupConsent; private volatile boolean mandatoryUpdate; private JSONObject requiredRelease; private long lastReleaseCheck;
  private String challengeState,pendingEmail,pendingPassword;private boolean pendingSignup;
  private static final String[] ROUTES={"posts","connect","rooms","conversations","online","notifications","premium","profile","settings","chat","stories","lives","search","support"};
  interface Work<T>{T run()throws Exception;}
@@ -74,15 +74,16 @@ public final class MainActivity extends Activity {
  }
  private static class Gate extends Exception{Gate(String m){super(m);}}
  private void guard()throws Exception{
+  if(mandatoryUpdate||SystemClock.elapsedRealtime()-lastReleaseCheck>=30000)checkRelease();
   if(guardAt>0&&SystemClock.elapsedRealtime()-guardAt<30000)return;
   settings=api.settings();if(!settings.has("maintenance_enabled")||settings.optBoolean("maintenance_enabled",true))throw new Gate("Estamos atualizando o CONNECT. "+settings.optString("maintenance_message","Tente novamente mais tarde."));
   if(!uid.isEmpty()){JSONObject s=(JSONObject)api.rpc("entre_my_suspension",null);if(s.optBoolean("suspended"))throw new Gate("Conta suspensa. "+s.optString("reason",""));}guardAt=SystemClock.elapsedRealtime();
  }
- private void gate(String msg){restricted=true;realtime.stop();stopVideo();screen("Acesso indisponível",msg,false);button(body,"Verificar novamente",true,this::startup);button(body,"Sair",false,this::logout);}
+ private void gate(String msg){restricted=true;realtime.stop();stopVideo();if(mandatoryUpdate){updateScreen();return;}screen("Acesso indisponível",msg,false);button(body,"Verificar novamente",true,this::startup);button(body,"Sair",false,this::logout);}
  private void startup(){
   restricted=true;guardAt=0;screen("Seu próximo oi.","Conectando à comunidade.",false);
   button(body,"Tentar novamente",false,this::startup);
-  task(()->{api.restore();settings=api.settings();if(!settings.has("maintenance_enabled")||settings.optBoolean("maintenance_enabled",true))throw new Gate("Estamos em manutenção.");
+  task(()->{checkRelease();api.restore();settings=api.settings();if(!settings.has("maintenance_enabled")||settings.optBoolean("maintenance_enabled",true))throw new Gate("Estamos em manutenção.");
    if(!api.hasSession())return "login";
    JSONObject user=api.user();uid=user.getString("id");guard();
    JSONArray ps=api.rows("entre_profiles?select=*&id=eq."+ConnectApi.enc(uid));profile=ps.optJSONObject(0);
@@ -120,6 +121,7 @@ public final class MainActivity extends Activity {
   if(!signup)button(body,"Recuperar senha",false,()->external(ConnectApi.WEBSITE+"?auth=login"));
  }
  private void beginChallenge(String email,String password,boolean signup){
+  if(mandatoryUpdate){updateScreen();return;}
   byte[] nonce=new byte[32];new SecureRandom().nextBytes(nonce);
   challengeState=android.util.Base64.encodeToString(nonce,android.util.Base64.URL_SAFE|android.util.Base64.NO_WRAP|android.util.Base64.NO_PADDING);
   challengeAt=SystemClock.elapsedRealtime();pendingEmail=email;pendingPassword=password;pendingSignup=signup;
@@ -132,7 +134,7 @@ public final class MainActivity extends Activity {
   if(challengeState==null||!challengeState.equals(nonce)||captcha==null||captcha.length()>4096||SystemClock.elapsedRealtime()-challengeAt>300000||pendingPassword==null||busy){notice("Verificação vencida. Tente novamente.");return;}
   String em=pendingEmail,pass=pendingPassword;boolean signup=pendingSignup;
   pendingEmail=null;pendingPassword=null;challengeState=null;intent.setData(null);
-  task(()->{if(signup)return api.signup(em,pass,captcha);api.login(em,pass,captcha);return true;},ok->{if(ok)startup();else auth(false,"Confirme seu e-mail e entre para continuar. O cadastro provisório expira após 30 minutos sem atividade.");});
+  task(()->{checkRelease();if(signup)return api.signup(em,pass,captcha);api.login(em,pass,captcha);return true;},ok->{if(ok)startup();else auth(false,"Confirme seu e-mail e entre para continuar. O cadastro provisório expira após 30 minutos sem atividade.");});
  }
  private void touch()throws Exception{JSONObject r=(JSONObject)api.rpc("connect_resume_registration",null);if("expired".equals(r.optString("status"))){api.clear();throw new Gate("Cadastro expirado. Crie uma nova conta.");}registrationTouch=System.currentTimeMillis();}
  private void profileForm(){
@@ -175,7 +177,7 @@ public final class MainActivity extends Activity {
  private void remember(){if(!uid.isEmpty()){prefs.edit().putString("page."+uid,page).putString("pair."+uid,"chat".equals(page)?pairId:"").apply();}}
  private void menu(){String[] names={"Online","Buscar pessoas","Stories","Lives","Notificações","Premium","Perfil","Configurações","Suporte","Sair"};String[] ids={"online","search","stories","lives","notifications","premium","profile","settings","support","logout"};new AlertDialog.Builder(this).setTitle("CONNECT").setItems(names,(d,i)->{if(ids[i].equals("logout"))logout();else open(ids[i]);}).show();}
  private void open(String view){
-  if(busy)return;if((searching||cancelPending)&&!view.equals("connect")){notice("Cancele a busca antes de mudar de página.");return;}if(!Arrays.asList(ROUTES).contains(view))return;
+  if(mandatoryUpdate){updateScreen();return;}if(busy)return;if((searching||cancelPending)&&!view.equals("connect")){notice("Cancele a busca antes de mudar de página.");return;}if(!Arrays.asList(ROUTES).contains(view))return;
   if(!page.equals(view)){stopVideo();liveId="";liveMessages=null;if("chat".equals(page)&&chatInput!=null&&!draftPair.isEmpty())chatDrafts.put(uid+":"+draftPair,chatInput.getText().toString());}page=view;remember();dirty=true;
   switch(view){case "stories":stories();break;case "lives":lives();break;case "search":peopleSearch();break;case "support":support();break;case "posts":posts();break;case "connect":encounters();break;case "rooms":rooms();break;case "conversations":conversations();break;case "chat":chat();break;case "online":online();break;case "notifications":notifications();break;case "premium":task(()->{guard();premium=(JSONObject)api.rpc("entre_premium_overview",null);return true;},v->plan(false));break;case "profile":myProfile();break;case "settings":settingsPage();break;}
  }
@@ -303,6 +305,29 @@ public final class MainActivity extends Activity {
  private void saveRegistrationDraft(EditText name,EditText handle,EditText age,Spinner gender){if(uid.isEmpty())return;try{prefs.edit().putString("registration."+uid,obj("at",System.currentTimeMillis(),"name",name.getText().toString(),"handle",handle.getText().toString(),"age",age.getText().toString(),"gender",gender.getSelectedItemPosition()).toString()).apply();}catch(Exception ignored){}}
  private void registrationInteraction(){if(restricted&&api.hasSession()&&!uid.isEmpty()&&(profile==null||!profile.optBoolean("onboarding_plan_selected")))registrationDirty=true;}
  @Override public boolean dispatchTouchEvent(android.view.MotionEvent event){if(event.getActionMasked()==android.view.MotionEvent.ACTION_DOWN)registrationInteraction();return super.dispatchTouchEvent(event);}
- private final Runnable tick=new Runnable(){@Override public void run(){if(!foreground||isDestroyed())return;updateCountdown();long now=SystemClock.elapsedRealtime();if(!busy&&restricted&&api.hasSession()&&!uid.isEmpty()&&(profile==null||!profile.optBoolean("onboarding_plan_selected"))&&registrationDirty&&SystemClock.elapsedRealtime()-lastRegistrationActivity>=15000){registrationDirty=false;lastRegistrationActivity=SystemClock.elapsedRealtime();task(()->{touch();return true;},v->{});}if(!busy&&!restricted){if(cancelPending&&!cancelling){/* explicit retry only */}else if(searching)poll();else if(profile!=null&&profile.optBoolean("onboarding_plan_selected")){if(now-lastSync>=30000)syncNative();else if("chat".equals(page)&&(dirty||now-lastChat>= (realtime.active()?30000:5000))){dirty=false;refreshChat();}else if("rooms".equals(page)&&(dirty||now-lastRoom>=30000)){dirty=false;refreshRoom();}else if("lives".equals(page)&&!liveId.isEmpty()&&liveMessages!=null&&(dirty||now-lastRoom>=15000)){dirty=false;refreshLive("read","",null);}}}main.postDelayed(this,1000);}};
+ private long installedVersion()throws Exception{android.content.pm.PackageInfo info=getPackageManager().getPackageInfo(getPackageName(),0);return Build.VERSION.SDK_INT>=28?info.getLongVersionCode():info.versionCode;}
+ private void checkRelease()throws Exception{
+  lastReleaseCheck=SystemClock.elapsedRealtime();
+  JSONObject release=api.release();
+  if(release.optBoolean("mandatory")&&release.optLong("version_code",0)>installedVersion()){
+   String url=release.optString("apk_url"),hash=release.optString("sha256");
+   if(!url.matches("https://github[.]com/appswebb/testesite/releases/download/[A-Za-z0-9._-]+/[A-Za-z0-9._-]+[.]apk")||!hash.matches("[a-f0-9]{64}"))throw new Gate("Atualização indisponível. Tente novamente.");
+   requiredRelease=release;mandatoryUpdate=true;throw new Gate("Atualização obrigatória.");
+  }
+  mandatoryUpdate=false;requiredRelease=null;
+ }
+ private void updateScreen(){
+  restricted=true;searching=false;cancelPending=false;realtime.stop();stopVideo();
+  screen("Atualização obrigatória","Instale a nova versão do CONNECT para continuar.",false);
+  JSONObject release=requiredRelease;
+  if(release!=null){
+   LinearLayout card=card(body);label(card,"Versão "+release.optString("version_name"),22,true);
+   if(!release.optString("notes").isEmpty())label(card,release.optString("notes"),14,false);
+   button(card,"Baixar atualização",true,()->external(release.optString("apk_url")));
+   label(card,"Abra o APK baixado e confirme a instalação. Não desinstale o CONNECT: a atualização deve manter seus dados e a mesma assinatura digital.",13,false);
+  }
+  button(body,"Verificar novamente",false,this::startup);
+ }
+ private final Runnable tick=new Runnable(){@Override public void run(){if(!foreground||isDestroyed())return;if(!busy&&SystemClock.elapsedRealtime()-lastReleaseCheck>=30000){task(()->{checkRelease();return true;},v->{if(mandatoryUpdate)updateScreen();});}updateCountdown();long now=SystemClock.elapsedRealtime();if(!busy&&!mandatoryUpdate&&restricted&&api.hasSession()&&!uid.isEmpty()&&(profile==null||!profile.optBoolean("onboarding_plan_selected"))&&registrationDirty&&SystemClock.elapsedRealtime()-lastRegistrationActivity>=15000){registrationDirty=false;lastRegistrationActivity=SystemClock.elapsedRealtime();task(()->{touch();return true;},v->{});}if(!busy&&!restricted){if(cancelPending&&!cancelling){/* explicit retry only */}else if(searching)poll();else if(profile!=null&&profile.optBoolean("onboarding_plan_selected")){if(now-lastSync>=30000)syncNative();else if("chat".equals(page)&&(dirty||now-lastChat>= (realtime.active()?30000:5000))){dirty=false;refreshChat();}else if("rooms".equals(page)&&(dirty||now-lastRoom>=30000)){dirty=false;refreshRoom();}else if("lives".equals(page)&&!liveId.isEmpty()&&liveMessages!=null&&(dirty||now-lastRoom>=15000)){dirty=false;refreshLive("read","",null);}}}main.postDelayed(this,1000);}};
  private void logout(){String owner=uid;searching=false;cancelPending=false;realtime.stop();stopVideo();task(()->{if(api.hasSession()){try{api.rpc("entre_leave",null);}catch(Exception ignored){}api.logout();}return true;},v->{prefs.edit().remove("page."+owner).remove("pair."+owner).apply();chatDrafts.clear();draftPair="";chatInput=null;uid="";profile=null;premium=null;pairId="";page="posts";auth(false,"Você saiu da conta.");});}
 }
