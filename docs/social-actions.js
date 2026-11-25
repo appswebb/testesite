@@ -2,16 +2,16 @@
 (function(){
 const api=window.entreSocial;
 let profileSequence=0,returnFocus=null;
-async function openPerson(id,handle='',name=''){
+async function openPerson(id,handle='',name='',preview=false){
  if(!state.session?.user||!state.profile||maintenanceIsActive()||state.suspension)return;
  const uid=state.session.user.id;
- if(id===uid||(!id&&handle&&handle===state.profile.username)){setConnectMenu(false);nav('profile');return;}
+ if(!preview&&(id===uid||(!id&&handle&&handle===state.profile.username))){setConnectMenu(false);nav('profile');return;}
  const request=++profileSequence;
  try{
-  let person=null;
-  if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id||'')){
+  let person=preview&&id===uid?state.profile:null;
+  if(!person&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id||'')){
    person=await api.rpc('entre_profile_for_member',{_target:id});
-  }else if(/^[a-z][a-z0-9_]{2,19}$/i.test(handle)){
+  }else if(!person&&/^[a-z][a-z0-9_]{2,19}$/i.test(handle)){
    const rows=await api.rpc('entre_user_search',{_query:handle.toLowerCase()});
    person=(Array.isArray(rows)?rows:[]).find(p=>p.username===handle.toLowerCase());
   }
@@ -24,6 +24,7 @@ async function openPerson(id,handle='',name=''){
   document.getElementById('modalBackdrop')?.remove();
   document.getElementById('app').insertAdjacentHTML('beforeend',api.profileModal());
   document.querySelector('#modalBackdrop [data-action="closemodal"]')?.focus({preventScroll:true});
+  if(person.id!==uid)void window.connectProfileVisits?.record?.(person.id);
  }catch(error){if(request===profileSequence)toast('Não foi possível abrir esse perfil.',true);}
 }
 window.connectProfileReturnFocus=()=>{if(returnFocus?.isConnected)returnFocus.focus({preventScroll:true});returnFocus=null;};
