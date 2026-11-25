@@ -14,3 +14,10 @@ html[data-connect-motion="off"] .cx-splash-mark .cx-reveal-static{display:block!
 #app .cn-online-top{flex-wrap:wrap;gap:8px}
 #app .cn-online-top .connect-community-totals{flex:1}
 @media(max-width:480px){#app .connect-community-totals{gap:5px}#app .connect-community-totals>span{font-size:10px;padding:6px 7px}#app .cn-online-top .connect-community-totals{flex-basis:100%}}
+
+/* Important declarations in a layer outrank unlayered important animation rules. */
+@layer connectMotionDisabled{
+ html[data-connect-motion="off"] *,html[data-connect-motion="off"] *::before,html[data-connect-motion="off"] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+ html[data-connect-motion="off"] [data-motion-reveal]{opacity:1!important;transform:none!important;translate:none!important}
+ html[data-connect-motion="off"] :is(.entre-touch-layer,.entre-celebration,.meet-overlay){display:none!important}
+}
