@@ -26,7 +26,7 @@ function interacting(){
  const app=document.getElementById('app');
  const active=document.activeElement;
  if(editable(active)&&(app?.contains(active)||active.closest('.live-app-filters')))return true;
- if(app?.querySelector('.pi-field-form:not([hidden]),dialog[open]')||document.querySelector('body > .live-app-filters'))return true;
+ if(app?.querySelector('.pi-field-form:not([hidden]),dialog[open]')||document.querySelector('body > .live-app-filters,body > .cx-discover-filter-dialog[open]'))return true;
  for(const el of dirty){
   if(!el.isConnected||el.value===el.defaultValue){dirty.delete(el);continue;}
   if(app?.contains(el))return true;
