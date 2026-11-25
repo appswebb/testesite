@@ -57,7 +57,7 @@ html[data-theme] .app-toolbar h1 .dot,html[data-theme] .brand .dot,
 html[data-theme] .brand>span:last-child .dot{color:var(--ui-accent)!important}
 html[data-theme] .brand,html[data-theme] .share-brand{color:var(--ui-text)!important}
 
-/* Users choose accent: highlights, active nav, CTAs and hero independent of old yellow. */
+/* Fixed theme accent: highlights, active navigation and actions. */
 html[data-theme] .app-shell .sidebar .nav-item.active,
 html[data-theme] .app-shell .sidebar .nav-item.active:hover,
 html[data-theme] .mobile-nav button.active,
@@ -68,8 +68,7 @@ html[data-theme] .camera-live-tools>button:where(:not(.camera-live-danger)),
 html[data-theme] .info-nav a[aria-current=page],
 html[data-theme] .rail-item.active,
 html[data-theme] .admin-bottom-bar [data-view].active,
-html[data-theme] .appearance-mode[aria-pressed=true],
-html[data-theme] .appearance-swatch[aria-pressed=true]{
+html[data-theme] .appearance-mode[aria-pressed=true]{
  background:var(--ui-accent)!important;border-color:var(--ui-accent)!important;color:var(--ui-accent-on)!important
 }
 html[data-theme] .nav-item.active svg,
@@ -311,21 +310,19 @@ html[data-theme="dark"] .maintenance-screen{background:var(--ui-bg)!important;co
 .appearance-mini.light i{background:#ebeeee}.appearance-mini.light b{background:#000000}
 .appearance-mini.dark{background:#101012;border:1px solid #37383E}
 .appearance-mini.dark i{background:#25262A}.appearance-mini.dark b{background:#F5F6F8}
-.appearance-mini.custom{background:linear-gradient(120deg,#f4cee6,#e3dbfb,#d0d8fb)}
-.appearance-mini.custom i{background:#875ac3}.appearance-mini.custom b{background:var(--ui-accent)}
-.appearance-custom-settings{box-sizing:border-box;min-width:0;max-width:100%;padding:16px;margin-top:13px;background:var(--ui-panel-alt)!important;
- border:1px solid var(--ui-line)!important;border-radius:15px}
-.appearance-custom-settings[hidden]{display:none!important}
-.appearance-custom-settings>label{display:block;margin-bottom:10px;font-size:12px;color:var(--ui-text)!important;font-weight:850}
-.appearance-color-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.appearance-color-line input[type=color]{width:51px!important;height:45px!important;min-height:45px!important;padding:3px!important;border:1px solid var(--ui-line)!important;
- border-radius:12px!important;cursor:pointer;background:var(--ui-panel)!important;flex:none}
-.appearance-color-line output{color:var(--ui-text)!important;font:800 12px ui-monospace,monospace!important;letter-spacing:.03em!important}
-.appearance-color-hint{color:var(--ui-muted)!important;font-size:10px}
-.appearance-swatches{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:15px}
-.appearance-swatch{background:var(--swatch)!important;width:37px;height:37px;border-radius:50%!important;border:3px solid var(--ui-panel)!important;box-shadow:0 0 0 1px var(--ui-line)!important;display:grid;place-items:center;cursor:pointer}
-.appearance-swatch[aria-pressed=true]{box-shadow:0 0 0 2px var(--ui-accent)!important;border-color:var(--ui-panel)!important}
-.appearance-swatch[aria-pressed=true] span:before{content:'✓';font-size:17px;color:white;text-shadow:0 1px 3px #0009}
+
+
+
+
+
+
+
+
+
+
+
+
+
 .appearance-panel .ui-btn{border-radius:999px!important}
 .appearance-toolbar-link{border:1px solid var(--ui-line)!important;background:var(--ui-panel)!important;color:var(--ui-text)!important;border-radius:999px!important}
 html[data-theme] .appearance-panel .appearance-mode:active{transform:scale(.98)!important}
@@ -385,7 +382,7 @@ html[data-theme] .entre-touch-wave{position:absolute;pointer-events:none;z-index
 
 /* Guard against content-box horizontal overflow in the mobile appearance picker. */
 .appearance-mode-grid{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
-.appearance-color-line,.appearance-swatches,.appearance-heading>div{min-width:0;max-width:100%}
+.appearance-heading>div{min-width:0;max-width:100%}
 
 /* On narrow devices, settings actions must wrap instead of widening
    the document (320px viewport previously produced 366px scrollWidth). */
