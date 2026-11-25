@@ -1,0 +1,23 @@
+/* CONNECT Premium signature — compact, independent of the selected theme. */
+html[data-theme] #app :is(.verified-mark,.avatar-verified){
+ box-sizing:border-box!important;display:inline-grid!important;place-items:center!important;
+ width:18px!important;height:18px!important;min-width:18px!important;min-height:18px!important;
+ padding:0!important;border:0!important;border-radius:0!important;outline:none!important;
+ background:transparent url("./connect-premium-seal.svg?v=1") center/100% 100% no-repeat!important;
+ color:transparent!important;box-shadow:none!important;filter:none!important;flex:none!important;
+ line-height:1!important;vertical-align:-3px!important;overflow:visible!important;
+}
+html[data-theme] #app :is(.verified-mark,.avatar-verified)>svg{display:none!important}
+html[data-theme] #app .verified-mark{position:relative!important;margin-inline:2px!important}
+html[data-theme] #app .avatar-verified{
+ position:absolute!important;inset:auto -3px -3px auto!important;z-index:3!important;
+ width:17px!important;height:17px!important;min-width:17px!important;min-height:17px!important;
+ margin:0!important;filter:drop-shadow(0 1px 1px #291a1633)!important;
+}
+html[data-theme] #app .premium-avatar{
+ border-color:#c6a15a!important;outline:none!important;box-shadow:none!important;overflow:visible!important;
+}
+@media(max-width:480px){
+ html[data-theme] #app .verified-mark{width:16px!important;height:16px!important;min-width:16px!important;min-height:16px!important;vertical-align:-2px!important}
+ html[data-theme] #app .avatar-verified{width:15px!important;height:15px!important;min-width:15px!important;min-height:15px!important;inset:auto -2px -2px auto!important}
+}
