@@ -15,7 +15,7 @@ function place(el,x,y){
  el.style.setProperty('--ce-float-x',p.x+'px');el.style.setProperty('--ce-float-y',p.y+'px');el.style.setProperty('--ce-float-right','auto');el.style.setProperty('--ce-float-bottom','auto');position=p;
 }
 function refresh(){
- frame=0;const v=viewport(),active=!!document.querySelector('#app .ce-session'),keyboard=active&&window.innerHeight-v.h>100;
+ frame=0;const v=viewport(),active=!!document.querySelector('#app .ce-session'),keyboard=active&&(root.classList.contains('connect-keyboard-open')||window.innerHeight-v.h>100);
  root.style.setProperty('--ce-vh',Math.floor(v.h)+'px');root.classList.toggle('ce-keyboard',keyboard);
  const el=floating();
  if(!el){drag=null;return}

@@ -22,7 +22,7 @@ async function loadOnline(reset=false){
   data.hasMore=Boolean(result?.has_more);data.loaded=true;
  }catch(e){data.loaded=true;data.onlineError=true;console.warn('Online page',e);}finally{data.busy=false;}
 }
-async function refreshInbox(){const owner=state.session?.user?.id;if(!owner)return;try{const r=await rpc('entre_social_inbox');if(state.session?.user?.id!==owner)return;data.follows=Array.isArray(r?.follows)?r.follows:[];data.chats=Array.isArray(r?.chats)?r.chats:[];if(state.view==='online'&&!document.querySelector('.cn-online-filter[open]'))renderView();}catch(e){console.warn('Inbox',e);}}
+async function refreshInbox(){const owner=state.session?.user?.id;if(!owner)return;try{const r=await rpc('entre_social_inbox');if(state.session?.user?.id!==owner)return;data.follows=Array.isArray(r?.follows)?r.follows:[];data.chats=Array.isArray(r?.chats)?r.chats:[];if(state.view==='online'&&!document.querySelector('.cn-online-filter[open]'))renderView(true);}catch(e){console.warn('Inbox',e);}}
 // Foreground-only banners: never replay the offline backlog.
 let foregroundSince=Date.now(),bannerUser=null,bannerReady=false,bannerTimer=0,bannerQueue=[],bannerSeen=new Set();
 const importantKinds=new Set(['poll','bulletin','follow','follow_accepted','chat_request','chat_accepted','message','matched','account_restored','account_suspended','retention','system']);
@@ -61,7 +61,7 @@ async function refreshNotifications(before=null){
   if(!before){const ids=new Set(rows.map(n=>n.id));bannerQueue=bannerQueue.filter(n=>!['bulletin','poll'].includes(n.kind)||ids.has(n.id));const banner=document.getElementById('connectForegroundNotice');if(banner?.dataset.official==='true'&&!ids.has(Number(banner.dataset.notificationId))){clearTimeout(bannerTimer);bannerTimer=0;banner.remove();showForegroundNotice();}foregroundNotifications(rows,user);}
   data.unread=Math.max(0,Math.min(99,Number(r?.unread)||0));data.notiMore=Boolean(r?.has_more);
   document.querySelectorAll('.toolbar-bell .social-unread').forEach(badge=>{badge.textContent=data.unread?String(data.unread):'';});
-  if(state.view==='notifications'&&!['bulletins','polls'].includes(data.notificationTab))renderView();
+  if(state.view==='notifications'&&!['bulletins','polls'].includes(data.notificationTab))renderView(true);
  }catch(e){console.warn('Notifications',e);}finally{data.notiBusy=false;if(notificationsQueued){notificationsQueued=false;void refreshNotifications();}}
 }
 async function updateConversation(pairId,change){
@@ -78,6 +78,6 @@ async function init(){
  setInterval(async()=>{if(document.hidden||!state.session?.user||state.suspension||maintenanceIsActive()||window.connectAccountData?.pending?.())return;await refreshNotifications();if(state.view==='online'&&!document.hidden)await refreshInbox();if(!document.hidden)await window.entreSocial?.refreshBulletins?.(!['avisos','notifications'].includes(state.view));},60000);
  document.addEventListener('change',async e=>{const select=e.target.closest('[data-social-folder]');if(!select)return;try{await updateConversation(select.dataset.socialFolder,{_folder:select.value});toast('Conversa movida.');renderView();}catch(error){toast(infoError(error),true);}});
 }
-async function enter(view){if(!state.session?.user||!state.profile)return;if(view==='online')await Promise.allSettled([loadOnline(true),refreshInbox()]);if(view==='notifications')await Promise.allSettled([refreshNotifications(),window.entreSocial?.refreshBulletins?.(true)]);if(view==='conversations')await Promise.allSettled([loadPrefs(),loadPairs()]);if(view==='avisos')await window.entreSocial?.refreshBulletins?.(true);renderView();}
+async function enter(view){if(!state.session?.user||!state.profile)return;if(view==='online')await Promise.allSettled([loadOnline(true),refreshInbox()]);if(view==='notifications')await Promise.allSettled([refreshNotifications(),window.entreSocial?.refreshBulletins?.(true)]);if(view==='conversations')await Promise.allSettled([loadPrefs(),loadPairs()]);if(view==='avisos')await window.entreSocial?.refreshBulletins?.(true);if(state.view===view)renderView(true);}
 return{data,rpc,pref,isHidden,init,resetAccount,enter,loadOnline,loadPrefs,refreshInbox,refreshNotifications,resetForeground,updateConversation,isArchived:id=>Boolean(data.prefs[id]?.archived_at)};
 })();

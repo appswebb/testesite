@@ -19,13 +19,13 @@ async function refreshBulletins(silent=false,force=false){
   const signature=JSON.stringify(next.map(x=>[x.id,x.my_vote,x.my_reply,x.votes_total]));
   d.bulletins=next;d.pendingPoll=null;
   d.bulletinSignature=signature;d.bulletinError='';d.bulletinLoaded=true;
-  if((state.view==='avisos'||(state.view==='notifications'&&['bulletins','polls'].includes(d.notificationTab)))&&!silent&&(removed||!document.activeElement?.closest?.('.bulletin-reply-form,.poll-choices')))renderView();
+  if((state.view==='avisos'||(state.view==='notifications'&&['bulletins','polls'].includes(d.notificationTab)))&&!silent&&(removed||!document.activeElement?.closest?.('.bulletin-reply-form,.poll-choices')))renderView(true);
  }catch(e){
   if(state.session?.user?.id!==user)return;
   d.bulletinError='Não foi possível atualizar os avisos. Tente novamente.';
   d.bulletinLoaded=true;
   console.warn('Bulletins',e);
-  if((state.view==='avisos'||(state.view==='notifications'&&['bulletins','polls'].includes(d.notificationTab)))&&!silent)renderView();
+  if((state.view==='avisos'||(state.view==='notifications'&&['bulletins','polls'].includes(d.notificationTab)))&&!silent)renderView(true);
  }finally{d.bulletinBusy=false;if(bulletinQueued){const nextForce=bulletinForce;bulletinQueued=false;bulletinForce=false;void refreshBulletins(false,nextForce);}}
 }
 function voteResults(b){

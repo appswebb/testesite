@@ -1,0 +1,13 @@
+/* Keyboard layout: no floating navigation over the active text field. */
+@media(max-width:900px){
+ html[data-theme].connect-keyboard-open #app>.cn-shell>.cn-dock{display:none!important}
+ html[data-theme].connect-keyboard-open #app>.cn-shell>.cn-main.app-main:not(:has(.ce-session,.cp-permanent-chat)){
+  padding-bottom:12px!important;
+ }
+ html[data-theme].connect-keyboard-open #app>.cn-shell>.cn-main.app-main:not(:has(.ce-session,.cp-permanent-chat))>.cn-toolbar{position:relative!important;top:auto!important}
+ html.connect-keyboard-open{scroll-padding-block:12px 24px}
+ html.connect-keyboard-open :is(input,textarea,[contenteditable=true]){scroll-margin-block:12px 24px}
+ html.connect-keyboard-open #app .modal-card{max-height:calc(var(--connect-visible-height,100dvh) - 20px)!important;overflow-y:auto!important}
+ html[data-theme].connect-keyboard-open #app .cn-account-dialog[open]{max-height:calc(var(--connect-visible-height,100dvh) - 20px)!important}
+ html[data-theme] #app :is(input:not([type]),input:is([type=text],[type=search],[type=email],[type=password],[type=tel],[type=url],[type=number]),textarea,select){font-size:16px!important}
+}

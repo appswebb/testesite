@@ -39,7 +39,7 @@ async function loadPosts(more=false){
   data.posts=next.slice(-45);data.feedWindowShifted=more&&(data.feedWindowShifted||next.length>45);data.postMore=arr.length===15;data.postBefore=next.at(-1)?.id||null;
   for(const p of data.posts){if(p.premium)data.premiumIds.add(p.author_id);else data.premiumIds.delete(p.author_id);}
   feedLoaded=true;
- }catch(e){if(state.session?.user?.id===uid&&seq===feedLoadSeq){feedError=infoError(e);toast(feedError,true);}}finally{data.postLoading=false;if(state.session?.user?.id===uid&&state.view==='posts')renderView();if(feedLoadQueued){feedLoadQueued=false;if(state.session?.user?.id&&state.view==='posts')void loadPosts();}}
+ }catch(e){if(state.session?.user?.id===uid&&seq===feedLoadSeq){feedError=infoError(e);toast(feedError,true);}}finally{data.postLoading=false;if(state.session?.user?.id===uid&&state.view==='posts')renderView(true);if(feedLoadQueued){feedLoadQueued=false;if(state.session?.user?.id&&state.view==='posts')void loadPosts();}}
 }
 
 function commentCard(c){
@@ -92,7 +92,7 @@ async function loadCommentPage(more=false){
   const merged=more?data.commentsRows.concat(next):next;data.commentsWindowShifted=more&&(data.commentsWindowShifted||merged.length>45);data.commentsRows=merged.slice(-45);
   data.commentsHasMore=response?.has_more===true;
  }catch(error){data.commentsError=infoError(error);}
- finally{data.commentsBusy=false;if(data.commentsPost===post)renderView();}
+ finally{data.commentsBusy=false;if(data.commentsPost===post)renderView(true);}
 }
 
 // Keep the composer draft across feed refreshes and media selection, scoped to the current account.
@@ -268,9 +268,9 @@ async function submitSupport(form){
 }
 async function enter(view){
  if(view==='posts')await loadPosts();
- if(view==='premium'){await refreshPremium();if(state.view==='premium'&&!data.webCheckoutOpen)renderView();}
- if(view==='checkout'){await refreshPremium();if(state.view==='checkout')renderView();}
- if(view==='support'){await refreshPremium();if(state.view==='support')renderView();}
+ if(view==='premium'){await refreshPremium();if(state.view==='premium'&&!data.webCheckoutOpen)renderView(true);}
+ if(view==='checkout'){await refreshPremium();if(state.view==='checkout')renderView(true);}
+ if(view==='support'){await refreshPremium();if(state.view==='support')renderView(true);}
  if(view==='protocols'){protocolQuery='';data.support=[];await loadSupport();}
 }
 function resetAccount(){syncFeedOwner();data.premium=null;data.premiumOwner=null;data.premiumIds.clear();data.support=[];protocolQuery='';supportOwner=null;supportSeq++;premiumRefreshSeq++;}
