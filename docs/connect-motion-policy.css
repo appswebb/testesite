@@ -17,9 +17,11 @@ html[data-theme] #app .connect-community-totals{
  background:none!important;border:0!important;box-shadow:none!important;
 }
 html[data-theme] #app .cn-online-top .connect-community-totals{flex:1 1 auto;align-content:center;}
+html[data-theme] #app .cl-hero .connect-community-totals .cc-stat strong{font-size:23px!important}
+html[data-theme] #app .cl-hero .connect-community-totals .cc-stat small{font-size:15px!important}
 html[data-theme] #app .connect-community-totals .cc-stat{
  display:inline-flex!important;align-items:center!important;justify-content:flex-start;
- gap:4px!important;padding:0!important;margin:0!important;min-height:0!important;
+ gap:5px!important;padding:0!important;margin:0!important;min-height:0!important;
  height:auto!important;max-width:100%;min-width:0;white-space:nowrap;
  border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;
  font:500 12px/1.4 Inter,system-ui,sans-serif!important;color:var(--ui-muted)!important;
@@ -27,18 +29,18 @@ html[data-theme] #app .connect-community-totals .cc-stat{
 html[data-theme] #app .connect-community-totals .cc-stat strong{
  display:inline!important;padding:0!important;margin:0!important;min-height:0!important;
  background:none!important;box-shadow:none!important;border:0!important;
- font:750 13px/1.4 Inter,system-ui,sans-serif!important;letter-spacing:-.02em;
+ font:750 21px/1.2 Inter,system-ui,sans-serif!important;letter-spacing:-.035em;
  font-variant-numeric:tabular-nums;color:var(--ui-text)!important;
 }
 html[data-theme] #app .connect-community-totals .cc-stat small{
- display:inline!important;font:500 11px/1.4 Inter,system-ui,sans-serif!important;
+ display:inline!important;font:550 14px/1.35 Inter,system-ui,sans-serif!important;
  padding:0!important;margin:0!important;color:var(--ui-muted)!important;
 }
 html[data-theme] #app .connect-community-totals .cc-stat-accounts{
  padding-inline-start:12px!important;border-inline-start:1px solid var(--ui-line)!important;
 }
 html[data-theme] #app .connect-community-totals .cc-presence-dot{
- display:block;width:7px;height:7px;flex:none;border-radius:50%;background:#1caa73!important;
+ display:block;width:9px;height:9px;flex:none;border-radius:50%;background:#1caa73!important;
  box-shadow:none!important;margin:0 2px 0 0!important;
 }
 html[data-theme] #app .cn-online-top .cn-online-filter{flex:0 0 auto!important;min-width:0;margin:0!important;}
@@ -55,13 +57,18 @@ html[data-theme] #app .cl-hero .connect-community-totals{margin:10px 0 16px!impo
 @media(max-width:480px){
  html[data-theme] #app .connect-community-totals{column-gap:8px;row-gap:4px}
  html[data-theme] #app .connect-community-totals .cc-stat-accounts{padding-inline-start:8px!important}
- html[data-theme] #app .connect-community-totals .cc-stat strong{font-size:12px!important}
- html[data-theme] #app .connect-community-totals .cc-stat small{font-size:10px!important}
+ html[data-theme] #app .connect-community-totals .cc-stat strong{font-size:19px!important}
+ html[data-theme] #app .connect-community-totals .cc-stat small{font-size:13px!important}
  html[data-theme] #app .cn-online-top .cn-online-filter>summary{height:44px!important;min-height:44px!important;padding-inline:12px!important}
+ html[data-theme] #app .cn-online-top .connect-community-totals{column-gap:9px;row-gap:4px}
+ html[data-theme] #app .cl-hero .connect-community-totals .cc-stat strong{font-size:20px!important}
+ html[data-theme] #app .cl-hero .connect-community-totals .cc-stat small{font-size:14px!important}
 }
 @media(max-width:350px){
  html[data-theme] #app .cn-online-top .cn-online-filter>summary{min-width:82px!important;padding-inline:9px!important}
  html[data-theme] #app .cn-online-top .cc-filter-label{display:inline!important}
+ html[data-theme] #app .cn-online-top .connect-community-totals{display:grid!important;grid-template-columns:minmax(0,1fr);row-gap:4px}
+ html[data-theme] #app .cn-online-top .cc-stat-accounts{border-inline-start:0!important;padding-inline-start:0!important}
 }
 @media(max-width:760px){
  html[data-theme] #app .cl-hero .connect-community-totals{justify-content:center}
