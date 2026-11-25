@@ -1,13 +1,13 @@
 /* entre. · Motion System / progressive enhancement; no auth, database or private chat access. */
 (()=>{'use strict';
-const reduce=matchMedia('(prefers-reduced-motion: reduce)');
-const shouldReduce=()=>document.documentElement.dataset.motionLevel==='light'||document.body.classList.contains('motion-off')||(!document.documentElement.dataset.motionLevel&&reduce.matches&&!document.body.classList.contains('motion-force'));
+const shouldReduce=()=>document.documentElement.dataset.connectMotion==='off'||document.body.classList.contains('motion-off');
 const level=()=>document.documentElement.dataset.motionLevel||'medium';
 let observer=null, scheduled=false, seenMatch=false, votedRecently=0;
 const $=(s,root=document)=>root.querySelector(s);
 const $$=(s,root=document)=>[...root.querySelectorAll(s)];
 function reveal(){
  if(shouldReduce()){document.querySelectorAll('[data-motion-reveal]').forEach(el=>el.classList.add('is-revealed'));return;}
+ if(typeof IntersectionObserver!=='function'){document.querySelectorAll('[data-motion-reveal]').forEach(el=>el.classList.add('is-revealed'));return;}
  if(!observer){
   observer=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting){entry.target.classList.add('is-revealed');observer.unobserve(entry.target)}}},{rootMargin:'0px 0px -28px 0px',threshold:.07});
  }
@@ -31,7 +31,7 @@ function celebrate(){
  const container=document.createElement('div');container.className='entre-celebration';container.setAttribute('aria-hidden','true');
  const accent=getComputedStyle(document.documentElement).getPropertyValue('--ui-accent').trim()||'#111111';
  const colors=[accent,'#FFFFFF','#D9DDE5','#FBC5D2',accent];
- for(let i=0;i<(level()==='high'?46:22);i++){
+ for(let i=0;i<(level()==='high'?46:level()==='light'?8:22);i++){
   const piece=document.createElement('i');piece.className='entre-confetti';
   const a=i*2.3999632297,dist=80+(i*41%260);
   piece.style.setProperty('--dx',Math.cos(a)*dist+'px');piece.style.setProperty('--dy',Math.sin(a)*dist+'px');
@@ -87,6 +87,6 @@ function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=
 const root=document.getElementById('app');
 if(root)new MutationObserver(schedule).observe(root,{childList:true,subtree:true,characterData:true});
 window.addEventListener('entre:themechange',schedule);
-reduce.addEventListener?.('change',schedule);
+window.addEventListener('connect:motionchange',schedule);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhance,{once:true});else enhance();
 })();
