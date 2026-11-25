@@ -70,8 +70,9 @@ public final class MainActivity extends Activity {
   if(busy||isFinishing())return;busy=true;long generation=++requestGeneration;
   if(status!=null)status.setText("Carregando…");
   io.execute(()->{try{T v=work.run();main.post(()->{if(isDestroyed()||generation!=requestGeneration)return;busy=false;if(status!=null)status.setText("");result.done(v);});}
-   catch(Exception ex){main.post(()->{if(isDestroyed()||generation!=requestGeneration)return;busy=false;String msg=ex instanceof ConnectApi.ApiException?ex.getMessage():ex instanceof Gate?ex.getMessage():"Não foi possível concluir. Confira sua conexão e tente novamente.";if(ex instanceof Gate){searching=false;gate(msg);}else if(ex instanceof ConnectApi.ApiException&&((ConnectApi.ApiException)ex).invalidSession()&&!api.hasSession()){uid="";profile=null;auth(false,"Sua sessão expirou. Entre novamente.");}else {if(cancelling){cancelling=false;cancelPending=true;searching=false;encounters();}notice(msg);}});}});
+   catch(Exception ex){main.post(()->{if(isDestroyed()||generation!=requestGeneration)return;busy=false;String msg=errorMessage(ex);if(ex instanceof Gate){searching=false;gate(msg);}else if(ex instanceof ConnectApi.ApiException&&((ConnectApi.ApiException)ex).invalidSession()&&!api.hasSession()){uid="";profile=null;auth(false,"Sua sessão expirou. Entre novamente.");}else {if(cancelling){cancelling=false;cancelPending=true;searching=false;encounters();}notice(msg);}});}});
  }
+ private String errorMessage(Exception ex){if(ex instanceof Gate)return ex.getMessage();if(ex instanceof ConnectApi.ApiException){ConnectApi.ApiException a=(ConnectApi.ApiException)ex;switch(a.code){case "captcha_failed":return "A verificação de segurança falhou. Faça o desafio novamente.";case "invalid_credentials":return "E-mail ou senha incorretos.";case "email_not_confirmed":return "Confirme seu e-mail antes de entrar.";case "over_email_send_rate_limit":case "over_request_rate_limit":return "Muitas tentativas. Aguarde antes de tentar novamente.";case "weak_password":return "A senha não atende aos requisitos de segurança.";case "23505":return "Este nome de usuário já está em uso. Escolha outro.";default:return a.getMessage();}}if(ex instanceof org.json.JSONException)return "O servidor retornou dados inesperados. Tente novamente.";return "Não foi possível concluir. Confira sua conexão e tente novamente.";}
  private static class Gate extends Exception{Gate(String m){super(m);}}
  private void guard()throws Exception{
   if(mandatoryUpdate||SystemClock.elapsedRealtime()-lastReleaseCheck>=30000)checkRelease();
@@ -104,17 +105,23 @@ public final class MainActivity extends Activity {
   },stage->{switch(stage){case "login":auth(false,"");break;case "expired":auth(true,"Cadastro expirado após 30 minutos sem atividade.");break;case "profile":profileForm();break;case "legal":legalForm();break;case "plan":plan(true);break;default:restricted=false;restorePage();}});
  }
  private void auth(boolean signup,String info){
-  restricted=true;realtime.stop();stopVideo();profile=null;uid="";screen(signup?"Criar sua conta":"Entre no CONNECT",signup?"01 · Conta     02 · Perfil     03 · Plano":"Conheça novas pessoas, de verdade.",false);
+  challengeState=null;pendingPassword=null;pendingEmail=null;restricted=true;realtime.stop();stopVideo();profile=null;uid="";screen(signup?"Criar sua conta":"Entre no CONNECT",signup?"01 · Conta     02 · Perfil     03 · Plano":"Conheça novas pessoas, de verdade.",false);
   if(!info.isEmpty())label(body,info,13,true);
   LinearLayout form=card(body);EditText email=field(form,"E-mail",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS,"");
   EditText pass=field(form,"Senha",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD,"");
   EditText confirm=signup?field(form,"Confirmar senha",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD,""):null;
+  CheckBox reveal=check(form,"Mostrar senha");reveal.setOnCheckedChangeListener((b,checked)->{for(EditText input:new EditText[]{pass,confirm})if(input!=null){int pos=input.getSelectionEnd();input.setTransformationMethod(checked?null:android.text.method.PasswordTransformationMethod.getInstance());input.setSelection(Math.max(0,Math.min(input.length(),pos)));}});
   CheckBox adult=signup?check(form,"Declaro que tenho 18 anos ou mais."):null,terms=signup?check(form,"Li e aceito os Termos de uso e a Política de privacidade."):null;
   if(signup){label(form,"12 caracteres ou mais, incluindo letras e números.",11,false);button(form,"Ler os termos",false,()->external(ConnectApi.WEBSITE+"termos.html"));button(form,"Política de privacidade",false,()->external(ConnectApi.WEBSITE+"privacidade.html"));}
   button(form,signup?"Criar conta":"Entrar",true,()->{
    String em=email.getText().toString().trim().toLowerCase(Locale.ROOT),p=pass.getText().toString();
    if(!android.util.Patterns.EMAIL_ADDRESS.matcher(em).matches()||p.isEmpty()){notice("Confira o e-mail e a senha.");return;}
-   if(signup&&(!adult.isChecked()||!terms.isChecked()||p.length()<12||p.length()>128||!p.matches("(?s).*\\p{L}.*")||!p.matches("(?s).*\\d.*")||!p.equals(confirm.getText().toString()))){notice("Confirme os termos e os requisitos da senha.");return;}
+   if(signup){
+    if(!adult.isChecked()){notice("Confirme que você tem 18 anos ou mais.");return;}
+    if(!terms.isChecked()){notice("Marque o aceite dos Termos de uso e da Política de privacidade.");return;}
+    if(p.length()<12||p.length()>128||!p.matches("(?s).*[a-zA-ZÀ-ÿ].*")||!p.matches("(?s).*\\d.*")){notice("A senha precisa ter de 12 a 128 caracteres, com letras e números.");return;}
+    if(!p.equals(confirm.getText().toString())){notice("As senhas não coincidem.");return;}
+   }
    beginChallenge(em,p,signup);
   });
   button(body,signup?"Já tenho conta":"Criar uma conta",false,()->auth(!signup,""));
@@ -131,7 +138,7 @@ public final class MainActivity extends Activity {
  private void handleChallenge(Intent intent){
   Uri data=intent.getData();if(data==null||!"connect-native".equals(data.getScheme())||!"captcha".equals(data.getHost()))return;
   String nonce=data.getQueryParameter("state"),captcha=data.getQueryParameter("token");
-  if(challengeState==null||!challengeState.equals(nonce)||captcha==null||captcha.length()>4096||SystemClock.elapsedRealtime()-challengeAt>300000||pendingPassword==null||busy){notice("Verificação vencida. Tente novamente.");return;}
+  if(challengeState==null||!challengeState.equals(nonce)||captcha==null||captcha.isEmpty()||captcha.length()>4096||SystemClock.elapsedRealtime()-challengeAt>300000||pendingPassword==null||busy){intent.setData(null);notice("A verificação não pôde ser concluída. Toque em Entrar ou Criar conta para tentar novamente.");return;}
   String em=pendingEmail,pass=pendingPassword;boolean signup=pendingSignup;
   pendingEmail=null;pendingPassword=null;challengeState=null;intent.setData(null);
   task(()->{checkRelease();if(signup)return api.signup(em,pass,captcha);api.login(em,pass,captcha);return true;},ok->{if(ok)startup();else auth(false,"Confirme seu e-mail e entre para continuar. O cadastro provisório expira após 30 minutos sem atividade.");});
@@ -147,9 +154,12 @@ public final class MainActivity extends Activity {
   button(c,"Concluir perfil",true,()->{
    String n=name.getText().toString().trim(),h=handle.getText().toString().trim().toLowerCase(Locale.ROOT);
    int years;try{years=Integer.parseInt(age.getText().toString());}catch(Exception e){years=0;}
-   if(n.length()<2||n.length()>42||!h.matches("[a-z][a-z0-9_]{2,19}")||years<18||years>100||(!signupConsent&&(!adult.isChecked()||!terms.isChecked()))){notice("Confira os dados, a idade e os termos.");return;}
-   final int y=years;String gender=new String[]{"man","woman","other"}[genders.getSelectedItemPosition()];
-   task(()->{guard();touch();api.insert("entre_profiles",obj("id",uid,"display_name",n,"username",h,"age",y,"gender",gender,"preference","any"));if(!signupConsent)api.rpc("connect_accept_legal",obj("_terms","2026-11-25","_privacy","2026-11-25","_adult",true));return true;},ok->{prefs.edit().remove("registration."+uid).apply();startup();});
+   if(n.length()<2||n.length()>42){notice("Informe um nome de 2 a 42 caracteres.");return;}
+   if(!h.matches("[a-z][a-z0-9_]{2,19}")){notice("Use um @usuário de 3 a 20 caracteres, começando com letra, sem espaços.");return;}
+   if(years<18||years>100){notice("Informe sua idade entre 18 e 100 anos.");return;}
+   if(!signupConsent&&(!adult.isChecked()||!terms.isChecked())){notice("Confirme a maioridade e aceite os termos.");return;}
+   final int y=years;String gender=new String[]{"man","woman","nonbinary"}[genders.getSelectedItemPosition()];
+   task(()->{guard();touch();JSONArray existing=api.rows("entre_profiles?select=id&id=eq."+ConnectApi.enc(uid));if(existing.length()==0)api.insert("entre_profiles",obj("id",uid,"display_name",n,"username",h,"age",y,"gender",gender,"preference","any"));if(!signupConsent)api.rpc("connect_accept_legal",obj("_terms","2026-11-25","_privacy","2026-11-25","_adult",true));return true;},ok->{prefs.edit().remove("registration."+uid).apply();startup();});
   });button(body,"Sair",false,this::logout);
  }
  private void legalForm(){
@@ -212,10 +222,10 @@ public final class MainActivity extends Activity {
   screen("Ao vivo","Uma conversa muda tudo.",true);LinearLayout c=card(body);label(c,"5 minutos · Texto ou vídeo",21,true);label(c,"Encontre uma pessoa nova. Se os dois quiserem continuar, a conversa permanece.",13,false);
   if(searching||cancelPending){label(c,cancelPending?"Cancelamento pendente · tente novamente":"Buscando alguém…",15,true);button(c,"Cancelar busca",false,this::cancelSearch);return;}
   Spinner modes=new Spinner(this);modes.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Chat por texto","Chamada de vídeo"}));add(c,modes,8);EditText uf=field(c,"Estado (opcional, ex. SP)",InputType.TYPE_CLASS_TEXT,targetState),city=field(c,"Cidade (opcional)",InputType.TYPE_CLASS_TEXT,targetCity);Runnable search=()->{matchMode=modes.getSelectedItemPosition()==1?"video":"chat";targetState=uf.getText().toString().trim().toUpperCase(Locale.ROOT);targetCity=city.getText().toString().trim();if(!targetCity.isEmpty()&&targetState.isEmpty()){notice("Selecione o estado da cidade.");return;}if(matchMode.equals("video"))withCamera(this::startSearch);else startSearch();};
-  if(premium!=null&&premium.optBoolean("active")){Spinner gender=new Spinner(this);gender.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Aleatório","Homens","Mulheres","Outros"}));add(c,gender,8);button(c,"Encontrar alguém",true,()->{preference=new String[]{"any","man","woman","other"}[gender.getSelectedItemPosition()];search.run();});}else{label(c,"Gênero aleatório",12,false);button(c,"Encontrar alguém",true,()->{preference="any";search.run();});}
+  if(premium!=null&&premium.optBoolean("active")){Spinner gender=new Spinner(this);gender.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Aleatório","Homens","Mulheres","Outros"}));add(c,gender,8);button(c,"Encontrar alguém",true,()->{preference=new String[]{"any","man","woman","nonbinary"}[gender.getSelectedItemPosition()];search.run();});}else{label(c,"Gênero aleatório",12,false);button(c,"Encontrar alguém",true,()->{preference="any";search.run();});}
   button(body,"Ver encontros ativos",false,()->task(()->{guard();return api.rows("entre_pairs?select=id&or=(a.eq."+uid+",b.eq."+uid+")&status=eq.active&expires_at=gt."+ConnectApi.enc(Instant.now().toString())+"&limit=1");},rows->{JSONObject p=rows.optJSONObject(0);if(p==null)notice("Nenhum encontro ativo.");else{pairId=p.optString("id");open("chat");}}));
  }
- private void startSearch(){searching=true;cancelling=false;cancelPending=false;encounters();poll();}
+ private void startSearch(){if(settings!=null&&!settings.optBoolean("matchmaking_enabled",true)){notice("Novos encontros estão temporariamente pausados.");return;}searching=true;cancelling=false;cancelPending=false;encounters();poll();}
  private void poll(){
   if(!searching||!foreground||busy||cancelling||SystemClock.elapsedRealtime()-lastPoll<3500)return;lastPoll=SystemClock.elapsedRealtime();
   task(()->{guard();return (JSONObject)api.rpc("entre_find_mode_location",obj("_preference",preference,"_mode",matchMode,"_target_state",targetState.isEmpty()?null:targetState,"_target_city",targetCity.isEmpty()?null:targetCity));},r->{
