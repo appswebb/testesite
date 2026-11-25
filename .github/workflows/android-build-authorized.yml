@@ -1,0 +1,55 @@
+name: CONNECT Android - build autorizado
+on:
+  pull_request:
+    types: [opened]
+    branches: [android-native]
+    paths: ['.github/workflows/android-build-authorized.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    if: github.head_ref == 'android-build-016' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+      - name: Android SDK
+        run: sdkmanager "platforms;android-35" "build-tools;34.0.0"
+      - name: Compilar APK de teste
+        working-directory: android
+        run: gradle --no-daemon :app:assembleDebug
+      - name: Validar assinatura e checksum
+        run: |
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose "$APK"
+          sha256sum "$APK" > android/app/build/outputs/apk/debug/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CONNECT-Android-0.3.0-native-prototype
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/apk/debug/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+      - name: Verificar lint
+        working-directory: android
+        run: gradle --no-daemon :app:lintDebug
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: CONNECT-Android-lint
+          path: android/app/build/reports/
+          if-no-files-found: ignore
