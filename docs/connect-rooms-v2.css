@@ -97,3 +97,6 @@ html[data-theme] #app .cr-rooms .cn-room-empty-icon{flex:none;width:48px!importa
  html[data-theme].connect-keyboard-open #app .cr-rooms :is(.cr-top,.cr-shortcuts,.cr-retention){display:none!important}
  html[data-theme].connect-keyboard-open #app #view-content[data-section="rooms"]>.cr-rooms.rooms-static-shell{grid-template-rows:minmax(0,1fr)!important}
 }
+
+/* Four compact international shortcuts on narrow viewports. */
+@media(max-width:480px){html[data-theme] #app .cr-shortcuts:has(>:nth-child(4)) .cr-shortcut{min-width:0!important;padding:5px!important;gap:3px!important;flex-direction:column!important;align-items:flex-start!important}.cr-shortcuts:has(>:nth-child(4)) .cr-shortcut-copy small{font-size:9px!important;max-width:100%}.cr-shortcuts:has(>:nth-child(4)) .cr-shortcut-copy strong{font-size:10px!important}}

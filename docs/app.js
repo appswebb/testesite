@@ -791,14 +791,14 @@ async function profileSetup(form){
   const declared=form.elements.adult?.checked===true&&form.elements.terms?.checked===true;
   if(state.signupConsent!==true&&!declared)throw Error('Confirme a maioridade e aceite os termos.');
   if(state.avatarPendingFile){uploaded=await uploadAvatarFile(state.avatarPendingFile);profile.avatar_path=uploaded;}
-  await createProfile(profile);let worldFailed=false;try{await window.connectWorld.save(world);}catch(_){worldFailed=true;}window.connectSession.clearDraft(state.session?.user?.id);
+  await window.connectWorld.register(profile,world);sessionStorage.removeItem('entre.pendingProfile');window.connectSession.clearDraft(state.session?.user?.id);
   if(declared&&state.signupConsent!==true){try{const {data,error}=await db.rpc('connect_accept_legal',{_terms:'2026-11-25',_privacy:'2026-11-25',_adult:true});state.signupConsent=!error&&data===true;}catch(_){state.signupConsent=false;}}
   let discoveryFailed=false;if(discovery&&state.session?.user?.id===owner){try{const {error}=await db.rpc('connect_discovery_save',discovery);if(error)throw error;}catch(_){discoveryFailed=true;}}
   let bannerFailed=false;try{await window.connectBanners?.commitRegistration?.();}catch(_){bannerFailed=true;}
   if(uploaded)commitLocalAvatar(uploaded);
   clearAvatarDraft();
   state.view='posts';await initializeAccount();
-  toast(worldFailed?'Perfil criado. Não foi possível salvar seu país; configure em Configurações.':discoveryFailed?'Perfil criado. Não foi possível salvar suas preferências opcionais; edite em Descobrir.':bannerFailed?'Perfil criado. Não foi possível salvar o banner; tente novamente no seu perfil.':'Perfil concluído. Escolha seu plano.',worldFailed||bannerFailed||discoveryFailed,worldFailed||bannerFailed||discoveryFailed?null:'success');
+  toast(discoveryFailed?'Perfil criado. Não foi possível salvar suas preferências opcionais; edite em Descobrir.':bannerFailed?'Perfil criado. Não foi possível salvar o banner; tente novamente no seu perfil.':'Perfil concluído. Escolha seu plano.',bannerFailed||discoveryFailed,bannerFailed||discoveryFailed?null:'success');
  }catch(e){
   if(uploaded)await db.storage.from(AVATAR_BUCKET).remove([uploaded]);
   showFormMessage(infoError(e));

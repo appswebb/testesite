@@ -281,7 +281,8 @@ async function enter(view){
  if(view==='support'){await refreshPremium();if(state.view==='support')renderView(true);}
  if(view==='protocols'){protocolQuery='';data.support=[];await loadSupport();}
 }
+function resetWorldFeed(){feedLoadSeq++;feedLoadQueued=false;data.posts=[];data.postBefore=null;data.postMore=false;data.feedWindowShifted=false;feedLoaded=false;feedError='';data.commentsPost=null;data.commentsRows=[];}
 function resetAccount(){syncFeedOwner();data.premium=null;data.premiumOwner=null;data.premiumIds.clear();data.support=[];protocolQuery='';supportOwner=null;supportSeq++;premiumRefreshSeq++;}
-Object.assign(mod,{data,resetAccount,isPremium:premium,badge,loadBadges,refreshPremium,loadPosts,postsView,postAction,postForm,premiumView,checkoutView,checkout,verifyPremium,copyPix,unmountPaymentBrick,leavePremium,openPremiumEmail,openPremiumDiscord,supportView,protocolsView,submitSupport,loadSupport,enter});
+Object.assign(mod,{data,resetAccount,resetWorldFeed,isPremium:premium,badge,loadBadges,refreshPremium,loadPosts,postsView,postAction,postForm,premiumView,checkoutView,checkout,verifyPremium,copyPix,unmountPaymentBrick,leavePremium,openPremiumEmail,openPremiumDiscord,supportView,protocolsView,submitSupport,loadSupport,enter});
 window.entreExtras=mod;
 })();
