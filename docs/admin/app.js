@@ -180,18 +180,22 @@ function users(){
  '<div class="table-footer"><span>Página '+(state.userPage+1)+' · '+e(total)+' usuário(s)</span><div style="display:flex;gap:8px"><button class="small-btn" data-action="prev-users" '+(state.userPage<=0?"disabled":"")+'>'+ico("chevron-left",13)+' Anterior</button><button class="small-btn" data-action="next-users" '+((state.userPage+1)*perPage>=total?"disabled":"")+'>Próxima '+ico("chevron-right",13)+'</button></div></div></section>';
 }
 var reasonNames={harassment:"Assédio / comportamento abusivo",hate:"Discurso de ódio",spam:"Spam / golpes",underage:"Suspeita de menor de idade",fake:"Perfil falso",other:"Outro motivo"};
+function retentionControl(area,row){
+ if(typeof row.retention_hold!=='boolean')return '';
+ return '<button type="button" class="small-btn" data-action="case-hold" data-area="'+e(area)+'" data-id="'+e(row.id)+'" data-hold="'+(row.retention_hold?'0':'1')+'" aria-pressed="'+String(row.retention_hold)+'">'+(row.retention_hold?'Liberar limpeza':'Preservar registro')+'</button>';
+}
 function commentReportsPanel(){
  var rows=state.commentReports||[];
- return '<section class="data-panel comment-reports-admin"><div class="data-tools"><div><h3>Denúncias de comentários</h3><small>Comentários públicos denunciados por usuários</small></div>'+badge(rows.filter(function(r){return r.status==='open';}).length+' pendentes','neutral')+'</div>'+
- (rows.length?rows.map(function(r){return '<article class="admin-comment-report"><div><strong>Comentário #'+e(r.comment_id)+' · '+e(r.reported_name)+'</strong><small>Denunciado por '+e(r.reporter_name)+' · '+fmt(r.created_at)+' · '+e(r.reason)+'</small><p>'+e(r.comment_body||'Comentário removido')+'</p>'+(r.details?'<p>Relato: '+e(r.details)+'</p>':'')+'</div><div class="admin-report-actions">'+badge(r.status==='open'?'PENDENTE':r.status==='reviewed'?'ANALISADO':'DESCARTADO',r.status==='open'?'warn':'neutral')+(r.status==='open'?'<button type="button" class="small-btn" data-action="commentReview" data-id="'+e(r.id)+'">Analisado</button><button type="button" class="small-btn" data-action="commentDismiss" data-id="'+e(r.id)+'">Descartar</button>':'')+'</div></article>';}).join(''):
+ return '<section class="data-panel comment-reports-admin"><div class="data-tools"><div><h3>Denúncias de comentários</h3><small>Comentários denunciados · resolvidos: 90 dias, salvo preservação</small></div>'+badge(rows.filter(function(r){return r.status==='open';}).length+' pendentes','neutral')+'</div>'+
+ (rows.length?rows.map(function(r){return '<article class="admin-comment-report"><div><strong>Comentário #'+e(r.comment_id)+' · '+e(r.reported_name)+'</strong><small>Denunciado por '+e(r.reporter_name)+' · '+fmt(r.created_at)+' · '+e(r.reason)+'</small><p>'+e(r.comment_body||'Comentário removido')+'</p>'+(r.details?'<p>Relato: '+e(r.details)+'</p>':'')+'</div><div class="admin-report-actions">'+badge(r.status==='open'?'PENDENTE':r.status==='reviewed'?'ANALISADO':'DESCARTADO',r.status==='open'?'warn':'neutral')+(r.status==='open'?'<button type="button" class="small-btn" data-action="commentReview" data-id="'+e(r.id)+'">Analisado</button><button type="button" class="small-btn" data-action="commentDismiss" data-id="'+e(r.id)+'">Descartar</button>':'')+retentionControl('comment_reports',r)+'</div></article>';}).join(''):
  '<div class="social-empty">Nenhuma denúncia de comentários registrada.</div>')+'</section>';
 }
 function reports(){
  var arr=state.reports||[];
  var filters=[["open","Pendentes"],["reviewed","Analisadas"],["dismissed","Descartadas"],["all","Todas"]];
  return heading("MODERAÇÃO","Moderação","Denúncias enviadas por participantes reais. Mensagens privadas não são exibidas aqui.")+
- '<section class="data-panel"><div class="data-tools"><div><h3>Central de denúncias</h3><small>Ações de moderação registradas no banco</small></div><div class="filter-row">'+filters.map(function(f){return '<button class="chip '+(state.reportStatus===f[0]?"active":"")+'" data-report-status="'+f[0]+'">'+e(f[1])+'</button>';}).join("")+'</div></div>'+
- (arr.length?arr.map(function(r){return '<div class="list-row"><div class="list-main">'+person(r.reported_name,reasonNames[r.reason]||r.reason,true)+'</div><div class="row-meta">'+fmt(r.created_at)+'</div>'+badge(r.status==="open"?"PENDENTE":r.status==="reviewed"?"ANALISADA":"DESCARTADA",r.status==="open"?"warn":"neutral")+'<button class="small-btn" data-action="review" data-id="'+e(r.id)+'">Analisar '+ico("chevron-right",13)+'</button></div>';}).join(""):empty("Nenhuma denúncia aqui","Quando houver denúncias, elas aparecerão nesta seção."))+'</section>'+commentReportsPanel();
+ '<section class="data-panel"><div class="data-tools"><div><h3>Central de denúncias</h3><small>Resolvidas: 90 dias após a análise, salvo preservação</small></div><div class="filter-row">'+filters.map(function(f){return '<button class="chip '+(state.reportStatus===f[0]?"active":"")+'" data-report-status="'+f[0]+'">'+e(f[1])+'</button>';}).join("")+'</div></div>'+
+ (arr.length?arr.map(function(r){return '<div class="list-row"><div class="list-main">'+person(r.reported_name,reasonNames[r.reason]||r.reason,true)+'</div><div class="row-meta">'+fmt(r.created_at)+'</div>'+badge(r.status==="open"?"PENDENTE":r.status==="reviewed"?"ANALISADA":"DESCARTADA",r.status==="open"?"warn":"neutral")+'<button class="small-btn" data-action="review" data-id="'+e(r.id)+'">Analisar '+ico("chevron-right",13)+'</button>'+retentionControl('reports',r)+'</div>';}).join(""):empty("Nenhuma denúncia aqui","Quando houver denúncias, elas aparecerão nesta seção."))+'</section>'+commentReportsPanel();
 }
 function pairs(){
  var arr=state.pairs||[];
@@ -238,17 +242,17 @@ async function saveRelease(enabled,onlyText){
 
 function appealsPanel(){
  var arr=state.appeals||[];
- return '<section class="form-card admin-appeals"><h2 class="section-heading">Contestações de suspensão</h2><p class="section-desc">Aprovar a contestação reativa a conta.</p>'+
+ return '<section class="form-card admin-appeals"><h2 class="section-heading">Contestações de suspensão</h2><p class="section-desc">Aprovar reativa a conta. Contestações concluídas: 90 dias, salvo preservação.</p>'+
  (arr.length?arr.map(function(a){
   return '<article class="appeal-row"><div><strong>'+e(a.display_name||a.email||'Conta')+'</strong><small>'+e(a.email||'')+' · '+fmt(a.created_at)+'</small><p>'+e(a.message)+'</p>'+badge(a.status==='pending'?'PENDENTE':a.status==='reviewed'?'APROVADA':'REJEITADA',a.status==='pending'?'warn':'neutral')+'</div>'+
-  (a.status==='pending'?'<div class="appeal-buttons"><button class="btn-main" data-action="review-appeal" data-id="'+e(a.id)+'">Aprovar e reativar</button><button class="btn-outline" data-action="reject-appeal" data-id="'+e(a.id)+'">Não aprovar</button></div>':'')+'</article>';
+  (a.status==='pending'?'<div class="appeal-buttons"><button class="btn-main" data-action="review-appeal" data-id="'+e(a.id)+'">Aprovar e reativar</button><button class="btn-outline" data-action="reject-appeal" data-id="'+e(a.id)+'">Não aprovar</button></div>':'')+'<div class="appeal-buttons">'+retentionControl('appeals',a)+'</div></article>';
  }).join(''):'<p class="section-desc">Nenhuma contestação recebida.</p>')+'</section>';
 }
 function privacyRequestsPanel(){
  var rows=state.privacyRequests||[];
- return '<section class="form-card admin-appeals"><h2 class="section-heading">Pedidos de privacidade · LGPD</h2><p class="section-desc">Pedidos de pessoas autenticadas. Analise antes de registrar a conclusão.</p>'+
+ return '<section class="form-card admin-appeals"><h2 class="section-heading">Pedidos de privacidade · LGPD</h2><p class="section-desc">Analise antes de concluir. Pedidos concluídos: 365 dias, salvo preservação.</p>'+
  (rows.length?rows.map(function(r){return '<article class="appeal-row"><div><strong>'+e(r.email||'Conta')+'</strong><small>'+e(r.request_type)+' · '+fmt(r.created_at)+'</small><p>'+e(r.description||'Sem descrição adicional.')+'</p>'+badge(r.status==='pending'?'PENDENTE':r.status==='handled'?'ATENDIDA':'NÃO ATENDIDA',r.status==='pending'?'warn':'neutral')+'</div>'+
- (r.status==='pending'?'<div class="appeal-buttons"><button class="btn-main" data-action="privacy-handled" data-id="'+e(r.id)+'">Marcar atendida</button><button class="btn-outline" data-action="privacy-denied" data-id="'+e(r.id)+'">Não atendida</button></div>':'')+'</article>';}).join(''):'<p class="section-desc">Nenhum pedido recebido.</p>')+'</section>';
+ (r.status==='pending'?'<div class="appeal-buttons"><button class="btn-main" data-action="privacy-handled" data-id="'+e(r.id)+'">Marcar atendida</button><button class="btn-outline" data-action="privacy-denied" data-id="'+e(r.id)+'">Não atendida</button></div>':'')+'<div class="appeal-buttons">'+retentionControl('privacy',r)+'</div></article>';}).join(''):'<p class="section-desc">Nenhum pedido recebido.</p>')+'</section>';
 }
 function security(){
  return heading("ACESSO E PRIVACIDADE","Segurança e privacidade","O acesso administrativo é verificado no servidor. Seu navegador nunca recebe a chave secreta do Supabase.")+
@@ -366,6 +370,14 @@ document.addEventListener("click",async function(ev){
  if(a==="supportThread"){try{await openSupportThread(Number(n.dataset.id));}catch(err){toast(errorText(err),true);}return;}
  if(a==="evidenceOpen"){
   try{var signed=await db.storage.from("entre-support-evidence").createSignedUrl(n.dataset.path,300);if(signed.error)throw signed.error;if(signed.data?.signedUrl)window.open(signed.data.signedUrl,"_blank","noopener,noreferrer");else toast("Prova indisponível.",true);}catch(err){toast(errorText(err),true);}return;
+ }
+ if(a==="case-hold"){
+ const area=n.dataset.area,id=Number(n.dataset.id),hold=n.dataset.hold==="1";
+ if(!state.verified||state.busy||!["reports","comment_reports","appeals","privacy"].includes(area)||!Number.isSafeInteger(id)||id<=0)return;
+ if(!window.confirm(hold?"Preservar este registro da limpeza automática por necessidade de segurança ou obrigação legal?":"Liberar a limpeza automática? Se o prazo já tiver vencido, o registro poderá ser removido na próxima rotina."))return;
+ state.busy=true;n.disabled=true;
+ try{const ok=await rpc("connect_admin_case_hold",{_area:area,_id:id,_hold:hold});if(ok!==true)throw Error("Alteração não confirmada.");toast(hold?"Registro preservado.":"Limpeza automática liberada.");await load(state.view);}
+ catch(err){toast(errorText(err),true);}finally{state.busy=false;if(n.isConnected)n.disabled=false;}return;
  }
  if(a==="review-appeal"||a==="reject-appeal"){
   if(!window.confirm(a==="review-appeal"?'Aprovar contestação e reativar?':'Rejeitar contestação?'))return;
