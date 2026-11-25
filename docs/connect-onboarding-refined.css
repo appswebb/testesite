@@ -1,0 +1,69 @@
+/* CONNECT — compact registration and single-offer onboarding. */
+#app .cx-signup-consent{display:grid;gap:9px;padding:13px;margin:12px 0 10px;border:1px solid var(--ui-line);border-radius:16px;background:var(--ui-panel-alt);min-width:0;box-sizing:border-box}
+#app .cx-consent-title{display:flex;align-items:center;gap:9px;color:var(--ui-text)}
+#app .cx-consent-title>svg,#app .cx-consent-icon{flex:none;width:28px;height:28px;display:grid;place-items:center}
+#app .cx-consent-title strong,#app .cx-consent-title small{display:block}
+#app .cx-consent-title strong{font-size:13px;line-height:1.3;font-weight:750}
+#app .cx-consent-title small{font-size:11px;line-height:1.4;color:var(--ui-muted);margin-top:2px}
+html[data-theme] #app .cx-signup-consent .checkbox-line{display:flex!important;align-items:flex-start!important;gap:9px!important;margin:0!important;padding:4px 0!important;font-size:12px!important;line-height:1.5!important;color:var(--ui-text)!important;font-weight:400!important;min-width:0}
+html[data-theme] #app .cx-signup-consent .checkbox-line input{appearance:auto!important;accent-color:var(--ui-accent);width:17px!important;height:17px!important;min-width:17px!important;min-height:17px!important;max-width:17px!important;flex:none!important;margin:2px 0 0!important;padding:0!important}
+#app .cx-signup-consent a{color:var(--ui-text);font-weight:650;text-decoration:underline;text-underline-offset:2px}
+#app .cx-consent-version{font-size:10px;color:var(--ui-muted);white-space:nowrap}
+#app .cx-signup-refined .cx-password-rules{margin:8px 0!important;gap:5px!important}
+#app .cx-auth-steps{gap:7px!important;justify-content:center!important}
+#app .cx-auth-steps>i{min-width:8px;max-width:32px;flex:1}
+#app .cx-auth-steps>div{flex:none;min-width:0}
+#app .cx-auth-steps strong{font-size:11px!important}
+html[data-theme] #app .onboarding-plans{width:min(100%,520px)!important;max-width:520px!important;margin:0 auto!important;padding:16px 22px 28px!important;box-sizing:border-box;min-height:100dvh}
+#app .onboarding-plans-top{padding:0 0 12px!important}
+#app .onboarding-plan-progress{margin:10px 0 22px!important}
+#app .onboarding-plan-progress strong{border:1px solid var(--ui-line);border-radius:99px;padding:7px 12px;background:var(--ui-panel-alt);font-weight:750}
+#app .cx-plan-offer{min-width:0;width:100%;max-width:100%;box-sizing:border-box}
+#app .cx-plan-intro{margin:0 0 16px}
+#app .cx-plan-intro>span{font-size:9px;letter-spacing:.16em;font-weight:750;color:var(--ui-muted)}
+#app .cx-plan-intro h1{font-family:Sora,Inter,sans-serif;font-size:clamp(24px,6.8vw,34px);line-height:1.08;letter-spacing:-.06em;margin:6px 0 6px;color:var(--ui-text)}
+#app .cx-plan-intro p{font-size:12px;line-height:1.5;margin:0;color:var(--ui-muted)}
+#app .cx-premium-offer{overflow:hidden;background:var(--ui-panel);border:1px solid var(--ui-line);border-radius:21px;box-shadow:0 8px 24px #00000008;min-width:0}
+#app .cx-offer-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:8px;isolation:isolate;padding:19px 17px;background:linear-gradient(125deg,#141416,#2d2d31);color:#f8f8f8;overflow:hidden}
+#app .cx-offer-head>div:first-child{position:relative;z-index:1;min-width:0}
+#app .cx-offer-label{display:inline-flex;align-items:center;gap:5px;color:#efdbac;font-size:10px;letter-spacing:.09em;font-weight:750}
+#app .cx-offer-price{font:800 clamp(27px,8vw,38px)/1.16 Sora,Inter,sans-serif;letter-spacing:-.065em;color:#fff;margin:7px 0}
+#app .cx-offer-price small{font:500 12px/1.3 Inter,sans-serif;color:#c5c5ca;letter-spacing:0}
+#app .cx-offer-head p{font-size:11px;color:#d1d1d5;margin:0;line-height:1.4}
+#app .cx-offer-emblem{position:relative;display:grid;place-items:center;flex:none;width:68px;height:68px;border-radius:21px;background:linear-gradient(145deg,#f8e9bc,#c39a56);color:#372a17;box-shadow:inset 0 1px 1px #fff8,0 10px 24px #0005;transform:rotate(-7deg);border:1px solid #fff4}
+#app .cx-offer-benefits{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 9px;padding:15px 15px 12px}
+#app .cx-offer-benefit{display:flex;gap:8px;align-items:center;min-width:0}
+#app .cx-offer-benefit>span{flex:none;display:grid;place-items:center;width:31px;height:31px;border-radius:10px;background:var(--ui-panel-alt);color:var(--ui-text)}
+#app .cx-offer-benefit strong,#app .cx-offer-benefit small{display:block;overflow-wrap:anywhere}
+#app .cx-offer-benefit strong{font-size:11px;color:var(--ui-text);line-height:1.3;font-weight:700}
+#app .cx-offer-benefit small{font-size:10px;color:var(--ui-muted);line-height:1.3;margin-top:3px}
+#app .cx-offer-purchase{padding:12px 15px 14px;border-top:1px solid var(--ui-line);display:grid;gap:8px}
+#app .cx-offer-purchase p{display:flex;align-items:flex-start;gap:8px;color:var(--ui-muted);font-size:11px;line-height:1.45;margin:0 0 2px}
+#app .cx-offer-purchase p svg{flex:none;color:var(--ui-text);margin-top:1px}
+html[data-theme] #app .cx-plan-offer :is(.ui-btn,.cx-continue-free){display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;width:100%!important;max-width:100%!important;min-height:42px!important;height:auto!important;padding:10px 12px!important;box-sizing:border-box!important;border-radius:12px!important;font-size:12px!important;line-height:1.3!important;white-space:normal!important;text-align:center!important}
+#app .cx-offer-purchase>small{color:var(--ui-muted);font-size:10px;text-align:center;line-height:1.4}
+#app .cx-offer-active{padding:6px 15px;display:flex;align-items:center;gap:5px;color:var(--ui-text);font-size:12px;font-weight:650}
+html[data-theme] #app .cx-plan-offer .cx-continue-free{margin-top:13px!important;min-height:43px!important;border:1px solid var(--ui-line)!important;background:var(--ui-panel)!important;color:var(--ui-text)!important}
+#app .cx-free-summary{display:flex;align-items:flex-start;gap:8px;margin:10px 2px 0;color:var(--ui-muted);font-size:11px;line-height:1.45}
+#app .cx-free-summary svg{flex:none;margin-top:1px}
+@media(max-width:600px){
+ html[data-theme] #app .onboarding-plans{padding:13px 15px 20px!important}
+ #app .onboarding-plans-top{padding-bottom:6px!important}
+ #app .onboarding-plan-progress{margin:8px 0 15px!important}
+ #app .cx-plan-intro{margin-bottom:13px}
+ #app .cx-offer-head{padding:16px 14px}
+ #app .cx-offer-emblem{width:58px;height:58px;border-radius:18px}
+ #app .cx-offer-emblem svg{width:30px;height:30px}
+ #app .cx-offer-benefits{padding:13px 12px;gap:11px 8px}
+ #app .cx-offer-purchase{padding:11px 12px}
+ #app .cx-signup-refined .auth-card{padding-top:14px!important}
+}
+@media(max-width:345px){
+ html[data-theme] #app .onboarding-plans{padding-left:10px!important;padding-right:10px!important}
+ #app .cx-offer-benefit{gap:5px}
+ #app .cx-offer-benefit>span{width:27px;height:27px}
+ #app .cx-offer-benefit>span svg{width:16px;height:16px}
+ #app .cx-offer-emblem{width:48px;height:48px}
+ #app .cx-auth-steps{gap:4px!important}
+ #app .cx-auth-steps strong{font-size:10px!important}
+}
