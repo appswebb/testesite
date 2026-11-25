@@ -1,3 +1,4 @@
 // Integrated purchases disabled. Premium is granted manually by an authorized administrator.
+const allowedOrigins=new Set(["https://connectbr.online","https://www.connectbr.online","https://appswebb.github.io"]);
 const headers={"Content-Type":"application/json","Cache-Control":"no-store","Access-Control-Allow-Origin":"https://appswebb.github.io","Access-Control-Allow-Headers":"authorization,apikey,content-type,x-client-info","Access-Control-Allow-Methods":"POST,OPTIONS"};
-Deno.serve(req=>new Response(JSON.stringify(req.method==="OPTIONS"?{}:{error:"manual_premium_only",purchase_url:"https://wa.me/5518988234267"}),{status:req.method==="OPTIONS"?200:410,headers}));
+Deno.serve(req=>new Response(JSON.stringify(req.method==="OPTIONS"?{}:{error:"manual_premium_only",purchase_url:"mailto:connectapp.w@gmail.com",purchase_email:"connectapp.w@gmail.com",purchase_discord:"connectweb"}),{status:req.method==="OPTIONS"?200:410,headers:{...headers,"Access-Control-Allow-Origin":allowedOrigins.has(req.headers.get("origin")||"")?req.headers.get("origin")!:"https://connectbr.online","Vary":"Origin"}}));
