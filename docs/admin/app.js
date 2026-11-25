@@ -28,6 +28,7 @@ var shapes={
  "headset":'<path d="M3 13v-2a9 9 0 0 1 18 0v2M3 13h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H3zM21 13h-2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2zM19 19v1a2 2 0 0 1-2 2h-4"/>',
  "activity":'<path d="M2 12h5l3-7 4 14 3-7h5"/>',
  "layout-dashboard":'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+ "user-plus":'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M19 8v6m-3-3h6"/><circle cx="9" cy="7" r="4"/>',
  "users":'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
  "flag":'<path d="M4 22V5a2 2 0 0 1 2-2h14l-3 6 3 6H4"/>',
  "heart-handshake":'<path d="M5 8l4-4 4 4 4-4 4 4v7l-8 6-8-6z"/><path d="m9 12 3 3 3-3"/>',
@@ -127,8 +128,8 @@ function overview(){
 }
 function users(){
  var arr=state.users.rows||[],total=state.users.total||0;
- return heading("GERENCIAMENTO","As pessoas <em>do CONNECT</em>","Pesquise usuários cadastrados e controle suspensão ou exclusão definitiva.")+
- '<section class="data-panel"><div class="data-tools"><div><h3>Contas cadastradas</h3><small>'+e(total)+' registro(s)</small></div><label class="search-box">'+ico("search",17)+'<input id="user-search" placeholder="Nome ou e-mail…" aria-label="Pesquisar usuários" autocomplete="off" maxlength="120" value="'+e(state.search)+'"></label></div>'+
+ return heading("GERENCIAMENTO","As pessoas <em>do CONNECT</em>","Crie contas, pesquise usuários cadastrados e controle suspensão ou exclusão definitiva.")+
+ '<div style="display:flex;justify-content:flex-end;margin:0 0 12px"><button type="button" class="small-btn" data-action="create-user">'+ico("user-plus",16)+' Criar usuário</button></div><section class="data-panel"><div class="data-tools"><div><h3>Contas cadastradas</h3><small>'+e(total)+' registro(s)</small></div><label class="search-box">'+ico("search",17)+'<input id="user-search" placeholder="Nome ou e-mail…" aria-label="Pesquisar usuários" autocomplete="off" maxlength="120" value="'+e(state.search)+'"></label></div>'+
  (arr.length?arr.map(function(u){return '<div class="list-row"><div class="list-main">'+person(u.display_name||u.email,u.email,u.admin)+'</div><div class="row-meta">'+fmt(u.created_at)+'</div>'+badge(u.admin?"ADMIN":u.banned?"SUSPENSO":"ATIVO",u.banned?"warn":u.admin?"":"neutral")+'<div class="admin-user-actions"><button class="small-btn '+(u.banned?"":"danger")+'" data-action="edit-user" data-id="'+e(u.id)+'">'+(u.admin?"Detalhes":u.banned?"Reativar":"Suspender")+'</button>'+(!u.admin?'<button type="button" class="small-btn user-delete-action" data-action="delete-user" data-id="'+e(u.id)+'">Excluir conta</button>':'')+'</div></div>';}).join(""):empty("Nenhuma conta encontrada","Ajuste os termos de busca ou aguarde novos cadastros."))+
  '<div class="table-footer"><span>Página '+(state.userPage+1)+' · '+e(total)+' usuário(s)</span><div style="display:flex;gap:8px"><button class="small-btn" data-action="prev-users" '+(state.userPage<=0?"disabled":"")+'>'+ico("chevron-left",13)+' Anterior</button><button class="small-btn" data-action="next-users" '+((state.userPage+1)*perPage>=total?"disabled":"")+'>Próxima '+ico("chevron-right",13)+'</button></div></div></section>';
 }
@@ -248,6 +249,16 @@ async function openSupportThread(id){
 }
 async function refreshSupportThread(id){const rows=await rpc("entre_support_thread",{_ticket:id});if(state.modal?.type!=="support-thread"||Number(state.modal.data.id)!==id)return;const root=document.getElementById("adminSupportThread");if(root){root.innerHTML=rows.map(x=>'<article><strong>'+(x.from_staff?"Equipe CONNECT":"Usuário")+'</strong><p>'+e(x.body)+'</p><small>'+fmt(x.created_at)+'</small>'+(x.from_staff?'<button type="button" class="small-btn" data-action="supportEmailReply" data-id="'+Number(x.id)+'">Enviar também por e-mail</button>':'')+'</article>').join("")||'<p>Nenhuma resposta ainda.</p>';root.scrollTop=root.scrollHeight;}}
 function closeModal(){state.modal=null;var el=document.getElementById("modal-root");if(el)el.innerHTML="";}
+function openCreateUser(){
+ if(!state.verified||state.busy)return;
+ state.modal={type:"create-user"};
+ modal('<h2>Criar usuário</h2><p>Cadastre uma conta comum diretamente no CONNECT. A pessoa deverá completar o perfil e confirmar a idade no primeiro acesso.</p>'+
+ '<form id="admin-create-user-form"><div class="field"><label for="manualUserEmail">E-mail</label><input id="manualUserEmail" name="email" type="email" inputmode="email" autocomplete="off" maxlength="254" required placeholder="usuario@exemplo.com"></div>'+
+ '<div class="field"><label for="manualUserPassword">Senha inicial</label><input id="manualUserPassword" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required placeholder="12 caracteres ou mais"><small>Inclua letras e números. Oriente a pessoa a alterar a senha.</small></div>'+
+ '<div class="field"><label for="manualUserConfirm">Confirmar senha</label><input id="manualUserConfirm" name="confirmation" type="password" autocomplete="new-password" minlength="12" maxlength="128" required></div>'+
+ '<label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.5"><input type="checkbox" name="authorized" required style="width:16px;height:16px;flex:none;margin-top:2px"><span>O titular autorizou o cadastro e confirmei a titularidade deste e-mail.</span></label>'+
+ '<div class="modal-actions"><button type="button" class="btn-outline" data-action="close-modal">Cancelar</button><button type="submit" class="btn-main">'+ico("user-plus",16)+' Criar conta</button></div></form>');
+}
 function openUser(id){
  var u=(state.users.rows||[]).find(function(x){return x.id===id;});if(!u)return;
  state.modal={type:"user",data:u};
@@ -320,6 +331,7 @@ document.addEventListener("click",async function(ev){
   try{await rpc('entre_admin_review_comment_report',{_id:Number(n.dataset.id),_status:a==="commentReview"?"reviewed":"dismissed"});toast("Denúncia atualizada.");await load("reports");}
   catch(err){toast(errorText(err),true);}return;
  }
+ if(a==="create-user"){openCreateUser();return;}
  if(a==="edit-user"){openUser(n.dataset.id);return;}
  if(a==="delete-user"){openDeleteUser(n.dataset.id);return;}
  if(a==="review"){openReport(n.dataset.id);return;}
@@ -375,6 +387,20 @@ document.addEventListener("submit",async function(ev){
   }else if(form.id==="settings-form"){
    var s=await rpc("entre_admin_save_settings",{_matchmaking:form.elements.matchmaking.checked,_reporting:form.elements.reporting.checked,_announcement:state.settings?.announcement||''});
    state.settings=s;if(state.overview)state.overview.settings=s;toast("Configurações salvas no Supabase.");await load("settings");
+  }else if(form.id==="admin-create-user-form"&&state.modal?.type==="create-user"){
+   if(!state.verified)throw Error("Acesso administrativo necessário.");
+   const email=String(form.elements.email.value||"").trim().toLowerCase();
+   const password=String(form.elements.password.value||"");
+   if(password!==form.elements.confirmation.value)throw Error("As senhas não coincidem.");
+   if(password.length<12||password.length>128||!/[a-zA-ZÀ-ÿ]/.test(password)||!/\d/.test(password))throw Error("Use entre 12 e 128 caracteres, com letras e números.");
+   if(!form.elements.authorized.checked)throw Error("Confirme a autorização e a titularidade do e-mail.");
+   const response=await db.functions.invoke("connect-admin-create-user",{body:{email,password,authorized:true}});
+   if(response.error||response.data?.created!==true){
+    let message=response.data?.error||"Não foi possível confirmar o cadastro. Confira a lista antes de tentar novamente.";
+    try{const detail=await response.error?.context?.json();if(typeof detail?.error==="string")message=detail.error;}catch(_){}
+    throw Error(message);
+   }
+   form.reset();closeModal();state.search=email;state.userPage=0;toast("Conta criada. A pessoa já pode entrar com os dados informados.");await load("users");
   }else if(form.id==="admin-delete-user-form"&&state.modal?.type==="delete-user"){
    var u=state.modal.data;
    if(form.elements.confirmation.value!=="EXCLUIR "+u.email.toLowerCase())throw Error("Digite o e-mail completo para confirmar a exclusão.");
