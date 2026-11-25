@@ -1,0 +1,37 @@
+/* Control Studio — plans and subscriptions. */
+#console .plan-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px}
+#console .plan-metric{min-width:0;padding:14px;border:1px solid var(--studio-border);border-radius:12px;background:var(--studio-panel);box-shadow:var(--studio-shadow)}
+#console .plan-metric>span{display:flex;align-items:center;gap:7px;color:var(--studio-muted);font:550 11px/1.4 Inter,sans-serif}
+#console .plan-metric>span svg{flex:none;color:var(--studio-accent)}
+#console .plan-metric>strong{display:block;font:750 29px/1.2 Sora,Inter,sans-serif;letter-spacing:-.05em;margin-top:7px;color:var(--studio-ink);font-variant-numeric:tabular-nums}
+#console .plan-directory{margin-bottom:16px;overflow:visible}
+#console .plan-filters{display:flex;gap:6px;flex-wrap:wrap;padding:10px 15px;border-bottom:1px solid var(--studio-border)}
+#console .plan-filters .small-btn{min-height:34px;padding:7px 11px!important}
+#console .plan-filters .is-selected{background:var(--studio-accent-soft)!important;color:var(--studio-accent)!important;border-color:var(--studio-accent)!important}
+#console .plan-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) auto;align-items:center;gap:14px;padding:13px 15px;border-bottom:1px solid var(--studio-border);min-width:0}
+#console .plan-row .list-main{min-width:0}
+#console .plan-row .person-details{min-width:0;overflow:hidden}
+#console .plan-row .person-details small{overflow-wrap:anywhere}
+#console .plan-row-details{display:flex;align-items:flex-start;flex-direction:column;gap:4px;min-width:0}
+#console .plan-row-details small{color:var(--studio-muted);font-size:10px;overflow-wrap:anywhere}
+#console .plan-badge{display:inline-flex;align-items:center;gap:5px;width:max-content;max-width:100%;padding:4px 8px;border:1px solid var(--studio-border);border-radius:6px;background:var(--studio-subtle);color:var(--studio-muted);font:650 10px/1.35 Inter,sans-serif}
+#console .plan-badge.is-premium{background:#f7ebce;border-color:#dcc28b;color:#76521c}
+html[data-theme="dark"] #console .plan-badge.is-premium{background:#473820;border-color:#78613d;color:#f8d694}
+#console .plan-badge.is-ended{color:var(--studio-muted);border-style:dashed}
+#console .plan-manage-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+#console .plan-pagination{display:flex;gap:6px;flex-wrap:wrap}
+#console .plan-empty{padding:22px 15px;text-align:center;color:var(--studio-muted);font-size:12px}
+#console .admin-user-plan{display:flex;flex-direction:column;align-items:flex-start;gap:5px;flex:none}
+#console .admin-user-plan .small-btn{padding:6px 9px!important;min-height:32px}
+#console .plan-current{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:12px;background:var(--studio-subtle);border:1px solid var(--studio-border);border-radius:10px;margin:0 0 14px;font-size:12px;color:var(--studio-ink)}
+#console .plan-current small{flex-basis:100%;color:var(--studio-muted);font-size:11px}
+#console .plan-editor>p{overflow-wrap:anywhere}
+#console .plan-editor-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0}
+#console .plan-editor-actions button{min-height:42px}
+#console .plan-audit{border-top:1px solid var(--studio-border);padding-top:12px}
+#console .plan-audit h3{font:700 14px/1.3 Inter,sans-serif;margin:0 0 7px}
+#console .plan-audit article{padding:9px 0;border-bottom:1px solid var(--studio-border);display:grid;gap:4px}
+#console .plan-audit article strong{font-size:11px}
+#console .plan-audit article small{font-size:10px;color:var(--studio-muted);overflow-wrap:anywhere}
+@media(max-width:760px){#console .plan-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#console .plan-metric{padding:11px}#console .plan-metric>strong{font-size:24px}#console .plan-row{grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:12px}#console .plan-row .list-main{grid-column:1/-1}#console .plan-filters{padding:9px}#console .admin-user-plan{flex:1 1 auto;flex-direction:row;align-items:center;flex-wrap:wrap}#console .plan-row-details small{font-size:9px}#console .plan-editor-actions button{min-height:44px}}
+@media(max-width:340px){#console .plan-row{grid-template-columns:minmax(0,1fr)}#console .plan-manage-btn{justify-self:start}#console .plan-editor-actions{flex-direction:column;align-items:stretch}}
