@@ -3,7 +3,7 @@
 'use strict';
 const prefix='connect.session.v1.',ttl=1800000;
 const views=new Set(['posts','connect','rooms','lives','conversations','online','search','premium','settings','profile','chat','notifications','support','protocols','soon','shareapp','checkout','partnerships']);
-const uid=()=>state.session?.user?.id||null;
+const uid=()=>typeof state==='undefined'?null:state.session?.user?.id||null;
 const get=(store,key)=>{try{return JSON.parse(store.getItem(prefix+key)||'null')}catch(_){return null}};
 const put=(store,key,value)=>{try{store.setItem(prefix+key,JSON.stringify(value))}catch(_){}};
 const remove=(store,key)=>{try{store.removeItem(prefix+key)}catch(_){}};
