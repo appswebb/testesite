@@ -8,7 +8,7 @@ if(!window.supabase || !window.supabase.createClient){
  app.innerHTML='<div class="preload"><h1>Falha de conexão</h1><p>Atualize a página quando estiver conectado à internet.</p></div>';return;
 }
 var db=window.supabase.createClient(URL,KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
-var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[],supportTickets:[],commentReports:[],premiumConfig:null,recurringConfig:null,manualPremiumAccount:null,planDirectory:null,planSearch:'',planFilter:'all',planPage:0,moreOpen:false,community:null,communityUnavailable:false,loadError:null};
+var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[],supportTickets:[],commentReports:[],premiumConfig:null,recurringConfig:null,manualPremiumAccount:null,observability:null,planDirectory:null,planSearch:'',planFilter:'all',planPage:0,moreOpen:false,community:null,communityUnavailable:false,loadError:null};
 var perPage=20, planSearchTimer=null, searchTimer=null, toastTimer=null, lastLoad=0;
 var sections=[
  ["overview","Visão geral","layout-dashboard"],
@@ -262,7 +262,7 @@ function renderView(){
  var loc=document.getElementById("topbar-location");if(loc)loc.textContent=viewTitle();
  var menu=document.getElementById("adminMoreMenu");if(menu)menu.hidden=!state.moreOpen;var toggle=document.querySelector(".admin-more-button");if(toggle)toggle.setAttribute("aria-expanded",String(state.moreOpen));
  var sync=document.getElementById("saas-sync");if(sync)sync.textContent=state.loading?"Sincronizando…":state.loadError?"Falha na atualização · dados anteriores podem estar desatualizados":state.refreshAt?"Sincronizado às "+state.refreshAt.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"Aguardando sincronização";
- target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="monitor"?monitor():state.view==="modules"?moduleDirectory():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="appeals"?heading("RECURSOS E MODERAÇÃO","Contestações de suspensão","Confira as solicitações e analise cada recurso.")+appealsPanel():state.view==="pairs"?pairs():state.view==="bulletins"?heading("COMUNICAÇÃO OFICIAL","Avisos e enquetes","Gerencie suas publicações por 24 horas.")+window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico}):state.view==="support"?heading("ATENDIMENTO","Central de suporte","Protocolos recebidos dos usuários.")+window.entreAdminExtras.supportPage(state.supportTickets,e,fmt,ico,badge):state.view==="premium"?heading("ASSINATURAS","Planos e assinaturas","Acompanhe os planos de todos os perfis do Connect e gerencie os benefícios Premium.")+window.entreAdminExtras.premiumPage(state.premiumConfig,e,ico,state.planDirectory,state.planSearch,state.planFilter,state.planPage,perPage,fmt,person):state.view==="settings"?settings():security());
+ target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="monitor"?monitor()+window.entreAdminExtras.observability(state.observability,e,fmt):state.view==="modules"?moduleDirectory():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="appeals"?heading("RECURSOS E MODERAÇÃO","Contestações de suspensão","Confira as solicitações e analise cada recurso.")+appealsPanel():state.view==="pairs"?pairs():state.view==="bulletins"?heading("COMUNICAÇÃO OFICIAL","Avisos e enquetes","Gerencie suas publicações por 24 horas.")+window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico}):state.view==="support"?heading("ATENDIMENTO","Central de suporte","Protocolos recebidos dos usuários.")+window.entreAdminExtras.supportPage(state.supportTickets,e,fmt,ico,badge):state.view==="premium"?heading("ASSINATURAS","Planos e assinaturas","Acompanhe os planos de todos os perfis do Connect e gerencie os benefícios Premium.")+window.entreAdminExtras.premiumPage(state.premiumConfig,e,ico,state.planDirectory,state.planSearch,state.planFilter,state.planPage,perPage,fmt,person):state.view==="settings"?settings():security());
 }
 let adminLoadEpoch=0;
 async function load(view,background=false){
@@ -276,6 +276,7 @@ async function load(view,background=false){
    if(view==="overview"||view==="monitor"){try{patch.community=await rpc("connect_admin_community_metrics");patch.communityUnavailable=false;}catch(_){patch.community=null;patch.communityUnavailable=true;}}
   }
   if(!valid())return;
+  if(view==="monitor"){try{patch.observability=await rpc("connect_admin_observability");}catch(_){patch.observability=null;}}
   if(view==="users")patch.users=await rpc("entre_admin_users",{_query:state.search,_limit:perPage,_offset:state.userPage*perPage});
   if(view==="appeals")patch.appeals=await rpc("entre_admin_appeals");
   if(view==="reports"){const results=await Promise.all([rpc("entre_admin_reports",{_status:state.reportStatus,_limit:100}),rpc('entre_admin_comment_reports')]);patch.reports=results[0];patch.commentReports=results[1]||[];}
@@ -302,11 +303,11 @@ async function openPlan(id){
  if(!state.verified||state.busy)return;
  const row=(state.view==="users"?state.users.rows:state.planDirectory?.rows||[]).find(u=>u.id===id);
  if(!row||!(row.plan_manageable||row.manageable)){toast("A conta precisa ter um perfil e e-mail confirmado.",true);return;}
- const owner=state.user?.id,context={type:"plan",email:String(row.email).trim().toLowerCase(),account:null,history:null};state.modal=context;
+ const owner=state.user?.id,context={type:"plan",email:String(row.email).trim().toLowerCase(),account:null,history:null,finance:null,request:null};state.modal=context;
  modal('<h2>Gerenciar plano</h2><p>Consultando a assinatura…</p><button type="button" class="btn-outline" data-action="close-modal">Fechar</button>');
- try{const [account,history]=await Promise.all([rpc("connect_admin_manual_premium",{_email:context.email,_action:"lookup",_months:1}),rpc("connect_admin_plan_history",{_email:context.email}).catch(()=>null)]);
+ try{const [account,history,finance]=await Promise.all([rpc("connect_admin_manual_premium",{_email:context.email,_action:"lookup",_months:1}),rpc("connect_admin_plan_history",{_email:context.email}).catch(()=>null),rpc("connect_admin_financial_history",{_email:context.email}).catch(()=>null)]);
  if(state.modal!==context||state.user?.id!==owner||!state.verified)return;
- context.account=account;context.history=history;modal(window.entreAdminExtras.planEditor(account,history,e,ico,fmt));
+ context.account=account;context.history=history;context.finance=finance;modal(window.entreAdminExtras.planEditor(account,history,e,ico,fmt,finance));
  }catch(err){if(state.modal===context){closeModal();toast(errorText(err),true);}}
 }
 function openUser(id){
@@ -382,6 +383,7 @@ document.addEventListener("click",async function(ev){
   try{await rpc('entre_admin_review_comment_report',{_id:Number(n.dataset.id),_status:a==="commentReview"?"reviewed":"dismissed"});toast("Denúncia atualizada.");await load("reports");}
   catch(err){toast(errorText(err),true);}return;
  }
+ if(a==="plan-refund"){const context=state.modal,owner=state.user?.id;if(!state.verified||state.busy||context?.type!=="plan")return;const item=context.finance?.find(x=>x.id===n.dataset.id&&x.kind==="payment");if(!item||Number(item.refundable_cents)<=0)return;const entered=prompt("Valor do reembolso já realizado (R$). Máximo: "+(Number(item.refundable_cents)/100).toFixed(2));if(entered===null)return;const amount=Math.round(Number(entered.replace(",","."))*100);if(!Number.isSafeInteger(amount)||amount<=0||amount>Number(item.refundable_cents)){toast("Valor inválido.",true);return;}if(!confirm("Registrar um reembolso já realizado de R$ "+(amount/100).toFixed(2)+"? Nenhum dinheiro será movimentado."))return;const key=item.id+":"+amount;if(context.refundKey!==key){context.refundKey=key;context.refundRequest=crypto.randomUUID();}state.busy=true;n.disabled=true;try{const ok=await rpc("connect_admin_record_refund",{_payment:item.id,_amount_cents:amount,_request:context.refundRequest});if(ok!==true)throw Error("Registro não confirmado.");if(state.user?.id!==owner||!state.verified)return;context.refundKey=null;const finance=await rpc("connect_admin_financial_history",{_email:context.email});if(state.modal===context){context.finance=finance;modal(window.entreAdminExtras.planEditor(context.account,context.history,e,ico,fmt,finance));}toast("Reembolso registrado.");}catch(err){toast(errorText(err),true);}finally{state.busy=false;if(n.isConnected)n.disabled=false;}return;}
  if(a==="plan-manage"){await openPlan(n.dataset.id);return;}
  if(a==="plan-filter"){if(!state.verified||state.busy||!["all","premium","free","expired","revoked"].includes(n.dataset.plan))return;state.planFilter=n.dataset.plan;state.planPage=0;await load("premium");return;}
  if(a==="plan-prev"&&state.planPage>0){state.planPage--;await load("premium");return;}
@@ -428,15 +430,16 @@ document.addEventListener("submit",async function(ev){
    if(!state.verified||context?.type!=="plan"||!context.account||!["grant","revoke"].includes(operation)||context.email!==String(form.elements.email.value||"").trim().toLowerCase())throw Error("Consulte a conta novamente.");
    if(operation==="grant"&&(!Number.isInteger(months)||months<1||months>12))throw Error("Escolha de 1 a 12 meses.");
    if(operation==="revoke"&&!context.account.active)throw Error("O usuário já está no plano gratuito.");
+   let transaction=null;if(operation==="grant"){const kind=form.elements.purchase_kind.value,amount=Math.round(Number(form.elements.received.value)*100),discount=Math.round(Number(form.elements.discount.value)*100),method=form.elements.method.value;if(!["payment","courtesy"].includes(kind)||!Number.isSafeInteger(amount)||!Number.isSafeInteger(discount)||amount<0||discount<0||amount>100000000||discount>100000000||(kind==="payment"&&(amount===0||method==="none"))||(kind==="courtesy"&&(amount!==0||method!=="none")))throw Error("Informe corretamente a origem, o valor recebido e a forma de pagamento.");transaction={_email:context.email,_months:months,_kind:kind,_amount_cents:amount,_discount_cents:discount,_method:method};const key=JSON.stringify(transaction);if(context.requestKey!==key){context.requestKey=key;context.request=crypto.randomUUID();}transaction._request=context.request;}
    if(!window.confirm(operation==="grant"?"Liberar ou renovar "+months+" mês(es) de Premium para "+context.email+"?":"Retornar "+context.email+" ao plano gratuito agora? Isso revoga os benefícios Premium e não gera estorno."))return;
    const controls=Array.from(form.querySelectorAll("button"));controls.forEach(b=>b.disabled=true);
    try{
-    const account=await rpc("connect_admin_manual_premium",{_email:context.email,_action:operation,_months:operation==="grant"?months:1});
+    const account=operation==="grant"?await rpc("connect_admin_plan_transaction",transaction):await rpc("connect_admin_manual_premium",{_email:context.email,_action:"revoke",_months:1});
     if(state.user?.id!==owner||!state.verified)return;
     if(operation==="grant"?account.active!==true:account.active!==false)throw Error("Alteração do plano não confirmada pelo servidor.");
-    const history=await rpc("connect_admin_plan_history",{_email:context.email}).catch(()=>null);
+    context.requestKey=null;const [history,finance]=await Promise.all([rpc("connect_admin_plan_history",{_email:context.email}).catch(()=>null),rpc("connect_admin_financial_history",{_email:context.email}).catch(()=>null)]);
     if(state.user?.id!==owner||!state.verified)return;
-    if(state.modal===context){context.account=account;context.history=history;modal(window.entreAdminExtras.planEditor(account,history,e,ico,fmt));}
+    if(state.modal===context){context.account=account;context.history=history;context.finance=finance;modal(window.entreAdminExtras.planEditor(account,history,e,ico,fmt,finance));}
     toast(operation==="grant"?"Premium ativo.":"Usuário retornou ao plano gratuito.");
     if(state.view===view)await load(view);
    }finally{controls.forEach(b=>{if(b.isConnected)b.disabled=false;});}
@@ -487,7 +490,7 @@ async function boot(){
   state.user=verified.data.user;
   var allowed=await rpc("entre_admin_check");
   if(allowed!==true){gate(true);return;}
-  state.verified=true;state.view="overview";state.moreOpen=false;state.modal=null;state.planDirectory=null;state.planSearch="";state.planFilter="all";state.planPage=0;state.users={rows:[],total:0};state.community=null;state.overview=null;state.loadError=null;state.refreshAt=null;shell();await load("overview");
+  state.verified=true;state.view="overview";state.moreOpen=false;state.modal=null;state.planDirectory=null;state.observability=null;state.planSearch="";state.planFilter="all";state.planPage=0;state.users={rows:[],total:0};state.community=null;state.overview=null;state.loadError=null;state.refreshAt=null;shell();await load("overview");
  stopAdminRealtime();
  adminSupportChannel=db.channel("admin-support-replies").on("postgres_changes",{event:"UPDATE",schema:"public",table:"entre_support_tickets"},async p=>{if(state.modal?.type==="support-thread"&&Number(state.modal.data.id)===Number(p.new?.id)&&p.new.status==="cancelled"){const form=document.getElementById("support-reply-form");if(form){form.hidden=true;form.querySelectorAll("button,textarea,input").forEach(x=>x.disabled=true);}state.modal.data.status="cancelled";}if(state.verified&&state.view==="support"&&!state.modal&&!state.loading&&!state.busy&&p.new?.status!=="draft")try{await load("support");}catch(err){console.warn(errorText(err));}}).on("postgres_changes",{event:"INSERT",schema:"public",table:"entre_support_replies"},async p=>{if(!state.verified||state.view!=="support")return;try{if(state.modal?.type==="support-thread")await refreshSupportThread(Number(state.modal.data.id));else if(!state.loading&&!state.busy)await load("support");}catch(err){console.warn(errorText(err));}}).subscribe();
   adminSignalChannel=db.channel("connect-admin-signal").on("postgres_changes",{event:"UPDATE",schema:"public",table:"connect_admin_signal"},p=>{const kind=p.new?.kind;if(kind){adminDirty.add(kind);scheduleAdminRefresh();}}).subscribe(status=>{if(status==="SUBSCRIBED"){adminDirty.add("all");scheduleAdminRefresh();}});
