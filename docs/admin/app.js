@@ -160,7 +160,7 @@ function contentPage(){
  return heading("COMUNIDADE / MODERAÇÃO","Conteúdo","Administre conteúdo público e sessões ativas. Conversas privadas não são acessíveis.")+
  '<section class="data-panel cc-content-panel"><div class="data-tools"><div><h3>'+e(entry[1])+'</h3><small>Até 25 registros por página · ordem recente</small></div><button type="button" class="small-btn" data-view="modules">'+ico("sliders-horizontal",15)+' Controles</button></div>'+
  '<div class="cc-segmented" role="group" aria-label="Tipo de conteúdo">'+contentKinds.map(([key,label,ic])=>'<button type="button" class="'+(key===kind?'is-active':'')+'" data-action="content-kind" data-kind="'+key+'" aria-pressed="'+String(key===kind)+'">'+ico(ic,15)+' '+e(label)+'</button>').join("")+'</div>'+
- (!state.contentData?empty("Conteúdo indisponível","Atualize os dados para tentar novamente."):items.length?items.map(row=>'<article class="cc-content-row"><div class="cc-content-icon">'+ico(entry[2],20)+'</div><div class="cc-content-copy"><strong>'+e(row.author)+'</strong><small>'+e(fmt(row.created_at))+(row.detail?' · '+e(row.detail):'')+'</small><p>'+e(row.body||"Conteúdo de mídia")+'</p>'+(row.protected?'<small class="cc-evidence">Denúncia vinculada · evidência preservada</small>':'')+'</div><button type="button" class="small-btn cc-danger-action" data-action="content-moderate" data-id="'+e(row.id)+'" '+(row.protected?'disabled':'')+'>'+ico(ending?"x":"trash",15)+' '+(ending?"Encerrar":"Excluir")+'</button></article>').join(""):empty("Nenhum registro","Não há conteúdo nesta página."))+
+ (!state.contentData?empty("Conteúdo indisponível","Atualize os dados para tentar novamente."):items.length?items.map(row=>'<article class="cc-content-row"><div class="cc-content-icon">'+ico(entry[2],20)+'</div><div class="cc-content-copy"><strong>'+e(row.author)+'</strong><small>'+e(fmt(row.created_at))+(row.detail?' · '+e(row.detail):'')+'</small><p>'+e(row.body||"Conteúdo de mídia")+'</p>'+(row.media_path?'<button type="button" class="small-btn cc-preview" data-action="content-preview" data-id="'+e(row.id)+'">'+ico("eye",15)+' Ver mídia</button>':'')+(row.protected?'<small class="cc-evidence">Denúncia vinculada · evidência preservada</small>':'')+'</div><button type="button" class="small-btn cc-danger-action" data-action="content-moderate" data-id="'+e(row.id)+'" '+(row.protected?'disabled':'')+'>'+ico(ending?"x":"trash",15)+' '+(ending?"Encerrar":"Excluir")+'</button></article>').join(""):empty("Nenhum registro","Não há conteúdo nesta página."))+
  '<div class="table-footer"><span>Página '+(state.contentPage+1)+'</span><div class="cc-pager"><button type="button" class="small-btn" data-action="content-prev" '+(state.contentPage===0?'disabled':'')+'>'+ico("chevron-left",13)+' Anterior</button><button type="button" class="small-btn" data-action="content-next" '+(!state.contentData?.has_more?'disabled':'')+'>Próxima '+ico("chevron-right",13)+'</button></div></div></section>';
 }
 function healthItem(label,active,view){return '<button type="button" class="saas-health-row" data-view="'+view+'"><span>'+e(label)+'</span><span class="saas-status '+(active===true?'is-ok':active===false?'is-warn':'')+'"><i></i>'+ (active===true?'Ativo':active===false?'Pausado':'Indisponível')+'</span>'+ico("chevron-right",14)+'</button>';}
@@ -397,6 +397,17 @@ document.addEventListener("click",async function(ev){
   else if(a==="content-prev"&&state.contentPage>0)state.contentPage--;
   else if(a==="content-next"&&state.contentData?.has_more)state.contentPage++;else return;
   state.contentData=null;await load("content");return;
+ }
+ if(a==="content-preview"){
+  if(!state.verified||state.busy||state.view!=="content")return;
+  const row=state.contentData?.rows?.slice(0,25).find(x=>x.id===n.dataset.id),kind=state.contentKind,bucket=({posts:"entre-post-media",stories:"entre-story-media",lives:"entre-live-covers"})[kind];
+  if(!row?.media_path||!bucket)return;
+  const ctx={type:"content-preview"},owner=state.user?.id;state.modal=ctx;modal('<h2>Visualizar mídia</h2><p>Carregando arquivo autorizado…</p><button type="button" class="btn-outline" data-action="close-modal">Fechar</button>');
+  try{const {data,error}=await db.storage.from(bucket).createSignedUrl(row.media_path,90);if(error)throw error;if(state.modal!==ctx||state.user?.id!==owner||!state.verified)return;
+   const url=new window.URL(data.signedUrl);if(url.protocol!=="https:"||url.origin!==new window.URL(URL).origin)throw Error("Endereço de mídia inválido.");
+   const video=row.media_type==="video"||/\.(webm|mp4)$/i.test(row.media_path);
+   modal('<h2>Mídia publicada</h2><p>'+e(row.author)+'</p><div class="cc-media-preview">'+(video?'<video controls playsinline preload="metadata" src="'+e(url.href)+'"></video>':'<img alt="Mídia da publicação" src="'+e(url.href)+'">')+'</div><div class="modal-actions"><button type="button" class="btn-outline" data-action="close-modal">Fechar</button></div>');
+  }catch(err){if(state.modal===ctx){closeModal();toast(errorText(err),true);}}return;
  }
  if(a==="content-moderate"){
   if(!state.verified||state.busy||state.view!=="content"||n.disabled)return;
