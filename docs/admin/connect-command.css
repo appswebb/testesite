@@ -231,3 +231,12 @@ html[data-theme] body.admin-saas #console .modal{max-height:calc(100dvh - 32px)!
 @media(prefers-reduced-motion:reduce){#console *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
 #console .cc-preview{margin-top:8px}#console .cc-media-preview{display:grid;place-items:center;min-height:100px;background:var(--cmd-soft);border-radius:13px;overflow:hidden}#console .cc-media-preview :is(img,video){display:block;max-width:100%;max-height:60dvh;width:auto;height:auto;object-fit:contain}#console .cc-media-preview video{width:100%}
+
+/* Directory reliability and accessible loading states. */
+#console [hidden]{display:none!important}
+#console .cc-load-error{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 14px;margin:0 0 12px;background:var(--cmd-card);border:1px solid #d9546550;border-radius:12px;color:var(--cmd-ink);font-size:12px}
+#console .cc-load-error span{flex:1 1 180px;overflow-wrap:anywhere;color:var(--cmd-muted)}
+#console .plan-filters .is-selected{border-color:var(--cmd-brand)!important;background:var(--cmd-brand)!important;color:var(--cmd-on)!important}
+#console .plan-metrics{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:1050px){#console .plan-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:780px){#console .plan-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#console .plan-metric{padding:11px}#console .plan-filters{padding:8px 0}#console .plan-metric:last-child{grid-column:1/-1}#console .plan-row .plan-manage-btn{min-width:0!important;width:auto!important}}
