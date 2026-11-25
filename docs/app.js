@@ -666,7 +666,7 @@ async function recordOnboardingPlan(){
 function onboardingPlanView(){
  return '<main class="onboarding-plans"><header class="onboarding-plans-top">'+brand()+'<div>'+ (window.entreTheme?.toggleMarkup?.()||'')+'<button type="button" class="ui-btn btn-outline" data-action="logout">Sair</button></div></header><div class="onboarding-plan-progress"><span>'+ico('check',14)+' Conta</span><i></i><span>'+ico('check',14)+' Perfil</span><i></i><strong>3 · Plano</strong></div><div class="onboarding-plan-body">'+(window.entreExtras?.premiumView?.(true)||'<p>Não foi possível carregar os planos.</p><button class="ui-btn btn-outline" data-action="onboardingFree">Continuar gratuitamente</button>')+'</div></main>';
 }
-async function finishOnboarding(btn){if(!onboardingPlanPending()||state.onboardingBusy)return;state.onboardingBusy=true;busy(btn,true);try{await recordOnboardingPlan();state.view='posts';state.mode='app';render();void window.entreExtras?.enter?.('posts');void window.connectRealtime?.resume?.();void window.entreGeo?.init?.();toast('Bem-vindo ao CONNECT!',false,'success');}catch(e){toast(infoError(e),true);}finally{state.onboardingBusy=false;if(btn?.isConnected)busy(btn,false);}}
+async function finishOnboarding(btn){if(!onboardingPlanPending()||state.onboardingBusy)return;state.onboardingBusy=true;busy(btn,true);try{if(!await window.connectSession.touch(true))return;await recordOnboardingPlan();state.resumeNavigation=false;window.connectSession.clearDraft(state.session?.user?.id);state.view='posts';state.mode='app';render();void window.entreExtras?.enter?.('posts');void window.connectRealtime?.resume?.();void window.entreGeo?.init?.();toast('Bem-vindo ao CONNECT!',false,'success');}catch(e){toast(infoError(e),true);}finally{state.onboardingBusy=false;if(btn?.isConnected)busy(btn,false);}}
 const messageDrafts=new Map();
 function messageDraftKey(){return state.session?.user?.id&&state.pair?.id?state.session.user.id+':'+state.pair.id:null;}
 function rememberMessageDraft(key,value){if(!key)return;if(value){messageDrafts.delete(key);messageDrafts.set(key,value);while(messageDrafts.size>20)messageDrafts.delete(messageDrafts.keys().next().value);}else messageDrafts.delete(key);}
@@ -681,8 +681,8 @@ function restoreMessageUI(snapshot){
  if(!input||!key)return;input.dataset.draftKey=key;input.value=messageDrafts.get(key)||'';
  if(snapshot?.key===key){if(list&&!snapshot.nearBottom&&Number.isFinite(snapshot.scroll))list.scrollTop=snapshot.scroll;if(snapshot.focus){input.focus({preventScroll:true});try{input.setSelectionRange(snapshot.start,snapshot.end);}catch(_){}}}
 }
-function render(){const messageUI=snapshotMessageUI();const previousDock=document.querySelector('.cn-dock-viewport');if(previousDock)dockScroll=previousDock.scrollLeft;state.profileMenuOpen=false;window.entreTheme?.setScope?.(state.session&&state.profile&&state.mode!=='reset'&&!maintenanceIsActive()&&!state.suspension?'app':'external');applyMotion();if(state.mode==='reset'){app.innerHTML=window.entreEmailAuth.resetView();return;}if(maintenanceIsActive()){dismissPublicNotice();app.innerHTML=maintenanceView();return;}if(state.suspension){dismissPublicNotice();app.innerHTML=suspensionView();return;}if(!state.session){app.innerHTML=['login','signup','forgot'].includes(state.mode)?authView():landing()}else if(!state.profile){state.mode='onboard';app.innerHTML=authView()}else if(window.connectAccountData?.pending?.()){app.innerHTML=window.connectAccountData.gate();return;}else if(onboardingPlanPending()){app.innerHTML=onboardingPlanView();return;}else{app.innerHTML=appLayout();restoreDockScroll();updateTimerText()}if(['connect','chat'].includes(state.view)&&state.pair){const el=document.getElementById('messageList');if(el)el.scrollTop=el.scrollHeight;window.entreSocial?.afterRender?.();window.entreChatMedia?.afterRender?.()}if(activeEncounter()&&state.pair.mode==='video')window.entreVideo?.attach?.();syncLiveFilters();restoreMessageUI(messageUI);}
-function renderView(){if(maintenanceIsActive())return;const messageUI=snapshotMessageUI();if(state.session&&state.profile){const el=document.getElementById('view-content');if(el){const liveScroll=document.querySelector('body > .live-app-filters .live-app-filter-body')?.scrollTop||el.querySelector('.live-app-filter-body')?.scrollTop||0;el.dataset.section=state.view;el.innerHTML=viewContent();syncLiveFilters(liveScroll);updateTimerText();const m=document.getElementById('messageList');if(m)m.scrollTop=m.scrollHeight;window.entreSocial?.afterRender?.();window.entreChatMedia?.afterRender?.();if(activeEncounter()&&state.pair?.mode==='video')window.entreVideo?.attach?.();restoreMessageUI(messageUI);}}}
+function render(){window.connectSession?.rememberPublic?.();const messageUI=snapshotMessageUI();const previousDock=document.querySelector('.cn-dock-viewport');if(previousDock)dockScroll=previousDock.scrollLeft;state.profileMenuOpen=false;window.entreTheme?.setScope?.(state.session&&state.profile&&state.mode!=='reset'&&!maintenanceIsActive()&&!state.suspension?'app':'external');applyMotion();if(state.mode==='reset'){app.innerHTML=window.entreEmailAuth.resetView();return;}if(maintenanceIsActive()){dismissPublicNotice();app.innerHTML=maintenanceView();return;}if(state.suspension){dismissPublicNotice();app.innerHTML=suspensionView();return;}if(!state.session){app.innerHTML=['login','signup','forgot'].includes(state.mode)?authView():landing()}else if(!state.profile){state.mode='onboard';app.innerHTML=authView()}else if(window.connectAccountData?.pending?.()){app.innerHTML=window.connectAccountData.gate();return;}else if(onboardingPlanPending()){app.innerHTML=onboardingPlanView();return;}else{app.innerHTML=appLayout();restoreDockScroll();updateTimerText();window.connectSession?.rememberPage?.()}if(['connect','chat'].includes(state.view)&&state.pair){const el=document.getElementById('messageList');if(el)el.scrollTop=el.scrollHeight;window.entreSocial?.afterRender?.();window.entreChatMedia?.afterRender?.()}if(activeEncounter()&&state.pair.mode==='video')window.entreVideo?.attach?.();syncLiveFilters();restoreMessageUI(messageUI);}
+function renderView(){if(maintenanceIsActive())return;const messageUI=snapshotMessageUI();if(state.session&&state.profile){const el=document.getElementById('view-content');if(el){const liveScroll=document.querySelector('body > .live-app-filters .live-app-filter-body')?.scrollTop||el.querySelector('.live-app-filter-body')?.scrollTop||0;el.dataset.section=state.view;el.innerHTML=viewContent();window.connectSession?.rememberPage?.();syncLiveFilters(liveScroll);updateTimerText();const m=document.getElementById('messageList');if(m)m.scrollTop=m.scrollHeight;window.entreSocial?.afterRender?.();window.entreChatMedia?.afterRender?.();if(activeEncounter()&&state.pair?.mode==='video')window.entreVideo?.attach?.();restoreMessageUI(messageUI);}}}
 function showFormMessage(msg,success=false){window.connectSound?.play?.(success?'success':'error');const id=success?'form-success':'form-error';const target=document.getElementById(id);if(target){target.classList.remove('hidden');target.textContent=msg}}
 function busy(btn,value){if(btn){btn.disabled=value;btn.dataset.oldLabel ||= btn.innerHTML;if(value)btn.textContent='Só um instante...';else btn.innerHTML=btn.dataset.oldLabel}}
 async function getProfile(){const uid=state.session?.user.id;if(!uid)return null;const {data,error}=await db.from('entre_profiles').select('*').eq('id',uid).maybeSingle();if(error)throw error;return data}
@@ -702,7 +702,7 @@ async function loadPairs(){
 }
 async function initializeAccount(){
  const uid=state.session?.user?.id;if(!uid)return;const profile=await getProfile();if(state.session?.user?.id!==uid)return;
- state.profile=profile;state.signupConsent=false;if(!profile){try{const {data,error}=await db.rpc('connect_signup_consent_status');if(state.session?.user?.id!==uid)return;state.signupConsent=!error&&data===true;}catch(_){if(state.session?.user?.id!==uid)return;}}window.entreSocial?.resetAccount?.();window.entreRooms?.resetAccount?.();state.pairs=[];state.pairsProfiles={};
+ state.profile=profile;if(!profile||profile.onboarding_plan_selected===false){if(!await window.connectSession.touch(true)||state.session?.user?.id!==uid)return;}state.signup=profile?null:window.connectSession.readDraft(uid);state.signupConsent=false;if(!profile){try{const {data,error}=await db.rpc('connect_signup_consent_status');if(state.session?.user?.id!==uid)return;state.signupConsent=!error&&data===true;}catch(_){if(state.session?.user?.id!==uid)return;}}window.entreSocial?.resetAccount?.();window.entreRooms?.resetAccount?.();state.pairs=[];state.pairsProfiles={};
  if(state.profile){try{await signAvatar(state.profile);}catch(e){console.warn('Avatar load unavailable',e);}}
  if(state.session?.user?.id!==uid)return;
  try{installAvatarRealtime();}catch(e){console.warn('Avatar updates unavailable',e);}
@@ -732,17 +732,30 @@ async function initializeAccount(){
   const clean=new URL(window.location.href);clean.searchParams.delete('premium');clean.searchParams.delete('checkoutSupport');clean.searchParams.delete('onboarding');
   window.history.replaceState(null,'',clean.pathname+clean.search+clean.hash);
  }
- if(state.profile&&!onboardingPlanPending()){try{const check=await deleteEmailStatus();if(state.session?.user?.id!==uid)return;if(check.verified)state.modal='deleteVerified';}catch(e){console.warn('Deletion verification unavailable',e?.message);}}
+ const saved=state.resumeNavigation&&!premiumReturn&&!onboardingReturn&&state.profile&&!onboardingPlanPending()?window.connectSession.readPage(uid):null;
+ if(saved){
+  if(saved.view==='chat'&&saved.pair&&!activeEncounter()){
+   try{if(!await openPair(saved.pair))state.view='conversations';}catch(_){state.view='conversations';}
+   if(state.session?.user?.id!==uid)return;
+  }else if(saved.view==='chat'){state.view=activeEncounter()?'connect':'conversations';}
+  else state.view=saved.view==='lives'&&!PUBLIC_LIVES_ENABLED?'soon':saved.view;
+  if(state.view==='notifications'&&window.entreSocial?.data)window.entreSocial.data.notificationTab=saved.notificationTab==='bulletins'?'bulletins':'personal';
+ }
+ if(state.profile&&!onboardingPlanPending()){state.resumeNavigation=false;window.connectSession.clearDraft(uid);try{const check=await deleteEmailStatus();if(state.session?.user?.id!==uid)return;if(check.verified)state.modal='deleteVerified';}catch(e){console.warn('Deletion verification unavailable',e?.message);}}
  render();
  if(state.profile&&!onboardingPlanPending()){
   void window.connectRealtime?.resume?.();
   void window.entreGeo?.init?.();
-  if(state.view==='posts'||state.view==='premium')void window.entreExtras?.enter?.(state.view);
+  if(['posts','premium','support','protocols','checkout'].includes(state.view))void window.entreExtras?.enter?.(state.view);
+  if(['online','conversations','notifications'].includes(state.view))void window.entreSocial?.enter?.(state.view);
+  if(state.view==='rooms')void window.entreRooms?.enter?.();
+  if(state.view==='lives'&&PUBLIC_LIVES_ENABLED)void window.entreLives?.enter?.();
+  if(state.view==='connect')void refreshSearchQuota();
   if(premiumReturn&&!onboardingReturn)toast('O Premium é contratado pelo WhatsApp e liberado pela equipe após confirmação.');
   const requestedHandle=new URLSearchParams(window.location.search).get('profile');
   if(requestedHandle&&!activeEncounter())void window.entreSocial?.openUsernameProfile?.(requestedHandle);
  }
- if(state.pair?.mode==='video')void window.entreVideo?.start?.(state.pair);
+ if(state.pair?.mode==='video'&&state.pair.status==='active')void window.entreVideo?.start?.(state.pair);
 }
 function getProfileData(form){return {display_name:form.display_name.value.trim(),username:normalizeHandle(form.username?.value),age:Number(form.age.value),gender:form.gender.value,preference:window.entreExtras?.isPremium?.(state.session?.user?.id)?(form.preference?.value||'any'):'any'}}
 async function createProfile(data){const {error}=await db.from('entre_profiles').upsert({id:state.session.user.id,display_name:data.display_name,username:data.username,age:data.age,gender:data.gender,preference:data.preference,...(data.avatar_path?{avatar_path:data.avatar_path}:{})},{onConflict:'id'});if(error)throw error;sessionStorage.removeItem('entre.pendingProfile')}
@@ -751,11 +764,12 @@ async function profileSetup(form){
  let uploaded=null;
  try{
   const profile=getProfileData(form);
+  window.connectSession.saveDraft(form);if(!await window.connectSession.touch(true))return;
   if(profile.age<18||!Number.isInteger(profile.age)||profile.age>100)throw Error('Informe uma idade válida a partir de 18 anos.');
   const declared=form.elements.adult?.checked===true&&form.elements.terms?.checked===true;
   if(state.signupConsent!==true&&!declared)throw Error('Confirme a maioridade e aceite os termos.');
   if(state.avatarPendingFile){uploaded=await uploadAvatarFile(state.avatarPendingFile);profile.avatar_path=uploaded;}
-  await createProfile(profile);
+  await createProfile(profile);window.connectSession.clearDraft(state.session?.user?.id);
   if(declared&&state.signupConsent!==true){try{const {data,error}=await db.rpc('connect_accept_legal',{_terms:'2026-11-25',_privacy:'2026-11-25',_adult:true});state.signupConsent=!error&&data===true;}catch(_){state.signupConsent=false;}}
   let bannerFailed=false;try{await window.connectBanners?.commitRegistration?.();}catch(_){bannerFailed=true;}
   if(uploaded)commitLocalAvatar(uploaded);
@@ -903,7 +917,7 @@ async function sendMessage(form){
 async function vote(accept){if(maintenanceIsActive())return;if(!state.pair)return;try{const {data,error}=await db.rpc('entre_vote',{_pair:state.pair.id,_accept:accept});if(error)throw error;if(data==='closed'){await refreshPair();await loadPairs();toast('Encontro encerrado. O chat temporário foi apagado.');return}await refreshPair();if(accept&&data==='active')toast('Sua escolha foi registrada. Falta a outra pessoa.',false,'success')}catch(e){toast(infoError(e),true)}}
 async function endPair(){if(!state.pair)return;try{const {error}=await db.rpc('entre_close',{_pair:state.pair.id});if(error)throw error;window.entreVideo?.cleanup?.();state.pair=null;state.messages=[];state.peer=null;state.modal=null;if(state.channel){db.removeChannel(state.channel);state.channel=null}await loadPairs();if(['connect','chat'].includes(state.view))state.view='connect';render();toast('Encontro encerrado.',false,'end')}catch(e){toast(infoError(e),true)}}
 async function blockPartner(){if(!state.peer)return;try{const {error}=await db.rpc('entre_block',{_user:state.peer.id});if(error)throw error;window.entreVideo?.cleanup?.();if(state.channel){void db.removeChannel(state.channel);state.channel=null;}state.modal=null;state.pair=null;state.peer=null;state.messages=[];await loadPairs();if(['connect','chat'].includes(state.view))state.view='connect';render();toast('Pessoa bloqueada. Vocês não serão reconectados.',false,'delete')}catch(e){toast(infoError(e),true)}}
-async function logout({silent=false}={}){window.entreSocial?.resetForeground?.();await window.connectRealtime?.depart?.();window.entreVideo?.cleanup?.();window.entreRooms?.stop?.();await window.entreLives?.leave?.();try{const wasSearching=state.searching;state.searching=false;clearSearchTimer();if(pendingSearchRequest)await pendingSearchRequest.catch(()=>{});if(wasSearching)await db.rpc('entre_leave');if(state.channel){await db.removeChannel(state.channel);state.channel=null}if(state.profileChannel){await db.removeChannel(state.profileChannel);state.profileChannel=null}for(const item of Object.values(state.avatarUrls)){if(item.local)URL.revokeObjectURL(item.url)}state.avatarUrls={};clearAvatarDraft();messageDrafts.clear();const {error}=await db.auth.signOut({scope:'local'});if(error)throw error;state.session=null;state.isAdmin=false;state.modal=null;state.profile=null;state.pair=null;state.peer=null;state.pairs=[];state.pairsProfiles={};state.messages=[];state.suspension=null;window.entreSocial?.resetAccount?.();window.entreRooms?.resetAccount?.();window.entreExtras?.resetAccount?.();state.searching=false;state.mode='landing';state.view='posts';dockScroll=0;render();toast('Você saiu da conta.',false,silent?null:'logout')}catch(e){toast(infoError(e),true)}}
+async function logout({silent=false}={}){window.entreSocial?.resetForeground?.();await window.connectRealtime?.depart?.();window.entreVideo?.cleanup?.();window.entreRooms?.stop?.();await window.entreLives?.leave?.();try{const wasSearching=state.searching;state.searching=false;clearSearchTimer();if(pendingSearchRequest)await pendingSearchRequest.catch(()=>{});if(wasSearching)await db.rpc('entre_leave');if(state.channel){await db.removeChannel(state.channel);state.channel=null}if(state.profileChannel){await db.removeChannel(state.profileChannel);state.profileChannel=null}for(const item of Object.values(state.avatarUrls)){if(item.local)URL.revokeObjectURL(item.url)}state.avatarUrls={};clearAvatarDraft();messageDrafts.clear();const departing=state.session?.user?.id;const {error}=await db.auth.signOut({scope:'local'});if(error)throw error;window.connectSession.clearAccount(departing);state.resumeNavigation=false;state.signup=null;state.session=null;state.isAdmin=false;state.modal=null;state.profile=null;state.pair=null;state.peer=null;state.pairs=[];state.pairsProfiles={};state.messages=[];state.suspension=null;window.entreSocial?.resetAccount?.();window.entreRooms?.resetAccount?.();window.entreExtras?.resetAccount?.();state.searching=false;state.mode='landing';state.view='posts';dockScroll=0;render();toast('Você saiu da conta.',false,silent?null:'logout')}catch(e){toast(infoError(e),true)}}
 let deleteEmailBusy=false,deleteEmailPending=false;
 async function deleteEmailStatus(){const {data,error}=await db.rpc('connect_delete_email_status');if(error)throw error;return data||{};}
 function deleteEmailModal(mode){
@@ -1220,7 +1234,7 @@ async function loadSiteSettings(){
 }
 async function boot(){
  const recovery=window.entreEmailAuth.isRecovery();
- state.signup=null;sessionStorage.removeItem('entre.pendingProfile');applyMotion();
+ state.signup=null;applyMotion();
  try{
   await loadSiteSettings();
   document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(maintenanceTimer);else void maintenanceCheck(false);});
@@ -1237,6 +1251,7 @@ async function boot(){
    // Remove the expired local session so the same email can sign up again.
    const checked=await db.auth.getUser();
    if(checked.error||!checked.data?.user){
+    if(checked.error&&!window.connectSession.invalidSession(checked.error)){app.innerHTML=window.connectSession.retryScreen();return;}
     await db.auth.signOut({scope:'local'});
     state.session=null;state.isAdmin=false;state.mode='login';render();
     showFormMessage('Sua sessão anterior expirou. Crie uma conta com e-mail e senha para continuar.',true);
@@ -1246,16 +1261,16 @@ async function boot(){
    }else await window.entreEmailAuth.acceptSession(data.session);
   }else{
    const authIntent=new URLSearchParams(window.location.search).get('auth');
-   state.mode=recovery?'forgot':authIntent==='signup'?'signup':authIntent==='login'?'login':'landing';
-   render();
+   const pendingEmail=window.connectSession.emailPending();state.mode=recovery?'forgot':authIntent==='signup'?'signup':authIntent==='login'?'login':pendingEmail?'login':window.connectSession.publicMode()||'landing';
+   render();if(pendingEmail&&!recovery)showFormMessage('Confirme seu e-mail e entre para continuar seu cadastro. O cadastro incompleto expira após 30 minutos sem atividade.',true);
    if(recovery)showFormMessage('O link de recuperação expirou ou é inválido. Solicite outro.');
   }
   db.auth.onAuthStateChange((event,session)=>{
-   if(event==='SIGNED_OUT'&&state.session){state.session=null;state.profile=null;state.isAdmin=false;state.mode='landing';render();}
+   if(event==='SIGNED_OUT'&&state.session){state.session=null;state.profile=null;state.isAdmin=false;state.signup=null;state.resumeNavigation=false;state.mode='landing';render();}else if(event==='TOKEN_REFRESHED'&&session?.user?.id===state.session?.user?.id){state.session=session;}
   });
   if(!maintenanceIsActive()&&!state.suspension)considerPublicAnnouncement(state.siteSettings);
   state.timerLoop=setInterval(updateTimerText,1000);
   setInterval(async()=>{if(state.session?.user&&state.pair&&(document.visibilityState==='visible'||activeEncounter())&&(activeEncounter()||['chat','connect'].includes(state.view))){await refreshPair()}},20000);
- }catch(error){state.mode='login';render();showFormMessage(infoError(error));console.error(error);}
+ }catch(error){if(state.session||!window.connectSession.invalidSession(error)){app.innerHTML=window.connectSession.retryScreen();}else{state.mode='login';render();showFormMessage(infoError(error));}console.error(error);}
 }
 boot();
