@@ -51,7 +51,7 @@ html[data-theme] #app .cn-online-top .cn-online-filter>summary{
 }
 html[data-theme] #app .cn-online-top .cn-online-filter>summary svg{width:18px!important;height:18px!important;flex:none;}
 html[data-theme] #app .cn-online-top .cn-online-filter[open]>summary{border-color:var(--ui-text)!important}
-html[data-theme] #app .cl-hero .connect-community-totals{margin:10px 0 16px!important;}
+html[data-theme] #app .cl-hero .connect-community-totals{margin:5px 0 5px!important;}
 /* Slight increase exclusively inside Discover. */
 html[data-theme] #app .cn-online-top .connect-community-totals .cc-stat strong{font-size:15px!important}
 html[data-theme] #app .cn-online-top .connect-community-totals .cc-stat small{font-size:12px!important}
@@ -69,7 +69,8 @@ html[data-theme] #app .cn-online-top .connect-community-totals .cc-stat small{fo
  html[data-theme] #app .cn-online-top .cc-filter-label{display:inline!important}
 }
 @media(max-width:760px){
- html[data-theme] #app .cl-hero .connect-community-totals{justify-content:center}
+ html[data-theme] #app .cl-hero .connect-community-totals{justify-content:center;margin:4px 0 2px!important}
+ html[data-theme] #app .cl-public .cl-hero h1{margin-top:6px!important}
 }
 
 /* Important declarations in a layer outrank unlayered important animation rules. */
