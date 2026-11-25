@@ -1,0 +1,4 @@
+select cron.schedule('connect-web-push-delivery','* * * * *',$job$
+select net.http_post(url:='https://trrakyybnvxpdhxwgjrz.supabase.co/functions/v1/connect-web-push-worker',headers:=jsonb_build_object('Content-Type','application/json','x-connect-push-token',(select decrypted_secret from vault.decrypted_secrets where name='connect_push_worker_token')),body:='{}'::jsonb,timeout_milliseconds:=50000)
+where exists(select 1 from connect_internal.push_devices d where d.pending_at is not null and d.next_try<=now() and (d.lease_until is null or d.lease_until<now()) and (d.last_sent_at is null or d.last_sent_at<now()-interval '60 seconds'));
+$job$);
