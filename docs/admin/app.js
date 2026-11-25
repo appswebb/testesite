@@ -8,10 +8,12 @@ if(!window.supabase || !window.supabase.createClient){
  app.innerHTML='<div class="preload"><h1>Falha de conexão</h1><p>Atualize a página quando estiver conectado à internet.</p></div>';return;
 }
 var db=window.supabase.createClient(URL,KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
-var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[],supportTickets:[],commentReports:[],premiumConfig:null,recurringConfig:null,manualPremiumAccount:null,moreOpen:false};
+var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[],supportTickets:[],commentReports:[],premiumConfig:null,recurringConfig:null,manualPremiumAccount:null,moreOpen:false,community:null,communityUnavailable:false,loadError:null};
 var perPage=20, searchTimer=null, toastTimer=null, lastLoad=0;
 var sections=[
  ["overview","Visão geral","layout-dashboard"],
+ ["monitor","Monitoramento","activity"],
+ ["modules","Central de controle","grid"],
  ["updates","Atualização","activity"],
  ["users","Usuários","users"],
  ["reports","Denúncias","flag"],
@@ -24,6 +26,8 @@ var sections=[
  ["security","Segurança","shield-check"]
 ];
 var shapes={
+ "grid":'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+ "trash":'<path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6"/>',
  "menu":'<path d="M4 6h16M4 12h16M4 18h16"/>',
  "headset":'<path d="M3 13v-2a9 9 0 0 1 18 0v2M3 13h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H3zM21 13h-2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2zM19 19v1a2 2 0 0 1-2 2h-4"/>',
  "activity":'<path d="M2 12h5l3-7 4 14 3-7h5"/>',
@@ -91,18 +95,18 @@ function gate(locked){
  +'<div class="gate-art"><img class="cp-admin-emblem" src="../connect-glass.svg?v=showcase-v17" width="190" height="127" alt=""><h2>Administração CONNECT</h2><p>Acesso autorizado para gerenciar a comunidade.</p></div></div>';
 }
 function navItem(s,compact){return '<button type="button" class="'+(compact?"":"rail-item ")+(state.view===s[0]?"active":"")+'" data-view="'+s[0]+'" aria-label="'+e(s[1])+'">'+ico(s[2],compact?19:19)+'<span>'+e(s[1])+'</span></button>';}
-var mainMobileSections=["overview","users","reports","appeals"];
+var mainMobileSections=["overview","monitor","users","reports"];
 function adminMobileNav(){
  return '<nav class="bottom-nav admin-bottom-bar" aria-label="Navegação administrativa">'+
  sections.filter(function(s){return mainMobileSections.includes(s[0]);}).map(function(s){return navItem(s,true);}).join('')+
  '<button type="button" class="admin-more-button" data-action="admin-more" aria-expanded="'+Boolean(state.moreOpen)+'" aria-controls="adminMoreMenu">'+ico("menu",19)+'<span>Mais</span></button></nav>'+
  '<div class="admin-more-menu" id="adminMoreMenu" '+(state.moreOpen?'':'hidden')+' role="dialog" aria-label="Mais áreas do painel">'+
  '<div class="admin-more-header"><strong>Mais ferramentas</strong><button type="button" class="small-btn" data-action="admin-more">'+ico('x',16)+' Fechar</button></div>'+
- '<div class="admin-more-links">'+sections.filter(function(s){return !mainMobileSections.includes(s[0]);}).map(function(s){return navItem(s,true);}).join('')+'</div></div>';
+ '<div class="admin-more-links">'+sections.filter(function(s){return !mainMobileSections.includes(s[0]);}).map(function(s){return navItem(s,true);}).join('')+'<button type="button" data-action="signout">'+ico("log-out",19)+'<span>Sair</span></button><a class="saas-mobile-open" href="../?site=1">'+ico("external-link",19)+'<span>Abrir aplicativo</span></a></div></div>';
 }
-function adminRail(){const groups=[['Plataforma',['overview','updates']],['Comunidade',['users','pairs','reports','appeals','bulletins']],['Operações',['support','premium','settings','security']]];return groups.map(function(group){return '<div class="rail-group"><div class="rail-label">'+e(group[0])+'</div><div class="rail-links">'+sections.filter(function(x){return group[1].includes(x[0]);}).sort(function(a,b){return group[1].indexOf(a[0])-group[1].indexOf(b[0]);}).map(function(x){return navItem(x,false);}).join('')+'</div></div>';}).join('');}
+function adminRail(){const groups=[['Workspace',['overview','monitor','modules']],['Comunidade',['users','pairs','reports','appeals']],['Relacionamento',['bulletins','support','premium']],['Sistema',['updates','settings','security']]];return groups.map(function(group){return '<div class="rail-group"><div class="rail-label">'+e(group[0])+'</div><div class="rail-links">'+sections.filter(function(x){return group[1].includes(x[0]);}).sort(function(a,b){return group[1].indexOf(a[0])-group[1].indexOf(b[0]);}).map(function(x){return navItem(x,false);}).join('')+'</div></div>';}).join('');}
 function shell(){
- app.innerHTML='<div class="shell"><aside class="rail"><div class="brand"><span class="brand-mark"><img src="../connect-glass.svg?v=showcase-v17" alt="" /></span><div><div class="brand-text">CONNECT</div><div class="brand-sub">ADMINISTRAÇÃO</div></div></div>'+adminRail()+'<div class="rail-spacer"></div><div class="rail-bottom"><div class="admin-identity"><div class="admin-avatar">'+e((state.user&&state.user.email||"A")[0].toUpperCase())+'</div><div><strong>Administrador</strong><small>'+e(state.user&&state.user.email||"")+'</small></div></div><div class="rail-out"><button data-action="signout">'+ico("log-out",13)+' Sair</button></div></div></aside><main class="main"><header class="topbar"><div class="topbar-left"><div class="admin-top-brand"><img src="../connect-glass.svg?v=showcase-v17" alt="" width="35" height="23"></div><div class="admin-top-context"><small>COMMAND CENTER</small><strong id="topbar-location">'+e(viewTitle())+'</strong></div></div><div class="topbar-right">'+(window.entreTheme?.toggleMarkup?.()||'')+'<span class="topbar-live" title="Sessão administrativa ativa"><span class="pulse"></span><span>Online</span></span><button type="button" class="toolbar-btn admin-icon-action" data-action="refresh" title="Atualizar dados" aria-label="Atualizar dados">'+ico("refresh-cw",19)+'</button><a class="toolbar-btn admin-icon-action" href="../?site=1" title="Abrir aplicativo" aria-label="Abrir aplicativo">'+ico("external-link",19)+'</a><button type="button" class="toolbar-btn admin-icon-action admin-top-exit" data-action="signout" title="Sair" aria-label="Sair">'+ico("log-out",19)+'</button></div></header><div id="admin-view"></div></main>'+adminMobileNav()+'</div><div id="modal-root"></div>';
+ app.innerHTML='<div class="shell"><aside class="rail"><div class="brand"><span class="brand-mark"><img src="../connect-glass.svg?v=showcase-v17" alt="" /></span><div><div class="brand-text">CONNECT</div><div class="brand-sub">CONTROL STUDIO</div></div></div>'+adminRail()+'<div class="rail-spacer"></div><div class="rail-bottom"><div class="admin-identity"><div class="admin-avatar">'+e((state.user&&state.user.email||"A")[0].toUpperCase())+'</div><div><strong>Administrador</strong><small>'+e(state.user&&state.user.email||"")+'</small></div></div><div class="rail-out"><button data-action="signout">'+ico("log-out",13)+' Sair</button></div></div></aside><main class="main"><header class="topbar"><div class="topbar-left"><div class="admin-top-brand"><img src="../connect-glass.svg?v=showcase-v17" alt="" width="35" height="23"></div><div class="admin-top-context"><small>WORKSPACE / CONNECT</small><strong id="topbar-location">'+e(viewTitle())+'</strong></div></div><div class="topbar-right">'+(window.entreTheme?.toggleMarkup?.()||'')+'<span class="topbar-live" title="Sessão administrativa autorizada"><span class="pulse"></span><span>Admin</span></span><button type="button" class="toolbar-btn admin-icon-action saas-command" data-action="command" title="Localizar ferramentas (Ctrl+K)" aria-label="Localizar ferramentas">'+ico("search",19)+'</button><button type="button" class="toolbar-btn admin-icon-action" data-action="refresh" title="Atualizar dados" aria-label="Atualizar dados">'+ico("refresh-cw",19)+'</button><a class="toolbar-btn admin-icon-action" href="../?site=1" title="Abrir aplicativo" aria-label="Abrir aplicativo">'+ico("external-link",19)+'</a><button type="button" class="toolbar-btn admin-icon-action admin-top-exit" data-action="signout" title="Sair" aria-label="Sair">'+ico("log-out",19)+'</button></div></header><div class="saas-sync" id="saas-sync" role="status"></div><div id="admin-view"></div></main>'+adminMobileNav()+'</div><div id="modal-root"></div>';
 }
 function viewTitle(){return (sections.find(function(s){return s[0]===state.view;})||sections[0])[1];}
 function heading(k,title,desc){return '<div class="page-intro"><span class="eyebrow">'+e(k)+'</span><h1 class="page-title">'+title+'</h1><p>'+e(desc)+'</p></div>';}
@@ -116,18 +120,61 @@ function releaseShortcut(active,title,description){
   +'<span class="release-entry-chevron" aria-hidden="true">'+ico("chevron-right",18)+'</span></button>';
 }
 
+const moduleInfo={
+ overview:["Visão geral","Indicadores, pendências e ações prioritárias.","Workspace"],
+ monitor:["Monitoramento","Presença, encontros, feed, salas, lives e atividade.","Workspace"],
+ modules:["Central de controle","Localize todos os recursos administrativos.","Workspace"],
+ users:["Usuários","Pesquisar, suspender, reativar e excluir contas.","Comunidade"],
+ pairs:["Encontros","Consultar sessões, matches e atividade de conexões.","Comunidade"],
+ reports:["Denúncias","Revisar relatos de usuários e comentários denunciados.","Comunidade"],
+ appeals:["Contestações","Analisar recursos e reativar contas.","Comunidade"],
+ bulletins:["Avisos e enquetes","Publicar, acompanhar resultados e remover avisos.","Relacionamento"],
+ support:["Suporte","Consultar protocolos, anexos autorizados e responder.","Relacionamento"],
+ premium:["Assinaturas","Consultar acesso, liberar ou revogar Premium e ajustar preço.","Relacionamento"],
+ updates:["Atualização","Ativar manutenção, editar mensagem e liberar o site.","Sistema"],
+ settings:["Configurações","Controlar novas conexões, denúncias e aparência.","Sistema"],
+ security:["Segurança e LGPD","Verificar acesso e tratar pedidos de privacidade.","Sistema"]
+};
+function metric(label,value,icon,note,view,tone="neutral"){
+ return '<button type="button" class="saas-metric tone-'+tone+'" data-view="'+e(view)+'"><span class="saas-metric-top"><span>'+e(label)+'</span><i>'+ico(icon,17)+'</i></span><strong>'+e(value==null?'—':Number(value).toLocaleString("pt-BR"))+'</strong><span class="saas-metric-foot">'+e(note)+ico("chevron-right",13)+'</span></button>';
+}
+function moduleTile(s){
+ const info=moduleInfo[s[0]];return '<button type="button" class="saas-module" data-view="'+s[0]+'"><span class="saas-module-icon">'+ico(s[2],19)+'</span><span><strong>'+e(info[0])+'</strong><small>'+e(info[1])+'</small></span>'+ico("chevron-right",16)+'</button>';
+}
+function moduleDirectory(){
+ return heading("WORKSPACE / FERRAMENTAS","Central de controle","Todos os recursos administrativos disponíveis, organizados por área.")+
+ ['Workspace','Comunidade','Relacionamento','Sistema'].map(group=>'<section class="saas-directory"><h2>'+e(group)+'</h2><div class="saas-module-grid">'+sections.filter(s=>s[0]!=="modules"&&moduleInfo[s[0]][2]===group).map(moduleTile).join("")+'</div></section>').join("")+
+ '<div class="saas-inline-note">'+ico("shield-check",17)+' Os controles existentes são autorizados no servidor. As métricas de feed, salas e lives estão disponíveis em Monitoramento; a moderação direta desses módulos ainda não está habilitada.</div>';
+}
+function healthItem(label,active,view){return '<button type="button" class="saas-health-row" data-view="'+view+'"><span>'+e(label)+'</span><span class="saas-status '+(active===true?'is-ok':active===false?'is-warn':'')+'"><i></i>'+ (active===true?'Ativo':active===false?'Pausado':'Indisponível')+'</span>'+ico("chevron-right",14)+'</button>';}
 function overview(){
- var x=state.overview||{},s=x.settings||{},trend=x.signup_trend||[],mx=Math.max(1,...trend.map(function(v){return Number(v.count||0);}));
- var chart=trend.map(function(v){var n=Number(v.count||0);var percent=Math.max(4,Math.round(n/mx*100));return '<div class="chart-col" title="'+n+' cadastros"><div class="chart-bar-box"><div class="chart-bar" style="height:'+percent+'%"></div></div><span class="chart-day">'+e(day(v.day))+'</span></div>';}).join("");
- return heading("VISÃO GERAL · TEMPO REAL","Visão geral","Acompanhe sua comunidade, a qualidade dos encontros e o estado da plataforma.")+
- releaseShortcut(Boolean(s.maintenance_enabled),s.maintenance_enabled?"Site em atualização":"Modo atualização",s.maintenance_enabled?"Visitantes veem a tela especial até você liberar.":"Ative, acompanhe e libere quando quiser.")+'<div class="stat-grid">'+stat("Usuários cadastrados",x.users,"users","Contas de autenticação","accent")+stat("Novos nos últimos 7 dias",x.new_users_7d,"calendar-days","Cadastros recentes")+stat("Denúncias pendentes",x.reports_open,"flag","Aguardando moderação")+'</div>'+
- '<div class="panel-grid"><section class="panel"><h3>Crescimento da comunidade</h3><p class="panel-desc">Cadastros por dia · últimos sete dias</p><div class="chart">'+chart+'</div></section><section class="panel"><h3>Saúde da plataforma</h3><p class="panel-desc">Acompanhamento das operações principais</p><div class="health-row"><strong>Novas conexões</strong><span class="health-state '+(!s.matchmaking_enabled?"state-off":"")+'"><span class="pulse"></span>'+(!s.matchmaking_enabled?"Pausadas":"Ativas")+'</span></div><div class="health-row"><strong>Recebimento de denúncias</strong><span class="health-state '+(!s.reporting_enabled?"state-off":"")+'"><span class="pulse"></span>'+(!s.reporting_enabled?"Pausado":"Ativo")+'</span></div><div class="health-row"><strong>Usuários suspensos</strong>'+badge(x.banned||0,(x.banned||0)>0?"warn":"neutral")+'</div><div class="health-row"><strong>Mensagens nas últimas 24h</strong>'+badge(x.messages_24h||0,"neutral")+'</div></section></div>'+
- '<section class="panel admin-appeals-overview"><h3>Contestações recentes</h3><p class="panel-desc">Pedidos de reativação enviados pelos usuários.</p><strong>'+(state.appeals||[]).filter(function(a){return a.status==='pending';}).length+' pendente(s)</strong><button type="button" class="btn-main" data-view="appeals">Analisar contestações</button></section>'+ 
- '<div class="quick-links"><button class="quick" data-view="users">'+ico("users",17)+' Gerenciar usuários '+ico("arrow-right",15)+'</button><button class="quick" data-view="reports">'+ico("flag",17)+' Moderar denúncias '+ico("arrow-right",15)+'</button><button class="quick" data-view="settings">'+ico("sliders-horizontal",17)+' Configurar site '+ico("arrow-right",15)+'</button></div>';
+ const x=state.overview||{},s=x.settings||{},m=state.community||{},trend=Array.isArray(x.signup_trend)?x.signup_trend:[],mx=Math.max(1,...trend.map(v=>Number(v.count||0)));
+ const chart=trend.length?trend.map(v=>{const n=Number(v.count||0),pct=n>0?Math.max(3,n/mx*100):0;return '<div class="saas-bar-col"><span class="saas-bar-value">'+e(n)+'</span><div class="saas-bar-track"><div style="height:'+pct+'%"></div></div><span>'+e(day(v.day))+'</span></div>';}).join(""):'<p class="saas-empty">Dados de crescimento indisponíveis.</p>';
+ const pending=Array.isArray(state.appeals)&&state.overview?state.appeals.filter(a=>a.status==="pending").length:null;
+ return '<section class="saas-page-head"><div><span class="saas-kicker">CONNECT / CONTROL STUDIO</span><h1>Visão geral</h1><p>Seu centro de operações. Acompanhe a comunidade e gerencie a plataforma em um só lugar.</p></div><button type="button" class="btn-outline saas-shortcut" data-view="modules">'+ico("grid",16)+' Todas as ferramentas</button></section>'+
+ '<div class="saas-overview-status"><div><span class="saas-status '+(s.maintenance_enabled===false?'is-ok':s.maintenance_enabled===true?'is-warn':'')+'"><i></i>'+(s.maintenance_enabled===false?'Operação normal':s.maintenance_enabled===true?'Em manutenção':'Estado indisponível')+'</span><span class="saas-overview-copy">Controle de disponibilidade do aplicativo</span></div><button type="button" class="small-btn" data-view="updates">'+ico("activity",15)+' Gerenciar atualização</button></div>'+
+ '<div class="saas-metrics">'+metric("Perfis concluídos",x.profiles,"users","Comunidade CONNECT","users","blue")+metric("Online visíveis",m.online_visible,"activity","Presença nos últimos 5 min","monitor","green")+metric("Encontros ativos",x.active_pairs,"heart-handshake","Sessões em andamento","pairs","violet")+metric("Denúncias pendentes",x.reports_open,"flag","Aguardam revisão","reports","amber")+metric("Novas contas",x.new_users_7d,"calendar-days","Auth compartilhado · 7 dias","users")+metric("Matches",x.matches_7d,"check-circle","Encontros criados nos últimos 7 dias","pairs")+metric("Mensagens privadas",x.messages_24h,"message-circle","Volume nas últimas 24h","monitor")+metric("Aguardando encontro",x.waiting,"clock","Fila de busca recente","monitor")+'</div>'+
+ '<div class="saas-dashboard-grid"><section class="saas-panel"><div class="saas-panel-head"><div><span class="saas-kicker">AQUISIÇÃO</span><h2>Novas contas</h2><p>Cadastros no Auth compartilhado por dia · 7 dias</p></div><span class="saas-period">Últimos 7 dias</span></div><div class="saas-chart">'+chart+'</div></section>'+
+ '<section class="saas-panel"><div class="saas-panel-head"><div><span class="saas-kicker">PLATAFORMA</span><h2>Status operacional</h2><p>Controles configurados no servidor</p></div>'+ico("shield-check",21)+'</div>'+healthItem("Novas conexões",s.matchmaking_enabled,"settings")+healthItem("Recebimento de denúncias",s.reporting_enabled,"settings")+healthItem("Disponibilidade do site",typeof s.maintenance_enabled==="boolean"?!s.maintenance_enabled:null,"updates")+'<button type="button" class="saas-health-row" data-view="security"><span>Segurança e privacidade</span>'+ico("chevron-right",14)+'</button></section></div>'+
+ '<section class="saas-panel saas-inbox"><div class="saas-panel-head"><div><span class="saas-kicker">PRIORIDADES</span><h2>Central de trabalho</h2><p>Filas que precisam de atenção</p></div></div><div class="saas-priorities">'+metric("Denúncias de usuários",x.reports_open,"flag","Revisar relatos","reports","amber")+metric("Comentários denunciados",m.comment_reports_open,"message-circle","Revisar conteúdo","reports")+metric("Contestações",pending,"alert-circle","Analisar recursos","appeals")+metric("Chamados de suporte",m.support_open,"headset","Responder protocolos","support")+'</div></section>'+
+ '<section class="saas-directory"><h2>Ações rápidas</h2><div class="saas-module-grid">'+["users","bulletins","premium","settings"].map(id=>moduleTile(sections.find(s=>s[0]===id))).join("")+'</div></section>';
+}
+function monitor(){
+ const x=state.overview||{},m=state.community||{};
+ return heading("WORKSPACE / ATIVIDADE","Monitoramento","Indicadores agregados de utilização, sem acesso ao conteúdo de conversas privadas.")+
+ (state.communityUnavailable?'<div class="saas-inline-note">'+ico("alert-circle",18)+' Alguns indicadores não puderam ser consultados. Use Atualizar para tentar novamente.</div>':'')+
+ '<section class="saas-directory"><h2>Conexões e presença</h2><div class="saas-metrics">'+metric("Online visíveis",m.online_visible,"activity","Presença em 5 minutos","monitor","green")+metric("Perfis concluídos",x.profiles,"users","Perfis do CONNECT","users")+metric("Encontros ativos",x.active_pairs,"heart-handshake","Sessões em andamento","pairs")+metric("Fila de busca",x.waiting,"clock","Presença na fila em 30 s","pairs")+metric("Conexões permanentes",x.connected_pairs,"check-circle","Matches existentes","pairs")+metric("Mensagens privadas",x.messages_24h,"message-circle","Últimas 24 horas","monitor")+'</div></section>'+
+ '<section class="saas-directory"><h2>Publicações e salas</h2><div class="saas-metrics">'+metric("Publicações",m.posts_total,"file-text","Total atual no feed","monitor")+metric("Novas publicações",m.posts_24h,"file-text","Últimas 24 horas","monitor")+metric("Comentários",m.comments_24h,"message-circle","Últimas 24 horas","monitor")+metric("Salas com atividade",m.rooms_24h,"users","Últimas 24 horas","monitor")+metric("Mensagens em salas",m.room_messages_24h,"message-circle","Últimas 24 horas · não excluídas","monitor")+'</div></section>'+
+ '<section class="saas-directory"><h2>Transmissões e assinaturas</h2><div class="saas-metrics">'+metric("Lives ativas",m.lives_active,"video","Transmissões não expiradas","monitor","violet")+metric("Lives iniciadas",m.lives_24h,"video","Últimas 24 horas","monitor")+metric("Premium manual",m.manual_premium_active,"crown","Acessos manuais ativos","premium")+'</div></section><div class="saas-inline-note">'+ico("info",17)+' Os números são consultados no Supabase. Nenhuma atividade ou receita é simulada. Os cartões de monitoramento exibem dados agregados.</div>';
+}
+function openCommand(){
+ if(!state.verified||state.modal)return;
+ state.modal={type:"command"};
+ modal('<div class="saas-command-dialog"><h2>Localizar ferramenta</h2><p>Pesquise pelo nome ou pela função desejada.</p><div class="field"><label for="admin-module-search">Ferramenta</label><input id="admin-module-search" placeholder="Ex.: usuários, manutenção, Premium…" autocomplete="off"></div><div class="saas-command-results">'+sections.map(s=>moduleTile(s)).join("")+'</div><div class="modal-actions"><button class="btn-outline" type="button" data-action="close-modal">Fechar</button></div></div>');
 }
 function users(){
  var arr=state.users.rows||[],total=state.users.total||0;
- return heading("GERENCIAMENTO","As pessoas <em>do CONNECT</em>","Pesquise usuários cadastrados e controle suspensão ou exclusão definitiva.")+
+ return heading("GERENCIAMENTO","Usuários","Pesquise usuários cadastrados e controle suspensão ou exclusão definitiva.")+
  '<section class="data-panel"><div class="data-tools"><div><h3>Contas cadastradas</h3><small>'+e(total)+' registro(s)</small></div><label class="search-box">'+ico("search",17)+'<input id="user-search" placeholder="Nome ou e-mail…" aria-label="Pesquisar usuários" autocomplete="off" maxlength="120" value="'+e(state.search)+'"></label></div>'+
  (arr.length?arr.map(function(u){return '<div class="list-row"><div class="list-main">'+person(u.display_name||u.email,u.email,u.admin)+'</div><div class="row-meta">'+fmt(u.created_at)+'</div>'+badge(u.admin?"ADMIN":u.banned?"SUSPENSO":"ATIVO",u.banned?"warn":u.admin?"":"neutral")+'<div class="admin-user-actions"><button class="small-btn '+(u.banned?"":"danger")+'" data-action="edit-user" data-id="'+e(u.id)+'">'+(u.admin?"Detalhes":u.banned?"Reativar":"Suspender")+'</button>'+(!u.admin?'<button type="button" class="small-btn user-delete-action" data-action="delete-user" data-id="'+e(u.id)+'">Excluir conta</button>':'')+'</div></div>';}).join(""):empty("Nenhuma conta encontrada","Ajuste os termos de busca ou aguarde novos cadastros."))+
  '<div class="table-footer"><span>Página '+(state.userPage+1)+' · '+e(total)+' usuário(s)</span><div style="display:flex;gap:8px"><button class="small-btn" data-action="prev-users" '+(state.userPage<=0?"disabled":"")+'>'+ico("chevron-left",13)+' Anterior</button><button class="small-btn" data-action="next-users" '+((state.userPage+1)*perPage>=total?"disabled":"")+'>Próxima '+ico("chevron-right",13)+'</button></div></div></section>';
@@ -142,13 +189,13 @@ function commentReportsPanel(){
 function reports(){
  var arr=state.reports||[];
  var filters=[["open","Pendentes"],["reviewed","Analisadas"],["dismissed","Descartadas"],["all","Todas"]];
- return heading("MODERAÇÃO","Uma comunidade <em>mais segura.</em>","Denúncias enviadas por participantes reais. Mensagens privadas não são exibidas aqui.")+
+ return heading("MODERAÇÃO","Moderação","Denúncias enviadas por participantes reais. Mensagens privadas não são exibidas aqui.")+
  '<section class="data-panel"><div class="data-tools"><div><h3>Central de denúncias</h3><small>Ações de moderação registradas no banco</small></div><div class="filter-row">'+filters.map(function(f){return '<button class="chip '+(state.reportStatus===f[0]?"active":"")+'" data-report-status="'+f[0]+'">'+e(f[1])+'</button>';}).join("")+'</div></div>'+
  (arr.length?arr.map(function(r){return '<div class="list-row"><div class="list-main">'+person(r.reported_name,reasonNames[r.reason]||r.reason,true)+'</div><div class="row-meta">'+fmt(r.created_at)+'</div>'+badge(r.status==="open"?"PENDENTE":r.status==="reviewed"?"ANALISADA":"DESCARTADA",r.status==="open"?"warn":"neutral")+'<button class="small-btn" data-action="review" data-id="'+e(r.id)+'">Analisar '+ico("chevron-right",13)+'</button></div>';}).join(""):empty("Nenhuma denúncia aqui","Quando houver denúncias, elas aparecerão nesta seção."))+'</section>'+commentReportsPanel();
 }
 function pairs(){
  var arr=state.pairs||[];
- return heading("ENCONTROS · 1 A 1","Conexões <em>reais.</em>","Acompanhe sessões e matches sem acessar o conteúdo das mensagens privadas.")+
+ return heading("ENCONTROS · 1 A 1","Encontros e matches","Acompanhe sessões e matches sem acessar o conteúdo das mensagens privadas.")+
  '<section class="data-panel"><div class="data-tools"><div><h3>Conexões recentes</h3><small>Últimos 60 encontros · dados de sessão</small></div>'+badge(arr.length+" exibidos","neutral")+'</div>'+
  (arr.length?arr.map(function(p){return '<div class="list-row"><div class="list-main">'+person(p.person_a,"com "+p.person_b,false)+'</div><div class="row-meta">'+fmt(p.created_at)+'</div>'+badge(p.status==="connected"?"MATCH":p.status==="active"?"EM CONVERSA":"ENCERRADA",p.status==="connected"?"":p.status==="active"?"warn":"neutral")+'</div>';}).join(""):empty("Sem encontros ainda","Quando as pessoas se conectarem, os encontros aparecem aqui."))+'</section>';
 }
@@ -204,7 +251,7 @@ function privacyRequestsPanel(){
  (r.status==='pending'?'<div class="appeal-buttons"><button class="btn-main" data-action="privacy-handled" data-id="'+e(r.id)+'">Marcar atendida</button><button class="btn-outline" data-action="privacy-denied" data-id="'+e(r.id)+'">Não atendida</button></div>':'')+'</article>';}).join(''):'<p class="section-desc">Nenhum pedido recebido.</p>')+'</section>';
 }
 function security(){
- return heading("ACESSO E PRIVACIDADE","Segurança <em>sem atalhos.</em>","O acesso administrativo é verificado no servidor. Seu navegador nunca recebe a chave secreta do Supabase.")+
+ return heading("ACESSO E PRIVACIDADE","Segurança e privacidade","O acesso administrativo é verificado no servidor. Seu navegador nunca recebe a chave secreta do Supabase.")+
  '<section class="form-card"><h2 class="section-heading">Administrador principal</h2><p class="section-desc">Conta reconhecida pela identidade E-mail e pela lista de autorização do banco.</p><div class="security-card"><span class="admin-avatar">'+e((state.user.email||"A").slice(0,1).toUpperCase())+'</span><div style="flex:1"><strong>'+e(state.user.email)+'</strong><small>E-mail confirmado · administrador autorizado</small></div>'+badge("ACESSO ATIVO")+'</div>'+
  '<div class="security-note"><b>Proteção em camadas.</b> Todas as operações de usuários, denúncias, suspensões e configurações são executadas por funções SQL com verificação administrativa. O controle não depende de esconder botões ou comparar e-mails no JavaScript.</div><div class="health-row"><strong>Autenticação</strong>'+badge("Supabase Auth")+'</div><div class="health-row"><strong>Banco de dados</strong>'+badge("Supabase + RLS")+'</div><div class="health-row"><strong>Conteúdo de conversas</strong>'+badge("Não acessível aqui","neutral")+'</div><div class="health-row"><strong>Endereço do painel</strong><span style="overflow-wrap:anywhere;font-size:11px">/testesite/admin/</span></div></section>'+privacyRequestsPanel();
 }
@@ -213,7 +260,9 @@ function renderView(){
  var target=document.getElementById("admin-view");if(!target)return;
  document.querySelectorAll("[data-view]").forEach(function(el){el.classList.toggle("active",el.getAttribute("data-view")===state.view);});
  var loc=document.getElementById("topbar-location");if(loc)loc.textContent=viewTitle();
- target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="appeals"?heading("RECURSOS E MODERAÇÃO","Contestações <em>de suspensão.</em>","Confira as solicitações e analise cada recurso.")+appealsPanel():state.view==="pairs"?pairs():state.view==="bulletins"?heading("COMUNICAÇÃO OFICIAL","Avisos <em>e enquetes.</em>","Gerencie suas publicações por 24 horas.")+window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico}):state.view==="support"?heading("ATENDIMENTO","Suporte <em>e provas.</em>","Protocolos recebidos dos usuários.")+window.entreAdminExtras.supportPage(state.supportTickets,e,fmt,ico,badge):state.view==="premium"?heading("ASSINATURAS","Premium <em>manual.</em>","Gerencie liberações por e-mail e o valor mensal.")+window.entreAdminExtras.premiumPage(state.premiumConfig,e,ico,state.manualPremiumAccount):state.view==="settings"?settings():security());
+ var menu=document.getElementById("adminMoreMenu");if(menu)menu.hidden=!state.moreOpen;var toggle=document.querySelector(".admin-more-button");if(toggle)toggle.setAttribute("aria-expanded",String(state.moreOpen));
+ var sync=document.getElementById("saas-sync");if(sync)sync.textContent=state.loading?"Sincronizando…":state.loadError?"Falha na atualização · dados anteriores podem estar desatualizados":state.refreshAt?"Sincronizado às "+state.refreshAt.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"Aguardando sincronização";
+ target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="monitor"?monitor():state.view==="modules"?moduleDirectory():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="appeals"?heading("RECURSOS E MODERAÇÃO","Contestações de suspensão","Confira as solicitações e analise cada recurso.")+appealsPanel():state.view==="pairs"?pairs():state.view==="bulletins"?heading("COMUNICAÇÃO OFICIAL","Avisos e enquetes","Gerencie suas publicações por 24 horas.")+window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico}):state.view==="support"?heading("ATENDIMENTO","Central de suporte","Protocolos recebidos dos usuários.")+window.entreAdminExtras.supportPage(state.supportTickets,e,fmt,ico,badge):state.view==="premium"?heading("ASSINATURAS","Assinaturas Premium","Gerencie liberações por e-mail e o valor mensal.")+window.entreAdminExtras.premiumPage(state.premiumConfig,e,ico,state.manualPremiumAccount):state.view==="settings"?settings():security());
 }
 let adminLoadEpoch=0;
 async function load(view,background=false){
@@ -221,9 +270,10 @@ async function load(view,background=false){
  const valid=()=>epoch===adminLoadEpoch&&state.user?.id===owner&&state.verified;
  if(!background){state.loading=true;renderView();}
  try{
-  if(view==="overview"||view==="settings"||view==="updates"||!state.overview){
+  if(view==="overview"||view==="monitor"||view==="settings"||view==="updates"||!state.overview){
    patch.overview=await rpc("entre_admin_overview");if(!valid())return;patch.settings=patch.overview?.settings||state.settings;
    if(view==="overview")patch.appeals=await rpc("entre_admin_appeals");
+   if(view==="overview"||view==="monitor"){try{patch.community=await rpc("connect_admin_community_metrics");patch.communityUnavailable=false;}catch(_){patch.community=null;patch.communityUnavailable=true;}}
   }
   if(!valid())return;
   if(view==="users")patch.users=await rpc("entre_admin_users",{_query:state.search,_limit:perPage,_offset:state.userPage*perPage});
@@ -234,11 +284,11 @@ async function load(view,background=false){
   if(view==="support")patch.supportTickets=await rpc("entre_admin_support_tickets");
   if(view==="premium"){patch.premiumConfig=await rpc("entre_admin_premium_settings");patch.recurringConfig=null;}
   if(view==="security"){const results=await Promise.all([rpc("entre_admin_appeals"),rpc("entre_admin_privacy_requests")]);patch.appeals=results[0];patch.privacyRequests=results[1];}
-  if(!valid())return;Object.assign(state,patch);state.refreshAt=new Date();lastLoad=Date.now();
- }catch(err){if(valid()){if(!background)toast(errorText(err),true);else console.warn(errorText(err));}}
+  if(!valid())return;Object.assign(state,patch);state.loadError=null;state.refreshAt=new Date();lastLoad=Date.now();
+ }catch(err){if(valid()){state.loadError=errorText(err);if(!background)toast(errorText(err),true);else console.warn(errorText(err));}}
  finally{if(valid()){state.loading=false;if(state.view===view){if(background&&view==='bulletins'){const wrapper=document.createElement('div');wrapper.innerHTML=window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico});const list=wrapper.querySelector('.bulletin-admin-list'),old=document.querySelector('.bulletin-admin-list');if(list&&old)old.replaceWith(list);else if(!adminEditing())renderView();}else if(!background||!adminEditing())renderView();}}}
 }
-async function navigate(view){if(!sections.some(function(s){return s[0]===view;}))return;state.moreOpen=false;state.view=view;renderView();await load(view);}
+async function navigate(view){if(!sections.some(function(s){return s[0]===view;}))return;if(state.modal?.type==="command")closeModal();state.moreOpen=false;state.view=view;state.loading=true;renderView();await load(view);}
 function modal(content){document.getElementById("modal-root").innerHTML='<div class="modal-back" id="modal-back"><div class="modal" role="dialog" aria-modal="true" aria-label="Ação administrativa">'+content+'</div></div>';var el=document.querySelector(".modal input,.modal textarea,.modal select");if(el)el.focus();}
 async function openSupportThread(id){
  const ticket=state.supportTickets.find(t=>Number(t.id)===id);if(!ticket||!state.verified)return;
@@ -298,6 +348,7 @@ document.addEventListener("click",async function(ev){
   if(!window.confirm("Excluir "+(item.kind==="poll"?"a enquete":"o aviso")+" “"+item.title+"”? A publicação, as notificações e as respostas ou votos serão removidos para todos."))return;
   state.busy=true;n.disabled=true;try{const result=await rpc("entre_admin_delete_bulletin",{_id:id});if(result?.deleted!==true&&result?.status!=="not_found")throw Error("Exclusão não confirmada.");state.bulletins=state.bulletins.filter(b=>Number(b.id)!==id);toast(result.deleted?"Publicação excluída.":"Publicação já indisponível.");await load("bulletins");}catch(err){toast(errorText(err),true);}finally{state.busy=false;if(n.isConnected)n.disabled=false;}return;
  }
+ if(a==="command"){openCommand();return;}
  if(a==="refresh"){await load(state.view);toast("Dados atualizados.");return;}
  if(a==="supportEmailReply"){if(!state.verified||n.disabled)return;n.disabled=true;try{var result=await db.functions.invoke("entre-support-email",{body:{reply_id:Number(n.dataset.id)}});if(result.error){let reason="Envio indisponível. Verifique a configuração de e-mail.";try{reason=(await result.error.context.json()).error||reason;}catch(_){}throw Error(reason);}if(result.data?.status!=="sent")throw Error("Envio não confirmado.");toast(result.data.already_sent?"E-mail já enviado.":"E-mail aceito pelo provedor.");}catch(err){toast(errorText(err),true);}finally{n.disabled=false;}return;}
  if(a==="supportThread"){try{await openSupportThread(Number(n.dataset.id));}catch(err){toast(errorText(err),true);}return;}
@@ -328,6 +379,7 @@ document.addEventListener("click",async function(ev){
 });
 document.addEventListener("change",function(ev){if(ev.target?.id==="bulletin-kind")window.entreAdminBulletins.syncType();});
  document.addEventListener("input",function(ev){
+ if(ev.target.id==="admin-module-search"){const q=ev.target.value.toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g,"");document.querySelectorAll(".saas-command-results .saas-module").forEach(el=>{el.hidden=!el.textContent.toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g,"").includes(q);});return;}
  if(ev.target.id==="user-search"){
   clearTimeout(searchTimer);var input=ev.target;state.search=input.value;state.userPage=0;
   searchTimer=setTimeout(async function(){if(state.view==="users"){var active=document.activeElement===input;await load("users");if(active){var next=document.getElementById("user-search");if(next){next.focus();next.setSelectionRange(next.value.length,next.value.length);}}}},420);
@@ -395,13 +447,13 @@ document.addEventListener("submit",async function(ev){
   }
  }catch(err){toast(errorText(err),true);}finally{state.busy=false;if(btn&&btn.isConnected)btn.disabled=false;}
 });
-document.addEventListener("keydown",function(ev){if(ev.key==="Escape")closeModal();});
+document.addEventListener("keydown",function(ev){if(ev.key==="Escape")closeModal();if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==="k"&&state.verified){ev.preventDefault();openCommand();}});
 document.addEventListener("click",function(ev){if(ev.target&&ev.target.id==="modal-back")closeModal();});
 let adminSignalChannel=null,adminSupportChannel=null,adminFallback=0,adminRefreshTimer=0,adminRefreshing=false,adminAuthBound=false;const adminDirty=new Set();
 function adminEditing(){const el=document.activeElement;return !!(el?.matches('input,textarea,select,[contenteditable=true]')||document.querySelector('#admin-view form textarea:not([readonly])')?.value?.trim());}
 function stopAdminRealtime(){if(adminSignalChannel)void db.removeChannel(adminSignalChannel);if(adminSupportChannel)void db.removeChannel(adminSupportChannel);adminSignalChannel=null;adminSupportChannel=null;clearInterval(adminFallback);clearTimeout(adminRefreshTimer);adminRefreshTimer=0;adminDirty.clear();}
 function scheduleAdminRefresh(){if(adminRefreshTimer||adminRefreshing||!state.verified||document.hidden)return;adminRefreshTimer=setTimeout(()=>{adminRefreshTimer=0;void flushAdminRefresh();},120);}
-async function flushAdminRefresh(){if(adminRefreshing||!state.verified||document.hidden)return;const view=state.view;const relevant=adminDirty.has('all')||adminDirty.has(view)||view==='overview'&&adminDirty.size>0||view==='updates'&&adminDirty.has('settings')||view==='users'&&adminDirty.has('premium')||view==='security'&&adminDirty.has('appeals');if(!relevant){adminDirty.clear();return;}if(state.busy||state.loading||state.modal||(view!=='bulletins'&&adminEditing())){adminRefreshTimer=setTimeout(()=>{adminRefreshTimer=0;void flushAdminRefresh();},700);return;}adminRefreshing=true;adminDirty.clear();try{await load(view,true);}finally{adminRefreshing=false;if(adminDirty.size)scheduleAdminRefresh();}}
+async function flushAdminRefresh(){if(adminRefreshing||!state.verified||document.hidden)return;const view=state.view;const relevant=adminDirty.has('all')||adminDirty.has(view)||(view==='overview'||view==='monitor')&&adminDirty.size>0||view==='updates'&&adminDirty.has('settings')||view==='users'&&adminDirty.has('premium')||view==='security'&&adminDirty.has('appeals');if(!relevant){adminDirty.clear();return;}if(state.busy||state.loading||state.modal||(view!=='bulletins'&&adminEditing())){adminRefreshTimer=setTimeout(()=>{adminRefreshTimer=0;void flushAdminRefresh();},700);return;}adminRefreshing=true;adminDirty.clear();try{await load(view,true);}finally{adminRefreshing=false;if(adminDirty.size)scheduleAdminRefresh();}}
 async function boot(){
  try{
   var s=await db.auth.getSession();if(s.error)throw s.error;
@@ -411,7 +463,7 @@ async function boot(){
   state.user=verified.data.user;
   var allowed=await rpc("entre_admin_check");
   if(allowed!==true){gate(true);return;}
-  state.verified=true;shell();await load("overview");
+  state.verified=true;state.view="overview";state.moreOpen=false;state.modal=null;state.community=null;state.overview=null;state.loadError=null;state.refreshAt=null;shell();await load("overview");
  stopAdminRealtime();
  adminSupportChannel=db.channel("admin-support-replies").on("postgres_changes",{event:"UPDATE",schema:"public",table:"entre_support_tickets"},async p=>{if(state.modal?.type==="support-thread"&&Number(state.modal.data.id)===Number(p.new?.id)&&p.new.status==="cancelled"){const form=document.getElementById("support-reply-form");if(form){form.hidden=true;form.querySelectorAll("button,textarea,input").forEach(x=>x.disabled=true);}state.modal.data.status="cancelled";}if(state.verified&&state.view==="support"&&!state.modal&&!state.loading&&!state.busy&&p.new?.status!=="draft")try{await load("support");}catch(err){console.warn(errorText(err));}}).on("postgres_changes",{event:"INSERT",schema:"public",table:"entre_support_replies"},async p=>{if(!state.verified||state.view!=="support")return;try{if(state.modal?.type==="support-thread")await refreshSupportThread(Number(state.modal.data.id));else if(!state.loading&&!state.busy)await load("support");}catch(err){console.warn(errorText(err));}}).subscribe();
   adminSignalChannel=db.channel("connect-admin-signal").on("postgres_changes",{event:"UPDATE",schema:"public",table:"connect_admin_signal"},p=>{const kind=p.new?.kind;if(kind){adminDirty.add(kind);scheduleAdminRefresh();}}).subscribe(status=>{if(status==="SUBSCRIBED"){adminDirty.add("all");scheduleAdminRefresh();}});
