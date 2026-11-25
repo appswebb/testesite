@@ -72,7 +72,7 @@ async function action(type,btn){
   const r=await call('entre_follow_request',{_target:id});
   toast(r?.status==='accepted'?'Vocês já se seguem.':r?.status==='pending'?'Pedido já enviado. Aguarde o aceite.':'Pedido enviado. Aguarde o aceite.');
    for(const person of(api.data.peopleResults||[])){if(person.id===id)person.follow_status=r?.status||'pending';}
-  state.modal=null;await api.loadOnline(true);render();return true;
+  state.modal=null;render();return true;
  }
  if(type==='socialChat'){
   const r=await call('entre_chat_request',{_target:id});
@@ -134,7 +134,7 @@ async function action(type,btn){
  if(type==='notificationTab'){api.data.notificationTab=['bulletins','polls'].includes(btn.dataset.value)?btn.dataset.value:'personal';renderView();if(['bulletins','polls'].includes(api.data.notificationTab))await api.refreshBulletins?.();return true;}
  if(type==='notificationOpen'){
   await call('entre_notifications_read',{_until:Number(id)});
-  if(Number(btn.dataset.bulletin)>0){api.data.notificationTab=btn.dataset.kind==='poll'?'polls':'bulletins';await api.refreshBulletins?.(true);nav('notifications');}else if(btn.dataset.pair){await loadPairs();await openPair(btn.dataset.pair);}else nav('online');
+  if(Number(btn.dataset.bulletin)>0){api.data.notificationTab=btn.dataset.kind==='poll'?'polls':'bulletins';await api.refreshBulletins?.(true);nav('notifications');}else if(btn.dataset.pair){await loadPairs();await openPair(btn.dataset.pair);}else {api.data.notificationTab='personal';if(state.view!=='notifications')nav('notifications');else renderView();}
   await api.refreshNotifications();return true;
  }
  if(type==='notificationsPermission'){
