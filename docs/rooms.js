@@ -2,10 +2,10 @@
 (function(){
 'use strict';
 const UF=[['AC','Acre'],['AL','Alagoas'],['AP','Amapá'],['AM','Amazonas'],['BA','Bahia'],['CE','Ceará'],['DF','Distrito Federal'],['ES','Espírito Santo'],['GO','Goiás'],['MA','Maranhão'],['MT','Mato Grosso'],['MS','Mato Grosso do Sul'],['MG','Minas Gerais'],['PA','Pará'],['PB','Paraíba'],['PR','Paraná'],['PE','Pernambuco'],['PI','Piauí'],['RJ','Rio de Janeiro'],['RN','Rio Grande do Norte'],['RS','Rio Grande do Sul'],['RO','Rondônia'],['RR','Roraima'],['SC','Santa Catarina'],['SP','São Paulo'],['SE','Sergipe'],['TO','Tocantins']];
-const s={room:'br',state:'SP',city:'',cities:[],loading:false,busy:false,rows:[],older:false,loadingMore:false,after:0,expiresCooldown:0,refreshTimer:null,cityLoading:false,cityError:false,filterOpen:false,detecting:false,filterEpoch:0};
+const s={room:'br',activeCity:'',state:'SP',city:'',cities:[],loading:false,busy:false,rows:[],older:false,loadingMore:false,after:0,expiresCooldown:0,refreshTimer:null,cityLoading:false,cityError:false,filterOpen:false,detecting:false,filterEpoch:0};
 const clean=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9_-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,80);
 const flags=uf=>'<img class="uf-flag" loading="lazy" width="33" height="24" alt="Bandeira de '+esc(uf)+'" src="https://strategicprojects.github.io/flags-brasil/flags/uf/'+uf.toLowerCase()+'.svg">';
-const title=key=>key==='br'?'Brasil · Sala global':key.startsWith('s:')?UF.find(u=>u[0].toLowerCase()===key.slice(2))?.[1]||'Estado':s.city||'Sala da cidade';
+const title=key=>key==='br'?'Brasil · Sala global':key.startsWith('s:')?UF.find(u=>u[0].toLowerCase()===key.slice(2))?.[1]||'Estado':s.activeCity||'Sala da cidade';
 const formatDate=d=>new Date(d).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 const icon=key=>key==='br'?'🇧🇷':flags(key.slice(2,4).toUpperCase());
 function chatRows(){
@@ -26,18 +26,23 @@ function paint(scrollToEnd=false){
  if(cool)cool.textContent=s.expiresCooldown>Date.now()?'Aguarde '+Math.ceil((s.expiresCooldown-Date.now())/1000)+'s para enviar outra.':'Uma mensagem a cada 5 segundos · apaga em 24h';
 }
 let roomOwner=null;
-function resetAccount(){const uid=state.session?.user?.id||null;if(roomOwner===uid)return;roomOwner=uid;s.rows=[];s.older=false;s.expiresCooldown=0;s.room='br';s.city='';s.state='SP';s.cities=[];if(s.refreshTimer)clearInterval(s.refreshTimer);s.refreshTimer=null;}
+function resetAccount(){const uid=state.session?.user?.id||null;if(roomOwner===uid)return;roomOwner=uid;s.rows=[];s.older=false;s.expiresCooldown=0;s.room='br';s.activeCity='';s.city='';s.state='SP';s.cities=[];if(s.refreshTimer)clearInterval(s.refreshTimer);s.refreshTimer=null;}
+function shortcut(kind,label,detail,graphic,selected){
+ return '<button type="button" class="cr-shortcut'+(selected?' is-current':'')+'" data-room-action="quick-'+kind+'" aria-pressed="'+String(selected)+'"><span class="cr-shortcut-icon">'+graphic+'</span><span class="cr-shortcut-copy"><strong>'+label+'</strong><small>'+esc(detail)+'</small></span>'+(selected?'<span class="cr-selected-dot" aria-hidden="true"></span>':'')+'</button>';
+}
 function view(){
- resetAccount();const current=title(s.room),label=s.room==='br'?'🇧🇷':icon(s.room);
- return '<section class="room-shell rooms-static-shell" aria-label="Salas públicas">'+
- '<header class="rooms-static-header"><div class="rooms-static-title"><h2>Salas</h2><div class="rooms-current-name">'+label+' <strong>'+esc(current)+'</strong></div></div>'+
- '<button type="button" class="rooms-open-filter" data-room-action="filter" aria-haspopup="dialog" aria-expanded="false" aria-controls="roomsFilterOverlay">'+ico('sliders',18)+' Filtros</button></header>'+
+ resetAccount();const current=title(s.room),label=icon(s.room),uf=UF.find(x=>x[0]===s.state)?.[1]||'Escolher estado';
+ return '<section class="room-shell rooms-static-shell cr-rooms" aria-label="Salas públicas">'+
+ '<header class="rooms-static-header cr-top"><div class="cr-title"><span class="cr-eyebrow"><span class="cr-tiny-dot"></span> COMUNIDADE</span><h2>Salas</h2><p>Converse com pessoas da sua região ou do Brasil.</p></div>'+
+ '<button type="button" class="rooms-open-filter" data-room-action="filter" aria-haspopup="dialog" aria-expanded="false" aria-controls="roomsFilterOverlay">'+ico('sliders',18)+'<span>Filtros</span></button></header>'+
+ '<nav class="cr-shortcuts" aria-label="Escolher sala">'+shortcut('global','Brasil','Sala nacional','🇧🇷',s.room==='br')+shortcut('state','Estado',uf,flags(s.state),s.room==='s:'+s.state.toLowerCase())+shortcut('city','Cidade',s.city||'Escolher cidade',ico('compass',20),s.room==='c:'+s.state.toLowerCase()+':'+clean(s.city))+'</nav>'+
+ '<section class="cr-chat" aria-label="Conversa atual"><header class="cr-chat-head"><div class="cr-room-symbol">'+label+'</div><div class="cr-chat-name"><small>'+(s.room==='br'?'Nacional':s.room.startsWith('s:')?'Estadual':'Municipal')+' · Sala pública</small><strong>'+esc(current)+'</strong></div><button type="button" class="cr-change-room" data-room-action="filter" aria-label="Trocar sala">'+ico('chevron',16)+'</button></header>'+
+ '<div class="cr-retention">'+ico('clock',14)+'<span>Mensagens temporárias · 24 horas</span></div>'+
  '<div class="rooms-discussion" id="roomMessages" aria-live="polite" aria-label="Mensagens da sala">'+chatRows()+'</div>'+
- '<form id="roomChatForm" class="room-composer"><label class="sr-only" for="roomText">Sua mensagem na sala</label>'+
- '<input autocomplete="off" id="roomText" maxlength="400" placeholder="Enviar mensagem…" required>'+
+ '<div class="cr-compose"><form id="roomChatForm" class="room-composer"><label class="sr-only" for="roomText">Sua mensagem na sala</label>'+
+ '<input autocomplete="off" id="roomText" maxlength="400" placeholder="Escreva uma mensagem…" required>'+
  '<button type="submit" title="Enviar mensagem" aria-label="Enviar mensagem">'+ico('send',19)+'</button></form>'+
- '<p class="rooms-cooldown" id="roomCooldown">Uma mensagem a cada 5 segundos · apaga em 24h</p>'+
- '</section>';
+ '<p class="rooms-cooldown" id="roomCooldown">Uma mensagem a cada 5 segundos · apaga em 24h</p></div></section></section>';
 }
 function filterCities(){
  const select=document.getElementById('roomsCitySelect'),button=document.querySelector('#roomsFilterOverlay [data-room-action="city"]'),status=document.getElementById('roomsCityStatus');
@@ -59,7 +64,7 @@ function openRoomFilter(){
  closeRoomFilter(false);
  const overlay=document.createElement('div');overlay.id='roomsFilterOverlay';overlay.className='rooms-filter-overlay';
  overlay.innerHTML='<section class="rooms-filter-dialog" role="dialog" aria-modal="true" aria-labelledby="roomsFilterHeading">'+
- '<header class="rooms-filter-heading"><h2 id="roomsFilterHeading">Filtros</h2>'+
+ '<header class="rooms-filter-heading"><div><small class="cr-filter-kicker">ESCOLHA SUA REGIÃO</small><h2 id="roomsFilterHeading">Encontre uma sala</h2></div>'+
  '<button type="button" data-room-action="closeFilter" aria-label="Fechar filtro">'+ico('close',20)+'</button></header>'+
  '<div class="rooms-filter-body"><button type="button" class="rooms-auto-detect" data-room-action="detect">'+ico('compass',18)+' <span><strong>Detectar localização</strong><small>Preencher estado e cidade automaticamente</small></span>'+ico('chevron',16)+'</button><p id="roomsDetectStatus" class="rooms-city-status" role="status"></p><button type="button" class="rooms-filter-global" data-room-action="choose" data-room="br">🇧🇷 Chat do Brasil '+ico('arrow',17)+'</button>'+
  '<label for="roomsStateSelect">Estado</label>'+
@@ -128,7 +133,7 @@ async function detectRoomRegion(){
 }
 function roomChange(key){
  if(!/^br$|^s:[a-z]{2}$|^c:[a-z]{2}:[a-z0-9][a-z0-9_-]{1,79}$/.test(key))return;
- closeRoomFilter(false);s.room=key;s.rows=[];s.older=false;renderView();void load();startPolling();
+ if(key===s.room){closeRoomFilter();return;}if(key.startsWith('c:'))s.activeCity=s.city;else s.activeCity='';closeRoomFilter(false);s.room=key;s.rows=[];s.older=false;renderView();void load();startPolling();
 }
 function startPolling(){
  if(s.refreshTimer)clearInterval(s.refreshTimer);
@@ -176,6 +181,9 @@ document.addEventListener('click',e=>{
  const b=e.target.closest('[data-room-action]');if(!b)return;
  const a=b.dataset.roomAction;
  if(a==='filter'){openRoomFilter();return;}
+ if(a==='quick-global'){roomChange('br');return;}
+ if(a==='quick-state'){if(UF.some(([uf])=>uf===s.state))roomChange('s:'+s.state.toLowerCase());else openRoomFilter();return;}
+ if(a==='quick-city'){if(s.city&&s.cities.includes(s.city))roomChange('c:'+s.state.toLowerCase()+':'+clean(s.city));else openRoomFilter();return;}
  if(a==='closeFilter'){closeRoomFilter();return;}
  if(a==='detect'){void detectRoomRegion();return;}
  if(a==='choose')roomChange('br');
