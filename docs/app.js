@@ -590,7 +590,7 @@ async function saveInlineAvatar(blob,uid){
  }catch(e){if(uploaded&&!committed)await db.storage.from(AVATAR_BUCKET).remove([path]);throw e}
  finally{inlineProfileBusy=false}
 }
-function appearanceView(){return '<section class="cx-appearance-page"><header class="cx-appearance-intro"><span>SEU CONNECT</span><h2>Personalize sua experiência</h2><p>Escolha o tema e a cor de destaque do aplicativo.</p></header>'+(window.entreTheme?.renderControls?.()||'')+'</section>';}
+function appearanceView(){return '<section class="cx-appearance-page"><header class="cx-appearance-intro"><span>SEU CONNECT</span><h2>Personalize sua experiência</h2><p>Escolha entre o tema claro e o escuro.</p></header>'+(window.entreTheme?.renderControls?.()||'')+'</section>';}
 function settingsView(){return heading('VOCÊ NO CONTROLE','Configurações<em>.</em>','Gerencie sua experiência, privacidade e conta.')+(window.entreTheme?.renderControls?.()||'')+
  
  '<div class="settings-card"><h3>Experiência</h3>'+
