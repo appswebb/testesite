@@ -25,7 +25,7 @@ async function loadBadges(profiles){
  catch(e){console.warn('Badge status',e);}
 }
 let feedLoadQueued=false,feedLoadSeq=0,feedMode='recent';
-const feedModes={recent:'Recentes',recommended:'Para você',following:'Seguindo',trending:'Em alta',region:'Minha região'};
+const feedModes={recent:'Recentes',recommended:'Para você',following:'Seguindo',trending:'Em alta',region:'Meu país'};
 async function loadPosts(more=false){
  syncFeedOwner();const uid=state.session?.user?.id;if(!uid)return;if(data.postLoading){if(!more)feedLoadQueued=true;return;}const seq=++feedLoadSeq;data.postLoading=true;feedError='';
  try{
@@ -118,7 +118,7 @@ function postsView(){
  '<section class="cn-feed-composer"><form id="postCreateForm" class="post-compose cn-inline-post"><div class="cf-compose-top">'+avatar(state.profile)+'<div class="cf-compose-field"><label class="sr-only" for="connectPostBody">Escreva uma publicação</label><textarea id="connectPostBody" name="body" minlength="3" maxlength="900" rows="2" placeholder="O que você quer compartilhar?">'+esc(feedDraft)+'</textarea></div></div>'+
  '<div class="cf-compose-media">'+(window.entreMedia?.composeMarkup?.()||'')+'</div><div class="post-compose-footer"><span id="connectFeedCount" class="cf-compose-count">'+feedDraft.length+'/900</span><button type="submit" class="ui-btn btn-dark btn-sm" '+(feedPublishing?'disabled':'')+'>'+ (feedPublishing?'Publicando…':'Publicar')+' '+ico('arrow',15)+'</button></div></form></section>'+
  '<div class="cf-feed-header"><div><small>FEED</small><h3>'+esc(feedModes[feedMode])+'</h3></div><button type="button" class="cf-refresh" data-action="postsRefresh" aria-label="Atualizar publicações" title="Atualizar" '+(data.postLoading?'disabled':'')+'>'+ico('refresh',18)+'</button></div>'+
- '<div class="cx-feed-tabs" aria-label="Filtrar publicações">'+Object.entries(feedModes).map(([key,label])=>'<button type="button" data-cx-feed-mode="'+key+'" aria-pressed="'+(key===feedMode)+'" '+(data.postLoading?'disabled':'')+'>'+label+'</button>').join('')+'</div>'+(feedMode==='recommended'?'<p class="cx-feed-hint">Publicações de pessoas com interesses em comum. <button type="button" data-action="nav" data-view="discover">Editar interesses</button></p>':feedMode==='region'?'<p class="cx-feed-hint">Publicações do seu estado, quando a região está configurada.</p>':'')+
+ '<div class="cx-feed-tabs" aria-label="Filtrar publicações">'+Object.entries(feedModes).map(([key,label])=>'<button type="button" data-cx-feed-mode="'+key+'" aria-pressed="'+(key===feedMode)+'" '+(data.postLoading?'disabled':'')+'>'+label+'</button>').join('')+'</div>'+(feedMode==='recommended'?'<p class="cx-feed-hint">Publicações de pessoas com interesses em comum. <button type="button" data-action="nav" data-view="discover">Editar interesses</button></p>':feedMode==='region'?'<p class="cx-feed-hint">Publicações do seu país, quando configurado.</p>':'')+
  (rows.length?rows.map(p=>{
   const person={id:p.author_id,display_name:p.author_name,avatar_path:p.author_avatar,avatar_uploaded_at:p.author_avatar_uploaded_at};
   const own=p.author_id===state.session?.user?.id,liked=Boolean(p.liked),count=Math.max(0,Number(p.likes)||0);

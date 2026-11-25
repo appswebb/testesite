@@ -15,7 +15,7 @@
  };
  function panel(waiting=false){
   const busy=waiting||geo.busy;
-  const modes=[['any','Qualquer região do Brasil'],['my_state','Meu estado'],['my_city','Minha cidade'],['other_state','Escolher outro estado'],['other_city','Escolher outra cidade']];
+  const modes=[['any','Mundo inteiro'],['my_state','Meu estado'],['my_city','Minha cidade'],['other_state','Escolher outro estado'],['other_city','Escolher outra cidade']];
   const custom=geo.targetMode==='other_state'||geo.targetMode==='other_city';
   return `<section class="geo-discovery" aria-label="Localização e proximidade para encontros">
    <div class="geo-discovery-top"><div><span class="geo-eyebrow">${ico('compass',15)} LOCALIZAÇÃO</span><h3>Encontre alguém por região.</h3><p>Escolha sua cidade ou detecte automaticamente. A busca pode usar qualquer estado ou cidade.</p></div><span class="geo-privacy-pill">${ico('lock',14)} Sem GPS salvo</span></div>
@@ -35,7 +35,7 @@
    <p class="geo-privacy-note">${ico('shield',14)} Sua cidade não aparece publicamente no perfil. Ao detectar automaticamente, o navegador pedirá autorização e enviará as coordenadas uma única vez ao OpenStreetMap para identificar o município. Guardamos só cidade e UF no Supabase.</p>
   </section>`;
  }
- const modes=[['any','Todo o Brasil'],['my_state','Meu estado'],['my_city','Minha cidade'],['other_state','Outro estado'],['other_city','Outra cidade']];
+ const modes=[['any','Mundo inteiro'],['my_state','Meu estado'],['my_city','Minha cidade'],['other_state','Outro estado'],['other_city','Outra cidade']];
  let picker='';
  const fieldValue=key=>({'target-mode':geo.targetMode,'target-state':geo.targetState,'target-city':geo.targetCity,'home-state':geo.homeState,'home-city':geo.homeCity})[key]||'';
  function pickerField(key,label,options,placeholder,busy=false,searchable=false){
@@ -52,10 +52,11 @@
   return '<div class="cp-geo-field"><span class="cp-geo-label">Cidade</span><button type="button" class="cp-geo-select" data-geo-retry="'+esc(uf)+'" '+(busy?'disabled':'')+'>Carregar cidades '+ico('chevron',16)+'</button></div>';
  }
  function compactPanel(waiting=false){
+  const world=window.connectWorld?.current?.()||{};if(world.country&&world.country!=='BR')return '<section class="geo-discovery geo-discovery-compact cp-geo-panel"><strong>Alcance: '+esc(world.scope==='country'?window.connectWorld.codeName(world.country):'Mundo inteiro')+'</strong><p class="cp-geo-feedback">Altere país e alcance em Configurações. Filtros de estado e cidade estão disponíveis no Brasil.</p><button class="ui-btn btn-outline" data-action="nav" data-view="settings">Configurar país</button></section>';
   const busy=waiting||geo.busy,custom=['other_state','other_city'].includes(geo.targetMode);
   const states=UFS.map(([uf,n])=>[uf,n+' ('+uf+')']);
   if(geo.homeExpanded)return '<section class="geo-discovery geo-discovery-compact cp-geo-panel geo-edit-mode" aria-label="Editar localização"><div class="cp-geo-heading"><strong>Minha cidade</strong><button type="button" class="cp-geo-link" data-action="geoHomeClose">'+ico('back',15)+' Voltar</button></div><p class="cp-geo-feedback">Escolha sua cidade ou use a detecção automática.</p>'+pickerField('home-state','Estado',states,'Selecione o estado',busy,true)+cityPicker('home-city',geo.homeState,busy)+'<div class="cp-geo-actions"><button type="button" class="cp-geo-primary" data-action="geoSave" '+(busy||!geo.homeState||!geo.homeCity||geo.loading.has(geo.homeState)?'disabled':'')+'>'+ico('check',15)+' Salvar cidade</button><button type="button" class="cp-geo-secondary" data-action="geoDetect" '+(busy?'disabled':'')+'>'+ico('compass',15)+' Detectar</button></div><p class="cp-geo-feedback">'+ico('shield',14)+' Guardamos apenas cidade e estado.</p></section>';
-  return '<section class="geo-discovery geo-discovery-compact cp-geo-panel" aria-label="Região do encontro">'+pickerField('target-mode','Onde encontrar pessoas?',modes,'Todo o Brasil',busy)+
+  return '<section class="geo-discovery geo-discovery-compact cp-geo-panel" aria-label="Região do encontro">'+pickerField('target-mode','Onde encontrar pessoas?',modes.map(([k,v])=>[k,k==='any'&&world.scope==='country'?'Meu país':v]),'Mundo inteiro',busy)+
    (custom?pickerField('target-state','Estado',states,'Selecione o estado',busy,true)+(geo.targetMode==='other_city'?cityPicker('target-city',geo.targetState,busy):''):'')+
    (!geo.self&&geo.targetMode!=='any'?'<p class="cp-geo-feedback">Configure sua cidade para usar a busca por região.</p>':'')+
    '<div class="cp-geo-home"><span class="cp-geo-home-icon">'+ico('compass',18)+'</span><span><small>Minha cidade</small><strong>'+esc(geo.self?geo.self.city+' · '+geo.self.state:'Não configurada')+'</strong></span><button type="button" class="cp-geo-link" data-action="geoHomeEdit" '+(busy?'disabled':'')+'>'+(geo.self?'Alterar':'Configurar')+' '+ico('chevron',14)+'</button></div></section>';
@@ -168,6 +169,7 @@
   finally{geo.busy=false;paintCompact();}
  }
  function target(){
+  const world=window.connectWorld?.current?.()||{};if(world.country&&world.country!=='BR')return {_target_state:null,_target_city:null};
   if(geo.targetMode==='any')return {_target_state:null,_target_city:null};
   if(!geo.self?.state||!geo.self?.city)throw Error('Salve sua cidade de referência antes de filtrar por região.');
   if(geo.targetMode==='my_state')return {_target_state:geo.self.state,_target_city:null};
@@ -190,5 +192,5 @@
    case'target-city':geo.targetCity=el.value;break;
   }
  });
- window.entreGeo={init,panel,compactPanel,action,target,detectRegion,resetPicker:()=>{picker='';geo.homeExpanded=false;},details:()=>({...geo,self:geo.self?{...geo.self}:null})};
+ window.entreGeo={init,panel,compactPanel,action,target,detectRegion,resetWorld:()=>{geo.targetMode='any';geo.homeExpanded=false;picker='';},resetPicker:()=>{picker='';geo.homeExpanded=false;},details:()=>({...geo,self:geo.self?{...geo.self}:null})};
 })();

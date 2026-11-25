@@ -1,0 +1,23 @@
+(()=>{
+'use strict';
+const codes='AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'.split(' ');
+const names=typeof Intl.DisplayNames==='function'?new Intl.DisplayNames(['pt-BR'],{type:'region'}):null;
+const languages={pt:'Português',en:'English',es:'Español',fr:'Français',de:'Deutsch',it:'Italiano',ja:'日本語',ko:'한국어',zh:'中文',ar:'العربية',ru:'Русский',hi:'हिन्दी',id:'Bahasa Indonesia',tr:'Türkçe',uk:'Українська',nl:'Nederlands',pl:'Polski',sv:'Svenska',vi:'Tiếng Việt',th:'ไทย'};
+const defaults={country:'',scope:'world',language:'pt'};
+let owner=null,prefs={...defaults};
+const codeName=code=>codes.includes(code)?names?.of(code)||code:'País';
+const current=()=>owner===state.session?.user?.id?{...prefs}:{...defaults};
+const flag=code=>codes.includes(code)?String.fromCodePoint(...[...code].map(c=>127397+c.charCodeAt(0))):'🌐';
+const countries=(value='')=>'<option value="">Selecione seu país</option>'+codes.map(code=>[code,codeName(code)]).sort((a,b)=>a[1].localeCompare(b[1],'pt-BR')).map(([code,name])=>'<option value="'+code+'" '+(code===value?'selected':'')+'>'+esc(name)+'</option>').join('');
+const langOptions=value=>Object.entries(languages).map(([code,name])=>'<option value="'+code+'" '+(code===value?'selected':'')+'>'+esc(name)+'</option>').join('');
+function fields(d={},prefix='world'){
+ const lang=Object.hasOwn(languages,d.language)?d.language:'pt';
+ return '<div class="cw-fields"><div class="field"><label for="'+prefix+'Country">Seu país</label><select required name="world_country" id="'+prefix+'Country">'+countries(d.country)+'</select></div><div class="field"><label for="'+prefix+'Scope">O que deseja encontrar?</label><select name="world_scope" id="'+prefix+'Scope"><option value="world" '+(d.scope!=='country'?'selected':'')+'>Mundo inteiro</option><option value="country" '+(d.scope==='country'?'selected':'')+'>Somente meu país</option></select><small>Aplica-se ao feed, à descoberta e aos novos encontros. Conversas existentes são preservadas.</small></div><div class="field"><label for="'+prefix+'Language">Idioma das traduções</label><select name="world_language" id="'+prefix+'Language">'+langOptions(lang)+'</select></div></div>';
+}
+function read(form){const country=form.elements.world_country?.value,scope=form.elements.world_scope?.value,language=form.elements.world_language?.value;if(!codes.includes(country)||!['country','world'].includes(scope)||!Object.hasOwn(languages,language))throw Error('Selecione seu país e idioma.');return {_country:country,_scope:scope,_language:language};}
+async function load(){const id=state.session?.user?.id;owner=id||null;prefs={...defaults};if(!id)return;const {data,error}=await db.rpc('connect_world_me');if(state.session?.user?.id!==id)return;if(error)throw error;prefs={...defaults,...data};return current();}
+async function save(values){const id=state.session?.user?.id;const {data,error}=await db.rpc('connect_world_save',values);if(error)throw error;if(state.session?.user?.id!==id)throw Error('Sessão alterada.');owner=id;prefs={...defaults,...data};return current();}
+function settings(){return '<section class="settings-card cw-settings"><h3>País e idioma</h3><p>Personalize seu alcance no CONNECT.</p><form id="connectWorldForm">'+fields(current(),'cwSettings')+'<button class="ui-btn btn-dark" type="submit">Salvar preferências</button></form></section>';}
+document.addEventListener('submit',async e=>{if(e.target?.id!=='connectWorldForm')return;e.preventDefault();const form=e.target,btn=form.querySelector('button[type=submit]');if(btn.disabled)return;if(state.searching){toast('Encerre a busca antes de mudar sua região.',true);return;}btn.disabled=true;try{await save(read(form));window.entreGeo?.resetWorld?.();window.entreRooms?.resetWorld?.();toast('País e idioma atualizados.');}catch(err){toast(infoError(err),true);}finally{if(btn.isConnected)btn.disabled=false;}});
+window.connectWorld={current,fields,read,save,load,settings,countries,codeName,flag,languages};
+})();
