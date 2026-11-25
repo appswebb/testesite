@@ -83,7 +83,7 @@ function afterRender(){
  if(next===host)return;dispose();host=next;if(!next)return;
  if(next.id==='cxMoments')void loadMoments();else void loadDiscover();
 }
-document.addEventListener('visibilitychange',()=>{if(document.hidden){visibleCard?.querySelector('video')?.pause();}else if(state.view==='moments'&&visibleCard)void activate(visibleCard);});
+document.addEventListener('visibilitychange',()=>{if(typeof state==='undefined')return;if(document.hidden){visibleCard?.querySelector('video')?.pause();}else if(state.view==='moments'&&visibleCard)void activate(visibleCard);});
 document.addEventListener('click',async e=>{
  const b=e.target.closest?.('[data-cx-next]');if(!b||b.disabled)return;
  const action=b.dataset.cxNext,card=b.closest('.cx-moment'),m=rows.find(r=>r.id===card?.dataset.momentId),account=uid();
@@ -114,5 +114,6 @@ document.addEventListener('submit',async e=>{
  if(form.id==='cxMomentReport'){await rpc('connect_moment_report',{_id:form.dataset.id,_reason:form.elements.reason.value});activeDialog?.close();toast('Denúncia enviada.');if(state.view==='moments')await loadMoments();}
  }catch(e){toast(e.message||'Não foi possível concluir.',true);}finally{if(b.isConnected)b.disabled=false;}
 });
+const appRoot=document.getElementById('app');if(appRoot)new MutationObserver(()=>{if(host&&!host.isConnected)dispose();}).observe(appRoot,{childList:true,subtree:true});
 window.connectNext={momentsView,discoverView,afterRender};
 })();
