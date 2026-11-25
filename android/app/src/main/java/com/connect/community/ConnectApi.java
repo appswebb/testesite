@@ -61,6 +61,7 @@ final class ConnectApi {
   }finally{con.disconnect();}
  }
  synchronized void login(String email,String password,String captcha)throws Exception{store((JSONObject)http("POST","/auth/v1/token?grant_type=password",obj("email",email,"password",password,"gotrue_meta_security",obj("captcha_token",captcha)),null,null));}
+ synchronized void recover(String email,String captcha)throws Exception{http("POST","/auth/v1/recover?redirect_to="+enc(WEBSITE+"?auth=recovery"),obj("email",email,"gotrue_meta_security",obj("captcha_token",captcha)),null,null);}
  synchronized boolean signup(String email,String password,String captcha)throws Exception{
   JSONObject response=(JSONObject)http("POST","/auth/v1/signup?redirect_to="+enc(WEBSITE),obj("email",email,"password",password,"gotrue_meta_security",obj("captcha_token",captcha),"data",obj("connect_adult_declared",true,"connect_terms_accepted",true,"connect_terms_version","2026-11-25","connect_privacy_version","2026-11-25")),null,null);
   if(response.optString("access_token","").isEmpty())return false;store(response);return true;
