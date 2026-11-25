@@ -770,6 +770,7 @@ async function initializeAccount(){
   else state.view=saved.view==='lives'&&!PUBLIC_LIVES_ENABLED?'soon':saved.view;
   if(state.view==='notifications'&&window.entreSocial?.data)window.entreSocial.data.notificationTab=saved.notificationTab==='bulletins'?'bulletins':'personal';
  }
+ if(state.profile&&!onboardingPlanPending()&&!activeEncounter()){if(params.get('push')==='1'){state.view='notifications';if(window.entreSocial?.data)window.entreSocial.data.notificationTab='personal';const url=new URL(location.href);url.searchParams.delete('push');history.replaceState(null,'',url);}else if(/^\d{1,15}$/.test(params.get('post')||'')){state.view='posts';}}
  if(state.profile&&!onboardingPlanPending()){state.resumeNavigation=false;window.connectSession.clearDraft(uid);try{const check=await deleteEmailStatus();if(state.session?.user?.id!==uid)return;if(check.verified)state.modal='deleteVerified';}catch(e){console.warn('Deletion verification unavailable',e?.message);}}
  render();
  if(state.profile&&!onboardingPlanPending()){

@@ -21,7 +21,7 @@ function setup(hostname='entre-ruby.vercel.app'){
  const listeners={};
  const document={getElementById:()=>({classList:{add(){}}}),addEventListener:(type,handler)=>{listeners[type]=handler}};
  const context={window:win,db,state,document,URL,URLSearchParams,console,
-  brand:()=>'<span>entre.</span>',busy:()=>{},render:()=>events.push('render'),
+  brand:()=>'<span>entre.</span>',ico:(name)=>'<svg data-icon="'+name+'"></svg>',busy:()=>{},render:()=>events.push('render'),
   showFormMessage:(msg,success=false)=>events.push({msg,success}),infoError:e=>e.message,
   checkSuspension:async()=>false,maintenanceIsActive:()=>false,initializeAccount:async()=>events.push('account-initialized')};
  vm.runInNewContext(read('email-auth.js'),context,{filename:'email-auth.js'});
@@ -30,7 +30,7 @@ function setup(hostname='entre-ruby.vercel.app'){
 function form(mode,values){
  const submit={disabled:false};
  return {dataset:{form:mode},querySelector:()=>submit,elements:{namedItem:name=>
-   name==='adult'?{checked:values.adult??true}:{value:values[name]||''}}};
+   ['adult','terms'].includes(name)?{checked:values[name]??true}:{value:values[name]||''}}};
 }
 test('email authentication supplies accessible forms and avoids exposing passwords',()=>{
  const {api}=setup();
@@ -39,7 +39,7 @@ test('email authentication supplies accessible forms and avoids exposing passwor
  assert.match(signup,/autocomplete="new-password"/);
  assert.match(signup,/minlength="12"/);
  assert.match(signup,/password_confirm/);
- assert.match(signup,/name="adult"/);
+ assert.match(signup,/name="adult"/);assert.match(signup,/name="terms"/);
  assert.match(login,/autocomplete="current-password"/);
  assert.match(login,/Esqueci minha senha/);
  assert.doesNotMatch(forgot,/type="password"/);
@@ -94,13 +94,13 @@ test('email redirects use the correct root path on both hosts',()=>{
  assert.equal(vercel.api.redirectUrl(),'https://entre-ruby.vercel.app/');
  assert.equal(vercel.api.redirectUrl(true),'https://entre-ruby.vercel.app/?auth=recovery');
  assert.equal(pages.api.redirectUrl(),'https://appswebb.github.io/testesite/');
- assert.equal(pages.api.redirectUrl(true),'https://appswebb.github.io/testesite/?auth=recovery');
+ assert.equal(pages.api.redirectUrl(true),'https://appswebb.github.io/testesite/?auth=recovery');assert.equal(setup('connectbr.online').api.redirectUrl(true),'https://connectbr.online/?auth=recovery');
 });
 test('signup requests email confirmation without creating a fake local session',async()=>{
  const {api,db,events,state}=setup();let request;
  db.auth.signUp=async p=>{request=p;return {data:{user:{id:'placeholder'},session:null},error:null}};
  await api.submit(form('signup',{email:' TEST@EXAMPLE.INVALID ',password:'MinhaSenhaSegura2026',password_confirm:'MinhaSenhaSegura2026'}));
- assert.equal(request.email,'test@example.invalid');
+ assert.equal(request.email,'test@example.invalid');assert.equal(request.options.data.connect_adult_declared,true);assert.equal(request.options.data.connect_terms_accepted,true);
  assert.equal(request.options.captchaToken,'test-captcha-token');
  assert.equal(request.options.emailRedirectTo,'https://entre-ruby.vercel.app/');
  assert.equal(state.session,null);
@@ -148,3 +148,5 @@ test('auth waits for the async Turnstile token before submitting and resets it a
 });
 
 test('Turnstile uses the official explicit onload callback and separates network from initialization failures',()=>{const source=read('connect-turnstile.js');assert.match(source,/render=explicit&onload=/);assert.match(source,/window\[name\]=ready/);assert.match(source,/CF-NET/);assert.match(source,/CF-INIT/);assert.match(source,/CF-TIMEOUT/);assert.match(read('index.html'),/connect-turnstile\.js\?v=\d+/);assert.match(read('admin/index.html'),/connect-turnstile.js\?v=3/);});
+
+test('signup refuses missing consent before sending credentials',async()=>{const {api,db,events}=setup();let called=false;db.auth.signUp=async()=>{called=true;};await api.submit(form('signup',{email:'test@example.invalid',password:'MinhaSenhaSegura2026',password_confirm:'MinhaSenhaSegura2026',terms:false}));assert.equal(called,false);assert.ok(events.some(e=>/aceite os termos/i.test(e.msg||'')));});
