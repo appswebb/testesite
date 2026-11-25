@@ -1,18 +1,21 @@
 /* Realtime presence, account activity, and recovery after a mobile browser pause. */
 (()=>{
 'use strict';
-let onlineSignature=null,feedDirty=false,roomTimer=0;let pairsDirty=false,pairsLoading=false;let publicChannel=null,accountChannel=null,account=null,count=null,countAt=0,started=false,pinging=false,counting=false,onlineBusy=false,onlineQueued=false,activityTimer=0,presenceTimer=0,resuming=false,lastPing=0,lastResume=0;
+let onlineSignature=null,feedDirty=false,roomTimer=0,accountTotal=null,accountTotalAt=0,accountTotalBusy=false;let pairsDirty=false,pairsLoading=false;let publicChannel=null,accountChannel=null,account=null,count=null,countAt=0,started=false,pinging=false,counting=false,onlineBusy=false,onlineQueued=false,activityTimer=0,presenceTimer=0,resuming=false,lastPing=0,lastResume=0;
 const ready=()=>typeof db!=='undefined'&&typeof state!=='undefined';
 const uid=()=>ready()?state.session?.user?.id:null;
 const member=()=>uid()&&state.profile&&!state.suspension&&!maintenanceIsActive();
 const api=()=>window.entreSocial;
 function paint(){
  const fresh=count!==null&&Date.now()-countAt<45000;
+ document.querySelectorAll('[data-connect-account-count]').forEach(el=>{const value=accountTotal===null?'—':accountTotal.toLocaleString('pt-BR');if(el.textContent!==value)el.textContent=value;});
  document.querySelectorAll('[data-connect-online-count]').forEach(el=>{
-  const value=fresh?String(count):'—';if(el.textContent!==value)el.textContent=value;
+  const value=fresh?count.toLocaleString('pt-BR'):'—';if(el.textContent!==value)el.textContent=value;
  });
 }
+async function refreshAccounts(force=false){if(!ready()||!navigator.onLine||accountTotalBusy||(!force&&Date.now()-accountTotalAt<60000))return;accountTotalBusy=true;try{const {data,error}=await db.rpc('connect_public_account_count');if(error)throw error;if(data===null||!Number.isFinite(Number(data)))throw Error('Invalid account count');accountTotal=Math.max(0,Number(data));accountTotalAt=Date.now();}catch(e){console.warn('Account counter unavailable',e?.message)}finally{accountTotalBusy=false;paint();}}
 async function refreshCount(){
+ void refreshAccounts();
  if(!ready()||counting||!navigator.onLine)return;counting=true;
  try{const {data,error}=await db.rpc('entre_online_count');if(error)throw error;count=Math.max(0,Number(data)||0);countAt=Date.now();}catch(e){console.warn('Online counter unavailable',e?.message)}finally{counting=false;paint()}
 }
@@ -69,7 +72,7 @@ function subscribe(){
 async function resume(){
  if(!ready()||resuming||!navigator.onLine)return;
  resuming=true;const user=uid();
- try{subscribe();await Promise.allSettled([ping(true),refreshCount()]);if(!member()||uid()!==user)return;
+ try{subscribe();await Promise.allSettled([ping(true),refreshCount(),refreshAccounts(true)]);if(!member()||uid()!==user)return;
  await Promise.allSettled([api().refreshNotifications(),api().refreshBulletins?.(false,true),window.connectRelationships?.tick?.(),refreshOnline()]);
  void refreshEntitlement(user);if(state.view==='rooms')void window.entreRooms?.refresh?.();if(state.view==='posts'){feedDirty=true;refreshFeed();}
  if(state.pair?.id&&['chat','connect'].includes(state.view)){await refreshPair();if(state.pair?.id){await loadMessages();refreshEncounterMessages();}}
