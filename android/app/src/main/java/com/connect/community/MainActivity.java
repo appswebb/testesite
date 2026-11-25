@@ -32,7 +32,7 @@ public final class MainActivity extends Activity {
  private NativeVideo video; private final NativeRealtime realtime=new NativeRealtime(); private String matchMode="chat",targetState="",targetCity="",liveId=""; private boolean livePublisher,dirty,mediaPicker,videoActive,cancelPending,restricted; private long lastPoll; private JSONObject accountPrefs; private LinearLayout liveMessages; private String mediaTarget="",mediaCaption="",mediaPair=""; private String draftChat=""; private final Map<String,String> chatDrafts=new HashMap<>(); private String draftPair=""; private long lastSync,lastChat,lastPresence,lastRoom; private LinearLayout chatList,roomList; private EditText chatInput; private TextView countdown; private FrameLayout videoFrame; private Runnable permissionAction;
  private long requestGeneration,challengeAt,registrationTouch,guardAt;
  private boolean signupConsent; private volatile boolean mandatoryUpdate; private JSONObject requiredRelease; private long lastReleaseCheck;
- private String challengeState,pendingEmail,pendingPassword;private boolean pendingSignup;
+ private String challengeState,pendingEmail,pendingPassword;private boolean pendingSignup,pendingRecovery;
  private static final String[] ROUTES={"posts","connect","rooms","conversations","online","notifications","premium","profile","settings","chat","stories","lives","search","support"};
  interface Work<T>{T run()throws Exception;}
  interface Result<T>{void done(T value);}
@@ -70,7 +70,7 @@ public final class MainActivity extends Activity {
   if(busy||isFinishing())return;busy=true;long generation=++requestGeneration;
   if(status!=null)status.setText("Carregando…");
   io.execute(()->{try{T v=work.run();main.post(()->{if(isDestroyed()||generation!=requestGeneration)return;busy=false;if(status!=null)status.setText("");result.done(v);});}
-   catch(Exception ex){main.post(()->{if(isDestroyed()||generation!=requestGeneration)return;busy=false;String msg=errorMessage(ex);if(ex instanceof Gate){searching=false;gate(msg);}else if(ex instanceof ConnectApi.ApiException&&((ConnectApi.ApiException)ex).invalidSession()&&!api.hasSession()){uid="";profile=null;auth(false,"Sua sessão expirou. Entre novamente.");}else {if(cancelling){cancelling=false;cancelPending=true;searching=false;encounters();}notice(msg);}});}});
+   catch(Exception ex){main.post(()->{if(isDestroyed()||generation!=requestGeneration)return;busy=false;String msg=errorMessage(ex);if(ex instanceof Gate){searching=false;gate(msg);}else if(ex instanceof ConnectApi.ApiException&&((ConnectApi.ApiException)ex).invalidSession()&&!api.hasSession()&&!uid.isEmpty()){uid="";profile=null;auth(false,"Sua sessão expirou. Entre novamente.");}else {if(cancelling){cancelling=false;cancelPending=true;searching=false;encounters();}notice(msg);}});}});
  }
  private String errorMessage(Exception ex){if(ex instanceof Gate)return ex.getMessage();if(ex instanceof ConnectApi.ApiException){ConnectApi.ApiException a=(ConnectApi.ApiException)ex;switch(a.code){case "captcha_failed":return "A verificação de segurança falhou. Faça o desafio novamente.";case "invalid_credentials":return "E-mail ou senha incorretos.";case "email_not_confirmed":return "Confirme seu e-mail antes de entrar.";case "over_email_send_rate_limit":case "over_request_rate_limit":return "Muitas tentativas. Aguarde antes de tentar novamente.";case "weak_password":return "A senha não atende aos requisitos de segurança.";case "23505":return "Este nome de usuário já está em uso. Escolha outro.";default:return a.getMessage();}}if(ex instanceof org.json.JSONException)return "O servidor retornou dados inesperados. Tente novamente.";return "Não foi possível concluir. Confira sua conexão e tente novamente.";}
  private static class Gate extends Exception{Gate(String m){super(m);}}
@@ -125,13 +125,14 @@ public final class MainActivity extends Activity {
    beginChallenge(em,p,signup);
   });
   button(body,signup?"Já tenho conta":"Criar uma conta",false,()->auth(!signup,""));
-  if(!signup)button(body,"Recuperar senha",false,()->external(ConnectApi.WEBSITE+"?auth=login"));
+  if(!signup)button(body,"Recuperar senha",false,()->{String em=email.getText().toString().trim().toLowerCase(Locale.ROOT);if(!android.util.Patterns.EMAIL_ADDRESS.matcher(em).matches()){notice("Informe seu e-mail para recuperar a senha.");return;}beginChallenge(em,"",false,true);});
  }
- private void beginChallenge(String email,String password,boolean signup){
+ private void beginChallenge(String email,String password,boolean signup){beginChallenge(email,password,signup,false);}
+ private void beginChallenge(String email,String password,boolean signup,boolean recovery){
   if(mandatoryUpdate){updateScreen();return;}
   byte[] nonce=new byte[32];new SecureRandom().nextBytes(nonce);
   challengeState=android.util.Base64.encodeToString(nonce,android.util.Base64.URL_SAFE|android.util.Base64.NO_WRAP|android.util.Base64.NO_PADDING);
-  challengeAt=SystemClock.elapsedRealtime();pendingEmail=email;pendingPassword=password;pendingSignup=signup;
+  challengeAt=SystemClock.elapsedRealtime();pendingEmail=email;pendingPassword=password;pendingSignup=signup;pendingRecovery=recovery;
   external(ConnectApi.WEBSITE+"android-captcha.html#"+challengeState);
   notice("Conclua a verificação de segurança e retorne ao aplicativo.");
  }
@@ -139,9 +140,9 @@ public final class MainActivity extends Activity {
   Uri data=intent.getData();if(data==null||!"connect-native".equals(data.getScheme())||!"captcha".equals(data.getHost()))return;
   String nonce=data.getQueryParameter("state"),captcha=data.getQueryParameter("token");
   if(challengeState==null||!challengeState.equals(nonce)||captcha==null||captcha.isEmpty()||captcha.length()>4096||SystemClock.elapsedRealtime()-challengeAt>300000||pendingPassword==null||busy){intent.setData(null);notice("A verificação não pôde ser concluída. Toque em Entrar ou Criar conta para tentar novamente.");return;}
-  String em=pendingEmail,pass=pendingPassword;boolean signup=pendingSignup;
+  String em=pendingEmail,pass=pendingPassword;boolean signup=pendingSignup,recovery=pendingRecovery;
   pendingEmail=null;pendingPassword=null;challengeState=null;intent.setData(null);
-  task(()->{checkRelease();if(signup)return api.signup(em,pass,captcha);api.login(em,pass,captcha);return true;},ok->{if(ok)startup();else auth(false,"Confirme seu e-mail e entre para continuar. O cadastro provisório expira após 30 minutos sem atividade.");});
+  task(()->{checkRelease();if(recovery){api.recover(em,captcha);return false;}if(signup)return api.signup(em,pass,captcha);api.login(em,pass,captcha);return true;},ok->{if(recovery)auth(false,"Se o e-mail estiver cadastrado, você receberá um link seguro para redefinir a senha. Depois, entre aqui.");else if(ok)startup();else auth(false,"Confirme seu e-mail e entre para continuar. O cadastro provisório expira após 30 minutos sem atividade.");});
  }
  private void touch()throws Exception{JSONObject r=(JSONObject)api.rpc("connect_resume_registration",null);if("expired".equals(r.optString("status"))){api.clear();throw new Gate("Cadastro expirado. Crie uma nova conta.");}registrationTouch=System.currentTimeMillis();}
  private void profileForm(){
