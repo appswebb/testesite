@@ -1,8 +1,11 @@
 import {createClient} from "jsr:@supabase/supabase-js@2.57.0";
 import {AccessToken} from "npm:livekit-server-sdk@2.20.1";
-const cors={"Access-Control-Allow-Origin":"https://appswebb.github.io","Access-Control-Allow-Headers":"authorization,apikey,content-type,x-client-info","Access-Control-Allow-Methods":"OPTIONS,POST","Cache-Control":"no-store","Content-Type":"application/json"};
-const json=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers:cors});
+const allowedOrigins=new Set(["https://connectbr.online","https://www.connectbr.online","https://appswebb.github.io"]);
 Deno.serve(async(req:Request)=>{
+ const requestOrigin=req.headers.get("origin")||"";
+ const origin=allowedOrigins.has(requestOrigin)?requestOrigin:"https://connectbr.online";
+ const cors={"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Headers":"authorization,apikey,content-type,x-client-info","Access-Control-Allow-Methods":"OPTIONS,POST","Cache-Control":"no-store","Vary":"Origin","Content-Type":"application/json"};
+ const json=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers:cors});
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:cors});
  if(req.method!=="POST")return json({error:"method_not_allowed"},405);
  const url=Deno.env.get("SUPABASE_URL")||"";

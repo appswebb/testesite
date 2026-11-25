@@ -1,7 +1,10 @@
 import {createClient} from "jsr:@supabase/supabase-js@2.57.0";
-const headers={"Content-Type":"application/json","Access-Control-Allow-Origin":"https://appswebb.github.io","Access-Control-Allow-Headers":"authorization,apikey,content-type,x-client-info","Access-Control-Allow-Methods":"POST,OPTIONS","Cache-Control":"no-store"};
-const json=(v:unknown,status=200)=>new Response(JSON.stringify(v),{status,headers});
+const allowedOrigins=new Set(["https://connectbr.online","https://www.connectbr.online","https://appswebb.github.io"]);
 Deno.serve(async(req:Request)=>{
+ const requestOrigin=req.headers.get("origin")||"";
+ const origin=allowedOrigins.has(requestOrigin)?requestOrigin:"https://connectbr.online";
+ const headers={"Vary":"Origin","Content-Type":"application/json","Access-Control-Allow-Origin":origin,"Access-Control-Allow-Headers":"authorization,apikey,content-type,x-client-info","Access-Control-Allow-Methods":"POST,OPTIONS","Cache-Control":"no-store"};
+ const json=(v:unknown,status=200)=>new Response(JSON.stringify(v),{status,headers});
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers});
  if(req.method!=="POST")return json({error:"method_not_allowed"},405);
  const url=Deno.env.get("SUPABASE_URL")||"",anon=Deno.env.get("SUPABASE_ANON_KEY")||"",secret=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";

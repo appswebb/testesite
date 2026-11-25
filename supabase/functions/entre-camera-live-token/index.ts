@@ -1,8 +1,11 @@
 import {createClient} from "jsr:@supabase/supabase-js@2.57.0";
 import {AccessToken,RoomServiceClient} from "npm:livekit-server-sdk@2.20.1";
-const cors={"Access-Control-Allow-Origin":"https://appswebb.github.io","Access-Control-Allow-Headers":"authorization,apikey,content-type,x-client-info","Access-Control-Allow-Methods":"OPTIONS,POST","Cache-Control":"no-store","Content-Type":"application/json; charset=utf-8"};
-const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:cors});
+const allowedOrigins=new Set(["https://connectbr.online","https://www.connectbr.online","https://appswebb.github.io"]);
 Deno.serve(async(req:Request)=>{
+ const requestOrigin=req.headers.get("origin")||"";
+ const origin=allowedOrigins.has(requestOrigin)?requestOrigin:"https://connectbr.online";
+ const cors={"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Headers":"authorization,apikey,content-type,x-client-info","Access-Control-Allow-Methods":"OPTIONS,POST","Cache-Control":"no-store","Vary":"Origin","Content-Type":"application/json; charset=utf-8"};
+ const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:cors});
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:cors});
  if(req.method!=="POST")return reply({error:"method_not_allowed"},405);
  const supabaseUrl=Deno.env.get("SUPABASE_URL")||"",anon=Deno.env.get("SUPABASE_ANON_KEY")||"",secret=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";

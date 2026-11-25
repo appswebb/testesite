@@ -1,5 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.57.0";
-const origins=new Set(["https://appswebb.github.io","https://entre-ruby.vercel.app","https://entre-orbytstudios.vercel.app"]);
+const origins=new Set(["https://connectbr.online","https://www.connectbr.online","https://appswebb.github.io","https://entre-ruby.vercel.app","https://entre-orbytstudios.vercel.app"]);
 const esc=(s:unknown)=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]!));
 Deno.serve(async(req:Request)=>{
  const origin=req.headers.get("origin")||"";
@@ -31,11 +31,11 @@ Deno.serve(async(req:Request)=>{
  const key=Deno.env.get("RESEND_API_KEY"),sender=Deno.env.get("ENTRE_SUPPORT_FROM");
  if(!key||!sender)return json({error:"Remetente de e-mail ainda não configurado. A resposta continua disponível no protocolo."},503);
  const subject="CONNECT | Resposta ao protocolo #"+ticket.id;
- const text="Equipe CONNECT\n\nProtocolo #"+ticket.id+" — "+ticket.subject+"\n\n"+reply.body+"\n\nAcompanhe seu atendimento em https://appswebb.github.io/testesite/";
- const html='<div style="background:#f7f7f7;padding:28px 10px;font-family:Arial,sans-serif;color:#171717"><div style="max-width:520px;margin:auto;background:white;border:1px solid #dedee2;border-radius:20px;padding:28px"><img src="https://appswebb.github.io/testesite/icons/icon-192.png" width="44" height="44" alt="" style="display:block;border-radius:12px"><h2 style="font-size:20px;letter-spacing:2px">CONNECT</h2><p style="color:#626269;font-size:12px">ATENDIMENTO · PROTOCOLO #'+ticket.id+'</p><h1 style="font-size:24px;line-height:1.2">'+esc(ticket.subject)+'</h1><p style="font-size:15px;line-height:1.6">'+esc(reply.body).replace(/\n/g,"<br>")+'</p><a href="https://appswebb.github.io/testesite/" style="display:inline-block;background:#000;color:white;text-decoration:none;border-radius:12px;padding:14px 20px;font-weight:bold">Acompanhar atendimento</a><p style="color:#626269;font-size:12px;line-height:1.5;margin-top:24px">Responda pelo protocolo dentro do CONNECT. Nunca envie senhas ou códigos de acesso.</p></div></div>';
+ const text="Equipe CONNECT\n\nProtocolo #"+ticket.id+" — "+ticket.subject+"\n\n"+reply.body+"\n\nAcompanhe seu atendimento em https://connectbr.online/";
+ const html='<div style="background:#f7f7f7;padding:28px 10px;font-family:Arial,sans-serif;color:#171717"><div style="max-width:520px;margin:auto;background:white;border:1px solid #dedee2;border-radius:20px;padding:28px"><img src="https://connectbr.online/icons/icon-192.png" width="44" height="44" alt="" style="display:block;border-radius:12px"><h2 style="font-size:20px;letter-spacing:2px">CONNECT</h2><p style="color:#626269;font-size:12px">ATENDIMENTO · PROTOCOLO #'+ticket.id+'</p><h1 style="font-size:24px;line-height:1.2">'+esc(ticket.subject)+'</h1><p style="font-size:15px;line-height:1.6">'+esc(reply.body).replace(/\n/g,"<br>")+'</p><a href="https://connectbr.online/" style="display:inline-block;background:#000;color:white;text-decoration:none;border-radius:12px;padding:14px 20px;font-weight:bold">Acompanhar atendimento</a><p style="color:#626269;font-size:12px;line-height:1.5;margin-top:24px">Responda pelo protocolo dentro do CONNECT. Nunca envie senhas ou códigos de acesso.</p></div></div>';
  const sent=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+key,"Content-Type":"application/json","Idempotency-Key":"connect-support-reply-"+reply.id},body:JSON.stringify({from:sender,to:[email],subject,text,html})});
  if(!sent.ok)return json({error:"O provedor recusou o envio. Confira o remetente e a configuração."},502);
- const {error:save}=await svc.from("entre_support_replies").update({email_sent_at:new Date().toISOString()}).eq("id",reply.id);
+ const {error:save}=await svc.from("entre_support_replies").update({email_sent_at:new Date().toISOString(),email_sent_by:user.user.id}).eq("id",reply.id).is("email_sent_at",null);
  if(save)return json({error:"E-mail aceito pelo provedor, mas confirmação interna não gravada."},500);
  return json({status:"sent"});
  }catch(_){return json({error:"Não foi possível enviar o e-mail."},500);}

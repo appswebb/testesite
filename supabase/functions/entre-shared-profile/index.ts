@@ -1,8 +1,10 @@
 import {createClient} from "jsr:@supabase/supabase-js@2.57.0";
-const origin="https://appswebb.github.io";
-const headers={"Content-Type":"application/json; charset=utf-8","Access-Control-Allow-Origin":origin,"Access-Control-Allow-Methods":"GET,OPTIONS","Access-Control-Allow-Headers":"apikey,authorization,content-type,x-client-info","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"};
-const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers});
+const allowedOrigins=new Set(["https://connectbr.online","https://www.connectbr.online","https://appswebb.github.io"]);
 Deno.serve(async(req:Request)=>{
+ const requestOrigin=req.headers.get("origin")||"";
+ const origin=allowedOrigins.has(requestOrigin)?requestOrigin:"https://connectbr.online";
+ const headers={"Vary":"Origin","Content-Type":"application/json; charset=utf-8","Access-Control-Allow-Origin":origin,"Access-Control-Allow-Methods":"GET,OPTIONS","Access-Control-Allow-Headers":"apikey,authorization,content-type,x-client-info","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"};
+ const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers});
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers});
  if(req.method!=="GET")return json({error:"method_not_allowed"},405);
  const handle=(new URL(req.url).searchParams.get("u")||"").replace(/^@/,"").trim().toLowerCase();
