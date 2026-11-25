@@ -808,7 +808,7 @@ async function cancelSearch(){
   if(data.status==='matched'){
    try{
     if(await openPair(data.pair_id)){window.entreSocial?.showMatchAnimation?.(state.peer);toast('O encontro foi confirmado antes do cancelamento. Você pode encerrá-lo a qualquer momento.',false,'found');}
-   }catch(e){toast('Encontro confirmado. Abra Ao vivo novamente para recuperar a conexão.',true);console.warn('Encontro confirmado durante cancelamento',e);}
+   }catch(e){toast('Encontro confirmado. Toque em Encontrar alguém para recuperar a conexão, se ainda estiver ativa.',true);console.warn('Encontro confirmado durante cancelamento',e);}
   }
  }catch(e){
   if(state.session?.user?.id===uid){state.searching=true;cancelUnconfirmed=true;toast('Não foi possível confirmar o cancelamento. Toque em Cancelar busca para tentar novamente.',true);console.warn('Cancelamento não confirmado',e);}
