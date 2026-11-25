@@ -8,8 +8,8 @@ if(!window.supabase || !window.supabase.createClient){
  app.innerHTML='<div class="preload"><h1>Falha de conexão</h1><p>Atualize a página quando estiver conectado à internet.</p></div>';return;
 }
 var db=window.supabase.createClient(URL,KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
-var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[],supportTickets:[],commentReports:[],premiumConfig:null,recurringConfig:null,manualPremiumAccount:null,moreOpen:false,community:null,communityUnavailable:false,loadError:null};
-var perPage=20, searchTimer=null, toastTimer=null, lastLoad=0;
+var state={user:null,verified:false,view:"overview",loading:false,busy:false,overview:null,users:{rows:[],total:0},reports:[],pairs:[],settings:null,search:"",userPage:0,reportStatus:"open",modal:null,refreshAt:null,appeals:[],privacyRequests:[],bulletins:[],supportTickets:[],commentReports:[],premiumConfig:null,recurringConfig:null,manualPremiumAccount:null,planDirectory:null,planSearch:'',planFilter:'all',planPage:0,moreOpen:false,community:null,communityUnavailable:false,loadError:null};
+var perPage=20, planSearchTimer=null, searchTimer=null, toastTimer=null, lastLoad=0;
 var sections=[
  ["overview","Visão geral","layout-dashboard"],
  ["monitor","Monitoramento","activity"],
@@ -21,7 +21,7 @@ var sections=[
  ["appeals","Contestações","alert-circle"],
   ["bulletins","Avisos","message-circle"],
   ["support","Suporte","headset"],
-  ["premium","Premium","crown"],
+  ["premium","Assinaturas","crown"],
  ["settings","Configurações","sliders-horizontal"],
  ["security","Segurança","shield-check"]
 ];
@@ -176,7 +176,7 @@ function users(){
  var arr=state.users.rows||[],total=state.users.total||0;
  return heading("GERENCIAMENTO","Usuários","Pesquise usuários cadastrados e controle suspensão ou exclusão definitiva.")+
  '<section class="data-panel"><div class="data-tools"><div><h3>Contas cadastradas</h3><small>'+e(total)+' registro(s)</small></div><label class="search-box">'+ico("search",17)+'<input id="user-search" placeholder="Nome ou e-mail…" aria-label="Pesquisar usuários" autocomplete="off" maxlength="120" value="'+e(state.search)+'"></label></div>'+
- (arr.length?arr.map(function(u){return '<div class="list-row"><div class="list-main">'+person(u.display_name||u.email,u.email,u.admin)+'</div><div class="row-meta">'+fmt(u.created_at)+'</div>'+badge(u.admin?"ADMIN":u.banned?"SUSPENSO":"ATIVO",u.banned?"warn":u.admin?"":"neutral")+'<div class="admin-user-actions"><button class="small-btn '+(u.banned?"":"danger")+'" data-action="edit-user" data-id="'+e(u.id)+'">'+(u.admin?"Detalhes":u.banned?"Reativar":"Suspender")+'</button>'+(!u.admin?'<button type="button" class="small-btn user-delete-action" data-action="delete-user" data-id="'+e(u.id)+'">Excluir conta</button>':'')+'</div></div>';}).join(""):empty("Nenhuma conta encontrada","Ajuste os termos de busca ou aguarde novos cadastros."))+
+ (arr.length?arr.map(function(u){return '<div class="list-row"><div class="list-main">'+person(u.display_name||u.email,u.email,u.admin)+'</div><div class="row-meta">'+fmt(u.created_at)+'</div>'+badge(u.admin?"ADMIN":u.banned?"SUSPENSO":"ATIVO",u.banned?"warn":u.admin?"":"neutral")+'<div class="admin-user-plan">'+window.entreAdminExtras.planBadge(u.plan_status,e,ico)+(u.plan_manageable?'<button type="button" class="small-btn" data-action="plan-manage" data-id="'+e(u.id)+'">Gerenciar plano</button>':'')+'</div><div class="admin-user-actions"><button class="small-btn '+(u.banned?"":"danger")+'" data-action="edit-user" data-id="'+e(u.id)+'">'+(u.admin?"Detalhes":u.banned?"Reativar":"Suspender")+'</button>'+(!u.admin?'<button type="button" class="small-btn user-delete-action" data-action="delete-user" data-id="'+e(u.id)+'">Excluir conta</button>':'')+'</div></div>';}).join(""):empty("Nenhuma conta encontrada","Ajuste os termos de busca ou aguarde novos cadastros."))+
  '<div class="table-footer"><span>Página '+(state.userPage+1)+' · '+e(total)+' usuário(s)</span><div style="display:flex;gap:8px"><button class="small-btn" data-action="prev-users" '+(state.userPage<=0?"disabled":"")+'>'+ico("chevron-left",13)+' Anterior</button><button class="small-btn" data-action="next-users" '+((state.userPage+1)*perPage>=total?"disabled":"")+'>Próxima '+ico("chevron-right",13)+'</button></div></div></section>';
 }
 var reasonNames={harassment:"Assédio / comportamento abusivo",hate:"Discurso de ódio",spam:"Spam / golpes",underage:"Suspeita de menor de idade",fake:"Perfil falso",other:"Outro motivo"};
@@ -262,7 +262,7 @@ function renderView(){
  var loc=document.getElementById("topbar-location");if(loc)loc.textContent=viewTitle();
  var menu=document.getElementById("adminMoreMenu");if(menu)menu.hidden=!state.moreOpen;var toggle=document.querySelector(".admin-more-button");if(toggle)toggle.setAttribute("aria-expanded",String(state.moreOpen));
  var sync=document.getElementById("saas-sync");if(sync)sync.textContent=state.loading?"Sincronizando…":state.loadError?"Falha na atualização · dados anteriores podem estar desatualizados":state.refreshAt?"Sincronizado às "+state.refreshAt.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"Aguardando sincronização";
- target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="monitor"?monitor():state.view==="modules"?moduleDirectory():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="appeals"?heading("RECURSOS E MODERAÇÃO","Contestações de suspensão","Confira as solicitações e analise cada recurso.")+appealsPanel():state.view==="pairs"?pairs():state.view==="bulletins"?heading("COMUNICAÇÃO OFICIAL","Avisos e enquetes","Gerencie suas publicações por 24 horas.")+window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico}):state.view==="support"?heading("ATENDIMENTO","Central de suporte","Protocolos recebidos dos usuários.")+window.entreAdminExtras.supportPage(state.supportTickets,e,fmt,ico,badge):state.view==="premium"?heading("ASSINATURAS","Assinaturas Premium","Gerencie liberações por e-mail e o valor mensal.")+window.entreAdminExtras.premiumPage(state.premiumConfig,e,ico,state.manualPremiumAccount):state.view==="settings"?settings():security());
+ target.innerHTML=state.loading?spinner():(state.view==="overview"?overview():state.view==="monitor"?monitor():state.view==="modules"?moduleDirectory():state.view==="updates"?maintenancePage():state.view==="users"?users():state.view==="reports"?reports():state.view==="appeals"?heading("RECURSOS E MODERAÇÃO","Contestações de suspensão","Confira as solicitações e analise cada recurso.")+appealsPanel():state.view==="pairs"?pairs():state.view==="bulletins"?heading("COMUNICAÇÃO OFICIAL","Avisos e enquetes","Gerencie suas publicações por 24 horas.")+window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico}):state.view==="support"?heading("ATENDIMENTO","Central de suporte","Protocolos recebidos dos usuários.")+window.entreAdminExtras.supportPage(state.supportTickets,e,fmt,ico,badge):state.view==="premium"?heading("ASSINATURAS","Planos e assinaturas","Acompanhe os planos de todos os perfis do Connect e gerencie os benefícios Premium.")+window.entreAdminExtras.premiumPage(state.premiumConfig,e,ico,state.planDirectory,state.planSearch,state.planFilter,state.planPage,perPage,fmt,person):state.view==="settings"?settings():security());
 }
 let adminLoadEpoch=0;
 async function load(view,background=false){
@@ -282,7 +282,7 @@ async function load(view,background=false){
   if(view==="pairs")patch.pairs=await rpc("entre_admin_pairs",{_limit:60});
   if(view==="bulletins")patch.bulletins=await rpc("entre_admin_bulletins");
   if(view==="support")patch.supportTickets=await rpc("entre_admin_support_tickets");
-  if(view==="premium"){patch.premiumConfig=await rpc("entre_admin_premium_settings");patch.recurringConfig=null;}
+  if(view==="premium"){const results=await Promise.all([rpc("entre_admin_premium_settings"),rpc("connect_admin_plan_page",{_query:state.planSearch,_plan:state.planFilter,_limit:perPage,_offset:state.planPage*perPage})]);patch.premiumConfig=results[0];patch.planDirectory=results[1];patch.recurringConfig=null;}
   if(view==="security"){const results=await Promise.all([rpc("entre_admin_appeals"),rpc("entre_admin_privacy_requests")]);patch.appeals=results[0];patch.privacyRequests=results[1];}
   if(!valid())return;Object.assign(state,patch);state.loadError=null;state.refreshAt=new Date();lastLoad=Date.now();
  }catch(err){if(valid()){state.loadError=errorText(err);if(!background)toast(errorText(err),true);else console.warn(errorText(err));}}
@@ -298,6 +298,17 @@ async function openSupportThread(id){
 }
 async function refreshSupportThread(id){const rows=await rpc("entre_support_thread",{_ticket:id});if(state.modal?.type!=="support-thread"||Number(state.modal.data.id)!==id)return;const root=document.getElementById("adminSupportThread");if(root){root.innerHTML=rows.map(x=>'<article><strong>'+(x.from_staff?"Equipe CONNECT":"Usuário")+'</strong><p>'+e(x.body)+'</p><small>'+fmt(x.created_at)+'</small>'+(x.from_staff?'<button type="button" class="small-btn" data-action="supportEmailReply" data-id="'+Number(x.id)+'">Enviar também por e-mail</button>':'')+'</article>').join("")||'<p>Nenhuma resposta ainda.</p>';root.scrollTop=root.scrollHeight;}}
 function closeModal(){state.modal=null;var el=document.getElementById("modal-root");if(el)el.innerHTML="";}
+async function openPlan(id){
+ if(!state.verified||state.busy)return;
+ const row=(state.view==="users"?state.users.rows:state.planDirectory?.rows||[]).find(u=>u.id===id);
+ if(!row||!(row.plan_manageable||row.manageable)){toast("A conta precisa ter um perfil e e-mail confirmado.",true);return;}
+ const owner=state.user?.id,context={type:"plan",email:String(row.email).trim().toLowerCase(),account:null,history:null};state.modal=context;
+ modal('<h2>Gerenciar plano</h2><p>Consultando a assinatura…</p><button type="button" class="btn-outline" data-action="close-modal">Fechar</button>');
+ try{const [account,history]=await Promise.all([rpc("connect_admin_manual_premium",{_email:context.email,_action:"lookup",_months:1}),rpc("connect_admin_plan_history",{_email:context.email}).catch(()=>null)]);
+ if(state.modal!==context||state.user?.id!==owner||!state.verified)return;
+ context.account=account;context.history=history;modal(window.entreAdminExtras.planEditor(account,history,e,ico,fmt));
+ }catch(err){if(state.modal===context){closeModal();toast(errorText(err),true);}}
+}
 function openUser(id){
  var u=(state.users.rows||[]).find(function(x){return x.id===id;});if(!u)return;
  state.modal={type:"user",data:u};
@@ -371,6 +382,10 @@ document.addEventListener("click",async function(ev){
   try{await rpc('entre_admin_review_comment_report',{_id:Number(n.dataset.id),_status:a==="commentReview"?"reviewed":"dismissed"});toast("Denúncia atualizada.");await load("reports");}
   catch(err){toast(errorText(err),true);}return;
  }
+ if(a==="plan-manage"){await openPlan(n.dataset.id);return;}
+ if(a==="plan-filter"){if(!state.verified||state.busy||!["all","premium","free","expired","revoked"].includes(n.dataset.plan))return;state.planFilter=n.dataset.plan;state.planPage=0;await load("premium");return;}
+ if(a==="plan-prev"&&state.planPage>0){state.planPage--;await load("premium");return;}
+ if(a==="plan-next"&&(state.planPage+1)*perPage<(state.planDirectory?.total||0)){state.planPage++;await load("premium");return;}
  if(a==="edit-user"){openUser(n.dataset.id);return;}
  if(a==="delete-user"){openDeleteUser(n.dataset.id);return;}
  if(a==="review"){openReport(n.dataset.id);return;}
@@ -380,6 +395,7 @@ document.addEventListener("click",async function(ev){
 document.addEventListener("change",function(ev){if(ev.target?.id==="bulletin-kind")window.entreAdminBulletins.syncType();});
  document.addEventListener("input",function(ev){
  if(ev.target.id==="admin-module-search"){const q=ev.target.value.toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g,"");document.querySelectorAll(".saas-command-results .saas-module").forEach(el=>{el.hidden=!el.textContent.toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g,"").includes(q);});return;}
+ if(ev.target.id==="plan-search"){clearTimeout(planSearchTimer);const input=ev.target;state.planSearch=input.value;state.planPage=0;planSearchTimer=setTimeout(async()=>{if(state.view==="premium"){const active=document.activeElement===input;await load("premium");if(active){const next=document.getElementById("plan-search");if(next){next.focus();next.setSelectionRange(next.value.length,next.value.length);}}}},420);return;}
  if(ev.target.id==="user-search"){
   clearTimeout(searchTimer);var input=ev.target;state.search=input.value;state.userPage=0;
   searchTimer=setTimeout(async function(){if(state.view==="users"){var active=document.activeElement===input;await load("users");if(active){var next=document.getElementById("user-search");if(next){next.focus();next.setSelectionRange(next.value.length,next.value.length);}}}},420);
@@ -408,14 +424,22 @@ document.addEventListener("submit",async function(ev){
  try{
   if(form.id==="support-reply-form"&&state.modal?.type==="support-thread"){const id=Number(state.modal.data.id);await rpc("entre_support_reply",{_ticket:id,_body:form.elements.body.value,_resolve:form.elements.resolve.checked});form.reset();await refreshSupportThread(id);state.supportTickets=await rpc("entre_admin_support_tickets");toast("Resposta enviada ao protocolo.");}
   else if(form.id==="premium-manual-form"){
-   var email=String(form.elements.email.value||"").trim().toLowerCase(),operation=ev.submitter?.value||"lookup",months=Number(form.elements.months?.value||1);
-   if(operation!=="lookup"){
-    if(state.manualPremiumAccount?.email!==email)throw Error("Busque o e-mail antes de alterar o acesso.");
-    if(!window.confirm(operation==="grant"?"Liberar ou renovar "+months+" mês(es) para "+email+"?":"Revogar o acesso Premium de "+email+" agora?"))return;
-   }
-   state.manualPremiumAccount=null;
-   state.manualPremiumAccount=await rpc("connect_admin_manual_premium",{_email:email,_action:operation,_months:months});
-   toast(operation==="lookup"?"Conta localizada.":operation==="grant"?"Acesso Premium liberado.":"Acesso Premium revogado.");renderView();
+   const context=state.modal,owner=state.user?.id,view=state.view,operation=ev.submitter?.value||"grant",months=Number(form.elements.months?.value||1);
+   if(!state.verified||context?.type!=="plan"||!context.account||!["grant","revoke"].includes(operation)||context.email!==String(form.elements.email.value||"").trim().toLowerCase())throw Error("Consulte a conta novamente.");
+   if(operation==="grant"&&(!Number.isInteger(months)||months<1||months>12))throw Error("Escolha de 1 a 12 meses.");
+   if(operation==="revoke"&&!context.account.active)throw Error("O usuário já está no plano gratuito.");
+   if(!window.confirm(operation==="grant"?"Liberar ou renovar "+months+" mês(es) de Premium para "+context.email+"?":"Retornar "+context.email+" ao plano gratuito agora? Isso revoga os benefícios Premium e não gera estorno."))return;
+   const controls=Array.from(form.querySelectorAll("button"));controls.forEach(b=>b.disabled=true);
+   try{
+    const account=await rpc("connect_admin_manual_premium",{_email:context.email,_action:operation,_months:operation==="grant"?months:1});
+    if(state.user?.id!==owner||!state.verified)return;
+    if(operation==="grant"?account.active!==true:account.active!==false)throw Error("Alteração do plano não confirmada pelo servidor.");
+    const history=await rpc("connect_admin_plan_history",{_email:context.email}).catch(()=>null);
+    if(state.user?.id!==owner||!state.verified)return;
+    if(state.modal===context){context.account=account;context.history=history;modal(window.entreAdminExtras.planEditor(account,history,e,ico,fmt));}
+    toast(operation==="grant"?"Premium ativo.":"Usuário retornou ao plano gratuito.");
+    if(state.view===view)await load(view);
+   }finally{controls.forEach(b=>{if(b.isConnected)b.disabled=false;});}
   }else if(form.id==="premium-config-form"){
    var config=await rpc("entre_admin_premium_config",window.entreAdminExtras.priceParams(form));state.premiumConfig=config;toast("Configuração Premium salva.");await load("premium");
   }else if(form.id==="bulletin-form"){
@@ -463,7 +487,7 @@ async function boot(){
   state.user=verified.data.user;
   var allowed=await rpc("entre_admin_check");
   if(allowed!==true){gate(true);return;}
-  state.verified=true;state.view="overview";state.moreOpen=false;state.modal=null;state.community=null;state.overview=null;state.loadError=null;state.refreshAt=null;shell();await load("overview");
+  state.verified=true;state.view="overview";state.moreOpen=false;state.modal=null;state.planDirectory=null;state.planSearch="";state.planFilter="all";state.planPage=0;state.users={rows:[],total:0};state.community=null;state.overview=null;state.loadError=null;state.refreshAt=null;shell();await load("overview");
  stopAdminRealtime();
  adminSupportChannel=db.channel("admin-support-replies").on("postgres_changes",{event:"UPDATE",schema:"public",table:"entre_support_tickets"},async p=>{if(state.modal?.type==="support-thread"&&Number(state.modal.data.id)===Number(p.new?.id)&&p.new.status==="cancelled"){const form=document.getElementById("support-reply-form");if(form){form.hidden=true;form.querySelectorAll("button,textarea,input").forEach(x=>x.disabled=true);}state.modal.data.status="cancelled";}if(state.verified&&state.view==="support"&&!state.modal&&!state.loading&&!state.busy&&p.new?.status!=="draft")try{await load("support");}catch(err){console.warn(errorText(err));}}).on("postgres_changes",{event:"INSERT",schema:"public",table:"entre_support_replies"},async p=>{if(!state.verified||state.view!=="support")return;try{if(state.modal?.type==="support-thread")await refreshSupportThread(Number(state.modal.data.id));else if(!state.loading&&!state.busy)await load("support");}catch(err){console.warn(errorText(err));}}).subscribe();
   adminSignalChannel=db.channel("connect-admin-signal").on("postgres_changes",{event:"UPDATE",schema:"public",table:"connect_admin_signal"},p=>{const kind=p.new?.kind;if(kind){adminDirty.add(kind);scheduleAdminRefresh();}}).subscribe(status=>{if(status==="SUBSCRIBED"){adminDirty.add("all");scheduleAdminRefresh();}});
