@@ -14,8 +14,8 @@ function gallery(){return '<section class="enc-media-gallery" id="encMediaGaller
 function controls(){
  if(!canSend())return '';
  return '<div class="enc-media-toolbar" aria-label="Compartilhar mídia privada">'+
- '<button type="button" data-chat-media-pick title="Enviar foto ou vídeo"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="9" r="1.5"/><path d="m4 17 5-5 4 4 3-3 5 5"/></svg><span>Foto / vídeo</span></button>'+
- '<button type="button" data-chat-media-record aria-pressed="false" title="Gravar áudio de até 30 segundos"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2m-7 9v3m-4 0h8"/></svg><span>Gravar áudio</span></button>'+
+ '<button type="button" data-chat-media-pick title="Enviar foto ou vídeo">'+ico('image',19)+'<span>Foto / vídeo</span></button>'+
+ '<button type="button" data-chat-media-record aria-pressed="false" title="Gravar áudio de até 30 segundos">'+ico('mic',19)+'<span>Gravar áudio</span></button>'+
  '<input type="file" id="encMediaFile" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,audio/webm,audio/mp4" hidden>'+
  '<span id="encMediaStatus" role="status" aria-live="polite"></span></div><div class="cp-voice-state" id="cpVoiceState" hidden></div>';
 }
