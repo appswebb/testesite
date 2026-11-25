@@ -77,6 +77,8 @@ final class ConnectApi {
  synchronized JSONObject settings()throws Exception{return (JSONObject)http("POST","/rest/v1/rpc/entre_public_settings",new JSONObject(),null,null);}
  synchronized JSONArray rows(String query)throws Exception{return (JSONArray)http("GET","/rest/v1/"+query,null,token(),null);}
  synchronized Object insert(String table,JSONObject data)throws Exception{return http("POST","/rest/v1/"+table,data,token(),"return=representation");}
+ synchronized JSONArray upsert(String query,JSONObject data)throws Exception{return (JSONArray)http("POST","/rest/v1/"+query,data,token(),"resolution=merge-duplicates,return=representation");}
+ synchronized void deleteRows(String query)throws Exception{http("DELETE","/rest/v1/"+query,null,token(),"return=minimal");}
  synchronized JSONArray patch(String query,JSONObject data)throws Exception{return (JSONArray)http("PATCH","/rest/v1/"+query,data,token(),"return=representation");}
  synchronized JSONObject edge(String name,JSONObject args)throws Exception{
   if(!name.matches("[a-z0-9-]+"))throw new IOException("Função inválida.");
