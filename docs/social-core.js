@@ -2,7 +2,7 @@
 window.entreSocial=(function(){
 'use strict';
 const data={presence:{visible:false,allow_requests:false},online:[],offset:0,hasMore:false,loaded:false,onlineError:false,busy:false,follows:[],chats:[],prefs:{},notifications:[],unread:0,notiMore:false,notiBusy:false,filter:'all',started:false,hasEarlier:false};
-async function rpc(name,params){const r=await db.rpc(name,params||{});if(r.error)throw r.error;return r.data;}
+async function rpc(name,params){const r=await db.rpc(name,params||{});if(r.error){if(r.status===0||r.status>=500||/^(08|53|XX)/.test(r.error.code||''))window.connectAccountData?.recordError?.(r.status===0?'network':'database');throw r.error;}return r.data;}
 const pref=p=>data.prefs[p.id]||{folder:p.origin==='online'?'online':'live',pinned:false,archived_at:null};
 const isHidden=id=>Boolean(data.prefs[id]?.hidden_at);
 async function loadPrefs(){const owner=state.session?.user?.id;if(!owner)return;try{const rows=await rpc('entre_conversation_list');if(state.session?.user?.id!==owner)return;data.prefs={};for(const p of(Array.isArray(rows)?rows:[])){if(p?.pair_id)data.prefs[p.pair_id]=p;}}catch(e){console.warn('Prefs',e);}}
