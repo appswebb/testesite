@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   build:
-    if: github.head_ref == 'android-build-017' && github.event.pull_request.head.repo.full_name == github.repository
+    if: github.head_ref == 'android-build-018' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -38,7 +38,7 @@ jobs:
           sha256sum "$APK" > android/app/build/outputs/apk/debug/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: CONNECT-Android-0.3.0-native-prototype-fix
+          name: CONNECT-Android-0.3.0-native-refined
           path: |
             android/app/build/outputs/apk/debug/app-debug.apk
             android/app/build/outputs/apk/debug/SHA256SUMS.txt
