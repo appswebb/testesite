@@ -13,10 +13,7 @@ final class ConnectIcon extends View {
  private void rect(Canvas c,float l,float t,float r,float b,float rad){c.drawRoundRect(l,t,r,b,rad,rad,p);}
  @Override protected void onDraw(Canvas canvas){super.onDraw(canvas);float s=Math.min(getWidth(),getHeight());canvas.save();canvas.translate((getWidth()-s)/2,(getHeight()-s)/2);canvas.scale(s/24f,s/24f);p.setColor(color);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1.65f);p.setStrokeCap(Paint.Cap.ROUND);p.setStrokeJoin(Paint.Join.ROUND);
  switch(kind){
- case "brand":{p.setStrokeWidth(3.5f);p.setShader(new LinearGradient(1,3,23,21,new int[]{0xffbd8bff,0xff7540e8,0xff4a22be},null,Shader.TileMode.CLAMP));Path loop=new Path();loop.moveTo(12,12);loop.cubicTo(9,7,6,5,3.5f,8);loop.cubicTo(-.5f,13,4,20,9,15.5f);loop.lineTo(15,8.5f);loop.cubicTo(20,4,24.5f,11,20.5f,16);loop.cubicTo(18,19,15,17,12,12);canvas.drawPath(loop,p);p.setShader(null);break;}
- case "wave":line(canvas,3,10,3,14);line(canvas,7,6,7,18);line(canvas,11,3,11,21);line(canvas,15,7,15,17);line(canvas,19,10,19,14);break;
- case "pin":{Path pin=new Path();pin.moveTo(12,22);pin.cubicTo(9,17,3.5f,13,4.5f,8);pin.cubicTo(5.5f,0,18.5f,0,19.5f,8);pin.cubicTo(20.5f,13,15,17,12,22);canvas.drawPath(pin,p);circle(canvas,12,9,2.5f);break;}
- case "radio":circle(canvas,12,12,8);break;
+ case "brand":canvas.scale(24f/64,24f/64);canvas.translate(7,1);p.setStrokeWidth(4.5f);Path bubble=new Path();bubble.moveTo(12,9);bubble.lineTo(36,9);bubble.cubicTo(44,9,50,15,50,23);bubble.lineTo(50,31);bubble.cubicTo(50,39,44,45,36,45);bubble.lineTo(23,45);bubble.lineTo(13,53);bubble.lineTo(13,45);bubble.lineTo(12,45);bubble.cubicTo(4,45,0,39,0,31);bubble.lineTo(0,23);bubble.cubicTo(0,15,4,9,12,9);bubble.close();canvas.drawPath(bubble,p);p.setStyle(Paint.Style.FILL);circle(canvas,17.5f,27,3.7f);circle(canvas,32.5f,27,3.7f);break;
  case "home":line(canvas,3,10,12,3,21,10,21,21,15,21,15,14,9,14,9,21,3,21,3,10);break;
  case "bolt":line(canvas,13,2,4,13,11,13,10,22,20,10,13,10,13,2);break;
  case "rooms":rect(canvas,3,3,21,21,3);line(canvas,8,3,8,21);line(canvas,8,11,21,11);break;
