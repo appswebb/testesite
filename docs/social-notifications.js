@@ -3,7 +3,7 @@
 const api=window.entreSocial;
 function summary(n){
  const p=n.actor_name||'Uma pessoa';
- return ({follow:p+' quer seguir você.',follow_accepted:p+' aceitou seu pedido.',chat_request:p+' quer conversar com você.',chat_accepted:p+' aceitou conversar.',message:'Nova mensagem de '+p+'.',matched:'Um encontro começou!',ended:'Um encontro terminou.',retention:'A conversa está perto de 10 dias sem mensagens. O texto poderá expirar.',account_suspended:'Sua conta foi suspensa pela moderação. Verifique o motivo e o recurso disponível.',account_restored:'Sua conta foi reativada. Você já pode voltar a usar o CONNECT.',system:'Novidades da plataforma.',bulletin:'Novo aviso oficial da administração.',poll:'Nova enquete oficial disponível.',bulletin_reply:p+' respondeu a um aviso oficial.'})[n.kind]||'Você tem uma novidade.';
+ return ({follow:p+' quer seguir você.',follow_accepted:p+' aceitou seu pedido.',chat_request:p+' quer conversar com você.',chat_accepted:p+' aceitou conversar.',message:'Nova mensagem de '+p+'.',matched:'Um encontro começou!',ended:'Um encontro terminou.',retention:'A conversa está perto de 20 dias sem mensagens ou anexos. Ela poderá ser excluída para os dois participantes.',account_suspended:'Sua conta foi suspensa pela moderação. Verifique o motivo e o recurso disponível.',account_restored:'Sua conta foi reativada. Você já pode voltar a usar o CONNECT.',system:'Novidades da plataforma.',bulletin:'Novo aviso oficial da administração.',poll:'Nova enquete oficial disponível.',bulletin_reply:p+' respondeu a um aviso oficial.'})[n.kind]||'Você tem uma novidade.';
 }
 function notificationEntry(n){
  const following=n.kind==='follow'||n.kind==='follow_accepted';
