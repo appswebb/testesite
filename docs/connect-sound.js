@@ -89,7 +89,7 @@ function sync(){
 function set(value){
  enabled=Boolean(value);
  try{localStorage.setItem(KEY,enabled?'on':'off')}catch(_){}
- sync();
+ sync();window.dispatchEvent(new Event('connect:soundchange'));
 }
 function markup(){
  return '<div class="setting-row"><div><strong>Sons de interação</strong><p>Sons diferentes para navegação, mensagens, conexões e confirmações.</p></div><button type="button" class="ui-btn btn-outline btn-sm" role="switch" aria-label="Sons de interação" aria-checked="'+enabled+'" data-connect-sound-toggle>'+ (enabled?'Ativado':'Desativado')+'</button></div><div class="setting-row sound-volume-row"><div><strong>Volume dos efeitos</strong><p data-connect-volume-label>'+level+'%</p></div><input type="range" data-connect-sound-volume aria-label="Volume dos sons" min="20" max="100" value="'+level+'"><button type="button" class="ui-btn btn-outline btn-sm" data-connect-sound-test>Testar</button></div>';
@@ -123,7 +123,7 @@ document.addEventListener('click',e=>{
  if(el.tagName==='LABEL'&&el.control)return;
  synth(clickKind(el),true);
 },true);
-document.addEventListener('input',e=>{if(!e.target.matches?.('[data-connect-sound-volume]'))return;level=Math.max(20,Math.min(100,Number(e.target.value)||80));try{localStorage.setItem(VOLUME,String(level));}catch(_){}sync();});
+document.addEventListener('input',e=>{if(!e.target.matches?.('[data-connect-sound-volume]'))return;level=Math.max(20,Math.min(100,Number(e.target.value)||80));try{localStorage.setItem(VOLUME,String(level));}catch(_){}sync();window.dispatchEvent(new Event('connect:soundchange'));});
 window.addEventListener('storage',e=>{if(e.key===KEY){enabled=e.newValue!=='off';sync();}if(e.key===VOLUME){level=Math.max(20,Math.min(100,Number(e.newValue)||80));sync();}});
-window.connectSound={markup,set,isEnabled:()=>enabled,play:kind=>synth(kind)};
+window.connectSound={markup,set,isEnabled:()=>enabled,read:()=>({enabled,volume:level}),restore:(sound,volume)=>{enabled=Boolean(sound);level=Math.max(20,Math.min(100,Number(volume)||80));try{localStorage.setItem(KEY,enabled?'on':'off');localStorage.setItem(VOLUME,String(level))}catch(_){}sync();},play:kind=>synth(kind)};
 })();
