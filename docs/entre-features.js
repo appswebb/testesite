@@ -32,11 +32,11 @@ async function loadPosts(more=false){
   if(state.session?.user?.id!==uid)return;
   const arr=Array.isArray(rows)?rows:[];
   const next=more?Array.from(new Map(data.posts.concat(arr).map(p=>[String(p.id),p])).values()):arr;
-  await Promise.allSettled(next.filter(p=>p.author_avatar).map(p=>signAvatar({id:p.author_id,display_name:p.author_name,avatar_path:p.author_avatar,avatar_uploaded_at:p.author_avatar_uploaded_at})));
+  await Promise.allSettled(arr.filter(p=>p.author_avatar).map(p=>signAvatar({id:p.author_id,display_name:p.author_name,avatar_path:p.author_avatar,avatar_uploaded_at:p.author_avatar_uploaded_at})));
   if(state.session?.user?.id!==uid||seq!==feedLoadSeq)return;
-  await window.entreMedia?.signPosts?.(next);
+  await window.entreMedia?.signPosts?.(arr);
   if(state.session?.user?.id!==uid||seq!==feedLoadSeq)return;
-  data.posts=next;data.postMore=arr.length===15;data.postBefore=next.at(-1)?.id||null;
+  data.posts=next.slice(-45);data.feedWindowShifted=more&&(data.feedWindowShifted||next.length>45);data.postMore=arr.length===15;data.postBefore=next.at(-1)?.id||null;
   for(const p of data.posts){if(p.premium)data.premiumIds.add(p.author_id);else data.premiumIds.delete(p.author_id);}
   feedLoaded=true;
  }catch(e){if(state.session?.user?.id===uid&&seq===feedLoadSeq){feedError=infoError(e);toast(feedError,true);}}finally{data.postLoading=false;if(state.session?.user?.id===uid&&state.view==='posts')renderView();if(feedLoadQueued){feedLoadQueued=false;if(state.session?.user?.id&&state.view==='posts')void loadPosts();}}
@@ -73,6 +73,7 @@ function commentsOverlay(){
  (data.commentsRows.length?data.commentsRows.map(commentCard).join(''):
  '<div class="comments-dialog-empty">'+ico('chat',36)+'<strong>'+(data.commentsBusy?'Carregando comentários…':'Ninguém comentou ainda')+'</strong>'+
  '<p>Seja a primeira pessoa a participar da conversa.</p></div>')+
+ (data.commentsWindowShifted?'<button type="button" class="comments-more" data-action="postCommentsRecent">Voltar aos comentários recentes</button>':'')+
  (data.commentsHasMore?'<button type="button" data-action="postCommentsMore" class="comments-more" '+(data.commentsBusy?'disabled':'')+'>Carregar mais comentários</button>':'')+
  '</div><footer class="comments-dialog-footer"><form class="post-comment-form" data-post="'+Number(data.commentsPost)+'">'+
  '<label class="sr-only" for="commentDialogInput">Escreva um comentário</label>'+
@@ -88,7 +89,7 @@ async function loadCommentPage(more=false){
   const response=await call('entre_post_comments_page',{_post:post,_before:before});
   if(post!==data.commentsPost)return;
   const next=Array.isArray(response?.items)?response.items:[];
-  data.commentsRows=more?data.commentsRows.concat(next):next;
+  const merged=more?data.commentsRows.concat(next):next;data.commentsWindowShifted=more&&(data.commentsWindowShifted||merged.length>45);data.commentsRows=merged.slice(-45);
   data.commentsHasMore=response?.has_more===true;
  }catch(error){data.commentsError=infoError(error);}
  finally{data.commentsBusy=false;if(data.commentsPost===post)renderView();}
@@ -99,7 +100,7 @@ let feedDraft='',feedDraftOwner=null,feedLoaded=false,feedError='',feedOwner=nul
 function syncFeedOwner(){
  const uid=state.session?.user?.id||null;
  if(feedDraftOwner!==uid){feedDraftOwner=uid;feedDraft='';window.entreMedia?.clearMedia?.();}
- if(feedOwner!==uid){feedOwner=uid;feedLoaded=false;feedError='';data.posts=[];data.postBefore=null;data.postMore=false;data.expandedPostComments.clear();data.commentsPost=null;data.commentsRows=[];}
+ if(feedOwner!==uid){feedOwner=uid;feedLoaded=false;feedError='';data.posts=[];data.feedWindowShifted=false;data.commentsWindowShifted=false;data.postBefore=null;data.postMore=false;data.expandedPostComments.clear();data.commentsPost=null;data.commentsRows=[];}
 }
 document.addEventListener('input',e=>{if(e.target?.matches?.('#postCreateForm textarea[name="body"]')){syncFeedOwner();feedDraft=e.target.value;const count=document.getElementById('connectFeedCount');if(count)count.textContent=String(feedDraft.length)+'/900';}});
 function feedTime(value){
@@ -125,6 +126,7 @@ function postsView(){
   (p.body?'<p class="post-body">'+esc(p.body)+'</p>':'')+(window.entreMedia?.postMarkup?.(p)||'')+
   '<div class="post-interactions cf-post-actions"><button type="button" class="'+(liked?'liked':'')+'" aria-pressed="'+liked+'" aria-label="'+(liked?'Remover curtida':'Curtir publicação')+'" data-action="postLike" data-id="'+Number(p.id)+'">'+ico('heart',20)+' <span>'+count+' '+(count===1?'curtida':'curtidas')+'</span></button><button type="button" class="post-comments-launch" data-action="postCommentsOpen" data-id="'+Number(p.id)+'">'+ico('chat',20)+' <span>Comentar</span></button></div></article>';
  }).join(''):(data.postLoading||!feedLoaded&&!feedError?'<div class="cf-feed-empty" role="status"><span class="cf-empty-icon">'+ico('refresh',25)+'</span><h3>Carregando publicações…</h3><p>Preparando seu feed.</p></div>':feedError?'<div class="cf-feed-empty" role="status"><span class="cf-empty-icon">'+ico('refresh',25)+'</span><h3>Não foi possível atualizar</h3><p>Tente novamente.</p><button type="button" data-action="postsRefresh">Atualizar feed</button></div>':'<div class="cf-feed-empty"><span class="cf-empty-icon">'+ico('chat',28)+'</span><h3>Toda conversa começa com um oi.</h3><p>Seja a primeira pessoa a compartilhar um momento com a comunidade.</p><button type="button" data-action="feedComposeFocus">Criar publicação '+ico('arrow',15)+'</button></div>'))+
+ (data.feedWindowShifted?'<button type="button" class="cf-load-more" data-action="postsRefresh">Voltar às publicações recentes</button>':'')+
  (data.postMore?'<button type="button" class="cf-load-more" data-action="postsMore">Ver mais publicações '+ico('chevron',16)+'</button>':'')+'</div></section>'+commentsOverlay();
 }
 async function postAction(a,btn){
@@ -132,10 +134,11 @@ async function postAction(a,btn){
  if(a==='postsRefresh'){await loadPosts();return true;}
  if(a==='feedComposeFocus'){document.getElementById('connectPostBody')?.focus();return true;}
  if(a==='postCommentsOpen'){
-  data.commentsPost=id;data.commentsRows=[];data.commentsError='';data.commentsHasMore=false;
+  data.commentsPost=id;data.commentsRows=[];data.commentsWindowShifted=false;data.commentsError='';data.commentsHasMore=false;
   renderView();await loadCommentPage();document.getElementById('commentDialogInput')?.focus();return true;
  }
  if(a==='postCommentsClose'){data.commentsPost=null;data.commentsRows=[];data.commentsError='';renderView();return true;}
+ if(a==='postCommentsRecent'){await loadCommentPage();return true;}
  if(a==='postCommentsMore'){await loadCommentPage(true);return true;}
  if(a==='postsMore'){await loadPosts(true);return true;}
  if(a==='postEdit'){
