@@ -101,7 +101,7 @@ async function load(more=false){
   const {data,error}=await db.rpc('entre_room_messages_page',{_room:room,_before:more?s.rows[0]?.id||null:null});
   if(error)throw error;if(room!==s.room||state.session?.user?.id!==user)return;
   const next=(data?.items||[]).filter(r=>!r.deleted_at).slice().reverse();
-  if(more)s.rows=next.concat(s.rows);
+  if(more)s.rows=next.concat(s.rows).slice(0,100);
   else s.rows=next;
   s.older=data?.has_more===true;
   paint(!more);
