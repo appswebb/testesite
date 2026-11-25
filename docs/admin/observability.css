@@ -1,0 +1,9 @@
+#console .connect-ops-scroll{max-width:100%;overflow:auto;overscroll-behavior:contain}
+#console .connect-ops-table{border-collapse:collapse;width:100%;font-size:11px;text-align:left;white-space:nowrap}
+#console .connect-ops-table th,#console .connect-ops-table td{padding:10px 12px;border-bottom:1px solid var(--studio-border)}
+#console .connect-ops-table th{color:var(--studio-muted);font-weight:650;background:var(--studio-subtle)}
+#console .connect-ops-audit{display:grid;gap:4px;padding:12px 15px;border-bottom:1px solid var(--studio-border)}
+#console .connect-ops-audit strong{font-size:12px}
+#console .connect-ops-audit small{font-size:10px;color:var(--studio-muted);overflow-wrap:anywhere}
+#console .plan-editor select{width:100%;min-height:40px;max-width:100%}
+#console .plan-audit .small-btn{align-self:start;justify-self:start;min-height:34px}
