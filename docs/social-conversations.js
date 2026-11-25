@@ -42,13 +42,13 @@ function conversationsView(){
 }
 function profileModal(){
  const p=d.socialProfile;if(!p)return '';
- const handle=esc(p.username||'');
+ const handle=esc(p.username||''),preview=p.id===state.session?.user?.id;
  return '<div class="modal-backdrop" id="modalBackdrop"><div class="modal-card social-profile-modal cp-visitor" role="dialog" aria-modal="true" aria-labelledby="socialProfileTitle">'+
- '<div class="cp-visitor-top"><strong>Perfil</strong><button type="button" class="cp-icon-button" data-action="closemodal" aria-label="Fechar perfil">'+ico('close',20)+'</button></div>'+
+ '<div class="cp-visitor-top"><strong>'+(preview?'Visualização como visitante':'Perfil')+'</strong><button type="button" class="cp-icon-button" data-action="closemodal" aria-label="Fechar perfil">'+ico('close',20)+'</button></div>'+
  '<div class="cp-visitor-scroll"><div class="cp-banner" data-cp-handle="'+handle+'" aria-label="Banner do perfil"></div><div class="cp-visitor-body"><div class="cp-visitor-avatar">'+avatar(p,'large')+'</div><div class="cp-person-title"><h2 id="socialProfileTitle">'+esc(p.display_name||'Pessoa do CONNECT')+'</h2>'+ (window.entreExtras?.badge?.(p)||'')+'</div>'+
  '<span class="person-handle">'+(handle?'@'+handle:'')+'</span><small class="cp-person-meta">'+esc(p.age||'')+(p.age?' anos · ':'')+esc(genders[p.gender]||'')+'</small>'+
  (window.connectRelationships?.stats?.(p.id)||'')+'<div class="cp-bio"><strong>Sobre</strong><p>'+esc(p.bio||'Esta pessoa ainda não escreveu uma apresentação.')+'</p></div>'+
- '</div></div><footer class="cp-visitor-footer"><div class="cp-visitor-actions"><button type="button" class="ui-btn btn-dark" data-action="socialChat" data-id="'+esc(p.id)+'">'+ico('chat',17)+' Conversar</button>'+ (window.connectRelationships?.followButton?.(p.id,p.follow_status)||'')+'</div>'+
+ '</div></div><footer class="cp-visitor-footer">'+(preview?'<p class="cpv-notice">Esta é a visualização que outras pessoas têm do seu perfil. As ações abaixo são apenas uma prévia.</p><div class="cp-visitor-actions"><button type="button" class="ui-btn btn-dark" disabled>'+ico('chat',17)+' Conversar</button><button type="button" class="ui-btn btn-outline btn-sm" disabled>Seguir</button></div>':(window.connectProfileVisits?.note?.()||'')+'<div class="cp-visitor-actions"><button type="button" class="ui-btn btn-dark" data-action="socialChat" data-id="'+esc(p.id)+'">'+ico('chat',17)+' Conversar</button>'+ (window.connectRelationships?.followButton?.(p.id,p.follow_status)||'')+'</div>')+
  (handle?'<button type="button" class="cp-share-link" data-action="copyUsernameLink" data-username="'+handle+'">'+ico('link',17)+' Compartilhar perfil</button>':'')+'</footer></div></div>';
 }
 
