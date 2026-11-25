@@ -38,7 +38,7 @@ function conversationsView(){
  '<div class="conversation-tabs">'+filters.map(f=>'<button type="button" data-action="convoFilter" data-value="'+f[0]+'" class="'+(d.filter===f[0]?'active':'')+'">'+f[1]+'</button>').join('')+'</div>'+
  (selected.length?'<div class="convo-list conversation-list-v2">'+selected.map(row).join('')+'</div>':
  '<div class="social-empty"><h3>Nenhuma conversa nesta categoria.</h3><p>As conversas aparecem após uma conexão aceita.</p><button class="ui-btn btn-dark btn-sm" data-action="nav" data-view="connect">Conhecer alguém</button></div>')+
- '<p class="retention-small">Apagar uma conversa remove o histórico apenas da sua conta. Se chegar uma nova mensagem, o chat volta sem as mensagens que você apagou.</p>';
+ '<p class="retention-small">Após 20 dias sem novas mensagens ou anexos de nenhum dos participantes, a conversa inteira é excluída para ambos, inclusive se estiver fixada ou arquivada. Apagar manualmente remove o histórico apenas da sua conta.</p>';
 }
 function profileModal(){
  const p=d.socialProfile;if(!p)return '';
