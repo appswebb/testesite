@@ -517,8 +517,8 @@ function connectView(){
   '<div class="live-modes"><button type="button" data-action="liveMode" data-value="chat" aria-pressed="'+(mode==='chat')+'" class="live-mode '+(mode==='chat'?'selected':'')+'" '+(waiting?'disabled':'')+'>'+ico('chat',24)+'<span><strong>Texto</strong><small>Sem câmera</small></span>'+(mode==='chat'?ico('check',20):'')+'</button>'+
   '<button type="button" data-action="liveMode" data-value="video" aria-pressed="'+(mode==='video')+'" class="live-mode '+(mode==='video'?'selected':'')+'" '+(waiting?'disabled':'')+'>'+ico('camera',24)+'<span><strong>Vídeo</strong><small>Com câmera</small></span>'+(mode==='video'?ico('check',20):'')+'</button></div>'+
   (state.liveFiltersOpen?'<section class="live-app-filters cp-match-filter-sheet" id="liveFilterSheet" role="dialog" aria-modal="true" aria-label="Filtros de encontros"><header class="cp-filter-header"><button type="button" data-action="liveFiltersClose" aria-label="Voltar">'+ico('back',20)+'</button><strong>Filtros</strong><button type="button" data-action="liveFiltersClose" aria-label="Fechar filtros">'+ico('close',20)+'</button></header><div class="live-app-filter-body"><div class="filter-bar"><h3>Encontrar</h3><div class="filters">'+filters+'</div>'+(!isPremium?'<p class="premium-filter-hint">Filtro de gênero: Premium.</p>':'')+'</div>'+(window.entreGeo?.compactPanel?.(waiting)||window.entreGeo?.panel?.(waiting)||'')+'</div><div class="live-filter-footer"><button type="button" class="live-filter-find ui-btn btn-dark" data-action="liveFiltersClose">Concluir '+ico('check',17)+'</button></div></section>':'')+
-  '</div><div class="cp-match-footer">'+quotaMarkup()+quotaOfferMarkup()+'<button type="button" class="live-app-find" data-action="'+(waiting?'cancelsearch':'startsearch')+'">'+ico(waiting?'close':'bolt',19)+' '+(waiting?'Cancelar busca':'Encontrar alguém')+'</button>'+
-  (waiting?'<div class="live-app-progress" role="status"><span class="live-dot"></span> Buscando alguém por '+(mode==='video'?'vídeo':'texto')+'…</div>':'')+
+  '</div><div class="cp-match-footer">'+quotaMarkup()+quotaOfferMarkup()+'<button type="button" class="live-app-find" data-action="'+(waiting?'cancelsearch':'startsearch')+'" '+(cancellingSearch?'disabled aria-busy="true"':'')+'>'+ico(waiting?'close':'bolt',19)+' '+(cancellingSearch?'Cancelando…':waiting?'Cancelar busca':'Encontrar alguém')+'</button>'+
+  (waiting?'<div class="live-app-progress" role="status"><span class="live-dot"></span> '+(cancellingSearch?'Confirmando cancelamento…':cancelUnconfirmed?'Cancelamento pendente. Tente novamente.':'Buscando alguém por '+(mode==='video'?'vídeo':'texto')+'…')+'</div>':'')+
   '</div><p class="sr-only">Somente encontros encontrados contam no limite diário. Buscas canceladas sem encontrar alguém não descontam do saldo. As buscas de chat e vídeo usam filas separadas. É possível encerrar um encontro a qualquer momento.</p>'+
   '</div></section>';
 }
@@ -789,10 +789,34 @@ async function saveProfile(form){
  }finally{busy(submit,false)}
 }
 function clearSearchTimer(){if(state.searchLoop){clearInterval(state.searchLoop);state.searchLoop=null}}
-async function startSearch(){if(maintenanceIsActive())return;if(!state.session||!state.profile||state.searching||cancellingSearch||activeEncounter())return;window.entreGeo?.target?.();if(state.preference!=='any'&&!window.entreExtras?.isPremium?.(state.session.user.id)){state.preference='any';renderView();premiumNotice('O filtro de gênero');return;}state.liveFiltersOpen=false;document.body.classList.remove('live-filters-open');state.searching=true;if(state.channel){void db.removeChannel(state.channel);state.channel=null;}state.pair=null;state.peer=null;state.messages=[];state.view='connect';render();await pollSearch();if(state.searching&&!state.searchLoop)state.searchLoop=setInterval(pollSearch,3500)}
-let polling=false,cancellingSearch=false,pendingSearchRequest=null;
-async function pollSearch(){if(polling||!state.searching)return;polling=true;const uid=state.session?.user?.id;try{pendingSearchRequest=Promise.resolve(db.rpc('entre_find_mode_location',{_preference:state.preference,_mode:state.liveMode,...(window.entreGeo?.target?.()||{_target_state:null,_target_city:null})}));const {data,error}=await pendingSearchRequest;if(error)throw error;if(state.session?.user?.id!==uid)return;applySearchQuota(data?.quota,uid);paintSearchQuota();if(data?.status==='daily_limit'){state.searching=false;clearSearchTimer();if(state.view==='connect')renderView();toast('Você atingiu 50 encontros hoje. Assine o Premium para encontros ilimitados ou volte amanhã.',true);return;}if(!state.searching)return;if(data?.status==='matched'&&data.pair_id){state.searching=false;clearSearchTimer();if(await openPair(data.pair_id)){window.entreSocial?.showMatchAnimation?.(state.peer);toast('Você encontrou uma conexão!',false,'found')}}}catch(e){if(state.session?.user?.id===uid){toast(infoError(e),true);state.searching=false;clearSearchTimer();renderView()}}finally{polling=false;pendingSearchRequest=null}}
-async function cancelSearch(){if(cancellingSearch)return;cancellingSearch=true;state.searching=false;clearSearchTimer();const uid=state.session?.user?.id;try{if(pendingSearchRequest)await pendingSearchRequest.catch(()=>{});if(state.session?.user?.id!==uid)return;const {error}=await db.rpc('entre_leave');if(error)throw error;await refreshSearchQuota();}catch(e){toast(infoError(e),true)}finally{cancellingSearch=false;if(state.session?.user?.id===uid&&state.view==='connect')renderView();}}
+async function startSearch(){if(maintenanceIsActive())return;if(!state.session||!state.profile||state.searching||cancellingSearch||activeEncounter())return;window.entreGeo?.target?.();if(state.preference!=='any'&&!window.entreExtras?.isPremium?.(state.session.user.id)){state.preference='any';renderView();premiumNotice('O filtro de gênero');return;}cancelUnconfirmed=false;state.liveFiltersOpen=false;document.body.classList.remove('live-filters-open');state.searching=true;if(state.channel){void db.removeChannel(state.channel);state.channel=null;}state.pair=null;state.peer=null;state.messages=[];state.view='connect';render();await pollSearch();if(state.searching&&!cancellingSearch&&!cancelUnconfirmed&&!state.searchLoop)state.searchLoop=setInterval(pollSearch,3500)}
+let polling=false,cancellingSearch=false,cancelUnconfirmed=false,pendingSearchRequest=null;
+async function pollSearch(){if(polling||!state.searching||cancellingSearch||cancelUnconfirmed)return;polling=true;const uid=state.session?.user?.id;try{pendingSearchRequest=Promise.resolve(db.rpc('entre_find_mode_location',{_preference:state.preference,_mode:state.liveMode,...(window.entreGeo?.target?.()||{_target_state:null,_target_city:null})}));const {data,error}=await pendingSearchRequest;if(error)throw error;if(state.session?.user?.id!==uid||cancellingSearch||cancelUnconfirmed)return;applySearchQuota(data?.quota,uid);paintSearchQuota();if(data?.status==='daily_limit'){state.searching=false;clearSearchTimer();if(state.view==='connect')renderView();toast('Você atingiu 50 encontros hoje. Assine o Premium para encontros ilimitados ou volte amanhã.',true);return;}if(!state.searching)return;if(data?.status==='matched'&&data.pair_id){state.searching=false;clearSearchTimer();if(await openPair(data.pair_id)){window.entreSocial?.showMatchAnimation?.(state.peer);toast('Você encontrou uma conexão!',false,'found')}}}catch(e){if(state.session?.user?.id===uid&&!cancellingSearch&&!cancelUnconfirmed){toast(infoError(e),true);state.searching=false;clearSearchTimer();renderView()}}finally{polling=false;pendingSearchRequest=null}}
+async function cancelSearch(){
+ if(cancellingSearch||!state.searching)return;
+ const uid=state.session?.user?.id;if(!uid)return;
+ cancellingSearch=true;cancelUnconfirmed=false;clearSearchTimer();
+ if(state.view==='connect')renderView();
+ try{
+  if(pendingSearchRequest)await pendingSearchRequest.catch(()=>{});
+  if(state.session?.user?.id!==uid)return;
+  const {data,error}=await db.rpc('connect_cancel_search');if(error)throw error;
+  if(state.session?.user?.id!==uid)return;
+  if(!data||!['cancelled','matched'].includes(data.status)||(data.status==='matched'&&!data.pair_id))throw Error('Resposta de cancelamento inválida.');
+  if(data.quota)applySearchQuota(data.quota,uid);
+  state.searching=false;cancelUnconfirmed=false;
+  if(data.status==='matched'){
+   try{
+    if(await openPair(data.pair_id)){window.entreSocial?.showMatchAnimation?.(state.peer);toast('O encontro foi confirmado antes do cancelamento. Você pode encerrá-lo a qualquer momento.',false,'found');}
+   }catch(e){toast('Encontro confirmado. Abra Ao vivo novamente para recuperar a conexão.',true);console.warn('Encontro confirmado durante cancelamento',e);}
+  }
+ }catch(e){
+  if(state.session?.user?.id===uid){state.searching=true;cancelUnconfirmed=true;toast('Não foi possível confirmar o cancelamento. Toque em Cancelar busca para tentar novamente.',true);console.warn('Cancelamento não confirmado',e);}
+ }finally{
+  cancellingSearch=false;
+  if(state.session?.user?.id===uid&&state.view==='connect')renderView();
+ }
+}
 let openPairSeq=0,messageLoadSeq=0,messageRevision=0;
 async function openPair(id){
  if(activeEncounter()&&state.pair.id!==id){toast('Encerre o encontro atual antes de abrir outra conversa.',true);return false;}
