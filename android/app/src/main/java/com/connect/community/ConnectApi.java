@@ -48,7 +48,7 @@ final class ConnectApi {
  synchronized void clear(){session=null;vault.edit().remove("session").commit();}
  synchronized boolean hasSession(){return session!=null;}
  private Object http(String method,String path,JSONObject body,String bearer,String prefer)throws Exception{
-  if(!path.startsWith("/auth/v1/")&&!path.startsWith("/rest/v1/"))throw new IOException("Endpoint inválido.");
+  if(!path.startsWith("/auth/v1/")&&!path.startsWith("/rest/v1/")&&!path.startsWith("/functions/v1/")&&!path.startsWith("/storage/v1/"))throw new IOException("Endpoint inválido.");
   HttpURLConnection con=(HttpURLConnection)new URL(BASE+path).openConnection();
   try{
    con.setInstanceFollowRedirects(false);con.setConnectTimeout(12000);con.setReadTimeout(15000);con.setRequestMethod(method);con.setRequestProperty("apikey",ANON);if(bearer!=null)con.setRequestProperty("Authorization","Bearer "+bearer);con.setRequestProperty("Accept","application/json");
@@ -65,7 +65,7 @@ final class ConnectApi {
   JSONObject response=(JSONObject)http("POST","/auth/v1/signup?redirect_to="+enc(WEBSITE),obj("email",email,"password",password,"gotrue_meta_security",obj("captcha_token",captcha),"data",obj("connect_adult_declared",true,"connect_terms_accepted",true,"connect_terms_version","2026-11-25","connect_privacy_version","2026-11-25")),null,null);
   if(response.optString("access_token","").isEmpty())return false;store(response);return true;
  }
- private synchronized String token()throws Exception{
+ synchronized String token()throws Exception{
   if(session==null)throw new IOException("Entre novamente.");
   if(session.optLong("expires_at",0)<=System.currentTimeMillis()/1000+90){try{store((JSONObject)http("POST","/auth/v1/token?grant_type=refresh_token",obj("refresh_token",session.getString("refresh_token")),null,null));}catch(ApiException ex){if(ex.invalidSession())clear();throw ex;}}
   return session.getString("access_token");
@@ -76,5 +76,31 @@ final class ConnectApi {
  synchronized JSONArray rows(String query)throws Exception{return (JSONArray)http("GET","/rest/v1/"+query,null,token(),null);}
  synchronized Object insert(String table,JSONObject data)throws Exception{return http("POST","/rest/v1/"+table,data,token(),"return=representation");}
  synchronized JSONArray patch(String query,JSONObject data)throws Exception{return (JSONArray)http("PATCH","/rest/v1/"+query,data,token(),"return=representation");}
+ synchronized JSONObject edge(String name,JSONObject args)throws Exception{
+  if(!name.matches("[a-z0-9-]+"))throw new IOException("Função inválida.");
+  return (JSONObject)http("POST","/functions/v1/"+name,args,token(),null);
+ }
+ private static String objectPath(String bucket,String path)throws Exception{
+  if(!bucket.matches("entre-[a-z-]+")||path==null||path.isEmpty()||path.contains(".."))throw new IOException("Arquivo inválido.");
+  StringBuilder b=new StringBuilder(bucket);
+  for(String part:path.split("/")){if(part.isEmpty())throw new IOException("Arquivo inválido.");b.append('/').append(enc(part).replace("+","%20"));}
+  return b.toString();
+ }
+ synchronized void upload(String bucket,String path,byte[] bytes,String mime)throws Exception{
+  if(bytes.length==0||bytes.length>26214400)throw new IOException("Arquivo grande demais.");
+  HttpURLConnection con=(HttpURLConnection)new URL(BASE+"/storage/v1/object/"+objectPath(bucket,path)).openConnection();
+  try{con.setInstanceFollowRedirects(false);con.setConnectTimeout(15000);con.setReadTimeout(45000);con.setRequestMethod("POST");con.setRequestProperty("apikey",ANON);con.setRequestProperty("Authorization","Bearer "+token());con.setRequestProperty("Content-Type",mime);con.setRequestProperty("x-upsert","false");con.setDoOutput(true);con.setFixedLengthStreamingMode(bytes.length);try(OutputStream out=con.getOutputStream()){out.write(bytes);}int status=con.getResponseCode();if(status<200||status>=300)throw new IOException("Envio recusado pelo armazenamento ("+status+").");}finally{con.disconnect();}
+ }
+ synchronized void removeMedia(String bucket,String path)throws Exception{
+  objectPath(bucket,path);http("DELETE","/storage/v1/object/"+bucket,obj("prefixes",new JSONArray().put(path)),token(),null);
+ }
+ synchronized String signed(String bucket,String path)throws Exception{
+  JSONObject result=(JSONObject)http("POST","/storage/v1/object/sign/"+objectPath(bucket,path),obj("expiresIn",120),token(),null);
+  String signed=result.optString("signedURL",result.optString("signedUrl"));
+  if(signed.startsWith("/object/sign/"))signed=BASE+"/storage/v1"+signed;
+  else if(signed.startsWith("/storage/v1/"))signed=BASE+signed;
+  URL u=new URL(signed);if(!u.getProtocol().equals("https")||!u.getHost().equals(new URL(BASE).getHost()))throw new IOException("URL de mídia inválida.");
+  return signed;
+ }
  synchronized void logout()throws Exception{if(session!=null)http("POST","/auth/v1/logout?scope=local",null,token(),null);clear();}
 }
