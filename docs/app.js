@@ -496,7 +496,7 @@ async function refreshSearchQuota(){
  try{const {data,error}=await db.rpc('connect_search_quota');if(error)throw error;applySearchQuota(data,uid);paintSearchQuota();}catch(e){console.warn('Search quota unavailable');}finally{searchQuotaBusy=false;}
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.view==='connect')void refreshSearchQuota();});
-setInterval(()=>{if(!document.hidden&&state.view==='connect'&&state.session?.user&&!activeEncounter()&&!state.searching)void refreshSearchQuota();},30000);
+setInterval(()=>{if(!document.hidden&&state.view==='connect'&&state.session?.user&&!activeEncounter()&&!state.searching)void refreshSearchQuota();},60000);
 function quotaOfferMarkup(){
  const q=currentSearchQuota();if(!q||q.unlimited||Number(q.remaining)!==0||state.searching)return '<div id="connectQuotaOffer" hidden></div>';
  const cents=window.entreExtras?.data?.premium?.price_cents,price=Number.isInteger(cents)&&cents>0?(cents/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):'';
@@ -1148,10 +1148,10 @@ async function readMaintenanceSettings(){
 }
 function scheduleMaintenanceCheck(){
  clearTimeout(maintenanceTimer);if(maintenanceLeaving||document.hidden)return;
- maintenanceTimer=setTimeout(()=>void maintenanceCheck(false),document.getElementById('maintenance-screen')?2000:15000);
+ maintenanceTimer=setTimeout(()=>void maintenanceCheck(false),document.getElementById('maintenance-screen')?2000:30000);
 }
 async function maintenanceCheck(manual=false){
- if(maintenanceLeaving)return;
+ if(maintenanceLeaving||(!manual&&document.hidden&&!state.searching&&!activeEncounter()&&!window.entreLives?.isActive?.()))return;
  if(maintenancePolling||maintenanceInitial){maintenanceQueued=true;maintenanceManualQueued=maintenanceManualQueued||manual;return;}
  maintenancePolling=true;paintMaintenanceStatus('checking',manual);
  try{
@@ -1228,8 +1228,7 @@ async function boot(){
   });
   if(!maintenanceIsActive()&&!state.suspension)considerPublicAnnouncement(state.siteSettings);
   state.timerLoop=setInterval(updateTimerText,1000);
-  setInterval(async()=>{if(state.session?.user&&state.pair&&document.visibilityState==='visible'){await refreshPair()}},12000);
-  setInterval(()=>{if(state.session?.user&&state.view==='avisos'&&!document.hidden)window.entreSocial?.refreshBulletins?.(true)},60000);
+  setInterval(async()=>{if(state.session?.user&&state.pair&&(document.visibilityState==='visible'||activeEncounter())&&(activeEncounter()||['chat','connect'].includes(state.view))){await refreshPair()}},20000);
  }catch(error){state.mode='login';render();showFormMessage(infoError(error));console.error(error);}
 }
 boot();
