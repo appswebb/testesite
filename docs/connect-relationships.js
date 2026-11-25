@@ -37,14 +37,14 @@ async function fillStats(el){
 function scan(){reset();if(!uid())return;document.querySelectorAll('[data-cp-stats]').forEach(fillStats);paintUnread();}
 const labels={followers:'Seguidores',following:'Seguindo',pending_in:'Recebidas',pending_out:'Enviadas'};
 function closeList(){generation++;if(modal){const el=modal;modal=null;el.remove()}}
-function listMarkup(){return '<div class="cp-list-head"><strong>Conexões</strong><button type="button" data-cp-list-close aria-label="Fechar">'+ico('close',20)+'</button></div><nav class="cp-list-tabs" aria-label="Conexões">'+Object.entries(labels).map(([k,v])=>'<button type="button" data-cp-list="'+k+'" aria-pressed="'+(k===currentKind)+'">'+v+'</button>').join('')+'</nav><div class="cp-list-body" aria-live="polite"></div><button class="cp-list-more" type="button" data-cp-list-more hidden>Carregar mais</button>'}
+function listMarkup(){return '<div class="cp-list-head"><strong>Conexões</strong><button type="button" data-cp-list-close aria-label="Fechar">'+ico('close',20)+'</button></div><nav class="cp-list-tabs" aria-label="Conexões">'+Object.entries(labels).map(([k,v])=>'<button type="button" data-cp-list="'+k+'" aria-pressed="'+(k===currentKind)+'">'+v+'</button>').join('')+'</nav><div class="cp-list-body" aria-live="polite"></div><div class="cpv-pagination"><button type="button" data-cp-list-prev hidden>Anterior</button><span data-cp-list-page></span><button class="cp-list-more" type="button" data-cp-list-more hidden>Próxima</button></div>'}
 async function loadList(kind,more=false){
  if(!uid()||!labels[kind])return;if(!modal){modal=document.createElement('section');modal.className='cp-list-overlay';modal.setAttribute('role','dialog');modal.setAttribute('aria-label','Conexões');document.body.append(modal);}
- const user=uid(),seq=++generation;currentKind=kind;if(!more){offset=0;modal.innerHTML=listMarkup();}
- const body=modal.querySelector('.cp-list-body'),next=modal.querySelector('[data-cp-list-more]');if(!more)body.textContent='Carregando…';next.hidden=true;
+ const user=uid(),seq=++generation;currentKind=kind;if(!more){offset=0;modal.innerHTML=listMarkup();}else if(more==='prev'){offset=Math.max(0,offset-30);}
+ const body=modal.querySelector('.cp-list-body'),next=modal.querySelector('[data-cp-list-more]');body.textContent='Carregando…';next.hidden=true;const prev=modal.querySelector('[data-cp-list-prev]');prev.hidden=true;
  try{const rows=await rpc('entre_relationships',{_target:user,_kind:kind,_offset:offset});if(seq!==generation||uid()!==user||!modal)return;
   const html=rows.map(p=>'<article class="cp-list-row"><button type="button" class="cp-list-person" data-cp-open="'+esc(p.id)+'" data-cp-username="'+esc(p.username)+'"><span class="cp-list-avatar">'+esc(initials(p.display_name))+'</span><span><strong>'+esc(p.display_name)+'</strong><small>@'+esc(p.username)+'</small></span></button><div class="cp-list-actions">'+(kind==='pending_in'?'<button type="button" data-cp-respond="yes" data-cp-id="'+esc(p.id)+'">Aceitar</button><button type="button" data-cp-respond="no" data-cp-id="'+esc(p.id)+'">Recusar</button>':'<button type="button" data-cp-follow-remove="'+esc(p.id)+'" data-cp-direction="'+(kind==='followers'?'incoming':'outgoing')+'">'+(kind==='followers'?'Remover':kind==='following'?'Deixar de seguir':'Cancelar')+'</button>')+'</div></article>').join('');
-  if(more)body.insertAdjacentHTML('beforeend',html);else body.innerHTML=html||'<p class="cp-list-empty">Nada por aqui ainda.</p>';offset+=rows.length;next.hidden=rows.length<30;
+  body.innerHTML=html||'<p class="cp-list-empty">Nada por aqui ainda.</p>';prev.hidden=offset===0;next.hidden=rows.length<30;modal.querySelector('[data-cp-list-page]').textContent='Página '+(Math.floor(offset/30)+1);body.scrollTop=0;
  }catch(error){if(seq===generation&&modal)body.textContent='Não foi possível carregar. Tente novamente.';}
 }
 async function refreshRelationships(id,status){
@@ -57,13 +57,14 @@ async function refreshRelationships(id,status){
 const url='https://appswebb.github.io/testesite/';
 function shareView(){return '<section class="cp-app-share"><div class="cp-share-hero"><img src="./connect-glass.svg?v=showcase-v17" alt="" width="96" height="60"><span>CONNECT</span><h2>O próximo oi<br> começa aqui.</h2><p>Convide alguém para conhecer o CONNECT. Converse por texto ou vídeo, faça novas conexões e compartilhe momentos.</p></div><div class="cp-share-card"><strong>Compartilhe o aplicativo</strong><p>Envie o link para seus amigos.</p><div class="cp-share-url">'+url+'</div><button type="button" class="ui-btn btn-dark" data-cp-share="native">'+ico('arrow',18)+' Compartilhar</button><button type="button" class="ui-btn btn-outline" data-cp-share="copy">'+ico('link',18)+' Copiar link</button></div></section>'}
 document.addEventListener('click',async e=>{
- const b=e.target.closest?.('[data-cp-follow],[data-cp-list],[data-cp-list-close],[data-cp-list-more],[data-cp-follow-remove],[data-cp-respond],[data-cp-open],[data-cp-share]');if(!b||b.disabled)return;
+ const b=e.target.closest?.('[data-cp-follow],[data-cp-list],[data-cp-list-close],[data-cp-list-more],[data-cp-list-prev],[data-cp-follow-remove],[data-cp-respond],[data-cp-open],[data-cp-share]');if(!b||b.disabled)return;
  e.preventDefault();e.stopImmediatePropagation();if(!uid()||state.suspension||maintenanceIsActive())return;
  if(api.requiredPoll?.()&&!activeEncounter()){toast('Primeiro, registre seu voto na enquete oficial.',true);return;}
  try{
  if(b.hasAttribute('data-cp-list-close'))return closeList();
  if(b.dataset.cpList)return void loadList(b.dataset.cpList);
- if(b.hasAttribute('data-cp-list-more'))return void loadList(currentKind,true);
+ if(b.hasAttribute('data-cp-list-more')){offset+=30;return void loadList(currentKind,true);}
+ if(b.hasAttribute('data-cp-list-prev'))return void loadList(currentKind,'prev');
  if(b.dataset.cpOpen){closeList();return void api.openPerson(b.dataset.cpOpen,b.dataset.cpUsername);}
  b.disabled=true;
  if(b.dataset.cpFollow){const id=b.dataset.cpFollow,status=b.dataset.cpFollowStatus;
