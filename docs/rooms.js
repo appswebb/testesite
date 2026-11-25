@@ -132,7 +132,7 @@ function roomChange(key){
 }
 function startPolling(){
  if(s.refreshTimer)clearInterval(s.refreshTimer);
- s.refreshTimer=setInterval(()=>{if(state.view==='rooms'&&!document.hidden&&!s.loading&&!s.loadingMore)void load();},7000);
+ s.refreshTimer=setInterval(()=>{if(state.view==='rooms'&&!document.hidden&&!s.loading&&!s.loadingMore)void load();},30000);
 }
 async function enter(){
  resetAccount();if(state.view!=='rooms')return;
