@@ -1,0 +1,2 @@
+revoke execute on function public.entre_delete_my_profile() from public, anon, authenticated;
+comment on function public.entre_delete_my_profile() is 'Deprecated. Self-service deletion is handled by the authenticated entre-self-delete-user Edge Function so storage and Auth records are removed together.';
