@@ -4,7 +4,13 @@
 const UF=[['AC','Acre'],['AL','Alagoas'],['AP','Amapá'],['AM','Amazonas'],['BA','Bahia'],['CE','Ceará'],['DF','Distrito Federal'],['ES','Espírito Santo'],['GO','Goiás'],['MA','Maranhão'],['MT','Mato Grosso'],['MS','Mato Grosso do Sul'],['MG','Minas Gerais'],['PA','Pará'],['PB','Paraíba'],['PR','Paraná'],['PE','Pernambuco'],['PI','Piauí'],['RJ','Rio de Janeiro'],['RN','Rio Grande do Norte'],['RS','Rio Grande do Sul'],['RO','Rondônia'],['RR','Roraima'],['SC','Santa Catarina'],['SP','São Paulo'],['SE','Sergipe'],['TO','Tocantins']];
 const s={room:'world',activeCity:'',state:'SP',city:'',cities:[],loading:false,busy:false,rows:[],older:false,loadingMore:false,after:0,expiresCooldown:0,refreshTimer:null,cityLoading:false,cityError:false,filterOpen:false,detecting:false,filterEpoch:0};
 const clean=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9_-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,80);
-const flags=uf=>'<img class="uf-flag" loading="lazy" width="33" height="24" alt="Bandeira de '+esc(uf)+'" src="https://strategicprojects.github.io/flags-brasil/flags/uf/'+uf.toLowerCase()+'.svg">';
+// Local, theme-aware regional symbols; cities never reuse a state flag.
+const regionGraphic=(kind,size=20)=>{
+ const paths=kind==='state'
+  ?'<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15m6-12v3m0 7v5"/><path d="M18 11a3 3 0 0 0-6 0c0 2 3 5 3 5s3-3 3-5z"/><circle cx="15" cy="11" r=".65"/>'
+  :'<path d="M3 21h18M4 21V11h5v10M9 21V4h7v17M16 21v-9h4v9M12 7h1m-1 4h1m-1 4h1m-7-1h1m11 1h1M12 21v-3h1v3"/>';
+ return '<svg class="cr-region-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="'+size+'" height="'+size+'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+paths+'</svg>';
+};
 const world=()=>window.connectWorld?.current?.()||{country:'',scope:'world'};
 const national=code=>code==='BR'?'br':'n:'+code.toLowerCase();
 const countryKey=()=>world().country?national(world().country):'world';
@@ -32,7 +38,7 @@ function openSlot(kind){if(kind==='global'){roomChange('world');return;}const se
 
 const title=key=>key==='world'?'Mundo · Sala global':key==='br'?'Brasil · Sala nacional':key.startsWith('n:')?window.connectWorld.codeName(key.slice(2).toUpperCase()):key.startsWith('s:')?UF.find(u=>u[0].toLowerCase()===key.slice(2))?.[1]||'Estado':s.activeCity||'Sala da cidade';
 const formatDate=d=>new Date(d).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-const icon=key=>key==='world'?'🌐':key==='br'?'🇧🇷':key.startsWith('n:')?window.connectWorld.flag(key.slice(2).toUpperCase()):flags(key.slice(2,4).toUpperCase());
+const icon=key=>key==='world'?'🌐':key==='br'?'🇧🇷':key.startsWith('n:')?window.connectWorld.flag(key.slice(2).toUpperCase()):regionGraphic(kindFor(key),22);
 function chatRows(){
  s.rows=s.rows.filter(r=>!r.deleted_at);
  if(s.loading&&!s.rows.length)return '<div class="rooms-empty">Carregando mensagens…</div>';
@@ -60,7 +66,7 @@ function view(){
  resetAccount();const current=title(s.room),label=icon(s.room),active=kindFor(s.room),n=slots.national,t=slots.state,city=slots.city;
  return '<section class="room-shell rooms-static-shell cr-rooms" aria-label="Salas públicas">'+
  '<header class="rooms-static-header cr-top"><div class="cr-title"><span class="cr-eyebrow"><span class="cr-tiny-dot"></span> COMUNIDADE</span><h2>Salas</h2><p>Alterne entre suas salas públicas.</p></div></header>'+
- '<nav class="cr-shortcuts" aria-label="Escolher sala">'+(world().scope==='country'?'':shortcut('global','Mundo','Sala global','🌐',active==='global'))+shortcut('national','País',n?window.connectWorld.codeName(n.country):'Selecionar',n?window.connectWorld.flag(n.country):ico('flag',20),active==='national')+(regionAllowed()?shortcut('state','Estado',t?stateName(t.uf):'Selecionar',ico('map',20),active==='state')+shortcut('city','Cidade',city?city.name:'Selecionar',ico('city',20),active==='city'):'')+'</nav>'+
+ '<nav class="cr-shortcuts" aria-label="Escolher sala">'+(world().scope==='country'?'':shortcut('global','Mundo','Sala global','🌐',active==='global'))+shortcut('national','País',n?window.connectWorld.codeName(n.country):'Selecionar',n?window.connectWorld.flag(n.country):ico('flag',20),active==='national')+(regionAllowed()?shortcut('state','Estado',t?stateName(t.uf):'Selecionar',regionGraphic('state'),active==='state')+shortcut('city','Cidade',city?city.name:'Selecionar',regionGraphic('city'),active==='city'):'')+'</nav>'+
  '<section class="cr-chat" aria-label="Conversa atual"><header class="cr-chat-head"><div class="cr-room-symbol">'+label+'</div><div class="cr-chat-name"><small>'+({global:'Internacional',national:'Nacional',state:'Estadual',city:'Municipal'})[active]+' · Sala pública</small><strong>'+esc(current)+'</strong></div>'+(active!=='global'?'<button type="button" class="cr-change-room cr-edit-channel" data-room-action="edit" data-kind="'+active+'" aria-label="Alterar '+({national:'país',state:'estado',city:'cidade'})[active]+'">'+ico('sliders',16)+' <span>Alterar</span></button>':'')+'</header>'+
  '<div class="cr-retention">'+ico('clock',14)+'<span>Mensagens temporárias · 24 horas</span></div>'+
  '<div class="rooms-discussion" id="roomMessages" aria-live="polite" aria-label="Mensagens da sala">'+chatRows()+'</div>'+
