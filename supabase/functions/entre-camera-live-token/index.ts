@@ -21,29 +21,31 @@ Deno.serve(async(req:Request)=>{
   const {data:{user},error}=await auth.auth.getUser(bearer);
   if(error||!user)return reply({error:"unauthorized"},401);
   const service=createClient(supabaseUrl,secret,{auth:{persistSession:false}});
-  const [{data:live,error:liveError},{data:mod,error:modError}]=await Promise.all([
-   service.from("entre_lives").select("id,host_id,guest_id,status,expires_at").eq("id",live_id).maybeSingle(),
-   service.from("entre_moderation").select("is_banned").eq("user_id",user.id).maybeSingle()
+  const caller=createClient(supabaseUrl,anon,{auth:{persistSession:false},global:{headers:{Authorization:"Bearer "+bearer}}});
+  const {data:live,error:liveError}=await service.from("entre_lives").select("id,host_id,guest_id,status,expires_at").eq("id",live_id).maybeSingle();
+  if(liveError)return reply({error:"unavailable"},503);
+  const liveExpiry=live?Date.parse(live.expires_at):NaN;
+  if(!live||live.status!=="active"||!Number.isFinite(liveExpiry)||liveExpiry<=Date.now())
+   return reply({error:"live_unavailable"},403);
+  const [{data:sessionRejected,error:sessionError},{data:site,error:siteError},{data:restriction,error:restrictionError}]=await Promise.all([
+   caller.rpc("entre_is_banned"),
+   service.from("entre_site_settings").select("maintenance_enabled").eq("id",1).maybeSingle(),
+   service.from("connect_live_restrictions").select("banned").eq("live_id",live_id).eq("user_id",user.id).maybeSingle()
   ]);
-  if(liveError||modError)return reply({error:"unavailable"},503);
-  if(!live||live.status!=="active"||Date.parse(live.expires_at)<=Date.now()||mod?.is_banned)
+  if(sessionError||siteError||restrictionError)return reply({error:"unavailable"},503);
+  if(sessionRejected===true||site?.maintenance_enabled===true||restriction?.banned)
    return reply({error:"live_unavailable"},403);
   const {data:blocks,error:blocksError}=await service.from("entre_blocks").select("blocker").or("and(blocker.eq."+user.id+",blocked.eq."+live.host_id+"),and(blocker.eq."+live.host_id+",blocked.eq."+user.id+")").limit(1);
   if(blocksError)return reply({error:"unavailable"},503);
   if(blocks?.length)return reply({error:"not_allowed"},403);
   if(action==="ban"){
    if(target===user.id||! /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(target||"")))return reply({error:"not_allowed"},403);
-   const caller=createClient(supabaseUrl,anon,{auth:{persistSession:false},global:{headers:{Authorization:"Bearer "+bearer}}});
    const {data:restrictions,error:banError}=await caller.rpc("connect_live_moderate",{_live:live_id,_target:target,_action:"ban"});
    if(banError)return reply({error:"moderation_failed"},403);
    try{const rooms=new RoomServiceClient(liveUrl.replace(/^wss:/,"https:"),key,liveSecret);await rooms.removeParticipant("entre-live-"+live.id,target);}
    catch(e){console.warn("live participant removal",String(e));return reply({restrictions,removed:false});}
    return reply({restrictions,removed:true});
   }
-  const {data:restriction,error:restrictionError}=await service.from("connect_live_restrictions").select("banned").eq("live_id",live_id).eq("user_id",user.id).maybeSingle();
-  if(restrictionError)return reply({error:"unavailable"},503);
-  if(restriction?.banned)return reply({error:"live_banned"},403);
-  const caller=createClient(supabaseUrl,anon,{auth:{persistSession:false},global:{headers:{Authorization:"Bearer "+bearer}}});
   if(action==="guest_remove"){
    if(live.host_id!==user.id||target===user.id||! /^[0-9a-f-]{36}$/i.test(String(target||"")))return reply({error:"not_allowed"},403);
    const {data:studio,error:removeError}=await caller.rpc("connect_live_studio",{_live:live_id,_action:"guest_remove",_target:target});
@@ -51,6 +53,25 @@ Deno.serve(async(req:Request)=>{
    try{const rooms=new RoomServiceClient(liveUrl.replace(/^wss:/,"https:"),key,liveSecret);await rooms.updateParticipant("entre-live-"+live.id,target,{permission:{canPublish:false,canSubscribe:true,canPublishData:false,canUpdateMetadata:false}});}
    catch(e){console.warn("stage permission update",String(e));return reply({studio,removed:false});}
    return reply({studio,removed:true});
+  }
+  const participantIds=[...new Set([user.id,live.host_id,live.guest_id].filter((v):v is string=>typeof v==="string"&&v.length>0))];
+  const blockFilters:string[]=[];
+  for(let i=0;i<participantIds.length;i++){
+   for(let j=i+1;j<participantIds.length;j++){
+    const a=participantIds[i],b=participantIds[j];
+    blockFilters.push("and(blocker.eq."+a+",blocked.eq."+b+")","and(blocker.eq."+b+",blocked.eq."+a+")");
+   }
+  }
+  if(blockFilters.length){
+   const {data:participantBlocks,error:participantBlocksError}=await service.from("entre_blocks").select("blocker").or(blockFilters.join(",")).limit(1);
+   if(participantBlocksError)return reply({error:"unavailable"},503);
+   if(participantBlocks?.length)return reply({error:"not_allowed"},403);
+  }
+  const otherParticipants=[...new Set([live.host_id,live.guest_id].filter((v):v is string=>typeof v==="string"&&v.length>0))];
+  if(otherParticipants.length){
+   const {data:participantModeration,error:participantModerationError}=await service.from("entre_moderation").select("user_id,is_banned").in("user_id",otherParticipants);
+   if(participantModerationError)return reply({error:"unavailable"},503);
+   if(participantModeration?.some((m:any)=>m.is_banned))return reply({error:"live_unavailable"},403);
   }
   const {data:guest,error:guestError}=await service.from("connect_live_stage_guests").select("status").eq("live_id",live_id).eq("user_id",user.id).maybeSingle();
   if(guestError)return reply({error:"unavailable"},503);

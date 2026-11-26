@@ -19,21 +19,32 @@ Deno.serve(async(req:Request)=>{
  const bearer=req.headers.get("authorization")?.replace(/^Bearer\s+/i,"")||"";
  if(!bearer)return json({error:"login_required"},401);
  try{
-  const client=createClient(url,publishable,{auth:{persistSession:false}});
-  const {data:{user},error:authError}=await client.auth.getUser(bearer);
+  const caller=createClient(url,publishable,{auth:{persistSession:false},global:{headers:{Authorization:"Bearer "+bearer}}});
+  const {data:{user},error:authError}=await caller.auth.getUser(bearer);
   if(authError||!user)return json({error:"login_required"},401);
   const body=await req.json().catch(()=>({}));
   const pairId=String(body.pair_id||"");
   if(!/^[0-9a-f-]{36}$/i.test(pairId))return json({error:"invalid_pair"},400);
   const service=createClient(url,secret,{auth:{persistSession:false}});
   const {data:pair,error:pairError}=await service.from("entre_pairs").select("id,a,b,status,mode,expires_at").eq("id",pairId).maybeSingle();
-  if(pairError||!pair||pair.status!=="active"||pair.mode!=="video"||Date.parse(pair.expires_at)<=Date.now()||
+  const expiresAt=pair?Date.parse(pair.expires_at):NaN;
+  if(pairError||!pair||pair.status!=="active"||pair.mode!=="video"||!Number.isFinite(expiresAt)||expiresAt<=Date.now()||
      (pair.a!==user.id&&pair.b!==user.id))return json({error:"room_not_allowed"},403);
-  const {data:moderation}=await service.from("entre_moderation").select("is_banned").eq("user_id",user.id).maybeSingle();
-  if(moderation?.is_banned)return json({error:"account_suspended"},403);
-  const at=new AccessToken(apiKey,apiSecret,{identity:user.id,ttl:480});
+  const peerId=pair.a===user.id?pair.b:pair.a;
+  const [{data:sessionRejected,error:sessionError},{data:pairAllowed,error:pairAllowedError},{data:peerModeration,error:peerModerationError},{data:site,error:siteError}]=await Promise.all([
+   caller.rpc("entre_is_banned"),
+   caller.rpc("entre_chat_pair_allowed",{_pair:pairId}),
+   service.from("entre_moderation").select("is_banned").eq("user_id",peerId).maybeSingle(),
+   service.from("entre_site_settings").select("maintenance_enabled").eq("id",1).maybeSingle()
+  ]);
+  if(sessionError||pairAllowedError||peerModerationError||siteError)return json({error:"security_check_unavailable"},503);
+  if(sessionRejected===true||pairAllowed!==true||peerModeration?.is_banned||site?.maintenance_enabled===true)return json({error:"room_not_allowed"},403);
+  const remainingSeconds=Math.floor((expiresAt-Date.now())/1000);
+  if(remainingSeconds<=0)return json({error:"room_expired"},403);
+  const ttl=Math.min(300,remainingSeconds);
+  const at=new AccessToken(apiKey,apiSecret,{identity:user.id,ttl});
   at.addGrant({roomJoin:true,room:"entre-"+pair.id,canPublish:true,canPublishData:false,canSubscribe:true});
   const token=await at.toJwt();
-  return json({url:liveUrl,token,expires_in:480});
+  return json({url:liveUrl,token,expires_in:ttl});
  }catch(e){console.error("livekit-token",String(e));return json({error:"room_unavailable"},503);}
 });

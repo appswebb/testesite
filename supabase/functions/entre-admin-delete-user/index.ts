@@ -30,12 +30,17 @@ Deno.serve(async(req:Request)=>{
   if(adminAllow)return json({error:"cannot_delete_admin"},403);
   // Cancel every pending/authorized renewal before deleting the Auth user,
   // including subscriptions whose first invoice has NOT yet been approved.
-  const [{data:subscription,error:subError},{data:recurring,error:recurringError}]=await Promise.all([
+  const [{data:subscription,error:subError},{data:recurring,error:recurringError},{data:asaasRecurring,error:asaasRecurringError},{data:asaasPayments,error:asaasPaymentsError}]=await Promise.all([
    service.from("entre_premium_subscriptions").select("provider,provider_id,status").eq("user_id",id).maybeSingle(),
    service.from("entre_premium_recurring").select("preapproval_id,status").eq("user_id",id)
-    .in("status",["creating","pending","authorized","paused"]).limit(5)
+    .in("status",["creating","pending","authorized","paused"]).limit(5),
+   service.from("connect_asaas_recurring").select("status").eq("user_id",id).in("status",["creating","open","active"]).limit(5),
+   service.from("connect_asaas_payments").select("status").eq("user_id",id).in("status",["creating","PENDING","OVERDUE"]).limit(5)
   ]);
-  if(subError||recurringError)return json({error:"payment_check_failed"},503);
+  if(subError||recurringError||asaasRecurringError||asaasPaymentsError)return json({error:"payment_check_failed"},503);
+  if(asaasRecurring?.length||(subscription?.provider==="asaas"&&["pending","authorized","paused"].includes(subscription.status)))
+   return json({error:"cancel_asaas_recurring_first"},409);
+  if(asaasPayments?.length)return json({error:"pending_asaas_payment_first"},409);
   if(recurring?.some((r:any)=>r.status==="creating"&&!r.preapproval_id))
    return json({error:"recurring_creation_pending_try_later"},409);
   const ids=[...new Set([
@@ -73,7 +78,7 @@ Deno.serve(async(req:Request)=>{
    }
    return paths;
   }
-  for(const bucket of ["entre-avatars","entre-post-media","entre-support-evidence"]){
+  for(const bucket of ["connect-chat","connect-media","entre-avatars","entre-chat-media","entre-live-covers","entre-post-media","entre-story-media","entre-support-evidence"]){
    try{assets[bucket]=await collect(bucket,id);}
    catch(e){console.error("Storage inventory failure",bucket,String(e));return json({error:"storage_inventory_failed"},503);}
   }

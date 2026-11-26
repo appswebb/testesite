@@ -1,5 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.57.0";
-const origins=new Set(["https://connectbr.online","https://www.connectbr.online","https://appswebb.github.io","https://entre-ruby.vercel.app","https://entre-orbytstudios.vercel.app"]);
+const origins=new Set(["https://connectbr.online","https://www.connectbr.online","https://appswebb.github.io"]);
 const esc=(s:unknown)=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]!));
 Deno.serve(async(req:Request)=>{
  const origin=req.headers.get("origin")||"";
