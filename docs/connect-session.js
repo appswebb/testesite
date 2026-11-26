@@ -17,8 +17,11 @@ function readPage(id){const p=get(sessionStorage,'page.'+id)||get(localStorage,'
 function clearDraft(id){if(id)remove(localStorage,'draft.'+id);}
 function readDraft(id){const p=get(localStorage,'draft.'+id);if(!p||!Number.isFinite(p.at)||Date.now()-p.at>=ttl){clearDraft(id);return null}return p.fields||null}
 function saveDraft(form){const id=uid();if(!id||state.profile||form?.dataset.form!=='profileSetup')return;const fields={};for(const name of ['username','display_name','age','gender','world_country','world_scope','world_language'])fields[name]=String(form.elements.namedItem(name)?.value||'').slice(0,100);fields.interests=[...form.querySelectorAll('input[name=interest]:checked')].map(x=>x.value).slice(0,8);fields.goal=String(form.elements.namedItem('discovery_goal')?.value||'conversar');fields.visible=form.elements.namedItem('discovery_visible')?.checked===true;state.signup=fields;put(localStorage,'draft.'+id,{at:Date.now(),fields});}
-function markEmailPending(){put(localStorage,'emailPending',{at:Date.now()});}
-function emailPending(){const p=get(localStorage,'emailPending');if(p&&Date.now()-p.at<ttl)return true;remove(localStorage,'emailPending');return false}
+function pendingEmailRecord(){const p=get(localStorage,'emailPending');if(p&&Number.isFinite(p.at)&&Date.now()-p.at>=0&&Date.now()-p.at<ttl)return p;remove(localStorage,'emailPending');return null}
+function markEmailPending(email,sent=false){const old=pendingEmailRecord(),normalized=String(email||'').trim().toLowerCase().slice(0,254);if(!normalized)return;const same=old?.email===normalized;put(localStorage,'emailPending',{email:normalized,at:same?old.at:Date.now(),sentAt:sent?Date.now():(same?old.sentAt||0:0)});}
+function emailPending(){return !!pendingEmailRecord()}
+function pendingEmailAddress(){return pendingEmailRecord()?.email||''}
+function pendingEmailCooldown(email){const p=pendingEmailRecord();return p?.email===email?Math.max(0,60000-(Date.now()-(p.sentAt||0))):0}
 function clearEmailPending(){remove(localStorage,'emailPending')}
 function rememberPublic(){if(!uid()&&['signup','login','forgot'].includes(state.mode))put(sessionStorage,'public',state.mode);else remove(sessionStorage,'public')}
 function publicMode(){const v=get(sessionStorage,'public');return ['signup','login','forgot'].includes(v)?v:null}
@@ -35,14 +38,14 @@ async function touch(force=false){
  const task=(async()=>{const {data,error}=await db.rpc('connect_resume_registration');if(error)throw error;if(uid()!==id)return false;if(data?.status==='expired'){await expire(id);return false;}if(!['pending','complete','untracked'].includes(data?.status))throw Error('Não foi possível confirmar o cadastro.');last=Date.now();return true;})();
  pending=task;try{return await task}finally{if(pending===task)pending=null;}
 }
-function actualActivity(ev){if(!ev.isTrusted||document.hidden||!unfinished())return;if(!ev.target.closest?.('.cx-onboard,.onboarding-plans,.connect-legal-card'))return;if(ev.type==='input'||ev.type==='change')saveDraft(ev.target.closest('form'));void touch().catch(()=>{});}
+function actualActivity(ev){if(!ev.isTrusted||document.hidden||!unfinished())return;if(!ev.target.closest?.('.cx-onboard,.onboarding-plans,.connect-legal-card'))return;if(ev.type==='input'||ev.type==='change')saveDraft(ev.target.closest('form'));else{const id=uid(),fields=readDraft(id);if(fields)put(localStorage,'draft.'+id,{at:Date.now(),fields});}void touch().catch(()=>{});}
 document.addEventListener('pointerdown',actualActivity,true);
 document.addEventListener('input',actualActivity,true);
 document.addEventListener('change',actualActivity,true);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(trailing);return;}if(unfinished())void touch(true).catch(()=>{});});
-function clearAccount(id){clearTimeout(trailing);if(id){remove(localStorage,'page.'+id);remove(sessionStorage,'page.'+id);clearDraft(id);}clearEmailPending();}
+function clearAccount(id,{preserveDraft=false}={}){clearTimeout(trailing);if(id){remove(localStorage,'page.'+id);remove(sessionStorage,'page.'+id);if(!preserveDraft)clearDraft(id);}clearEmailPending();}
 function invalidSession(error){const code=String(error?.code||'');return ['session_not_found','refresh_token_not_found','refresh_token_already_used','user_not_found','bad_jwt','invalid_jwt','session_expired','user_banned'].includes(code)||error?.status===401||error?.status===403;}
 function retryScreen(){return '<main class="auth-page"><section class="settings-card connect-legal-card"><h2>Não foi possível reconectar</h2><p>Sua sessão foi preservada. Verifique a conexão e tente novamente.</p><button type="button" class="ui-btn btn-dark" data-action="retryArea">Tentar novamente</button></section></main>';}
 try{for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k?.startsWith(prefix+'draft.')){const p=JSON.parse(localStorage.getItem(k)||'null');if(!p||Date.now()-p.at>=ttl)localStorage.removeItem(k);}}}catch(_){}
-window.connectSession={rememberPage,readPage,saveDraft,readDraft,clearDraft,markEmailPending,emailPending,clearEmailPending,rememberPublic,publicMode,touch,clearAccount,invalidSession,retryScreen};
+window.connectSession={rememberPage,readPage,saveDraft,readDraft,clearDraft,markEmailPending,emailPending,pendingEmailAddress,pendingEmailCooldown,clearEmailPending,rememberPublic,publicMode,touch,clearAccount,invalidSession,retryScreen};
 })();

@@ -19,7 +19,7 @@ function setup(hostname='entre-ruby.vercel.app'){
   signOut:async()=>({error:null})
  },rpc:async()=>({data:false,error:null})};
  const listeners={};
- const document={getElementById:()=>({classList:{add(){}}}),addEventListener:(type,handler)=>{listeners[type]=handler}};
+ const document={getElementById:()=>({classList:{add(){}}}),addEventListener:(type,handler)=>{const prev=listeners[type];listeners[type]=prev?(event)=>{prev(event);handler(event)}:handler}};
  const context={window:win,db,state,document,URL,URLSearchParams,console,
   brand:()=>'<span>entre.</span>',ico:(name)=>'<svg data-icon="'+name+'"></svg>',busy:()=>{},render:()=>events.push('render'),
   showFormMessage:(msg,success=false)=>events.push({msg,success}),infoError:e=>e.message,
@@ -147,6 +147,9 @@ test('auth waits for the async Turnstile token before submitting and resets it a
  const attempt=api.submit(form('login',{email:'test@example.invalid',password:'MinhaSenhaSegura2026'}));await Promise.resolve();assert.equal(request,undefined);resolveToken('fresh-token');await attempt;assert.equal(request.options.captchaToken,'fresh-token');assert.ok(events.includes('captcha-reset'));
 });
 
-test('Turnstile uses the official explicit onload callback and separates network from initialization failures',()=>{const source=read('connect-turnstile.js');assert.match(source,/render=explicit&onload=/);assert.match(source,/window\[name\]=ready/);assert.match(source,/CF-NET/);assert.match(source,/CF-INIT/);assert.match(source,/CF-TIMEOUT/);assert.match(read('index.html'),/connect-turnstile\.js\?v=\d+/);assert.match(read('admin/index.html'),/connect-turnstile.js\?v=3/);});
+test('Turnstile uses the official explicit onload callback and separates network from initialization failures',()=>{const source=read('connect-turnstile.js');assert.match(source,/render=explicit&onload=/);assert.match(source,/window\[name\]=ready/);assert.match(source,/CF-NET/);assert.match(source,/CF-INIT/);assert.match(source,/CF-TIMEOUT/);assert.match(read('index.html'),/connect-turnstile\.js\?v=[^\"]+/);assert.match(read('admin/index.html'),/connect-turnstile\.js\?v=[^\"]+/);});
 
 test('signup refuses missing consent before sending credentials',async()=>{const {api,db,events}=setup();let called=false;db.auth.signUp=async()=>{called=true;};await api.submit(form('signup',{email:'test@example.invalid',password:'MinhaSenhaSegura2026',password_confirm:'MinhaSenhaSegura2026',terms:false}));assert.equal(called,false);assert.ok(events.some(e=>/aceite os termos/i.test(e.msg||'')));});
+
+test('confirmation resend works without a password and uses signup resend, not a new account',async()=>{const {api,db,win,events}=setup();let request;db.auth.resend=async p=>{request=p;return {error:null}};win.connectSession={markEmailPending(){},pendingEmailCooldown:()=>0};await api.resend(form('login',{email:'test@example.invalid'}),{disabled:false});assert.equal(request.type,'signup');assert.equal(request.email,'test@example.invalid');assert.equal(request.options.emailRedirectTo,'https://entre-ruby.vercel.app/');assert.ok(events.some(e=>e.success&&/cadastro pendente/.test(e.msg)));});
+test('signup transitions to login and does not persist password',async()=>{const {api,win,state}=setup();let pending;win.connectSession={markEmailPending:(...args)=>pending=args};await api.submit(form('signup',{email:'test@example.invalid',password:'MinhaSenhaSegura2026',password_confirm:'MinhaSenhaSegura2026'}));assert.equal(state.mode,'login');assert.deepEqual(pending,['test@example.invalid',true]);});
