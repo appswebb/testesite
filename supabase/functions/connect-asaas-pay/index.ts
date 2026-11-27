@@ -110,5 +110,5 @@ async function handle(req: Request){
   return reply(await result(e,db,full,payment));
  }catch(err){const code=String(err.message||"production_failure");const safe=/^[a-z0-9_]{1,80}$/.test(code)?code:"production_failure";const codes=Array.isArray(err.codes)?err.codes:[];console.warn("asaas_production",safe,err.stage||"",codes.join(","));return reply({error:safe,provider_codes:codes,stage:err.stage||null},502);}
 }
-const allowedOrigins=new Set(["https://connectbr.online","https://www.connectbr.online","https://appswebb.github.io"]);
+const allowedOrigins=new Set(["https://joinconnectbr.vercel.app","https://connectbr.online","https://www.connectbr.online","https://appswebb.github.io"]);
 Deno.serve(async req=>{const origin=req.headers.get("origin");if(origin&&!allowedOrigins.has(origin))return new Response(JSON.stringify({error:"origin_not_allowed"}),{status:403,headers:{"Content-Type":"application/json","Cache-Control":"no-store","Vary":"Origin"}});const res=await handle(req);const headers=new Headers(res.headers);headers.set("Vary","Origin");if(origin)headers.set("Access-Control-Allow-Origin",origin);else headers.delete("Access-Control-Allow-Origin");return new Response(res.body,{status:res.status,headers});});
