@@ -343,7 +343,7 @@ async function openPlan(id){
  if(!row||!(row.plan_manageable||row.manageable)){toast("A conta precisa ter um perfil e e-mail confirmado.",true);return;}
  const owner=state.user?.id,context={type:"plan",email:String(row.email).trim().toLowerCase(),account:null,history:null,finance:null,request:null};state.modal=context;
  modal('<h2>Gerenciar plano</h2><p>Consultando a assinatura…</p><button type="button" class="btn-outline" data-action="close-modal">Fechar</button>');
- try{const [account,history,finance]=await Promise.all([rpc("connect_admin_manual_premium",{_email:context.email,_action:"lookup",_months:1}),rpc("connect_admin_plan_history",{_email:context.email}).catch(()=>null),rpc("connect_admin_financial_history",{_email:context.email}).catch(()=>null)]);
+ try{const [manual,history,finance,asaas]=await Promise.all([rpc("connect_admin_manual_premium",{_email:context.email,_action:"lookup",_months:1}),rpc("connect_admin_plan_history",{_email:context.email}).catch(()=>null),rpc("connect_admin_financial_history",{_email:context.email}).catch(()=>null),rpc("connect_admin_asaas_summary",{_email:context.email}).catch(()=>null)]);const account={...manual,asaas};
  if(state.modal!==context||state.user?.id!==owner||!state.verified)return;
  context.account=account;context.history=history;context.finance=finance;modal(window.entreAdminExtras.planEditor(account,history,e,ico,fmt,finance));
  }catch(err){if(state.modal===context){closeModal();toast(errorText(err),true);}}
@@ -520,16 +520,16 @@ document.addEventListener("submit",async function(ev){
    if(operation==="grant"&&(!Number.isInteger(months)||months<1||months>12))throw Error("Escolha de 1 a 12 meses.");
    if(operation==="revoke"&&!context.account.active)throw Error("O usuário já está no plano gratuito.");
    let transaction=null;if(operation==="grant"){const kind=form.elements.purchase_kind.value,amount=Math.round(Number(form.elements.received.value)*100),discount=Math.round(Number(form.elements.discount.value)*100),method=form.elements.method.value;if(!["payment","courtesy"].includes(kind)||!Number.isSafeInteger(amount)||!Number.isSafeInteger(discount)||amount<0||discount<0||amount>100000000||discount>100000000||(kind==="payment"&&(amount===0||method==="none"))||(kind==="courtesy"&&(amount!==0||method!=="none")))throw Error("Informe corretamente a origem, o valor recebido e a forma de pagamento.");transaction={_email:context.email,_months:months,_kind:kind,_amount_cents:amount,_discount_cents:discount,_method:method};const key=JSON.stringify(transaction);if(context.requestKey!==key){context.requestKey=key;context.request=crypto.randomUUID();}transaction._request=context.request;}
-   if(!window.confirm(operation==="grant"?"Liberar ou renovar "+months+" mês(es) de Premium para "+context.email+"?":"Retornar "+context.email+" ao plano gratuito agora? Isso revoga os benefícios Premium e não gera estorno."))return;
+   if(!window.confirm(operation==="grant"?"Liberar ou renovar "+months+" mês(es) de Premium para "+context.email+"?":"Revogar a concessão manual de "+context.email+"? Pagamentos Asaas não serão cancelados nem estornados."))return;
    const controls=Array.from(form.querySelectorAll("button"));controls.forEach(b=>b.disabled=true);
    try{
-    const account=operation==="grant"?await rpc("connect_admin_plan_transaction",transaction):await rpc("connect_admin_manual_premium",{_email:context.email,_action:"revoke",_months:1});
+    const manual=operation==="grant"?await rpc("connect_admin_plan_transaction",transaction):await rpc("connect_admin_manual_premium",{_email:context.email,_action:"revoke",_months:1});const account={...manual,asaas:context.account.asaas};
     if(state.user?.id!==owner||!state.verified)return;
     if(operation==="grant"?account.active!==true:account.active!==false)throw Error("Alteração do plano não confirmada pelo servidor.");
     context.requestKey=null;const [history,finance]=await Promise.all([rpc("connect_admin_plan_history",{_email:context.email}).catch(()=>null),rpc("connect_admin_financial_history",{_email:context.email}).catch(()=>null)]);
     if(state.user?.id!==owner||!state.verified)return;
     if(state.modal===context){context.account=account;context.history=history;context.finance=finance;modal(window.entreAdminExtras.planEditor(account,history,e,ico,fmt,finance));}
-    toast(operation==="grant"?"Premium ativo.":"Usuário retornou ao plano gratuito.");
+    toast(operation==="grant"?"Premium ativo.":"Concessão manual revogada.");
     if(state.view===view)await load(view);
    }finally{controls.forEach(b=>{if(b.isConnected)b.disabled=false;});}
   }else if(form.id==="premium-config-form"){
