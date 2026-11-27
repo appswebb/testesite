@@ -72,7 +72,7 @@ Acesse http://localhost:8000/. Para publicar, GitHub Actions envia a pasta `docs
 
 ## Painel administrativo entre.
 
-O painel está disponível em https://appswebb.github.io/testesite/admin/. O administrador autorizado no Supabase é l.demelo2004@gmail.com, verificado com Google OAuth e funções SQL protegidas por RLS. O painel permite gerenciar usuários, banimentos, denúncias, sessões de matches, avisos com respostas, enquetes obrigatórias com totalização dos votos e o status do matchmaking. Conteúdos de conversas privadas não aparecem no painel. Todas as operações administrativas exigem validação no servidor. Funciona no desktop e no mobile.
+O painel está disponível em https://appswebb.github.io/testesite/admin/. O acesso administrativo é validado no servidor por uma lista privada de administradores e funções SQL protegidas por RLS. O painel permite gerenciar usuários, banimentos, denúncias, sessões de matches, avisos com respostas, enquetes obrigatórias com totalização dos votos e o status do matchmaking. Conteúdos de conversas privadas não aparecem no painel. Todas as operações administrativas exigem validação no servidor. Funciona no desktop e no mobile.
 
 ## Modo atualização (controle manual)
 
