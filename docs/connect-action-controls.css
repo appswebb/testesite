@@ -1,0 +1,77 @@
+/* CONNECT navigation and secondary actions — shared by app and checkout.
+   Preserve native links/buttons and their existing event handlers. */
+:root{
+ --connect-action-surface:var(--ui-panel,#fff);
+ --connect-action-text:var(--ui-text,#171717);
+ --connect-action-line:var(--ui-line,#dedee2);
+ --connect-action-soft:var(--ui-panel-alt,#efeff0);
+ --connect-action-primary:var(--ui-accent,#171717);
+ --connect-action-on:var(--ui-accent-on,#fff);
+ --connect-action-danger:var(--ui-danger,#bc3c4d);
+}
+html[data-theme] body #app :is(.cc-back,.auth-back,.encounter-floating-return),
+html body #app :is(.cc-back,.auth-back,.encounter-floating-return),
+html body .pc-start .pc-text-link{
+ display:inline-flex;align-items:center;justify-content:center;gap:9px;
+ width:fit-content;max-width:100%;min-height:44px;min-width:44px;
+ padding:8px 15px 8px 10px;border:1px solid var(--connect-action-line);
+ border-radius:14px;background:var(--connect-action-surface);color:var(--connect-action-text);
+ box-shadow:0 3px 12px #00000009;line-height:1.35;
+ font-family:Inter,system-ui,sans-serif;font-size:13px;font-weight:700;
+ text-decoration:none;text-align:left;white-space:normal;cursor:pointer;
+ touch-action:manipulation;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+html body #app :is(.cc-back,.auth-back) svg,
+html body .pc-start .pc-text-link svg{
+ width:19px;height:19px;flex:0 0 19px;transform:none;
+}
+html body #app .cc-back .connect-action-icon,
+html body .pc-start .pc-text-link .connect-action-icon{
+ display:grid;place-items:center;flex:0 0 29px;width:29px;height:29px;
+ background:var(--connect-action-primary);color:var(--connect-action-on);border-radius:9px;
+}
+html body #app .cc-head{margin-bottom:14px}
+html body #app .cc-head .cc-back{margin:0}
+html body #app .cc-head .cc-back>span{display:inline-flex;align-items:center}
+html body #app .cc-head .cc-back>span.connect-action-icon{display:grid}
+html body #app :is(.cc-help,.web-pay-pending .ui-btn,.web-pay-expired .ui-btn){
+ display:flex;align-items:center;justify-content:center;gap:9px;min-height:44px;
+ width:100%;max-width:100%;padding:11px 14px;border:1px solid var(--connect-action-line);
+ border-radius:13px;background:var(--connect-action-surface);color:var(--connect-action-text);
+ font:650 13px/1.4 Inter,system-ui,sans-serif;text-decoration:none;text-align:center;
+ white-space:normal;overflow-wrap:anywhere;cursor:pointer;transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+}
+html body #app .cc-help[data-monthly="cancel"]{color:var(--connect-action-danger);border-color:currentColor}
+html body #app .cc-help svg{width:18px;height:18px;flex:none}
+html body #app .cc-pay-button{min-height:48px;border-radius:14px;font-weight:750;transition:transform .18s ease,box-shadow .18s ease}
+html body #app .cc-pay-button svg{width:18px;height:18px}
+html body #app .cc-payment .cp-recurring-consent{
+ display:flex;align-items:flex-start;gap:11px;padding:14px;margin:12px 0;
+ border:1px solid var(--connect-action-line);border-radius:14px;background:var(--connect-action-soft);
+ color:var(--connect-action-text);font-size:13px;line-height:1.5;cursor:pointer;
+}
+html body #app .cc-payment .cp-recurring-consent input{
+ flex:0 0 20px;width:20px;height:20px;margin:1px 0 0;accent-color:var(--connect-action-primary);cursor:pointer;
+}
+html body #app .cc-payment .cp-recurring-consent:focus-within{outline:2px solid var(--connect-action-primary);outline-offset:2px}
+html body #app .cc-payment .cp-recurring-consent:has(input:checked){border-color:var(--connect-action-text)}
+html body #app :is(.cp-chat-back,.cc-methods button){min-width:44px;min-height:44px}
+html[data-theme] body>.cp-match-filter-sheet>.cp-filter-header button{min-width:44px;min-height:44px}
+html body #app .cc-brand img{filter:brightness(0) invert(1)}
+html body #app :is(.cc-back,.cc-help,.auth-back,.encounter-floating-return,.cc-pay-button,.cc-methods button,.cp-chat-back):focus-visible,
+html body .pc-start .pc-text-link:focus-visible{outline:2px solid var(--connect-action-primary);outline-offset:3px}
+@media(hover:hover){
+ html body #app :is(.cc-back,.cc-help,.auth-back,.encounter-floating-return):not(:disabled):hover,
+ html body .pc-start .pc-text-link:hover{background:var(--connect-action-soft);border-color:var(--connect-action-text);box-shadow:0 4px 15px #00000012}
+}
+html body #app :is(.cc-back,.cc-help,.auth-back,.encounter-floating-return,.cc-pay-button,.cc-methods button,.cp-chat-back):not(:disabled):active,
+html body .pc-start .pc-text-link:active{transform:scale(.98)}
+html body #app :is(.cc-help,.cc-pay-button,.cc-methods button):disabled{opacity:.5;cursor:not-allowed;transform:none}
+@media(max-width:720px){
+ html body #app .cc-head{margin-bottom:12px}
+ html body #app :is(.cc-back,.auth-back){font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){
+ html body #app :is(.cc-back,.cc-help,.auth-back,.encounter-floating-return,.cc-pay-button,.cc-methods button,.cp-chat-back),
+ html body .pc-start .pc-text-link{transition:none}
+}
