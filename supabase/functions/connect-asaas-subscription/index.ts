@@ -86,7 +86,7 @@ async function handle(req: Request){
   if(Number(body.amount_cents)!==cents)return reply({error:"price_changed"},409);
   const {data:ok,error:ie}=await db.rpc("connect_asaas_recurring_reserve",{_id:body.request_id,_user:user.id,_cents:cents});if(ie||ok!==true)return reply({error:"pending_or_duplicate"},409);
   const ref=recRef({id:body.request_id});
-  const callbackOrigin=req.headers.get("origin");const callbackBase=callbackOrigin==="https://appswebb.github.io"?callbackOrigin+"/testesite":callbackOrigin==="https://www.connectbr.online"?callbackOrigin:"https://connectbr.online";
+  const callbackOrigin=req.headers.get("origin");const callbackBase=callbackOrigin==="https://appswebb.github.io"?callbackOrigin+"/testesite":(callbackOrigin==="https://www.connectbr.online"||callbackOrigin==="https://joinconnectbr.vercel.app")?callbackOrigin:"https://connectbr.online";
   const base=callbackBase+"/checkout.html?"+(body.onboarding===true?"onboarding=1&":"")+"result=";
   const date=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
   let checkout;
@@ -98,5 +98,5 @@ async function handle(req: Request){
   return reply(view(row));
  }catch(err){const code=String(err.message||"recurring_failure");console.warn("asaas_recurring",/^[a-z0-9_]{1,80}$/.test(code)?code:"recurring_failure");return reply({error:/^[a-z0-9_]{1,80}$/.test(code)?code:"recurring_failure"},502);}
 }
-const allowedOrigins=new Set(["https://connectbr.online","https://www.connectbr.online","https://appswebb.github.io"]);
+const allowedOrigins=new Set(["https://joinconnectbr.vercel.app","https://connectbr.online","https://www.connectbr.online","https://appswebb.github.io"]);
 Deno.serve(async req=>{const origin=req.headers.get("origin");if(origin&&!allowedOrigins.has(origin))return new Response(JSON.stringify({error:"origin_not_allowed"}),{status:403,headers:{"Content-Type":"application/json","Cache-Control":"no-store","Vary":"Origin"}});const res=await handle(req);const headers=new Headers(res.headers);headers.set("Vary","Origin");if(origin)headers.set("Access-Control-Allow-Origin",origin);else headers.delete("Access-Control-Allow-Origin");return new Response(res.body,{status:res.status,headers});});
