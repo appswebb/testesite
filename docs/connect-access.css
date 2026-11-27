@@ -1,0 +1,89 @@
+/* CONNECT access — intentionally scoped to login, registration and password recovery. */
+html[data-theme] body #app .cx-access-shell{
+ min-height:100dvh; background:var(--ui-bg);grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+}
+html[data-theme] body #app .cx-access-shell .auth-visual{
+ background:radial-gradient(ellipse at 80% 10%,#434348 0%,transparent 55%),linear-gradient(155deg,#232326,#111113)!important;
+ color:#fff!important;padding:clamp(30px,5vw,76px)!important;min-height:100dvh;
+}
+html[data-theme] body #app .cx-access-shell .auth-visual .cx-auth-editorial{position:relative;z-index:1}
+html[data-theme] body #app .cx-access-shell .auth-visual .cx-auth-editorial h2{color:#fff!important}
+html[data-theme] body #app .cx-access-shell .auth-main{
+ display:flex!important;align-items:center!important;justify-content:center!important;padding:24px clamp(16px,4vw,56px)!important;min-height:100dvh;min-width:0;
+}
+html[data-theme] body #app .cx-access-shell .auth-card{
+ width:min(100%,480px)!important;max-width:480px!important;padding:24px!important;
+ border:1px solid var(--ui-line)!important;border-radius:26px!important;box-shadow:0 16px 50px #0000000b!important;min-width:0;box-sizing:border-box;
+}
+#app .cx-access-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 18px;min-width:0}
+#app .cx-access-brand{min-width:0}
+html[data-theme] body #app .cx-access-header .cn-brand{display:flex!important;align-items:center;gap:8px;margin:0!important;color:var(--ui-text)!important;font:800 19px/1 Inter,system-ui,sans-serif!important;letter-spacing:-.06em!important;white-space:nowrap}
+#app .cx-access-header .cn-brand img{width:34px!important;height:27px!important;object-fit:contain}
+#app .cx-access-nav{display:flex;gap:7px;align-items:center;flex:none}
+html[data-theme] body #app .cx-access-header :is(.cx-access-back,.connect-mode-toggle){
+ position:static!important;display:grid!important;place-items:center;flex:none;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;padding:0!important;margin:0!important;border:1px solid var(--ui-line)!important;border-radius:13px!important;background:var(--ui-panel-alt)!important;color:var(--ui-text)!important;box-shadow:none!important;transform:none!important;cursor:pointer;touch-action:manipulation;
+}
+#app .cx-access-theme{display:flex;align-items:center}
+#app .cx-access-intro{
+ position:relative;isolation:isolate;display:flex;align-items:center;justify-content:space-between;gap:12px;overflow:hidden;
+ background:radial-gradient(ellipse at 95% 0%,#49494e,transparent 65%),linear-gradient(135deg,#28282c,#141416);
+ color:#fff;padding:22px 19px;border-radius:19px;margin:0 0 21px;
+}
+#app .cx-access-intro:before{content:"";position:absolute;width:180px;height:180px;right:-78px;top:-80px;border:1px solid #ffffff24;border-radius:50%;box-shadow:0 0 0 24px #ffffff08,0 0 0 49px #ffffff05;z-index:-1;pointer-events:none}
+#app .cx-access-intro-copy{min-width:0;flex:1}
+#app .cx-access-intro-copy>span{font:750 10px/1.3 Inter,system-ui,sans-serif;letter-spacing:.13em;color:#d5d5dc}
+html[data-theme] body #app .cx-access-shell .cx-access-intro h1{font:750 clamp(24px,5.7vw,33px)/1.12 Sora,Inter,system-ui,sans-serif!important;color:#fff!important;letter-spacing:-.06em!important;margin:8px 0 7px!important;overflow-wrap:normal}
+html[data-theme] body #app .cx-access-shell .cx-access-intro .auth-sub{color:#dedee3!important;font:400 13px/1.5 Inter,system-ui,sans-serif!important;margin:0!important}
+#app .cx-access-emblem{display:grid;place-items:center;flex:0 0 48px;width:48px;height:48px;border-radius:16px;border:1px solid #ffffff40;background:#ffffff12;color:#fff;box-shadow:inset 0 1px 1px #ffffff20,0 6px 16px #0003;transform:rotate(-6deg)}
+html[data-theme] body #app .cx-access-shell .auth-card #authForm{margin:0!important;width:100%;min-width:0}
+html[data-theme] body #app .cx-access-shell .auth-card .form-grid{display:grid!important;gap:13px!important;margin:0!important;grid-template-columns:minmax(0,1fr)!important}
+html[data-theme] body #app .cx-access-shell .auth-card .field{display:grid!important;gap:6px!important;margin:0!important;min-width:0}
+html[data-theme] body #app .cx-access-shell .auth-card .field>label{font:700 12px/1.4 Inter,system-ui,sans-serif!important;color:var(--ui-text)!important;margin:0!important}
+#app .cx-access-input{position:relative;display:flex;align-items:center;width:100%;min-width:0;box-sizing:border-box;border:1px solid var(--ui-line);border-radius:14px;background:var(--ui-panel-alt);overflow:hidden;transition:border-color .18s,box-shadow .18s}
+#app .cx-access-input:focus-within{border-color:var(--ui-text);box-shadow:0 0 0 2px var(--ui-accent-soft,#8883)}
+#app .cx-input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);display:grid;place-items:center;color:var(--ui-muted);pointer-events:none;z-index:1}
+html[data-theme] body #app .cx-access-shell .auth-card .cx-access-input input{
+ display:block!important;width:100%!important;min-width:0!important;height:52px!important;min-height:52px!important;max-height:none!important;padding:12px 12px 12px 43px!important;margin:0!important;border:0!important;outline:none!important;border-radius:0!important;background:transparent!important;color:var(--ui-text)!important;box-shadow:none!important;font:400 16px/1.3 Inter,system-ui,sans-serif!important;
+}
+html[data-theme] body #app .cx-access-shell .auth-card .password-field-wrap input{padding-right:58px!important}
+html[data-theme] body #app .cx-access-shell .auth-card .password-visibility-toggle{
+ position:absolute!important;inset:50% 5px auto auto!important;transform:translateY(-50%)!important;display:grid!important;place-items:center;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;padding:0!important;margin:0!important;border:1px solid transparent!important;border-radius:10px!important;background:transparent!important;color:var(--ui-text)!important;box-shadow:none!important;cursor:pointer;
+}
+html[data-theme] body #app .cx-access-shell .auth-card .password-visibility-toggle[aria-pressed=true]{background:var(--ui-panel)!important;border-color:var(--ui-line)!important}
+html[data-theme] body #app .cx-access-shell .auth-card .auth-email-links{display:flex!important;justify-content:flex-end;margin:3px 0 4px!important}
+html[data-theme] body #app .cx-access-shell .auth-card :is(.cx-access-forgot-link,.cx-access-resend,.cx-access-alternate){
+ display:flex!important;align-items:center;justify-content:center;gap:8px;min-height:44px!important;padding:10px 12px!important;border:1px solid var(--ui-line)!important;border-radius:12px!important;background:var(--ui-panel)!important;color:var(--ui-text)!important;text-decoration:none!important;font:650 12px/1.35 Inter,system-ui,sans-serif!important;white-space:normal!important;text-align:center;box-shadow:none!important;cursor:pointer;
+}
+html[data-theme] body #app .cx-access-shell .auth-card .cx-access-forgot-link{width:auto!important;background:var(--ui-panel-alt)!important;gap:6px}
+html[data-theme] body #app .cx-access-shell .auth-card .auth-email-submit{
+ position:relative;display:flex!important;justify-content:center;align-items:center;gap:10px;width:100%!important;min-height:52px!important;padding:13px 18px!important;margin:7px 0 0!important;border:0!important;border-radius:14px!important;background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;font:750 15px/1.35 Inter,system-ui,sans-serif!important;box-shadow:0 4px 0 var(--ui-line)!important;cursor:pointer;
+}
+html[data-theme] body #app .cx-access-shell .auth-card .cx-access-resend{margin:11px 0 0!important;width:100%!important}
+#app .cx-access-shell .auth-card .email-auth-fields{display:flex!important;flex-direction:column;gap:0!important;min-width:0}
+html[data-theme] body #app .cx-access-shell .auth-card .auth-switch{
+ display:flex!important;flex-direction:column;align-items:stretch;gap:8px;margin:17px 0 0!important;padding-top:15px;border-top:1px solid var(--ui-line);font:500 12px/1.4 Inter,system-ui,sans-serif!important;text-align:center;
+}
+html[data-theme] body #app .cx-access-shell .auth-card .cx-access-alternate{width:100%!important;min-height:46px!important;background:var(--ui-panel-alt)!important;font-weight:750!important}
+#app .cx-access-foot{display:flex;align-items:center;justify-content:center;gap:7px;font:400 11px/1.45 Inter,system-ui,sans-serif;color:var(--ui-muted);margin:16px 0 0;text-align:left}
+#app .cx-access-foot svg{flex:none}
+html[data-theme] body #app .cx-access-shell .auth-card button:focus-visible{outline:2px solid var(--ui-text)!important;outline-offset:2px}
+html[data-theme] body #app .cx-access-shell .auth-card button:disabled{cursor:not-allowed;opacity:.55}
+html[data-theme] body #app .cx-access-shell .auth-card button:not(:disabled){transition:background .16s,opacity .16s,scale .16s}
+html[data-theme] body #app .cx-access-shell .auth-card button:not(:disabled):active{scale:.98}
+@media(hover:hover){html[data-theme] body #app .cx-access-shell .auth-card :is(.cx-access-back,.cx-access-forgot-link,.cx-access-resend,.cx-access-alternate,.password-visibility-toggle):not(:disabled):hover{background:var(--ui-panel-alt)!important;border-color:var(--ui-muted)!important}}
+@media(max-width:760px){
+ html[data-theme] body #app .cx-access-shell .auth-main{min-height:100dvh;padding:14px 13px calc(16px + env(safe-area-inset-bottom,0px))!important;align-items:flex-start!important}
+ html[data-theme] body #app .cx-access-shell .auth-card{padding:16px!important;border-radius:23px!important;margin:0!important}
+ #app .cx-access-header{margin-bottom:14px}
+ #app .cx-access-intro{padding:17px 15px;margin-bottom:17px}
+ #app .cx-access-emblem{flex-basis:43px;width:43px;height:43px;border-radius:13px}
+}
+@media(max-width:350px){
+ html[data-theme] body #app .cx-access-shell .auth-main{padding-left:8px!important;padding-right:8px!important}
+ html[data-theme] body #app .cx-access-shell .auth-card{padding:12px!important}
+ #app .cx-access-header .cn-brand img{width:28px!important}
+ html[data-theme] body #app .cx-access-header .cn-brand{font-size:17px!important}
+ #app .cx-access-intro{gap:7px}
+ #app .cx-access-emblem{flex-basis:36px;width:36px;height:36px}
+}
+@media(prefers-reduced-motion:reduce){#app .cx-access-shell *{transition:none!important}}
