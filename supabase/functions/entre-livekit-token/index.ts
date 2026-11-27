@@ -1,6 +1,6 @@
 import {createClient} from "jsr:@supabase/supabase-js@2.57.0";
 import {AccessToken} from "npm:livekit-server-sdk@2.20.1";
-const allowedOrigins=new Set(["https://connectbr.online","https://www.connectbr.online","https://appswebb.github.io"]);
+const allowedOrigins=new Set(["https://joinconnectbr.vercel.app","https://connectbr.online","https://www.connectbr.online","https://appswebb.github.io"]);
 Deno.serve(async(req:Request)=>{
  const requestOrigin=req.headers.get("origin")||"";
  const origin=allowedOrigins.has(requestOrigin)?requestOrigin:"https://connectbr.online";
