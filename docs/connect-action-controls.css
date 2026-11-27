@@ -75,3 +75,14 @@ html body #app :is(.cc-help,.cc-pay-button,.cc-methods button):disabled{opacity:
  html body #app :is(.cc-back,.cc-help,.auth-back,.encounter-floating-return,.cc-pay-button,.cc-methods button,.cp-chat-back),
  html body .pc-start .pc-text-link{transition:none}
 }
+
+/* Public pages use the same navigation component, not an unstyled text link. */
+html[data-theme] body a.connect-return,html body a.connect-return{
+ display:inline-flex;align-items:center;justify-content:center;gap:9px;width:fit-content;max-width:100%;min-height:44px;padding:8px 15px 8px 10px;border:1px solid var(--connect-action-line);border-radius:14px;background:var(--connect-action-surface);color:var(--connect-action-text);font:700 13px/1.35 Inter,system-ui,sans-serif;text-decoration:none;box-shadow:0 3px 12px #00000009;touch-action:manipulation;transition:transform .18s ease,background .18s ease
+}
+html body a.connect-return .connect-action-icon{display:grid;place-items:center;flex:0 0 29px;width:29px;height:29px;border-radius:9px;background:var(--connect-action-primary);color:var(--connect-action-on)}
+html body a.connect-return svg{width:19px;height:19px;flex:none}
+html body a.connect-return:focus-visible{outline:2px solid var(--connect-action-primary);outline-offset:3px}
+html body a.connect-return:active{transform:scale(.98)}
+@media(hover:hover){html body a.connect-return:hover{background:var(--connect-action-soft)}}
+@media(prefers-reduced-motion:reduce){html body a.connect-return{transition:none}}
