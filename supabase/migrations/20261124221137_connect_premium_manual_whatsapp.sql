@@ -26,12 +26,12 @@ declare uid uuid:=auth.uid(); m public.connect_manual_premium%rowtype;
 begin
  if uid is null then raise exception 'Faça login para continuar' using errcode='42501';end if;
  select * into m from public.connect_manual_premium where user_id=uid;
- return jsonb_build_object('active',public.entre_premium_active(uid),'status',case when m.revoked then 'cancelled' when m.paid_until>now() then 'authorized' when m.paid_until is not null then 'expired' else 'inactive' end,'paid_until',m.paid_until,'price_cents',(select monthly_price_cents from public.entre_premium_settings where id=1),'checkout_enabled',false,'purchase_whatsapp','https://wa.me/5518988234267','manual_only',true);
+ return jsonb_build_object('active',public.entre_premium_active(uid),'status',case when m.revoked then 'cancelled' when m.paid_until>now() then 'authorized' when m.paid_until is not null then 'expired' else 'inactive' end,'paid_until',m.paid_until,'price_cents',(select monthly_price_cents from public.entre_premium_settings where id=1),'checkout_enabled',false,'purchase_whatsapp','mailto:connectapp.w@gmail.com','manual_only',true);
 end $$;
 create or replace function public.entre_premium_whatsapp() returns text language plpgsql stable security definer set search_path='' as $$
 begin
  if auth.uid() is null then raise exception 'Faça login' using errcode='42501';end if;
- return 'https://wa.me/5518988234267';
+ return 'mailto:connectapp.w@gmail.com';
 end $$;
 create or replace function public.entre_admin_premium_config(_price_cents integer,_enabled boolean default false) returns jsonb language plpgsql security definer set search_path='' as $$
 begin
