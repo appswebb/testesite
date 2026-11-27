@@ -1,5 +1,5 @@
 import {createClient} from "jsr:@supabase/supabase-js@2.57.0";
-const allowedOrigins=new Set(["https://connectbr.online","https://www.connectbr.online","https://appswebb.github.io"]);
+const allowedOrigins=new Set(["https://joinconnectbr.vercel.app","https://connectbr.online","https://www.connectbr.online","https://appswebb.github.io"]);
 Deno.serve(async(req:Request)=>{
  const requestOrigin=req.headers.get("origin")||"";
  const origin=allowedOrigins.has(requestOrigin)?requestOrigin:"https://connectbr.online";
