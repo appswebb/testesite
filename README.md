@@ -4,13 +4,13 @@ Um site de conexões privadas **1 a 1**, reconstruído do zero. O nome do reposi
 
 ## URL
 
-https://appswebb.github.io/testesite/
+https://joinconnectbr.vercel.app/
 
 ## O que existe
 
 - Homepage pública, editorial, responsiva e animada — não é uma página de documentação.
-- Cadastro com Google OAuth exclusivamente e onboarding 18+, sem campos de senha.
-- Login exclusivo pelo Google, logout, recuperação da sessão, perfil editável e preferências de gênero.
+- Cadastro por e-mail e senha com confirmação de e-mail e onboarding 18+.
+- Login por e-mail e senha, logout, recuperação da sessão, perfil editável e preferências de gênero.
 - Fila de busca real e recíproca com escolha entre chat temporário e chamada de vídeo WebRTC, usando canais privados Supabase Realtime. Vídeo não é gravado pelo aplicativo, e termina ao encerrar o encontro. Redes restritivas podem exigir TURN para melhor conexão.\n- Filtro exato de gênero no Ao vivo exclusivo do Premium: o servidor confere a assinatura antes de aceitar a preferência.
 - Conversa privada de 5 minutos e cronômetro validado pelo servidor.
 - Cada participante vota separadamente: **sim + sim** salva a conversa permanente; caso contrário encerra a sessão temporária.
@@ -21,22 +21,14 @@ https://appswebb.github.io/testesite/
 - Posts de texto publicados por usuários com curtidas e comentários, protegidos por autenticação, limites de criação e opção de apagar o próprio post.\n- Assinatura Premium com checkout recorrente preparado para Mercado Pago, selo elegante e brilho para perfis verificados pelo servidor e WhatsApp prioritário para assinantes. Sem credenciais ou valor configurado, a cobrança permanece desativada.\n- Suporte com protocolo, anexos privados obrigatórios (até 3 provas de 5MB), área administrativa e integração opcional com Resend para encaminhar à caixa de suporte separada.\n- Avisos oficiais com respostas privadas à administração e enquetes com voto único obrigatório, ambos por 24 horas e com notificações para todos os perfis cadastrados. Notificações pessoais continuam no sino e expiram em 24 horas.
 - Esquema próprio com tabelas `entre_*` e políticas RLS (sem modificar as tabelas existentes).
 
-## Integrações externas\n\nConfira [INTEGRATIONS.md](INTEGRATIONS.md) para ativar o Mercado Pago, as notificações por e-mail e as chamadas de vídeo. Nunca coloque tokens privados no frontend ou no repositório.\n\n## Login exclusivamente pelo Google
+## Integrações externas\n\nConfira [INTEGRATIONS.md](INTEGRATIONS.md) para ativar o Mercado Pago, as notificações por e-mail e as chamadas de vídeo. Nunca coloque tokens privados no frontend ou no repositório.\n\n## Login por e-mail e senha
 
-O frontend não oferece autenticação por senha. O botão inicia `db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })` e redireciona de volta à URL atual.
-A configuração do Google OAuth não pode ser substituída por frontend: é preciso ativar o provider e cadastrar o site nos sistemas Google/Supabase.
-
-1. No [Google Cloud Auth Platform](https://console.cloud.google.com/auth/clients), crie um OAuth Client do tipo **Web application**. Origem autorizada: `https://appswebb.github.io`. URI de redirecionamento do OAuth: `https://trrakyybnvxpdhxwgjrz.supabase.co/auth/v1/callback`.
-2. No [Supabase > Authentication > Providers > Google](https://supabase.com/dashboard/project/trrakyybnvxpdhxwgjrz/auth/providers), ative Google e informe Client ID e Client Secret. Nunca exponha o Client Secret no repositório.
-3. No [Supabase > Authentication > URL Configuration](https://supabase.com/dashboard/project/trrakyybnvxpdhxwgjrz/auth/url-configuration), inclua na lista de Redirect URLs: `https://appswebb.github.io/testesite/`. Preserve as URLs de outros aplicativos do projeto compartilhado.
-4. Em janela anônima, abra o site, clique em **Continuar com Google**, selecione a conta, retorne para completar o perfil 18+ e teste o logout.
-
-Como este projeto Supabase hospeda autenticação para outro aplicativo, **não desative os outros provedores globalmente**; isso poderia interromper o acesso dos demais usuários. Este site oferece apenas o fluxo Google.
+O CONNECT usa Supabase Auth com confirmação de e-mail. Consulte [AUTH_EMAIL_SETUP.md](AUTH_EMAIL_SETUP.md) para configurar o domínio oficial, recuperação de senha e acesso administrativo. O fluxo antigo de Google OAuth não é mais utilizado.
 
 ## Arquitetura
 
 - `index.html`, `styles.css`, `app.js`, `favicon.svg`: frontend estático para GitHub Pages.
-- `docs/`: cópia de produção para a publicação do GitHub Pages pelo workflow atual.
+- `docs/`: frontend publicado na Vercel, no domínio oficial `https://joinconnectbr.vercel.app/`. GitHub Pages permanece como hospedagem legada.
 - Backend: Supabase Auth + PostgreSQL RLS + Realtime + funções RPC server-side.
 - `DESIGN_REFERENCES.md`: referências externas e regras de microinteração.
 
@@ -47,7 +39,7 @@ Como este projeto Supabase hospeda autenticação para outro aplicativo, **não 
 1. Esta versão usa **um projeto Supabase compartilhado com outro aplicativo**, mas mantém os dados próprios em tabelas isoladas `entre_*`. O gerenciamento de identidade (`auth.users`) continua compartilhado. Por isso, **Excluir meus dados** apaga o perfil, as mensagens e os matches dentro do `entre.`, mas não elimina a identidade global de autenticação. Antes de um lançamento público, migre para um projeto Supabase dedicado para permitir exclusão completa do usuário sem afetar outros aplicativos.
 2. Não há verificação independente de idade: somente autodeclaração de 18+.
 3. Não há moderação humana, detecção de abuso, proteção anti-bot/anti-spam ou criptografia ponta a ponta. Não publique dados sensíveis neste MVP.
-4. Google OAuth requer ativação do provedor e autorização de redirect URL no painel do Supabase. Sem isso, o botão de login não poderá concluir a autenticação.
+4. Os links de confirmação e recuperação exigem autorização de redirect URL no painel do Supabase.
 5. Não são criados usuários ou mensagens falsos para aparentar atividade.
 6. A busca considera preferências de ambos e evita usuários bloqueados. A presença na fila tem validade curta, renovada pelo navegador a cada 3,5s; conexão perdida pode ocasionar nova busca.
 7. As mensagens de encontros sem match são apagadas quando a sessão termina no servidor. Sem match, a pessoa não é mantida em uma lista de contatos. Seguir pode ser solicitado pela área Online, e só o aceite libera um chat normal separado. Mensagens de conversas permanentes expiram após 10 dias de inatividade, mas o match continua.
@@ -72,7 +64,7 @@ Acesse http://localhost:8000/. Para publicar, GitHub Actions envia a pasta `docs
 
 ## Painel administrativo entre.
 
-O painel está disponível em https://appswebb.github.io/testesite/admin/. O acesso administrativo é validado no servidor por uma lista privada de administradores e funções SQL protegidas por RLS. O painel permite gerenciar usuários, banimentos, denúncias, sessões de matches, avisos com respostas, enquetes obrigatórias com totalização dos votos e o status do matchmaking. Conteúdos de conversas privadas não aparecem no painel. Todas as operações administrativas exigem validação no servidor. Funciona no desktop e no mobile.
+O painel está disponível em https://joinconnectbr.vercel.app/admin/. O acesso administrativo é validado no servidor por uma lista privada de administradores e funções SQL protegidas por RLS. O painel permite gerenciar usuários, banimentos, denúncias, sessões de matches, avisos com respostas, enquetes obrigatórias com totalização dos votos e o status do matchmaking. Conteúdos de conversas privadas não aparecem no painel. Todas as operações administrativas exigem validação no servidor. Funciona no desktop e no mobile.
 
 ## Modo atualização (controle manual)
 
