@@ -55,7 +55,7 @@ async function refreshRelationships(id,status){
  document.querySelectorAll('[data-cp-stats]').forEach(el=>{delete el.dataset.loading;void fillStats(el)});
  await api.refreshInbox();if(modal)await loadList(currentKind);void tick();
 }
-const url=new URL('./',window.location.href).href;
+const url='https://joinconnectbr.vercel.app/';
 function shareView(){return '<section class="cp-app-share"><div class="cp-share-hero"><img src="./connect-glass.svg?v=showcase-v17" alt="" width="96" height="60"><span>CONNECT</span><h2>O próximo oi<br> começa aqui.</h2><p>Convide alguém para conhecer o CONNECT. Converse por texto ou vídeo, faça novas conexões e compartilhe momentos.</p></div><div class="cp-share-card"><strong>Compartilhe o aplicativo</strong><p>Envie o link para seus amigos.</p><div class="cp-share-url">'+esc(url)+'</div><button type="button" class="ui-btn btn-dark" data-cp-share="native">'+ico('arrow',18)+' Compartilhar</button><button type="button" class="ui-btn btn-outline" data-cp-share="copy">'+ico('link',18)+' Copiar link</button></div></section>'}
 document.addEventListener('click',async e=>{
  const b=e.target.closest?.('[data-cp-follow],[data-cp-list],[data-cp-list-close],[data-cp-list-more],[data-cp-list-prev],[data-cp-follow-remove],[data-cp-respond],[data-cp-open],[data-cp-share]');if(!b||b.disabled)return;
