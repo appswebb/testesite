@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 const UF=[['AC','Acre'],['AL','Alagoas'],['AP','Amapá'],['AM','Amazonas'],['BA','Bahia'],['CE','Ceará'],['DF','Distrito Federal'],['ES','Espírito Santo'],['GO','Goiás'],['MA','Maranhão'],['MT','Mato Grosso'],['MS','Mato Grosso do Sul'],['MG','Minas Gerais'],['PA','Pará'],['PB','Paraíba'],['PR','Paraná'],['PE','Pernambuco'],['PI','Piauí'],['RJ','Rio de Janeiro'],['RN','Rio Grande do Norte'],['RS','Rio Grande do Sul'],['RO','Rondônia'],['RR','Roraima'],['SC','Santa Catarina'],['SP','São Paulo'],['SE','Sergipe'],['TO','Tocantins']];
-const s={room:'world',activeCity:'',state:'SP',city:'',cities:[],loading:false,busy:false,rows:[],older:false,loadingMore:false,after:0,expiresCooldown:0,refreshTimer:null,cityLoading:false,cityError:false,filterOpen:false,detecting:false,filterEpoch:0};
+const s={room:'world',activeCity:'',state:'SP',city:'',cities:[],loading:false,busy:false,rows:[],older:false,loadingMore:false,after:0,expiresCooldown:0,refreshTimer:null,cityLoading:false,cityError:false,filterOpen:false,detecting:false,filterEpoch:0,loadError:false,loaded:false};
 const clean=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9_-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,80);
 // Local, theme-aware regional symbols; cities never reuse a state flag.
 const regionGraphic=(kind,size=20)=>{
@@ -38,11 +38,11 @@ function openSlot(kind){if(kind==='global'){roomChange('world');return;}const se
 
 const title=key=>key==='world'?'Mundo · Sala global':key==='br'?'Brasil · Sala nacional':key.startsWith('n:')?window.connectWorld.codeName(key.slice(2).toUpperCase()):key.startsWith('s:')?UF.find(u=>u[0].toLowerCase()===key.slice(2))?.[1]||'Estado':s.activeCity||'Sala da cidade';
 const formatDate=d=>new Date(d).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-const icon=key=>key==='world'?'🌐':key==='br'?'🇧🇷':key.startsWith('n:')?window.connectWorld.flag(key.slice(2).toUpperCase()):regionGraphic(kindFor(key),22);
+const icon=key=>key==='world'?ico('rooms',24):key==='br'?'🇧🇷':key.startsWith('n:')?window.connectWorld.flag(key.slice(2).toUpperCase()):regionGraphic(kindFor(key),22);
 function chatRows(){
  s.rows=s.rows.filter(r=>!r.deleted_at);
- if(s.loading&&!s.rows.length)return '<div class="rooms-empty">Carregando mensagens…</div>';
- if(!s.rows.length)return '<div class="rooms-empty"><span class="cn-room-empty-icon">'+ico('rooms',32)+'</span><strong>Comece a conversa.</strong><p>Esta sala está tranquila. Seja a primeira pessoa a dar um oi.</p></div>';
+ if(s.loadError&&!s.rows.length)return '<div class="rooms-empty"><span class="cn-room-empty-icon">'+ico('info',26)+'</span><strong>Não foi possível carregar.</strong><p>Confira sua conexão e tente novamente.</p><button type="button" class="cr-empty-action" data-room-action="retry">'+ico('refresh',16)+' Tentar novamente</button></div>';if(!s.loaded&&!s.rows.length)return '<div class="rooms-empty" role="status"><span class="cr-loading-ring"></span><strong>Carregando mensagens…</strong></div>';
+ if(!s.rows.length)return '<div class="rooms-empty"><span class="cn-room-empty-icon">'+ico('rooms',32)+'</span><strong>O próximo oi começa aqui.</strong><p>Seja a primeira pessoa a conversar nesta sala.</p><button type="button" class="cr-empty-action" data-room-action="say-hi">'+ico('chat',16)+' Dizer oi</button></div>';
  return (s.older?'<button class="rooms-load-more" type="button" data-room-action="more">Mensagens anteriores</button>':'')+
  s.rows.map(r=>'<article class="room-message '+(r.sender===state.session?.user?.id?'is-mine':'')+'"><span class="room-message-avatar"'+profileTarget(r.sender,r.username)+'>'+esc(String(r.display_name||'?').slice(0,1).toUpperCase())+'</span><div class="room-message-content"><header><strong>'+profileName(r.sender,r.display_name,r.username)+'</strong><span>'+profileName(r.sender,'@'+(r.username||'pessoa'),r.username)+'</span><time>'+formatDate(r.created_at)+'</time></header><p class="'+(r.deleted_at?'cp-room-deleted':'')+'">'+esc(r.body)+'</p>'+(r.sender!==state.session?.user?.id&&r.body?window.connectTranslate?.markup?.(r.body)||'':'')+(r.edited_at&&!r.deleted_at?'<small class="cp-room-edited">Editada</small>':'')+(r.sender===state.session?.user?.id&&!r.deleted_at?'<button type="button" class="cp-message-menu cp-room-message-menu" data-room-message-menu="'+Number(r.id)+'" aria-label="Opções da mensagem">'+ico('more',16)+'</button>':'')+'</div></article>').join('');
 }
@@ -53,11 +53,11 @@ function paint(scrollToEnd=false){
  const markup=chatRows();if(el.dataset.roomMarkup!==markup){el.innerHTML=markup;el.dataset.roomMarkup=markup;}
  if(keepBottom)el.scrollTop=el.scrollHeight;
  else el.scrollTop=oldTop+(el.scrollHeight-oldHeight);
- const cool=document.getElementById('roomCooldown');
- if(cool)cool.textContent=s.expiresCooldown>Date.now()?'Aguarde '+Math.ceil((s.expiresCooldown-Date.now())/1000)+'s para enviar outra.':'Uma mensagem a cada 5 segundos · apaga em 24h';
+ updateComposer();
 }
 let roomOwner=null;
-function resetAccount(){const uid=state.session?.user?.id||null;if(roomOwner===uid)return;closeRoomFilter(false);roomOwner=uid;roomEpoch++;roomRefreshQueued=false;drafts=new Map();s.rows=[];s.older=false;s.expiresCooldown=0;s.activeCity='';s.city='';s.state='';s.cities=[];restoreSlots();if(s.refreshTimer)clearInterval(s.refreshTimer);s.refreshTimer=null;}
+function updateComposer(){const input=document.getElementById('roomText'),btn=document.querySelector('#roomChatForm [type=submit]'),cool=document.getElementById('roomCooldown'),chars=document.getElementById('crRoomChars');const wait=Math.max(0,Math.ceil((s.expiresCooldown-Date.now())/1000));if(btn)btn.disabled=s.busy||wait>0||!input?.value.trim();if(cool)cool.textContent=wait?'Próximo envio em '+wait+'s':'Intervalo de 5s entre mensagens';if(chars)chars.textContent=(input?.value.length||0)+'/400';}
+function resetAccount(){const uid=state.session?.user?.id||null;if(roomOwner===uid)return;closeRoomFilter(false);roomOwner=uid;roomEpoch++;roomRefreshQueued=false;drafts=new Map();s.rows=[];s.older=false;s.loaded=false;s.loadError=false;s.expiresCooldown=0;s.activeCity='';s.city='';s.state='';s.cities=[];restoreSlots();if(s.refreshTimer)clearInterval(s.refreshTimer);s.refreshTimer=null;}
 
 function shortcut(kind,label,detail,graphic,selected){
  return '<button type="button" class="cr-shortcut'+(selected?' is-current':'')+'" data-room-action="quick-'+kind+'" aria-pressed="'+String(selected)+'"><span class="cr-shortcut-icon">'+graphic+'</span><span class="cr-shortcut-copy"><strong>'+label+'</strong><small>'+esc(detail)+'</small></span>'+(selected?'<span class="cr-selected-dot" aria-hidden="true"></span>':'')+'</button>';
@@ -65,15 +65,15 @@ function shortcut(kind,label,detail,graphic,selected){
 function view(){
  resetAccount();const current=title(s.room),label=icon(s.room),active=kindFor(s.room),n=slots.national,t=slots.state,city=slots.city;
  return '<section class="room-shell rooms-static-shell cr-rooms" aria-label="Salas públicas">'+
- '<header class="rooms-static-header cr-top"><div class="cr-title"><span class="cr-eyebrow"><span class="cr-tiny-dot"></span> COMUNIDADE</span><h2>Salas</h2><p>Alterne entre suas salas públicas.</p></div></header>'+
- '<nav class="cr-shortcuts" aria-label="Escolher sala">'+(world().scope==='country'?'':shortcut('global','Mundo','Sala global','🌐',active==='global'))+shortcut('national','País',n?window.connectWorld.codeName(n.country):'Selecionar',n?window.connectWorld.flag(n.country):ico('flag',20),active==='national')+(regionAllowed()?shortcut('state','Estado',t?stateName(t.uf):'Selecionar',regionGraphic('state'),active==='state')+shortcut('city','Cidade',city?city.name:'Selecionar',regionGraphic('city'),active==='city'):'')+'</nav>'+
- '<section class="cr-chat" aria-label="Conversa atual"><header class="cr-chat-head"><div class="cr-room-symbol">'+label+'</div><div class="cr-chat-name"><small>'+({global:'Internacional',national:'Nacional',state:'Estadual',city:'Municipal'})[active]+' · Sala pública</small><strong>'+esc(current)+'</strong></div>'+(active!=='global'?'<button type="button" class="cr-change-room cr-edit-channel" data-room-action="edit" data-kind="'+active+'" aria-label="Alterar '+({national:'país',state:'estado',city:'cidade'})[active]+'">'+ico('sliders',16)+' <span>Alterar</span></button>':'')+'</header>'+
- '<div class="cr-retention">'+ico('clock',14)+'<span>Mensagens temporárias · 24 horas</span></div>'+
+ '<header class="rooms-static-header cr-top"><div class="cr-title"><span class="cr-eyebrow">COMUNIDADE</span><p>Escolha onde conversar</p></div></header>'+
+ '<nav class="cr-shortcuts" aria-label="Escolher sala">'+(world().scope==='country'?'':shortcut('global','Mundo','Global',ico('rooms',20),active==='global'))+shortcut('national','País',n?window.connectWorld.codeName(n.country):'Selecionar',n?window.connectWorld.flag(n.country):ico('flag',20),active==='national')+(regionAllowed()?shortcut('state','Estado',t?stateName(t.uf):'Selecionar',regionGraphic('state'),active==='state')+shortcut('city','Cidade',city?city.name:'Selecionar',regionGraphic('city'),active==='city'):'')+'</nav>'+
+ '<section class="cr-chat" aria-label="Conversa atual"><header class="cr-chat-head"><div class="cr-room-symbol">'+label+'</div><div class="cr-chat-name"><strong>'+esc(current)+'</strong><small>'+({global:'Internacional',national:'Nacional',state:'Estadual',city:'Municipal'})[active]+' · Sala pública</small></div>'+(active!=='global'?'<button type="button" class="cr-change-room cr-edit-channel" data-room-action="edit" data-kind="'+active+'" aria-label="Alterar '+({national:'país',state:'estado',city:'cidade'})[active]+'">'+ico('sliders',16)+' <span>Alterar</span></button>':'')+'</header>'+
+ '<div class="cr-retention">'+ico('clock',14)+'<span>Mensagens expiram em 24h</span></div>'+
  '<div class="rooms-discussion" id="roomMessages" aria-live="polite" aria-label="Mensagens da sala">'+chatRows()+'</div>'+
  '<div class="cr-compose"><form id="roomChatForm" class="room-composer"><label class="sr-only" for="roomText">Sua mensagem na sala</label>'+
- '<input autocomplete="off" id="roomText" maxlength="400" placeholder="Escreva uma mensagem…" value="'+esc(drafts.get(s.room)||'')+'" required>'+
- '<button type="submit" title="Enviar mensagem" aria-label="Enviar mensagem">'+ico('send',19)+'</button></form>'+
- '<p class="rooms-cooldown" id="roomCooldown">Uma mensagem a cada 5 segundos · apaga em 24h</p></div></section></section>';
+ '<input autocomplete="off" id="roomText" maxlength="400" placeholder="Digite sua mensagem…" value="'+esc(drafts.get(s.room)||'')+'" required>'+
+ '<button type="submit" title="Enviar mensagem" aria-label="Enviar mensagem" '+(s.busy||s.expiresCooldown>Date.now()||!drafts.get(s.room)?.trim()?'disabled':'')+'>'+ico('send',19)+'</button></form>'+
+ '<div class="cr-compose-meta"><p class="rooms-cooldown" id="roomCooldown">'+(s.expiresCooldown>Date.now()?'Próximo envio em '+Math.ceil((s.expiresCooldown-Date.now())/1000)+'s':'Intervalo de 5s entre mensagens')+'</p><span id="crRoomChars">'+(drafts.get(s.room)?.length||0)+'/400</span></div></div></section></section>';
 }
 function filterCities(){
  if(picker?.kind!=='city')return;
@@ -134,22 +134,22 @@ let roomRefreshQueued=false;
 async function load(more=false){
  if(s.loading||s.loadingMore){if(!more)roomRefreshQueued=true;return;}if(!state.session)return;
  const room=s.room,user=state.session.user.id,epoch=roomEpoch;
- if(more)s.loadingMore=true;else s.loading=true;
+ if(more)s.loadingMore=true;else s.loading=true;s.loadError=false;
  try{
   const {data,error}=await db.rpc('entre_room_messages_page',{_room:room,_before:more?s.rows[0]?.id||null:null});
   if(error)throw error;if(epoch!==roomEpoch||room!==s.room||state.session?.user?.id!==user)return;
   const next=(data?.items||[]).filter(r=>!r.deleted_at).slice().reverse();
   if(more)s.rows=next.concat(s.rows).slice(0,100);
   else s.rows=next;
-  s.older=data?.has_more===true;
-  paint(!more);
- }catch(error){if(epoch===roomEpoch&&room===s.room&&state.session?.user?.id===user)toast(infoError(error),true)}
- finally{s.loading=false;s.loadingMore=false;if(epoch===roomEpoch&&state.session?.user?.id===user)paint(!more);if(roomRefreshQueued){roomRefreshQueued=false;if(state.view==='rooms'&&!document.hidden)void load();}}
+  s.older=data?.has_more===true;s.loaded=true;
+  paint();
+ }catch(error){if(epoch===roomEpoch&&room===s.room&&state.session?.user?.id===user){s.loadError=true;toast(infoError(error),true)}}
+ finally{s.loading=false;s.loadingMore=false;if(epoch===roomEpoch&&state.session?.user?.id===user)paint();if(roomRefreshQueued){roomRefreshQueued=false;if(state.view==='rooms'&&!document.hidden)void load();}}
 }
 function roomChange(key){
  if(!/^(world|br|n:[a-z]{2}|s:[a-z]{2}|c:[a-z]{2}:[a-z0-9][a-z0-9_-]{1,79})$/.test(key)||!permitted(key))return;
  if(key===s.room){closeRoomFilter();persist();return;}
- rememberDraft();closeRoomFilter(false);roomEpoch++;s.room=key;s.activeCity=kindFor(key)==='city'?slots.city?.name||'':'';s.rows=[];s.older=false;persist();renderView();void load();startPolling();
+ rememberDraft();closeRoomFilter(false);roomEpoch++;s.room=key;s.activeCity=kindFor(key)==='city'?slots.city?.name||'':'';s.rows=[];s.older=false;s.loaded=false;s.loadError=false;persist();renderView();void load();startPolling();
 }
 function startPolling(){
  if(s.refreshTimer)clearInterval(s.refreshTimer);
@@ -170,6 +170,8 @@ async function send(form){
  }catch(e){toast(infoError(e),true);if(/5 segundos/.test(e.message||''))s.expiresCooldown=Date.now()+5000;}
  finally{s.busy=false;if(btn?.isConnected)btn.disabled=false;paint();}
 }
+document.addEventListener('input',e=>{if(e.target?.id==='roomText'){rememberDraft();updateComposer();}});
+setInterval(()=>{if(typeof state!=='undefined'&&state.view==='rooms'&&!document.hidden)updateComposer();},500);
 document.addEventListener('submit',e=>{if(e.target?.id!=='roomChatForm')return;e.preventDefault();void send(e.target);});
 document.addEventListener('change',event=>{
  const el=event.target;if(!picker)return;
@@ -189,6 +191,8 @@ document.addEventListener('click',e=>{
  if(a==='confirm-state'&&picker?.kind==='state'&&validState(picker.uf)){const uf=picker.uf;selectSlot('state',{uf,key:'s:'+uf.toLowerCase()});}
  if(a==='confirm-city'&&picker?.kind==='city'&&picker.cities.includes(picker.city)){const {uf,city}=picker;selectSlot('city',{uf,name:city,key:'c:'+uf.toLowerCase()+':'+clean(city)});}
  if(a==='more')void load(true);
+ if(a==='retry')void load();
+ if(a==='say-hi'){const input=document.getElementById('roomText');if(input){if(!input.value)input.value='Oi!';rememberDraft();updateComposer();input.focus();}}
 });
 
 window.entreRooms={view,enter,resetAccount,resetWorld:()=>{roomOwner=null;resetAccount();},messageContext:id=>state.view==='rooms'?{room:s.room,message:s.rows.find(r=>String(r.id)===String(id))}:null,applyMutation:(room,row)=>{if(state.view!=='rooms'||room!==s.room)return;const item=s.rows.find(r=>r.id===row.id);if(row.deleted_at)s.rows=s.rows.filter(r=>String(r.id)!==String(row.id));else if(item)Object.assign(item,row);paint();},refresh:()=>state.view==='rooms'&&!document.hidden?load():Promise.resolve(),stop:()=>{rememberDraft();closeRoomFilter(false);if(s.refreshTimer)clearInterval(s.refreshTimer);s.refreshTimer=null;},roomChange,details:()=>({room:s.room,rows:s.rows.length,filterOpen:s.filterOpen,channels:Object.fromEntries(Object.entries(slots).map(([k,v])=>[k,v.key]))})};
