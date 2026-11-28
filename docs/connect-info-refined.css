@@ -5,8 +5,18 @@ html[data-theme] body.info-page.connect-info{margin:0!important;min-width:0!impo
 html[data-theme] body.connect-info .info-wrap{width:min(1120px,calc(100% - 48px))!important;max-width:1120px!important;min-width:0!important;margin-inline:auto!important}
 html[data-theme] body.connect-info .info-header{position:static!important;border-bottom:1px solid var(--ui-line)!important;background:var(--ui-bg)!important}
 html[data-theme] body.connect-info .info-header .info-wrap{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center!important;gap:14px!important;padding-block:12px!important;min-height:70px!important}
-html[data-theme] body.connect-info .info-brand{display:inline-flex!important;align-items:center!important;gap:7px!important;font:800 19px/1 Inter,system-ui,sans-serif!important;letter-spacing:-.055em!important;text-decoration:none!important;color:var(--ui-text)!important;white-space:nowrap!important;margin:0!important}
-html[data-theme] body.connect-info .info-brand img{width:36px!important;height:27px!important;object-fit:contain!important;filter:brightness(0);margin:0!important}
+/* Match the homepage wordmark geometry and typography exactly. */
+html[data-theme] body.connect-info .info-brand{
+ --cl-control:44px;--cl-mark:clamp(25px,7.2vw,34px);--cl-word:clamp(16px,4.8vw,22px);
+ display:inline-flex!important;align-items:center!important;justify-self:start;gap:5px!important;min-width:0;max-width:100%;
+ min-height:var(--cl-control);padding:0!important;margin:0!important;text-decoration:none!important;white-space:nowrap!important;
+ color:var(--ui-text)!important;font:800 var(--cl-word)/1 Inter,system-ui,-apple-system,sans-serif!important;letter-spacing:-.045em!important;
+}
+html[data-theme] body.connect-info .info-brand img{
+ display:block;flex:none;width:var(--cl-mark)!important;height:var(--cl-mark)!important;max-width:none;object-fit:contain;
+ margin:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;border:0!important;filter:brightness(0);
+}
+html[data-theme] body.connect-info .info-brand span{font:inherit!important;letter-spacing:inherit;color:inherit!important}
 html[data-theme="dark"] body.connect-info .info-brand img{filter:brightness(0) invert(1)}
 html[data-theme] body.connect-info .info-nav{display:flex!important;gap:4px!important;align-items:center!important;flex-wrap:nowrap!important;order:0!important;width:auto!important;padding:4px!important;border:1px solid var(--ui-line);border-radius:15px;background:var(--ui-panel-alt);overflow:visible!important}
 html[data-theme] body.connect-info .info-nav a{display:flex!important;align-items:center;justify-content:center;min-height:40px!important;padding:8px 12px!important;gap:6px!important;border:1px solid transparent!important;border-radius:11px!important;background:transparent!important;color:var(--ui-muted)!important;text-decoration:none!important;font:650 12px/1.3 Inter,system-ui,sans-serif!important;white-space:nowrap!important}
@@ -87,7 +97,6 @@ html[data-theme] body.connect-info .info-footer nav a{color:var(--ui-muted)!impo
 @media(max-width:520px){
  html[data-theme] body.connect-info .info-wrap{width:calc(100% - 24px)!important}
  html[data-theme] body.connect-info .info-header .info-wrap{padding-block:10px!important;min-height:0!important}
- html[data-theme] body.connect-info .info-brand{font-size:18px!important}
  html[data-theme] body.connect-info .info-nav a .ci-icon{display:none}
  html[data-theme] body.connect-info .info-hero{padding:12px 0 7px!important}
  html[data-theme] body.connect-info .info-hero .info-wrap{padding:20px 16px!important;border-radius:19px!important;grid-template-columns:minmax(0,1fr) 51px;gap:9px;min-height:165px}
@@ -103,5 +112,6 @@ html[data-theme] body.connect-info .info-footer nav a{color:var(--ui-muted)!impo
  html[data-theme] body.connect-info .info-actions>*{flex:1 1 auto}
  .connect-info .ci-install-page .info-grid{grid-template-columns:minmax(0,1fr)!important}
 }
+@media(max-width:340px){html[data-theme] body.connect-info .info-brand{--cl-word:16px;--cl-mark:25px}}
 @media(prefers-reduced-motion:no-preference){.connect-info :is(.info-button,.connect-return,.info-nav a,.ci-home){transition:background .15s,opacity .15s,transform .15s}.connect-info :is(.info-button,.connect-return,.ci-home):active{transform:scale(.98)}}
 }
