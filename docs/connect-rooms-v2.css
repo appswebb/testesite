@@ -2,36 +2,11 @@
 @layer connect-room-design {
 html[data-theme] #app #view-content[data-section="rooms"]>.cr-rooms.rooms-static-shell{
  box-sizing:border-box!important;display:grid!important;grid-template-columns:minmax(0,1fr)!important;
- grid-template-rows:auto auto minmax(0,1fr)!important;gap:10px!important;
+ grid-template-rows:minmax(0,1fr)!important;gap:0!important;
  width:min(100%,1140px)!important;min-width:0!important;min-height:0!important;
  height:calc(100dvh - 110px)!important;max-height:none!important;margin:0 auto!important;padding:4px 0 8px!important;
  border:0!important;background:transparent!important;box-shadow:none!important;overflow:hidden!important;
 }
-html[data-theme] #app .cr-rooms .cr-top{display:block!important;padding:0 2px!important;margin:0!important;border:0!important;min-height:0!important}
-#app .cr-rooms .cr-title{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
-#app .cr-rooms .cr-eyebrow{font:750 10px/1.4 Inter,system-ui,sans-serif;letter-spacing:.11em;color:var(--ui-text)}
-#app .cr-rooms .cr-title p{margin:0;font-size:11px;line-height:1.4;color:var(--ui-muted)}
-html[data-theme] #app .cr-rooms .cr-shortcuts{
- display:grid!important;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);
- gap:6px;padding:5px;min-width:0;border:1px solid var(--ui-line);border-radius:18px;background:var(--ui-panel-alt);
-}
-html[data-theme] #app .cr-rooms .cr-shortcut{
- display:flex!important;flex-direction:row;align-items:center;gap:9px;position:relative;box-sizing:border-box;
- width:100%;min-width:0!important;min-height:60px!important;padding:9px!important;border:1px solid transparent!important;
- border-radius:13px!important;background:transparent!important;color:var(--ui-text)!important;text-align:left;box-shadow:none!important;cursor:pointer;
- transition:background .15s,transform .15s,border-color .15s;
-}
-html[data-theme] #app .cr-rooms .cr-shortcut.is-current{
- background:var(--ui-panel)!important;color:var(--ui-text)!important;border-color:var(--ui-line)!important;box-shadow:0 3px 9px #0000000c!important;
-}
-#app .cr-rooms .cr-shortcut-icon{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:11px;background:var(--ui-panel);color:var(--ui-text);border:1px solid var(--ui-line);font-size:21px;line-height:1;overflow:hidden}
-#app .cr-rooms .cr-shortcut.is-current .cr-shortcut-icon{background:var(--ui-accent);color:var(--ui-accent-on);border-color:transparent}
-#app .cr-rooms .cr-shortcut-icon svg{width:19px;height:19px}
-#app .cr-rooms :is(.cr-shortcut-icon,.cr-room-symbol) img{display:block;width:24px!important;height:17px!important;object-fit:contain;border-radius:2px}
-#app .cr-rooms .cr-shortcut-copy{display:grid;gap:3px;min-width:0;max-width:100%}
-#app .cr-rooms .cr-shortcut-copy strong{font-size:12px;line-height:1.25;font-weight:750}
-#app .cr-rooms .cr-shortcut-copy small{font-size:10px;line-height:1.3;color:var(--ui-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-#app .cr-rooms .cr-selected-dot{position:absolute;right:6px;top:6px;width:5px;height:5px;border-radius:50%;background:var(--ui-accent)}
 html[data-theme] #app .cr-rooms .cr-chat{
  display:flex!important;flex-direction:column!important;box-sizing:border-box!important;min-width:0!important;min-height:0!important;height:100%!important;
  border:1px solid var(--ui-line)!important;border-radius:20px!important;overflow:hidden!important;background:var(--ui-panel)!important;box-shadow:0 6px 24px #00000008;
@@ -81,24 +56,10 @@ html[data-theme] #app .cr-rooms .rooms-cooldown{margin:0!important;font-size:10p
 @keyframes cr-spin{to{transform:rotate(360deg)}}
 #app .cr-rooms button:focus-visible{outline:2px solid var(--ui-accent);outline-offset:-2px}
 #app .cr-rooms button:not(:disabled):active{transform:scale(.98)}
-@media(min-width:1000px){
- html[data-theme] #app #view-content[data-section="rooms"]>.cr-rooms.rooms-static-shell{grid-template-columns:220px minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr)!important;gap:12px!important}
- #app .cr-rooms .cr-top{grid-column:1;grid-row:1}
- #app .cr-rooms .cr-title{display:grid;gap:5px}
- html[data-theme] #app .cr-rooms .cr-shortcuts{grid-column:1;grid-row:2;grid-auto-flow:row;grid-auto-columns:auto;align-content:start;align-self:start}
- #app .cr-rooms .cr-chat{grid-column:2;grid-row:1/3}
-}
 @media(max-width:900px){
  html[data-theme] #app #view-content[data-section="rooms"]>.cr-rooms.rooms-static-shell{flex:1 1 0!important;width:100%!important;height:auto!important;max-height:100%!important;padding:3px 0!important;gap:8px!important}
 }
 @media(max-width:600px){
- html[data-theme] #app .cr-rooms .cr-shortcuts{gap:3px;padding:4px;border-radius:15px}
- html[data-theme] #app .cr-rooms .cr-shortcut{min-height:62px!important;flex-direction:column!important;align-items:center!important;gap:4px;padding:5px 3px!important;text-align:center;border-radius:11px!important}
- #app .cr-rooms .cr-shortcut-icon{width:27px;height:27px;border-radius:8px;font-size:18px}
- #app .cr-rooms .cr-shortcut-icon svg{width:17px;height:17px}
- #app .cr-rooms .cr-shortcut-copy{justify-items:center;width:100%;gap:1px}
- #app .cr-rooms .cr-shortcut-copy strong{font-size:11px}
- #app .cr-rooms .cr-shortcut-copy small{font-size:9px}
  #app .cr-rooms .cr-chat-head{padding:10px;gap:9px}
  #app .cr-rooms .cr-room-symbol{width:36px;height:36px;border-radius:11px}
  #app .cr-rooms .cr-chat-name strong{font-size:16px}
@@ -106,7 +67,6 @@ html[data-theme] #app .cr-rooms .rooms-cooldown{margin:0!important;font-size:10p
  #app .cr-rooms .cr-compose{padding:7px 8px 6px}
 }
 @media(max-width:900px) and (max-height:620px){
- html[data-theme] #app .cr-rooms .cr-shortcut{min-height:48px!important}
  #app .cr-rooms .rooms-empty{gap:5px}
  html[data-theme] #app .cr-rooms .cn-room-empty-icon{width:40px!important;height:40px!important;border-radius:12px!important}
  #app .cr-rooms .cr-empty-orbit{width:30px;height:30px}
@@ -114,9 +74,7 @@ html[data-theme] #app .cr-rooms .rooms-cooldown{margin:0!important;font-size:10p
  #app .cr-rooms .cr-empty-art{margin:0}
 }
 @media(max-width:900px) and (max-height:480px){
- html[data-theme] #app #view-content[data-section="rooms"]>.cr-rooms.rooms-static-shell{grid-template-rows:auto minmax(0,1fr)!important}
- html[data-theme] #app .cr-rooms .cr-top{display:none!important}
- #app .cr-rooms .cr-shortcut-copy small,#app .cr-rooms .cr-retention,#app .cr-rooms .rooms-empty p{display:none!important}
+ html[data-theme] #app #view-content[data-section="rooms"]>.cr-rooms.rooms-static-shell{grid-template-rows:minmax(0,1fr)!important}
 }
 @media(max-width:900px){
  html[data-theme].connect-keyboard-open #app #view-content[data-section="rooms"]>.cr-rooms.rooms-static-shell{grid-template-rows:minmax(0,1fr)!important}
@@ -126,3 +84,14 @@ html[data-theme] #app .cr-rooms .rooms-cooldown{margin:0!important;font-size:10p
 }
 /* The regional picker is an overlay and uses the shared CONNECT dialog style. */
 #roomsFilterOverlay .cr-filter-kicker{font-size:10px;font-weight:750;letter-spacing:.12em;color:var(--ui-muted)}
+
+/* Unified filter: only the active channel and a single filter button remain in the chat. */
+#roomsFilterOverlay .cr-filter-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;min-width:0}
+#roomsFilterOverlay .cr-filter-option{display:flex;align-items:center;justify-content:flex-start;gap:8px;min-width:0;min-height:44px;padding:9px;border:1px solid var(--ui-line);border-radius:12px;background:var(--ui-panel-alt);color:var(--ui-text);font-weight:650;font-size:13px;cursor:pointer}
+#roomsFilterOverlay .cr-filter-option svg{flex:none}
+#roomsFilterOverlay .cr-filter-option.is-selected{background:var(--ui-accent);color:var(--ui-accent-on);border-color:transparent}
+#roomsFilterOverlay .cr-filter-option:focus-visible{outline:2px solid var(--ui-accent);outline-offset:2px}
+#roomsFilterOverlay .cr-filter-fields{display:grid;gap:9px;min-width:0;padding-top:12px;border-top:1px solid var(--ui-line);margin-top:6px}
+#roomsFilterOverlay .cr-filter-field-heading{font-size:14px;color:var(--ui-text)}
+#roomsFilterOverlay .cr-filter-description{font-size:13px;line-height:1.5;color:var(--ui-muted);margin:0}
+#roomsFilterOverlay .cr-unified-filter{box-sizing:border-box;max-width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain}
