@@ -5,13 +5,10 @@ O site usa exclusivamente e-mail e senha no Supabase Auth (SDK 2.117.1), sem pro
 ## Configuração obrigatória antes de abrir cadastros ao público
 
 1. No Supabase → Authentication → Providers → Email, habilitar cadastro por e-mail e **Confirm email**. Sem confirmação, o servidor pode aceitar cadastro usando e-mails não verificados; validação só no JavaScript não substitui esta configuração.
-2. Em Authentication → URL Configuration, manter um Site URL definido (sugestão: `https://entre-ruby.vercel.app/`) e adicionar à allow list, individualmente:
-   - `https://entre-ruby.vercel.app/`
-   - `https://entre-ruby.vercel.app/?auth=recovery`
-   - `https://entre-orbytstudios.vercel.app/`
-   - `https://entre-orbytstudios.vercel.app/?auth=recovery`
-   - `https://appswebb.github.io/testesite/`
-   - `https://appswebb.github.io/testesite/?auth=recovery`
+2. Em Authentication → URL Configuration, definir o Site URL oficial: `https://joinconnectbr.vercel.app/`. Adicionar à lista de Redirect URLs, individualmente:
+   - `https://joinconnectbr.vercel.app/`
+   - `https://joinconnectbr.vercel.app/?auth=recovery`
+   Mantenha endereços antigos somente se ainda forem necessários para fluxos de autenticação em andamento; nunca os use em novos compartilhamentos.
 3. Em Authentication → SMTP Settings, configurar e validar um provedor de e-mail confiável para mensagens de confirmação e redefinição. O serviço de e-mails padrão do Supabase não é adequado para escala de produção (limites e destinatários permitidos).
 4. Em Authentication → Security and Protection, usar política mínima de senha de 12 caracteres, se disponível, proteção contra senhas vazadas, limitação de requisições e CAPTCHA (por exemplo Turnstile). Um CAPTCHA exige configurar a integração no dashboard e passar o token do widget nas chamadas de Auth; não ativar a exigência sem conectar um widget, pois isso bloquearia login/cadastro.
 5. Exigir HTTPS (GitHub Pages/Vercel já o oferecem). Não disponibilizar chaves `service_role` ou segredos no frontend; só chaves publicáveis. Manter RLS em tabelas expostas e validar privilégios administrativos no banco.
