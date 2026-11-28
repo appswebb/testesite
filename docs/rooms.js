@@ -71,13 +71,20 @@ function view(){
  '<button type="submit" title="Enviar mensagem" aria-label="Enviar mensagem" '+(s.busy||s.expiresCooldown>Date.now()||!drafts.get(s.room)?.trim()?'disabled':'')+'>'+ico('send',19)+'</button></form>'+
  '<div class="cr-compose-meta"><p class="rooms-cooldown" id="roomCooldown">'+(s.expiresCooldown>Date.now()?'Próximo envio em '+Math.ceil((s.expiresCooldown-Date.now())/1000)+'s':'Envio a cada 5s')+'</p><span id="crRoomChars">'+(drafts.get(s.room)?.length||0)+'/400</span></div></div></section></section>';
 }
+let cityCatalog=null,cityCatalogRequest=null;
+const cityKey=c=>c.uf+':'+clean(c.name);
 function filterCities(){
  if(picker?.kind!=='city')return;
  const select=document.getElementById('roomsCitySelect'),button=document.querySelector('#roomsFilterOverlay [data-room-action="confirm-city"]'),status=document.getElementById('roomsCityStatus');if(!select)return;
- select.disabled=picker.loading||!picker.uf||!picker.cities.length;
- select.innerHTML='<option value="">'+(picker.loading?'Carregando cidades…':picker.error?'Cidades indisponíveis':'Selecione a cidade')+'</option>'+picker.cities.map(city=>'<option value="'+esc(city)+'" '+(city===picker.city?'selected':'')+'>'+esc(city)+'</option>').join('');
- if(button)button.disabled=picker.loading||!picker.cities.includes(picker.city);
- if(status)status.textContent=picker.error?'Não foi possível consultar as cidades. Tente novamente.':'';
+ const selected=picker.cities.find(c=>c.uf===picker.uf&&c.name===picker.city);
+ const query=clean(picker.query||'');
+ const matches=query?picker.cities.filter(c=>clean(c.name).includes(query)||clean(c.name+' '+c.uf).includes(query)):picker.cities;
+ const shown=matches.slice(0,100);if(selected&&!shown.some(c=>cityKey(c)===cityKey(selected)))shown.unshift(selected);
+ select.disabled=picker.loading||!shown.length;
+ select.innerHTML='<option value="">'+(picker.loading?'Carregando cidades…':picker.error?'Cidades indisponíveis':'Selecione a cidade')+'</option>'+shown.map(c=>'<option value="'+esc(cityKey(c))+'" '+(selected&&cityKey(c)===cityKey(selected)?'selected':'')+'>'+esc(c.name+' · '+c.uf)+'</option>').join('');
+ if(button)button.disabled=picker.loading||!selected;
+ if(status)status.textContent=picker.error?'Não foi possível carregar as cidades. Tente novamente.':picker.loading?'':!matches.length?'Nenhuma cidade encontrada.':matches.length>100?'Digite o nome da cidade para encontrar mais resultados.':'';
+ const retry=document.querySelector('[data-room-action="retry-cities"]');if(retry)retry.hidden=!picker.error;
 }
 function closeRoomFilter(focus=true){
  document.getElementById('roomsFilterOverlay')?.remove();
@@ -86,30 +93,38 @@ function closeRoomFilter(focus=true){
  if(focus&&state.view==='rooms')document.querySelector('[data-room-action="filter"]')?.focus({preventScroll:true});
 }
 const ufOptions=value=>'<option value="">Selecione o estado</option>'+UF.map(([uf,name])=>'<option value="'+uf+'" '+(uf===value?'selected':'')+'>'+esc(name)+' ('+uf+')</option>').join('');
-function openRoomFilter(kind=kindFor(s.room)){
+function openRoomFilter(kind=''){
  if(state.view!=='rooms')return;
  const choices=[...(world().scope==='country'?[]:[['global','Mundo',globe(19)]]),['national','País',ico('flag',19)],...(regionAllowed()?[['state','Estado',regionGraphic('state',19)],['city','Cidade',regionGraphic('city',19)]]:[])];
- if(!choices.some(([key])=>key===kind))kind=choices[0][0];
+ if(kind&&!choices.some(([key])=>key===kind))return;
+ const choosing=!kind;
  closeRoomFilter(false);focusKind=kind;
  const prev=slots[kind]||{},mine=window.entreGeo?.details?.().self;
- picker={kind,country:world().scope==='country'?world().country:prev.country||world().country||'',uf:prev.uf||mine?.state||'',city:prev.name||'',cities:[],loading:false,error:false};
+ picker={kind,country:world().scope==='country'?world().country:prev.country||world().country||'',uf:prev.uf||mine?.state||'',city:prev.name||'',cities:[],query:'',loading:false,error:false};
  const overlay=document.createElement('div');overlay.id='roomsFilterOverlay';overlay.className='rooms-filter-overlay';
- const label={global:'Sala global',national:'Escolha um país',state:'Escolha um estado',city:'Escolha uma cidade'}[kind];
+ const label={global:'Sala global',national:'Escolha um país',state:'Escolha um estado',city:'Escolha uma cidade'}[kind]||'Filtrar salas';
  let body='';
  if(kind==='global')body='<p class="cr-filter-description">Converse com pessoas de qualquer parte do mundo.</p><button type="button" class="rooms-filter-action" data-room-action="confirm-global">Entrar na sala global '+ico('arrow',16)+'</button>';
  if(kind==='national')body='<label for="roomsCountrySelect">País</label><select id="roomsCountrySelect" '+(world().scope==='country'?'disabled':'')+'>'+window.connectWorld.countries(picker.country)+'</select>'+(world().scope==='country'?'<p class="rooms-city-status">Seu alcance está limitado ao seu país. Altere em Configurações para acessar outros países.</p>':'')+'<button type="button" class="rooms-filter-action" data-room-action="confirm-national" '+(!picker.country?'disabled':'')+'>Entrar no chat do país '+ico('arrow',16)+'</button>';
  if(kind==='state')body='<label for="roomsStateSelect">Estado (Brasil)</label><select id="roomsStateSelect">'+ufOptions(picker.uf)+'</select><button type="button" class="rooms-filter-action" data-room-action="confirm-state" '+(!picker.uf?'disabled':'')+'>Entrar no chat do estado '+ico('arrow',16)+'</button>';
- if(kind==='city')body='<label for="roomsStateSelect">Estado de referência (Brasil)</label><select id="roomsStateSelect">'+ufOptions(picker.uf)+'</select><label for="roomsCitySelect">Cidade</label><select id="roomsCitySelect" aria-describedby="roomsCityStatus" disabled><option>Selecione o estado primeiro</option></select><p id="roomsCityStatus" class="rooms-city-status" role="status"></p><button type="button" class="rooms-filter-action" data-room-action="confirm-city" disabled>Entrar no chat da cidade '+ico('arrow',16)+'</button>';
+ if(kind==='city')body='<label for="roomsCitySearch">Buscar cidade</label><input type="search" id="roomsCitySearch" maxlength="100" autocomplete="off" placeholder="Digite o nome da cidade"><label for="roomsCitySelect">Cidade</label><select id="roomsCitySelect" aria-describedby="roomsCityStatus" disabled><option>Carregando cidades…</option></select><p id="roomsCityStatus" class="rooms-city-status" role="status"></p><button type="button" class="rooms-filter-action cr-city-retry" data-room-action="retry-cities" hidden>Tentar novamente</button><button type="button" class="rooms-filter-action" data-room-action="confirm-city" disabled>Entrar no chat da cidade '+ico('arrow',16)+'</button>';
  if(['state','city'].includes(kind)&&window.entreGeo?.detectRegion)body='<button type="button" class="rooms-auto-detect" data-room-action="detect-slot">'+ico('compass',18)+' <span><strong>Detectar '+(kind==='state'?'meu estado':'minha cidade')+'</strong><small>Usar localização do dispositivo</small></span></button><p id="roomsDetectStatus" class="rooms-city-status" role="status"></p>'+body;
- overlay.innerHTML='<section class="rooms-filter-dialog cr-unified-filter" role="dialog" aria-modal="true" aria-labelledby="roomsFilterHeading"><header class="rooms-filter-heading"><div><small class="cr-filter-kicker">SALAS PÚBLICAS</small><h2 id="roomsFilterHeading">Filtrar salas</h2></div><button type="button" data-room-action="closeFilter" aria-label="Fechar">'+ico('close',20)+'</button></header><div class="rooms-filter-body"><div class="cr-filter-options" aria-label="Abrangência da sala">'+choices.map(([key,name,graphic])=>'<button type="button" class="cr-filter-option'+(key===kind?' is-selected':'')+'" data-room-action="filter-kind" data-kind="'+key+'" aria-pressed="'+String(key===kind)+'">'+graphic+'<span>'+name+'</span></button>').join('')+'</div><div class="cr-filter-fields"><strong class="cr-filter-field-heading">'+label+'</strong>'+body+'</div></div></section>';
+ const options='<div class="cr-filter-options" aria-label="Abrangência da sala">'+choices.map(([key,name,graphic])=>'<button type="button" class="cr-filter-option'+(key===kindFor(s.room)?' is-selected':'')+'" data-room-action="filter-kind" data-kind="'+key+'">'+graphic+'<span>'+name+'</span>'+ico('arrow',15)+'</button>').join('')+'</div>';
+ overlay.innerHTML='<section class="rooms-filter-dialog cr-unified-filter" role="dialog" aria-modal="true" aria-labelledby="roomsFilterHeading"><header class="rooms-filter-heading"><div class="cr-filter-heading-copy">'+(choosing?'':'<button type="button" class="cr-filter-back" data-room-action="filter-back" aria-label="Voltar aos tipos de sala">'+ico('back',18)+'</button>')+'<div><small class="cr-filter-kicker">SALAS PÚBLICAS</small><h2 id="roomsFilterHeading">'+label+'</h2></div></div><button type="button" data-room-action="closeFilter" aria-label="Fechar">'+ico('close',20)+'</button></header><div class="rooms-filter-body">'+(choosing?options:'<div class="cr-filter-fields">'+body+'</div>')+'</div></section>';
  document.body.appendChild(overlay);document.body.classList.add('rooms-filter-open');s.filterOpen=true;overlay.querySelector('select:not([disabled]),button')?.focus();
- if(kind==='city'&&picker.uf)void cities(picker.uf);
+ if(kind==='city')void cities();
 }
-async function cities(uf){
- if(picker?.kind!=='city'||!validState(uf))return;
+async function cities(){
+ if(picker?.kind!=='city')return;
  const selected=picker,stamp=++cityRequest;selected.loading=true;selected.error=false;filterCities();
- try{const response=await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/'+encodeURIComponent(uf)+'/municipios');if(!response.ok)throw Error('Falha ao consultar cidades.');const rows=await response.json();if(!Array.isArray(rows)||!rows.length||rows.length>1500)throw Error('Lista inválida');if(picker!==selected||stamp!==cityRequest)return;selected.cities=rows.map(x=>String(x.nome||'')).filter(Boolean).sort((a,b)=>a.localeCompare(b,'pt-BR'));if(!selected.cities.includes(selected.city))selected.city='';}
- catch(_){if(picker===selected&&stamp===cityRequest){selected.cities=[];selected.error=true;}}
+ try{
+  if(!cityCatalog){
+   if(!cityCatalogRequest)cityCatalogRequest=(async()=>{const response=await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios');if(!response.ok)throw Error('Falha ao consultar cidades.');const rows=await response.json();if(!Array.isArray(rows)||!rows.length||rows.length>10000)throw Error('Lista inválida');const unique=new Map();for(const row of rows){const name=String(row.nome||'');const uf=row.microrregiao?.mesorregiao?.UF?.sigla||row['regiao-imediata']?.['regiao-intermediaria']?.UF?.sigla;if(name&&validState(uf))unique.set(uf+':'+clean(name),{name,uf});}if(unique.size<5000)throw Error('Lista incompleta');cityCatalog=[...unique.values()].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')||a.uf.localeCompare(b.uf));return cityCatalog;})().finally(()=>{cityCatalogRequest=null;});
+   await cityCatalogRequest;
+  }
+  if(picker!==selected||stamp!==cityRequest)return;selected.cities=cityCatalog;
+  if(!selected.cities.some(c=>c.uf===selected.uf&&c.name===selected.city))selected.city='';
+ }catch(_){if(picker===selected&&stamp===cityRequest){selected.cities=[];selected.error=true;}}
  finally{if(picker===selected&&stamp===cityRequest){selected.loading=false;filterCities();}}
 }
 
@@ -123,8 +138,8 @@ async function detectSlot(btn){
   if(!validState(region.state))throw Error('Estado indisponível.');
   selected.uf=region.state;selected.city='';selected.cities=[];const uf=document.getElementById('roomsStateSelect');if(uf)uf.value=selected.uf;
   if(selected.kind==='state'){const confirm=document.querySelector('[data-room-action="confirm-state"]');if(confirm)confirm.disabled=false;if(status)status.textContent='Estado encontrado. Confirme para entrar.';return;}
-  const stamp=selected.uf;await cities(stamp);if(picker!==selected||selected.uf!==stamp)return;
-  selected.city=selected.cities.find(n=>clean(n)===clean(region.city))||'';filterCities();
+  const stamp=selected.uf;await cities();if(picker!==selected||selected.uf!==stamp)return;
+  selected.city=selected.cities.find(c=>c.uf===stamp&&clean(c.name)===clean(region.city))?.name||'';selected.query=selected.city;const search=document.getElementById('roomsCitySearch');if(search)search.value=selected.query;filterCities();
   if(status)status.textContent=selected.city?'Cidade encontrada. Confirme para entrar.':'Selecione sua cidade na lista.';
  }catch(error){if(picker===selected&&status)status.textContent=error?.message||'Localização indisponível. Escolha manualmente.';}
  finally{if(btn.isConnected)btn.disabled=false;}
@@ -169,14 +184,14 @@ async function send(form){
  }catch(e){toast(infoError(e),true);if(/5 segundos/.test(e.message||''))s.expiresCooldown=Date.now()+5000;}
  finally{s.busy=false;if(btn?.isConnected)btn.disabled=false;paint();}
 }
-document.addEventListener('input',e=>{if(e.target?.id==='roomText'){rememberDraft();updateComposer();}});
+document.addEventListener('input',e=>{if(e.target?.id==='roomText'){rememberDraft();updateComposer();}else if(e.target?.id==='roomsCitySearch'&&picker?.kind==='city'){picker.query=e.target.value;picker.city='';filterCities();}});
 setInterval(()=>{if(typeof state!=='undefined'&&state.view==='rooms'&&!document.hidden)updateComposer();},500);
 document.addEventListener('submit',e=>{if(e.target?.id!=='roomChatForm')return;e.preventDefault();void send(e.target);});
 document.addEventListener('change',event=>{
  const el=event.target;if(!picker)return;
  if(el?.id==='roomsCountrySelect'&&picker.kind==='national'){picker.country=el.value;const btn=document.querySelector('[data-room-action="confirm-national"]');if(btn)btn.disabled=!picker.country;}
- if(el?.id==='roomsStateSelect'&&['state','city'].includes(picker.kind)){picker.uf=validState(el.value)?el.value:'';picker.city='';picker.cities=[];picker.error=false;picker.loading=false;cityRequest++;if(picker.kind==='state'){const btn=document.querySelector('[data-room-action="confirm-state"]');if(btn)btn.disabled=!picker.uf;}else{filterCities();if(picker.uf)void cities(picker.uf);}}
- if(el?.id==='roomsCitySelect'&&picker.kind==='city'){picker.city=el.value;filterCities();}
+ if(el?.id==='roomsStateSelect'&&picker.kind==='state'){picker.uf=validState(el.value)?el.value:'';const btn=document.querySelector('[data-room-action="confirm-state"]');if(btn)btn.disabled=!picker.uf;}
+ if(el?.id==='roomsCitySelect'&&picker.kind==='city'){const chosen=picker.cities.find(c=>cityKey(c)===el.value);picker.city=chosen?.name||'';picker.uf=chosen?.uf||'';filterCities();}
 });
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&s.filterOpen){event.preventDefault();closeRoomFilter();}});
 document.addEventListener('click',e=>{
@@ -185,12 +200,14 @@ document.addEventListener('click',e=>{
  if(a.startsWith('quick-')){openSlot(a.slice(6));return;}
  if(a==='filter'){openRoomFilter();return;}
  if(a==='filter-kind'){openRoomFilter(b.dataset.kind);return;}
+ if(a==='filter-back'){openRoomFilter();return;}
+ if(a==='retry-cities'){void cities();return;}
  if(a==='confirm-global'&&picker?.kind==='global'){roomChange('world');return;}
  if(a==='closeFilter'){closeRoomFilter();return;}
  if(a==='detect-slot'){void detectSlot(b);return;}
  if(a==='confirm-national'&&picker?.kind==='national'&&picker.country&&/^[A-Z]{2}$/.test(picker.country)){const country=picker.country;selectSlot('national',{country,key:national(country)});}
  if(a==='confirm-state'&&picker?.kind==='state'&&validState(picker.uf)){const uf=picker.uf;selectSlot('state',{uf,key:'s:'+uf.toLowerCase()});}
- if(a==='confirm-city'&&picker?.kind==='city'&&picker.cities.includes(picker.city)){const {uf,city}=picker;selectSlot('city',{uf,name:city,key:'c:'+uf.toLowerCase()+':'+clean(city)});}
+ if(a==='confirm-city'&&picker?.kind==='city'&&picker.cities.some(c=>c.uf===picker.uf&&c.name===picker.city)){const {uf,city}=picker;selectSlot('city',{uf,name:city,key:'c:'+uf.toLowerCase()+':'+clean(city)});}
  if(a==='more')void load(true);
  if(a==='retry')void load();
  if(a==='say-hi'){const input=document.getElementById('roomText');if(input){if(!input.value)input.value='Oi!';rememberDraft();updateComposer();input.focus();}}
