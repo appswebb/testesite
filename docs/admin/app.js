@@ -83,19 +83,15 @@ function person(name,secondary,accent){var n=String(name||"Pessoa");return '<spa
 function errorText(err){var s=String(err&&err.message||err||"Erro desconhecido");if(/invalid login credentials|invalid_credentials/i.test(s))return "E-mail ou senha incorretos.";if(/email not confirmed|email_not_confirmed/i.test(s))return "Confirme seu e-mail antes de entrar.";if(s.indexOf("42501")>=0||s.toLowerCase().indexOf("administrativo negado")>=0)return "Acesso negado pelo servidor. Esta conta não possui permissão administrativa.";return s;}
 function toast(msg,bad){if(bad)window.connectSound?.play?.('error');clearTimeout(toastTimer);toastEl.removeAttribute('style');toastEl.className='cp-notice show'+(bad?' is-error':'');const symbol=document.createElement('span');symbol.className='cp-notice-icon';symbol.textContent=bad?'!':'✓';const message=document.createElement('span');message.className='cp-notice-text';message.textContent=String(msg);toastEl.replaceChildren(symbol,message);toastTimer=setTimeout(function(){toastEl.classList.remove('show');},3500);}
 async function rpc(name,params){var r=await db.rpc(name,params||{});if(r.error)throw r.error;return r.data;}
-function gate(locked){
- var message=locked?"Esta conta não tem acesso ao painel. Entre com o e-mail autorizado e confirmado.":"Entre com o e-mail e a senha do seu cadastro no CONNECT";
- app.innerHTML='<div class="gate"><div class="gate-copy"><div><a class="brand" style="padding:0" href="../?site=1"><span class="brand-mark"><img src="../connect-glass.svg?v=showcase-v17" alt="" /></span><span><span class="brand-text">CONNECT</span><br><span class="brand-sub">ADMINISTRAÇÃO</span></span></a></div>'
- +'<div class="gate-inner"><span class="gate-kicker">ACESSO RESTRITO · SUPABASE AUTH</span><h1>Seu Connect.<br><em>Seu comando.</em></h1><p>'+e(message)+'</p>'
- +'<form id="admin-login-form" class="admin-login-form"><label for="admin-email">E-mail</label><input id="admin-email" type="email" name="email" autocomplete="username" inputmode="email" maxlength="254" required placeholder="E-mail da conta cadastrada">'
- +'<label for="admin-password">Senha</label><div class="admin-password-wrap"><input id="admin-password" type="password" name="password" autocomplete="current-password" required placeholder="Sua senha"><button type="button" class="admin-password-toggle" data-admin-password-toggle aria-controls="admin-password" aria-label="Mostrar senha" aria-pressed="false">Mostrar</button></div>'
- +window.connectTurnstile.markup()+'<button class="btn-main coral" type="submit">'+ico("shield-check",19)+' Entrar no painel '+ico("arrow-right",19)+'</button></form>'
- +'<div class="admin-gate-actions"><a class="btn-outline" href="../?site=1">Ir para o site</a><a href="../?site=1" class="admin-gate-help">Precisa cadastrar ou recuperar a senha? Acesse o site.</a></div>'
- +(locked&&state.user?'<p style="font-size:11px;margin-top:18px">Sessão atual: '+e(state.user.email)+'</p>':'')
- +'</div><div class="gate-small">CONNECT · Painel privado · E-mail confirmado e autorizado no Supabase</div></div>'
- +'<div class="gate-art"><img class="cp-admin-emblem" src="../connect-glass.svg?v=showcase-v17" width="190" height="127" alt=""><h2>CONNECT / ADMIN</h2><p>Uma central. Toda a comunidade.</p></div></div>';
+function gate(locked,notice=""){
+ stopAdminRealtime();state.verified=false;state.moreOpen=false;state.modal=null;state.loading=false;
+ const message=locked?"Esta conta não tem autorização administrativa. Entre com uma conta autorizada e confirmada.":"Use sua conta autorizada do CONNECT para continuar.";
+ const theme=window.entreTheme?.toggleMarkup?.()||'';
+ const captcha=window.connectTurnstile?.markup?.()||'';
+ app.innerHTML='<div class="ca-access"><header class="ca-access-nav"><a href="../?site=1" class="ca-wordmark" aria-label="CONNECT início"><img src="../connect-glass.svg?v=showcase-v17" width="32" height="32" alt=""><span>CONNECT</span></a><div class="ca-access-actions"><a href="../?site=1" class="ca-home" aria-label="Voltar ao site" title="Voltar ao site">'+ico("chevron-left",20)+'</a>'+theme+'</div></header><main class="ca-access-grid"><section class="ca-access-art"><div class="ca-art-copy"><span class="ca-art-label">'+ico("shield-check",16)+' CENTRAL ADMINISTRATIVA</span><h2>O controle<br>da comunidade.</h2><p>Gerencie a plataforma, acompanhe solicitações e cuide da experiência CONNECT.</p></div><div class="ca-art-mark" aria-hidden="true"><img src="../connect-glass.svg?v=showcase-v17" alt=""></div><div class="ca-art-footer"><span>CONNECT / ADMIN</span><span>ACESSO RESTRITO</span></div></section><section class="ca-access-panel"><div class="ca-access-card"><div class="ca-access-heading"><span class="ca-access-shield">'+ico("shield-check",22)+'</span><small>ÁREA RESTRITA</small><h1>Entrar no painel</h1><p>'+e(message)+'</p></div><div id="ca-login-notice" class="ca-login-notice" role="alert" '+(!notice&&!locked?'hidden':'')+'>'+e(notice||(locked?message:''))+'</div><form id="admin-login-form" class="ca-login-form"><label for="admin-email">E-mail</label><div class="ca-input"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg><input id="admin-email" type="email" name="email" autocomplete="username" inputmode="email" maxlength="254" required placeholder="Seu e-mail"></div><label for="admin-password">Senha</label><div class="ca-input ca-password"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"/></svg><input id="admin-password" type="password" name="password" autocomplete="current-password" required placeholder="Sua senha"><button type="button" class="ca-password-toggle" data-admin-password-toggle aria-controls="admin-password" aria-label="Mostrar senha" aria-pressed="false">'+ico("eye",19)+'</button></div>'+captcha+'<button class="ca-login-submit" type="submit"><span>Entrar no painel</span>'+ico("arrow-right",19)+'</button></form><div class="ca-access-help"><a href="../?site=1">Acessar o CONNECT '+ico("external-link",14)+'</a><p>Precisa recuperar sua senha? Utilize a tela de acesso do aplicativo.</p></div></div><footer class="ca-access-foot">'+ico("shield-check",15)+' Somente contas administrativas autorizadas.</footer></section></main></div>';
 }
-function navItem(s,compact){return '<button type="button" class="'+(compact?"":"rail-item ")+(state.view===s[0]?"active":"")+'" data-view="'+s[0]+'" aria-label="'+e(s[1])+'">'+ico(s[2],compact?19:19)+'<span>'+e(s[1])+'</span></button>';}
+function adminLoginNotice(message){const node=document.getElementById("ca-login-notice");if(node){node.textContent=message;node.hidden=!message;}else if(message)toast(message,true);}
+function navItem(s,compact){return '<button type="button" class="'+(compact?"":"rail-item ")+(state.view===s[0]?"active":"")+'" data-view="'+s[0]+'" aria-label="'+e(s[1])+'" aria-current="'+(state.view===s[0]?"page":"false")+'">'+ico(s[2],compact?19:19)+'<span>'+e(s[1])+'</span></button>';}
 var mainMobileSections=["overview","modules","users","content"];
 function adminMobileNav(){
  return '<nav class="bottom-nav admin-bottom-bar" aria-label="Navegação administrativa">'+
@@ -107,7 +103,7 @@ function adminMobileNav(){
 }
 function adminRail(){const groups=[['Comando',['overview','modules','monitor']],['Comunidade',['users','content','pairs','reports','appeals']],['Relacionamento',['bulletins','support','premium']],['Sistema',['updates','settings','security']]];return groups.map(function(group){return '<div class="rail-group"><div class="rail-label">'+e(group[0])+'</div><div class="rail-links">'+sections.filter(function(x){return group[1].includes(x[0]);}).sort(function(a,b){return group[1].indexOf(a[0])-group[1].indexOf(b[0]);}).map(function(x){return navItem(x,false);}).join('')+'</div></div>';}).join('');}
 function shell(){
- app.innerHTML='<div class="shell"><aside class="rail"><div class="brand"><span class="brand-mark"><img src="../connect-glass.svg?v=showcase-v17" alt="" /></span><div><div class="brand-text">CONNECT</div><div class="brand-sub">CENTRAL DE COMANDO</div></div></div>'+adminRail()+'<div class="rail-spacer"></div><div class="rail-bottom"><div class="admin-identity"><div class="admin-avatar">'+e((state.user&&state.user.email||"A")[0].toUpperCase())+'</div><div><strong>Administrador</strong><small>'+e(state.user&&state.user.email||"")+'</small></div></div><div class="rail-out"><button data-action="signout">'+ico("log-out",13)+' Sair</button></div></div></aside><main class="main"><header class="topbar"><div class="topbar-left"><div class="admin-top-brand"><img src="../connect-glass.svg?v=showcase-v17" alt="" width="35" height="23"></div><div class="admin-top-context"><small>CONNECT / ADMIN</small><strong id="topbar-location">'+e(viewTitle())+'</strong></div></div><div class="topbar-right">'+(window.entreTheme?.toggleMarkup?.()||'')+'<span class="topbar-live" title="Sessão administrativa autorizada"><span class="pulse"></span><span>Admin</span></span><button type="button" class="toolbar-btn admin-icon-action saas-command" data-action="command" title="Localizar ferramentas (Ctrl+K)" aria-label="Localizar ferramentas">'+ico("search",19)+'</button><button type="button" class="toolbar-btn admin-icon-action" data-action="refresh" title="Atualizar dados" aria-label="Atualizar dados">'+ico("refresh-cw",19)+'</button><a class="toolbar-btn admin-icon-action" href="../?site=1" title="Abrir aplicativo" aria-label="Abrir aplicativo">'+ico("external-link",19)+'</a><button type="button" class="toolbar-btn admin-icon-action admin-top-exit" data-action="signout" title="Sair" aria-label="Sair">'+ico("log-out",19)+'</button></div></header><div class="saas-sync" id="saas-sync" role="status"></div><div id="admin-view"></div></main>'+adminMobileNav()+'</div><div id="modal-root"></div>';
+ app.innerHTML='<div class="shell"><aside class="rail"><div class="brand"><span class="brand-mark"><img src="../connect-glass.svg?v=showcase-v17" alt="" /></span><div><div class="brand-text">CONNECT</div><div class="brand-sub">CENTRAL DE COMANDO</div></div></div>'+adminRail()+'<div class="rail-spacer"></div><div class="rail-bottom"><div class="admin-identity"><div class="admin-avatar">'+e((state.user&&state.user.email||"A")[0].toUpperCase())+'</div><div><strong>Administrador</strong><small>'+e(state.user&&state.user.email||"")+'</small></div></div><div class="rail-out"><button data-action="signout">'+ico("log-out",13)+' Sair</button></div></div></aside><main class="main"><header class="topbar"><div class="topbar-left"><div class="admin-top-brand"><img src="../connect-glass.svg?v=showcase-v17" alt="" width="32" height="32"></div><div class="admin-top-context"><small>CONNECT / ADMIN</small><strong id="topbar-location">'+e(viewTitle())+'</strong></div></div><div class="topbar-right">'+(window.entreTheme?.toggleMarkup?.()||'')+'<span class="topbar-live" title="Sessão administrativa autorizada"><span class="pulse"></span><span>Admin</span></span><button type="button" class="toolbar-btn admin-icon-action saas-command" data-action="command" title="Localizar ferramentas (Ctrl+K)" aria-label="Localizar ferramentas">'+ico("search",19)+'</button><button type="button" class="toolbar-btn admin-icon-action" data-action="refresh" title="Atualizar dados" aria-label="Atualizar dados">'+ico("refresh-cw",19)+'</button><a class="toolbar-btn admin-icon-action" href="../?site=1" title="Abrir aplicativo" aria-label="Abrir aplicativo">'+ico("external-link",19)+'</a><button type="button" class="toolbar-btn admin-icon-action admin-top-exit" data-action="signout" title="Sair" aria-label="Sair">'+ico("log-out",19)+'</button></div></header><div class="saas-sync" id="saas-sync" role="status"></div><div id="admin-view"></div></main>'+adminMobileNav()+'</div><div id="modal-root"></div>';
 }
 function viewTitle(){return (sections.find(function(s){return s[0]===state.view;})||sections[0])[1];}
 function heading(k,title,desc){return '<div class="page-intro"><span class="eyebrow">'+e(k)+'</span><h1 class="page-title">'+title+'</h1><p>'+e(desc)+'</p></div>';}
@@ -288,7 +284,7 @@ function security(){
 function spinner(){return '<div class="loading-panel"><div class="loading-indicator"></div>Atualizando dados…</div>';}
 function renderView(){
  var target=document.getElementById("admin-view");if(!target)return;
- document.querySelectorAll("[data-view]").forEach(function(el){el.classList.toggle("active",el.getAttribute("data-view")===state.view);});
+ document.querySelectorAll("[data-view]").forEach(function(el){el.classList.toggle("active",el.getAttribute("data-view")===state.view);if(el.closest(".rail,.admin-bottom-bar,.admin-more-menu"))el.setAttribute("aria-current",el.getAttribute("data-view")===state.view?"page":"false");});
  var loc=document.getElementById("topbar-location");if(loc)loc.textContent=viewTitle();
  var menu=document.getElementById("adminMoreMenu");if(menu)menu.hidden=!state.moreOpen;var toggle=document.querySelector(".admin-more-button");if(toggle)toggle.setAttribute("aria-expanded",String(state.moreOpen));
  var sync=document.getElementById("saas-sync");if(sync)sync.textContent=state.loading?"Sincronizando…":state.loadError?"Falha na atualização · dados anteriores podem estar desatualizados":state.refreshAt?"Sincronizado às "+state.refreshAt.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"Aguardando sincronização";
@@ -327,7 +323,7 @@ async function load(view,background=false){
  }catch(err){if(valid()){state.loadError=errorText(err);if(!background)toast(errorText(err),true);else console.warn(errorText(err));}}
  finally{if(valid()){state.loading=false;if(state.view===view){if(background&&view==='bulletins'){const wrapper=document.createElement('div');wrapper.innerHTML=window.entreAdminBulletins.page(state.bulletins,{escape:e,format:fmt,badge,icon:ico});const list=wrapper.querySelector('.bulletin-admin-list'),old=document.querySelector('.bulletin-admin-list');if(list&&old)old.replaceWith(list);else if(!adminEditing())renderView();}else if(!background||!adminEditing())renderView();}}}
 }
-async function navigate(view){if(!sections.some(function(s){return s[0]===view;}))return;if(state.modal?.type==="command")closeModal();state.moreOpen=false;state.view=view;await load(view);}
+async function navigate(view){if(!state.verified)return;if(!sections.some(function(s){return s[0]===view;}))return;if(state.modal?.type==="command")closeModal();state.moreOpen=false;state.view=view;await load(view);}
 function modal(content){document.getElementById("modal-root").innerHTML='<div class="modal-back" id="modal-back"><div class="modal" role="dialog" aria-modal="true" aria-label="Ação administrativa">'+content+'</div></div>';var el=document.querySelector(".modal input,.modal textarea,.modal select");if(el)el.focus();}
 async function openSupportThread(id){
  const ticket=state.supportTickets.find(t=>Number(t.id)===id);if(!ticket||!state.verified)return;
@@ -382,7 +378,7 @@ document.addEventListener("click",function(ev){
  var reveal=field.type==="password";
  if(!reveal&&field.type!=="text")return;
  field.type=reveal?"text":"password";
- toggle.textContent=reveal?"Ocultar":"Mostrar";
+ toggle.innerHTML=ico(reveal?"eye-off":"eye",19);
  toggle.setAttribute("aria-label",reveal?"Ocultar senha":"Mostrar senha");
  toggle.setAttribute("aria-pressed",String(reveal));
 });
@@ -496,18 +492,19 @@ document.addEventListener("submit",async function(ev){
  var form=ev.target;if(!(form instanceof HTMLFormElement))return;ev.preventDefault();
  if(form.id==="admin-login-form"){
   if(state.busy)return;
-  state.busy=true;
-  var submit=form.querySelector('[type="submit"]');if(submit)submit.disabled=true;
+  state.busy=true;adminLoginNotice("");
+  var submit=form.querySelector('[type="submit"]');if(submit){submit.disabled=true;submit.setAttribute("aria-busy","true");submit.innerHTML='<span>Verificando acesso…</span><span class="ca-spinner" aria-hidden="true"></span>';}
   try{
    var email=String(form.elements.email.value||"").trim().toLowerCase();
    var password=String(form.elements.password.value||"");
+   if(typeof window.connectTurnstile?.consume!=="function")throw Error("Não foi possível carregar a verificação de acesso. Atualize a página.");
    var token=await window.connectTurnstile.consume(form);
    var logged=await db.auth.signInWithPassword({email:email,password:password,options:{captchaToken:token}});
    if(logged.error)throw logged.error;
    await boot();
-   if(!state.verified)toast("Este e-mail não tem acesso ao painel. Verifique a confirmação e a autorização.",true);
-  }catch(err){toast(err?.code==='captcha_failed'?'O servidor recusou a verificação de segurança. Repita o desafio.':errorText(err),true);}
-  finally{if(token)window.connectTurnstile.reset(form);state.busy=false;if(submit&&submit.isConnected)submit.disabled=false;}
+   if(!state.verified)adminLoginNotice("Acesso não autorizado. Verifique a confirmação do e-mail e a permissão administrativa.");
+  }catch(err){adminLoginNotice(err?.code==='captcha_failed'?'O servidor recusou a verificação de segurança. Repita o desafio.':errorText(err));}
+  finally{if(token)window.connectTurnstile?.reset?.(form);state.busy=false;if(submit&&submit.isConnected){submit.disabled=false;submit.removeAttribute("aria-busy");submit.innerHTML='<span>Entrar no painel</span>'+ico("arrow-right",19);}}
   return;
  }
  if(form.id==="release-form"){await saveRelease(Boolean(state.settings?.maintenance_enabled),true);return;}if(state.busy)return;
@@ -573,9 +570,9 @@ async function flushAdminRefresh(){if(adminRefreshing||!state.verified||document
 async function boot(){
  try{
   var s=await db.auth.getSession();if(s.error)throw s.error;
-  if(!s.data.session){gate(false);return;}
+  if(!s.data.session){state.user=null;gate(false);return;}
   var verified=await db.auth.getUser();if(verified.error)throw verified.error;
-  if(!verified.data.user){gate(false);return;}
+  if(!verified.data.user){state.user=null;gate(false);return;}
   state.user=verified.data.user;
   var allowed=await rpc("entre_admin_check");
   if(allowed!==true){gate(true);return;}
@@ -585,7 +582,7 @@ async function boot(){
   adminSignalChannel=db.channel("connect-admin-signal").on("postgres_changes",{event:"UPDATE",schema:"public",table:"connect_admin_signal"},p=>{const kind=p.new?.kind;if(kind){adminDirty.add(kind);scheduleAdminRefresh();}}).subscribe(status=>{if(status==="SUBSCRIBED"){adminDirty.add("all");scheduleAdminRefresh();}});
   if(!adminAuthBound){adminAuthBound=true;db.auth.onAuthStateChange(function(ev){if(ev==="SIGNED_OUT"){stopAdminRealtime();state.user=null;state.verified=false;gate(false);}});document.addEventListener("visibilitychange",()=>{if(!document.hidden){if(state.verified&&state.modal?.type==="support-thread")void refreshSupportThread(Number(state.modal.data.id)).catch(err=>console.warn(errorText(err)));adminDirty.add("all");scheduleAdminRefresh();}});document.addEventListener("focusout",scheduleAdminRefresh);window.addEventListener("online",()=>{adminDirty.add("all");scheduleAdminRefresh();});}
   adminFallback=setInterval(()=>{if(state.verified&&!document.hidden){adminDirty.add("all");scheduleAdminRefresh();}},60000);
- }catch(err){console.error("entre admin boot",err);gate(false);toast(errorText(err),true);}
+ }catch(err){console.error("entre admin boot",err);state.user=null;gate(false,"Não foi possível verificar o acesso. Confira a conexão e tente novamente.");}
 }
 boot();
 })();
