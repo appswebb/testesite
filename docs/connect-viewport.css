@@ -113,3 +113,92 @@ html[data-theme] body :is(#entreTouchLayer,.entre-celebration){
   flex-shrink:0!important;
  }
 }
+
+/* One mobile viewport for EVERY signed-in tab. Only the inner scroll surface
+   changes; the document never alternates between a locked and scrolling page. */
+@layer connect-stable-mobile-shell {
+ @media(max-width:900px){
+  html[data-theme]:has(#app>.cn-shell.app-shell),
+  html[data-theme]:has(#app>.cn-shell.app-shell) body{
+   height:100%!important;min-height:0!important;max-height:100%!important;
+   width:100%!important;min-width:0!important;max-width:100%!important;
+   overflow:hidden!important;overscroll-behavior:none!important;
+   margin:0!important;
+  }
+  html[data-theme] #app:has(>.cn-shell.app-shell){
+   --connect-shell-height:100dvh;
+   position:fixed!important;inset:0!important;
+   width:100%!important;height:var(--connect-shell-height)!important;
+   min-height:0!important;max-height:var(--connect-shell-height)!important;
+   overflow:hidden!important;
+  }
+  html[data-theme].connect-keyboard-open #app:has(>.cn-shell.app-shell),
+  html[data-theme].ce-keyboard #app:has(>.cn-shell.app-shell){
+   --connect-shell-height:var(--connect-visible-height,100dvh);
+  }
+  html[data-theme] #app>.cn-shell.app-shell{
+   display:block!important;width:100%!important;height:100%!important;
+   min-height:0!important;max-height:100%!important;overflow:hidden!important;
+   padding:0!important;margin:0!important;
+  }
+  html[data-theme] #app>.cn-shell.app-shell>.cn-main.app-main{
+   --connect-page-inset:12px;--connect-toolbar-height:58px;--connect-dock-space:103px;
+   display:flex!important;flex-direction:column!important;
+   width:100%!important;height:100%!important;min-height:0!important;max-height:100%!important;
+   padding:0 max(var(--connect-page-inset),env(safe-area-inset-right,0px)) calc(var(--connect-dock-space) + env(safe-area-inset-bottom,0px)) max(var(--connect-page-inset),env(safe-area-inset-left,0px))!important;
+   margin:0!important;gap:0!important;overflow:hidden!important;
+  }
+  html[data-theme] #app>.cn-shell.app-shell>.cn-main.app-main>.cn-toolbar{
+   position:relative!important;top:auto!important;flex:0 0 var(--connect-toolbar-height)!important;
+   box-sizing:border-box!important;height:var(--connect-toolbar-height)!important;
+   min-height:var(--connect-toolbar-height)!important;max-height:var(--connect-toolbar-height)!important;
+   width:100%!important;margin:0!important;padding:5px 0!important;
+  }
+  html[data-theme] #app>.cn-shell.app-shell>.cn-main.app-main>#view-content.cn-view{
+   box-sizing:border-box!important;display:block!important;flex:1 1 0!important;
+   width:100%!important;min-width:0!important;max-width:100%!important;
+   height:auto!important;min-height:0!important;max-height:none!important;
+   margin:0!important;padding:0!important;overflow-x:hidden!important;overflow-y:auto!important;
+   overscroll-behavior:contain!important;scrollbar-width:none;touch-action:pan-y pinch-zoom;
+  }
+  html[data-theme] #app #view-content.cn-view::-webkit-scrollbar{display:none}
+  html[data-theme] #app>.cn-shell.app-shell>.cn-main.app-main>#view-content.cn-view:has(>.cr-rooms,.ce-session,.cp-permanent-chat,.cp-match-footer){
+   display:flex!important;flex-direction:column!important;overflow:hidden!important;
+  }
+  html[data-theme] #app #view-content[data-section="rooms"]>.cr-rooms.rooms-static-shell{
+   display:grid!important;flex:1 1 0!important;grid-template-columns:minmax(0,1fr)!important;
+   grid-template-rows:auto auto minmax(0,1fr)!important;width:100%!important;
+   height:auto!important;min-height:0!important;max-height:100%!important;padding:3px 0!important;
+   margin:0!important;overflow:hidden!important;
+  }
+  html[data-theme] #app #view-content[data-section="conversations"] :is(.conversation-tabs,.convo-list,.conversation-list-v2,.conversation-search,.social-empty,.retention-small){
+   box-sizing:border-box!important;min-width:0!important;max-width:100%!important;
+  }
+  html[data-theme] #app #view-content[data-section="conversations"] .conversation-tabs{
+   display:flex!important;flex-wrap:wrap!important;gap:5px!important;
+  }
+  html[data-theme] #app #view-content[data-section="conversations"] .conversation-tabs>button{
+   flex:0 1 auto!important;min-width:0!important;white-space:normal!important;
+  }
+  html[data-theme] #app>.cn-shell.app-shell>.cn-main.app-main:has(.cp-permanent-chat){
+   padding:0!important;
+  }
+  html[data-theme].connect-keyboard-open #app>.cn-shell.app-shell>.cn-main.app-main,
+  html[data-theme].ce-keyboard #app>.cn-shell.app-shell>.cn-main.app-main{
+   padding-bottom:4px!important;
+  }
+  html[data-theme].connect-keyboard-open #app #view-content[data-section="rooms"]>.cr-rooms.rooms-static-shell{
+   grid-template-rows:minmax(0,1fr)!important;
+  }
+ }
+ @media(max-width:350px){
+  html[data-theme] #app>.cn-shell.app-shell>.cn-main.app-main{--connect-page-inset:8px}
+ }
+ @media(max-width:900px) and (max-height:480px){
+  html[data-theme] #app>.cn-shell.app-shell>.cn-main.app-main{--connect-toolbar-height:46px;--connect-dock-space:75px}
+  html[data-theme] #app #view-content[data-section="rooms"]>.cr-rooms.rooms-static-shell{
+   grid-template-rows:auto minmax(0,1fr)!important;
+  }
+  html[data-theme].connect-keyboard-open #app #view-content[data-section="rooms"]>.cr-rooms.rooms-static-shell{grid-template-rows:minmax(0,1fr)!important}
+ }
+}
