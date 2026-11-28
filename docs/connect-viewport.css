@@ -1,0 +1,69 @@
+/* CONNECT — shared viewport geometry. Prevent tab-specific width/scale shifts.
+   Keep native pinch zoom, keyboard handling and intentionally full-screen chats. */
+html[data-theme]{
+ -webkit-text-size-adjust:100%;text-size-adjust:100%;
+}
+html[data-theme]:has(#app>.cn-shell),html[data-theme]:has(#app>.cn-shell) body{
+ width:100%;max-width:100%;min-width:0!important;overflow-x:clip;
+}
+html[data-theme] #app:has(>.cn-shell){
+ width:100%!important;max-width:100%!important;min-width:0!important;
+}
+html[data-theme] body #app>.cn-shell.app-shell{
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;
+}
+html[data-theme] body #app>.cn-shell>.cn-main.app-main{
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;
+}
+html[data-theme] body #app>.cn-shell>.cn-main>#view-content{
+ box-sizing:border-box!important;min-width:0!important;max-width:100%;
+}
+html[data-theme] body #app>.cn-shell>.cn-main>#view-content>*{min-width:0;max-width:100%}
+html[data-theme] body #app>.cn-shell>.cn-main>#view-content :is(img,video,canvas,iframe){max-width:100%}
+html[data-theme] body #app .cn-toolbar-title{flex:1 1 0;min-width:0!important}
+html[data-theme] body #app .cn-toolbar-title h1{max-width:100%!important;min-width:0!important;overflow:hidden;text-overflow:ellipsis}
+html[data-theme] body #app .cn-toolbar-actions{flex:0 0 auto;min-width:0;max-width:100%}
+@media(min-width:901px){
+ html[data-theme]:has(#app>.cn-shell){scrollbar-gutter:stable}
+ html[data-theme] body #app>.cn-shell>.cn-main.app-main{
+  --connect-page-inset:26px;padding-inline:var(--connect-page-inset)!important;
+ }
+ html[data-theme] body #app>.cn-shell>.cn-main>.cn-toolbar{
+  box-sizing:border-box!important;height:75px!important;min-height:75px!important;flex-shrink:0!important;
+ }
+}
+@media(max-width:900px){
+ html[data-theme] body #app>.cn-shell>.cn-main.app-main{
+  --connect-page-inset:12px;--connect-toolbar-height:58px;--connect-dock-height:70px;--connect-dock-space:103px;
+ }
+ html[data-theme] body #app>.cn-shell>.cn-main.app-main:not(:has(.cp-permanent-chat)){
+  padding-left:max(var(--connect-page-inset),env(safe-area-inset-left,0px))!important;
+  padding-right:max(var(--connect-page-inset),env(safe-area-inset-right,0px))!important;
+  padding-bottom:calc(var(--connect-dock-space) + env(safe-area-inset-bottom,0px))!important;
+ }
+ html[data-theme] body #app>.cn-shell>.cn-main.app-main:has(.cp-match-footer){--cp-match-dock-space:calc(var(--connect-dock-space) + env(safe-area-inset-bottom,0px))}
+ html[data-theme] body #app>.cn-shell>.cn-main>.cn-toolbar{
+  box-sizing:border-box!important;height:var(--connect-toolbar-height)!important;min-height:var(--connect-toolbar-height)!important;
+  max-height:var(--connect-toolbar-height)!important;flex:0 0 auto!important;padding-block:5px!important;margin:0!important;
+ }
+ html[data-theme] body #app>.cn-shell>.cn-main>.cn-toolbar .cn-toolbar-title h1{
+  font-size:18px!important;line-height:1.25!important;
+ }
+ html[data-theme] body #app>.cn-shell>.cn-dock{
+  box-sizing:border-box!important;width:min(392px,calc(100% - 24px))!important;max-width:calc(100% - 24px)!important;
+  height:70px!important;min-height:70px!important;max-height:70px!important;padding:6px!important;
+  bottom:calc(12px + env(safe-area-inset-bottom,0px))!important;
+ }
+ html[data-theme] body #app>.cn-shell>.cn-dock .cn-nav-link{gap:4px!important;padding:4px 2px!important}
+ html[data-theme] body #app>.cn-shell>.cn-dock .cn-nav-icon svg{width:21px!important;height:21px!important}
+ html[data-theme] body #app>.cn-shell>.cn-dock .cn-nav-label{font-size:10px!important;line-height:1.2!important}
+ /* Text inputs at native mobile size avoid automatic focus magnification. */
+ html[data-theme] body #app :is(input:not([type]),input:is([type=text],[type=email],[type=search],[type=password],[type=tel],[type=url],[type=number]),textarea,select){font-size:16px!important}
+ html[data-theme].connect-keyboard-open body #app>.cn-shell>.cn-main.app-main:not(:has(.cp-permanent-chat)),html[data-theme].ce-keyboard body #app>.cn-shell>.cn-main.app-main:not(:has(.cp-permanent-chat)){padding-bottom:4px!important}
+}
+@media(max-width:900px) and (max-height:480px){
+ html[data-theme] body #app>.cn-shell>.cn-main.app-main{--connect-toolbar-height:46px;--connect-dock-space:75px}
+ html[data-theme] body #app>.cn-shell>.cn-dock{height:55px!important;min-height:55px!important;max-height:55px!important;padding:4px!important;bottom:calc(6px + env(safe-area-inset-bottom,0px))!important}
+ html[data-theme] body #app>.cn-shell>.cn-dock .cn-nav-icon svg{width:18px!important;height:18px!important}
+}
+@media(max-width:350px){html[data-theme] body #app>.cn-shell>.cn-main.app-main{--connect-page-inset:8px}html[data-theme] body #app>.cn-shell>.cn-main>.cn-toolbar .cn-toolbar-title h1{font-size:16px!important}}
