@@ -45,7 +45,7 @@
   document.title=(p.display_name||"Perfil")+" (@"+p.username+") · CONNECT";
   copy.hidden=false;message("Perfil compartilhado com segurança pelo CONNECT");
   copy.onclick=async()=>{
-   try{if(navigator.share){await navigator.share({title:document.title,url:location.href});return;}await navigator.clipboard.writeText(location.href);message("Link copiado!");}
+   try{const url=new URL('perfil.html','https://joinconnectbr.vercel.app/');const username=new URLSearchParams(location.search).get('u');if(!username)throw Error('Perfil indisponível');url.searchParams.set('u',username);if(navigator.share){await navigator.share({title:document.title,url:url.href});return;}await navigator.clipboard.writeText(url.href);message("Link copiado!");}
    catch(error){if(error?.name!=="AbortError")message("Use a opção compartilhar do navegador.");}
   };
  }catch(error){name.textContent="Perfil indisponível";tag.textContent="@"+handle;avatar.textContent="?";bio.textContent="Esta conta não pode ser exibida ou o link está incorreto.";message(error?.name==="AbortError"?"A conexão demorou. Atualize e tente novamente.":error.message,true)}
