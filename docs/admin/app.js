@@ -501,8 +501,9 @@ document.addEventListener("submit",async function(ev){
    var token=await window.connectTurnstile.consume(form);
    var logged=await db.auth.signInWithPassword({email:email,password:password,options:{captchaToken:token}});
    if(logged.error)throw logged.error;
-   await boot();
-   if(!state.verified)adminLoginNotice("Acesso não autorizado. Verifique a confirmação do e-mail e a permissão administrativa.");
+   await boot(true);
+   if(state.verified)window.connectSound?.play?.('login');
+   if(!state.verified&&!document.getElementById("ca-login-notice")?.textContent)adminLoginNotice("Acesso não autorizado. Verifique a confirmação do e-mail e a permissão administrativa.");
   }catch(err){adminLoginNotice(err?.code==='captcha_failed'?'O servidor recusou a verificação de segurança. Repita o desafio.':errorText(err));}
   finally{if(token)window.connectTurnstile?.reset?.(form);state.busy=false;if(submit&&submit.isConnected){submit.disabled=false;submit.removeAttribute("aria-busy");submit.innerHTML='<span>Entrar no painel</span>'+ico("arrow-right",19);}}
   return;
@@ -567,7 +568,7 @@ function adminEditing(){const el=document.activeElement;return !!(el?.matches('i
 function stopAdminRealtime(){if(adminSignalChannel)void db.removeChannel(adminSignalChannel);if(adminSupportChannel)void db.removeChannel(adminSupportChannel);adminSignalChannel=null;adminSupportChannel=null;clearInterval(adminFallback);clearTimeout(adminRefreshTimer);adminRefreshTimer=0;adminDirty.clear();}
 function scheduleAdminRefresh(){if(adminRefreshTimer||adminRefreshing||!state.verified||document.hidden)return;adminRefreshTimer=setTimeout(()=>{adminRefreshTimer=0;void flushAdminRefresh();},400);}
 async function flushAdminRefresh(){if(adminRefreshing||!state.verified||document.hidden)return;const view=state.view;const relevant=adminDirty.has('all')||adminDirty.has(view)||(view==='overview'||view==='monitor')&&adminDirty.size>0||view==='updates'&&adminDirty.has('settings')||view==='users'&&adminDirty.has('premium')||view==='security'&&adminDirty.has('appeals');if(!relevant){adminDirty.clear();return;}if(state.busy||state.loading||state.modal||(view!=='bulletins'&&adminEditing())){adminRefreshTimer=setTimeout(()=>{adminRefreshTimer=0;void flushAdminRefresh();},700);return;}adminRefreshing=true;adminDirty.clear();try{await load(view,true);}finally{adminRefreshing=false;if(adminDirty.size)scheduleAdminRefresh();}}
-async function boot(){
+async function boot(fromLogin=false){
  try{
   var s=await db.auth.getSession();if(s.error)throw s.error;
   if(!s.data.session){state.user=null;gate(false);return;}
@@ -576,7 +577,13 @@ async function boot(){
   state.user=verified.data.user;
   var allowed=await rpc("entre_admin_check");
   if(allowed!==true){gate(true);return;}
-  state.verified=true;state.view="overview";state.moreOpen=false;state.modal=null;state.planDirectory=null;state.premiumConfig=null;state.observability=null;state.planSearch="";state.planFilter="all";state.planPage=0;state.users={rows:[],total:0};state.community=null;state.platformControls=null;state.contentData=null;state.contentKind="posts";state.contentPage=0;state.overview=null;state.loadError=null;state.refreshAt=null;shell();await load("overview");
+  state.verified=true;state.view="overview";state.moreOpen=false;state.modal=null;state.planDirectory=null;state.premiumConfig=null;state.observability=null;state.planSearch="";state.planFilter="all";state.planPage=0;state.users={rows:[],total:0};state.community=null;state.platformControls=null;state.contentData=null;state.contentKind="posts";state.contentPage=0;state.overview=null;state.loadError=null;state.refreshAt=null;
+  // Keep the login form on screen until authorization and the initial data load finish.
+  const owner=state.user.id;
+  await load("overview",true);
+  if(!state.verified||state.user?.id!==owner)return;
+  shell();renderView();
+  if(fromLogin){const target=app.querySelector('.shell');if(target){target.classList.add('ca-enter-ready');target.addEventListener('animationend',()=>target.classList.remove('ca-enter-ready'),{once:true});}}
  stopAdminRealtime();
  adminSupportChannel=db.channel("admin-support-replies").on("postgres_changes",{event:"UPDATE",schema:"public",table:"entre_support_tickets"},async p=>{if(state.modal?.type==="support-thread"&&Number(state.modal.data.id)===Number(p.new?.id)&&p.new.status==="cancelled"){const form=document.getElementById("support-reply-form");if(form){form.hidden=true;form.querySelectorAll("button,textarea,input").forEach(x=>x.disabled=true);}state.modal.data.status="cancelled";}if(state.verified&&!document.hidden&&state.view==="support"&&!state.modal&&!state.loading&&!state.busy&&p.new?.status!=="draft")try{await load("support");}catch(err){console.warn(errorText(err));}}).on("postgres_changes",{event:"INSERT",schema:"public",table:"entre_support_replies"},async p=>{if(!state.verified||document.hidden||state.view!=="support")return;try{if(state.modal?.type==="support-thread")await refreshSupportThread(Number(state.modal.data.id));else if(!state.loading&&!state.busy)await load("support");}catch(err){console.warn(errorText(err));}}).subscribe();
   adminSignalChannel=db.channel("connect-admin-signal").on("postgres_changes",{event:"UPDATE",schema:"public",table:"connect_admin_signal"},p=>{const kind=p.new?.kind;if(kind){adminDirty.add(kind);scheduleAdminRefresh();}}).subscribe(status=>{if(status==="SUBSCRIBED"){adminDirty.add("all");scheduleAdminRefresh();}});
