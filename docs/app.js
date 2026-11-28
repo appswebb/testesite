@@ -51,7 +51,7 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const nameOf=v=>String(v||'').trim().split(' ')[0]||'alguém';
 const handleText=p=>p?.username?'@'+esc(p.username):'@ pendente';
 const normalizeHandle=v=>String(v||'').trim().replace(/^@/,'').toLowerCase();
-const profileShareUrl=username=>new URL('./perfil.html?u='+encodeURIComponent(username),window.location.href).href;
+const profileShareUrl=username=>new URL('perfil.html?u='+encodeURIComponent(username),'https://joinconnectbr.vercel.app/').href;
 async function copyProfileLink(username){
  if(!username)return toast('Seu @ ainda não foi configurado.',true);
  const url=profileShareUrl(username);
