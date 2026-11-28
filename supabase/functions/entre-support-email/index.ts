@@ -23,20 +23,23 @@ Deno.serve(async(req:Request)=>{
  const {data:reply,error:replyErr}=await svc.from("entre_support_replies").select("id,ticket_id,from_staff,body,email_sent_at").eq("id",replyId).maybeSingle();
  if(replyErr||!reply||!reply.from_staff)return json({error:"Resposta não encontrada"},404);
  if(reply.email_sent_at)return json({status:"sent",already_sent:true});
- const {data:ticket,error:ticketErr}=await svc.from("entre_support_tickets").select("id,owner_id,subject,status").eq("id",reply.ticket_id).maybeSingle();
+ const {data:ticket,error:ticketErr}=await svc.from("entre_support_tickets").select("id,owner_id,subject,status,contact_email").eq("id",reply.ticket_id).maybeSingle();
  if(ticketErr||!ticket||ticket.status==="draft")return json({error:"Protocolo indisponível"},404);
  const {data:recipient,error:recipientErr}=await svc.auth.admin.getUserById(ticket.owner_id);
- const email=recipient?.user?.email;
- if(recipientErr||!email||!recipient.user.email_confirmed_at)return json({error:"E-mail confirmado indisponível"},409);
+ const accountEmail=recipient?.user?.email;
+ if(recipientErr||!accountEmail||!recipient.user.email_confirmed_at)return json({error:"E-mail confirmado indisponível"},409);
+ const email=String(ticket.contact_email||accountEmail).trim();
+ if(email.length>254||!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email))return json({error:"E-mail para retorno inválido"},409);
+ const verified=email.toLowerCase()===accountEmail.toLowerCase();
  const key=Deno.env.get("RESEND_API_KEY"),sender=Deno.env.get("ENTRE_SUPPORT_FROM");
  if(!key||!sender)return json({error:"Remetente de e-mail ainda não configurado. A resposta continua disponível no protocolo."},503);
  const subject="CONNECT | Resposta ao protocolo #"+ticket.id;
  const text="Equipe CONNECT\n\nProtocolo #"+ticket.id+" — "+ticket.subject+"\n\n"+reply.body+"\n\nAcompanhe seu atendimento em https://connectbr.online/";
  const html='<div style="background:#f7f7f7;padding:28px 10px;font-family:Arial,sans-serif;color:#171717"><div style="max-width:520px;margin:auto;background:white;border:1px solid #dedee2;border-radius:20px;padding:28px"><img src="https://connectbr.online/icons/icon-192.png" width="44" height="44" alt="" style="display:block;border-radius:12px"><h2 style="font-size:20px;letter-spacing:2px">CONNECT</h2><p style="color:#626269;font-size:12px">ATENDIMENTO · PROTOCOLO #'+ticket.id+'</p><h1 style="font-size:24px;line-height:1.2">'+esc(ticket.subject)+'</h1><p style="font-size:15px;line-height:1.6">'+esc(reply.body).replace(/\n/g,"<br>")+'</p><a href="https://connectbr.online/" style="display:inline-block;background:#000;color:white;text-decoration:none;border-radius:12px;padding:14px 20px;font-weight:bold">Acompanhar atendimento</a><p style="color:#626269;font-size:12px;line-height:1.5;margin-top:24px">Responda pelo protocolo dentro do CONNECT. Nunca envie senhas ou códigos de acesso.</p></div></div>';
- const sent=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+key,"Content-Type":"application/json","Idempotency-Key":"connect-support-reply-"+reply.id},body:JSON.stringify({from:sender,to:[email],subject,text,html})});
+ const sent=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+key,"Content-Type":"application/json","Idempotency-Key":"connect-support-reply-"+reply.id},body:JSON.stringify({from:sender,to:[email],subject:verified?subject:"CONNECT | Atualização de atendimento",text:verified?text:"Há uma atualização de atendimento no CONNECT. Entre na sua conta e consulte Meus protocolos para ler a resposta. Se não reconhece este atendimento, ignore esta mensagem. https://joinconnectbr.vercel.app/",html:verified?html:undefined})});
  if(!sent.ok)return json({error:"O provedor recusou o envio. Confira o remetente e a configuração."},502);
  const {error:save}=await svc.from("entre_support_replies").update({email_sent_at:new Date().toISOString(),email_sent_by:user.user.id}).eq("id",reply.id).is("email_sent_at",null);
  if(save)return json({error:"E-mail aceito pelo provedor, mas confirmação interna não gravada."},500);
- return json({status:"sent"});
+ return json({status:"sent",notice_only:!verified});
  }catch(_){return json({error:"Não foi possível enviar o e-mail."},500);}
 });
