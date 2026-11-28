@@ -103,3 +103,69 @@ html[data-theme] #app .cr-rooms .cn-room-empty-icon{flex:none;width:48px!importa
 
 /* Per-channel settings: no shared filter; keep the viewport locked. */
 html[data-theme] #app .cr-rooms .cr-edit-channel{width:auto!important;min-width:0!important;padding:0 9px!important;display:flex!important;gap:5px;align-items:center;font-size:11px!important;flex:none} .cr-edit-channel span{white-space:nowrap}.cr-rooms .cr-title{width:100%}.cr-shortcut-copy{max-width:100%}.cr-shortcut-copy small{max-width:100%}
+
+/* CONNECT Rooms v3 — conversation-first workspace */
+html[data-theme] #app #view-content[data-section="rooms"]>.cr-rooms.rooms-static-shell{width:min(100%,1120px)!important;gap:9px!important}
+html[data-theme] #app .cr-rooms .cr-top.rooms-static-header{padding:0 3px!important}
+#app .cr-rooms .cr-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#app .cr-rooms .cr-eyebrow{font-size:10px;letter-spacing:.12em}
+#app .cr-rooms .cr-title p{font-size:11px;color:var(--ui-muted)}
+#app .cr-rooms .cr-shortcuts{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+#app .cr-rooms .cr-shortcuts:has(>:nth-child(4)){grid-template-columns:repeat(4,minmax(0,1fr))}
+#app .cr-rooms .cr-shortcuts:has(>:nth-child(2):last-child){grid-template-columns:repeat(2,minmax(0,1fr))}
+#app .cr-rooms .cr-shortcuts:has(>:only-child){grid-template-columns:minmax(0,1fr)}
+html[data-theme] #app .cr-rooms .cr-shortcut{min-height:58px!important;border-radius:13px!important;padding:9px!important;align-items:center!important;flex-direction:row!important;gap:8px!important}
+html[data-theme] #app .cr-rooms .cr-shortcut.is-current{background:var(--ui-accent)!important;color:var(--ui-accent-on)!important;border-color:var(--ui-accent)!important}
+#app .cr-rooms .cr-shortcut.is-current .cr-shortcut-copy small{color:var(--ui-accent-on);opacity:.8}
+#app .cr-rooms .cr-shortcut.is-current .cr-shortcut-icon{background:transparent;border-color:currentColor;color:inherit}
+#app .cr-rooms .cr-shortcut.is-current .cr-selected-dot{background:var(--ui-accent-on)}
+#app .cr-rooms .cr-chat{border-radius:20px}
+#app .cr-rooms .cr-chat-head{padding:11px 13px!important;gap:10px;background:var(--ui-panel)}
+#app .cr-rooms .cr-room-symbol{background:var(--ui-accent);color:var(--ui-accent-on);border:0;width:40px;height:40px;border-radius:12px}
+#app .cr-rooms .cr-chat-name{gap:2px}
+#app .cr-rooms .cr-chat-name strong{font-weight:750;line-height:1.3}
+#app .cr-rooms .cr-retention{justify-content:flex-start;background:var(--ui-panel-alt);padding:6px 13px!important;font-size:11px}
+html[data-theme] #app .cr-rooms .rooms-discussion{background:var(--ui-bg)!important;padding:12px!important}
+html[data-theme] #app .cr-rooms .rooms-empty{gap:8px!important}
+html[data-theme] #app .cr-rooms .cn-room-empty-icon{background:var(--ui-panel)!important;box-shadow:0 4px 15px #0000000a;width:54px!important;height:54px!important}
+html[data-theme] #app .cr-rooms .cr-empty-action{display:inline-flex!important;align-items:center;justify-content:center;gap:7px;min-height:44px!important;padding:8px 15px!important;border-radius:12px!important;border:1px solid var(--ui-line)!important;background:var(--ui-panel)!important;color:var(--ui-text)!important;font-size:12px;font-weight:750;cursor:pointer}
+#app .cr-loading-ring{width:26px;height:26px;border:2px solid var(--ui-line);border-top-color:var(--ui-accent);border-radius:50%;animation:cr-spin .8s linear infinite}
+@keyframes cr-spin{to{transform:rotate(360deg)}}
+html[data-theme] #app .cr-rooms .room-message{width:fit-content!important;max-width:95%!important;align-self:flex-start;padding:10px!important;border-radius:5px 15px 15px 15px!important;background:var(--ui-panel)!important}
+html[data-theme] #app .cr-rooms .room-message.is-mine{align-self:flex-end;border-radius:15px 5px 15px 15px!important;background:var(--ui-panel-alt)!important}
+#app .cr-rooms .room-message-content p{white-space:pre-wrap;overflow-wrap:anywhere}
+#app .cr-rooms .cr-compose{padding:10px 12px!important}
+html[data-theme] #app .cr-rooms .room-composer input{height:46px!important;min-height:46px!important;font-size:16px!important;border-radius:14px!important}
+html[data-theme] #app .cr-rooms .room-composer>button{width:46px!important;height:46px!important;min-width:46px!important;min-height:46px!important;border-radius:14px!important;transition:opacity .15s,transform .15s}
+html[data-theme] #app .cr-rooms .room-composer>button:disabled{opacity:.35!important;cursor:not-allowed;box-shadow:none!important}
+html[data-theme] #app .cr-rooms .room-composer>button:not(:disabled):active{transform:scale(.96)}
+#app .cr-rooms .cr-compose-meta{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-top:5px;color:var(--ui-muted);font-size:10px}
+html[data-theme] #app .cr-rooms .cr-compose-meta .rooms-cooldown{margin:0!important;text-align:left!important}
+#app .cr-rooms .cr-compose-meta>span{font-variant-numeric:tabular-nums;white-space:nowrap}
+@media(min-width:1000px){
+ html[data-theme] #app #view-content[data-section="rooms"]>.cr-rooms.rooms-static-shell{grid-template-columns:220px minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr)!important;align-items:start;gap:12px!important;padding:10px!important}
+ #app .cr-rooms .cr-top{grid-column:1;grid-row:1}
+ #app .cr-rooms .cr-title{display:grid;gap:5px}
+ #app .cr-rooms .cr-shortcuts{grid-column:1;grid-row:2;grid-template-columns:minmax(0,1fr)!important}
+ #app .cr-rooms .cr-shortcuts:has(>:nth-child(4)){grid-template-columns:minmax(0,1fr)!important}
+ #app .cr-rooms .cr-chat{grid-column:2;grid-row:1/3;align-self:stretch}
+}
+@media(max-width:600px){
+ html[data-theme] #app .cr-rooms .cr-shortcut{min-height:54px!important;padding:5px 4px!important;gap:3px!important;flex-direction:column!important;align-items:center!important;text-align:center!important}
+ #app .cr-rooms .cr-shortcut-icon{width:24px;height:24px;border-radius:8px}
+ #app .cr-rooms .cr-shortcut-copy{justify-items:center;width:100%;min-width:0}
+ #app .cr-rooms .cr-shortcut-copy strong{font-size:10px!important}
+ #app .cr-rooms .cr-shortcut-copy small{font-size:9px!important}
+ #app .cr-rooms .cr-selected-dot{top:5px;right:5px;width:5px;height:5px}
+ #app .cr-rooms .cr-chat-head{padding:7px 9px!important}
+ #app .cr-rooms .cr-room-symbol{width:34px;height:34px;border-radius:10px}
+ #app .cr-rooms .cr-compose{padding:7px 8px!important}
+ html[data-theme] #app .cr-rooms .rooms-discussion{padding:8px!important}
+}
+@media(max-height:520px) and (max-width:900px){
+ html[data-theme] #app .cr-rooms .cr-shortcut{min-height:42px!important;flex-direction:row!important}
+ #app .cr-rooms .cr-shortcut-copy{justify-items:start}
+ #app .cr-rooms .rooms-empty p{display:none}
+ html[data-theme] #app .cr-rooms .cn-room-empty-icon{width:34px!important;height:34px!important}
+}
+@media(prefers-reduced-motion:reduce){#app .cr-loading-ring{animation:none}}
