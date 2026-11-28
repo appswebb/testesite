@@ -111,3 +111,13 @@ html[data-theme] body.admin-saas #console button.saas-metric{border-radius:16px!
 }
 @media(max-width:360px){html[data-theme] body.admin-saas #console .ca-access{padding:0 10px 18px}#console .ca-access-card{padding:14px}#console .ca-access-art{padding:14px;grid-template-columns:minmax(0,1fr) 46px}#console .ca-art-mark{width:44px}#console .ca-art-copy h2{font-size:23px!important}#console .ca-art-copy p{font-size:10px}html[data-theme] body.admin-saas #console .shell .topbar-right{gap:3px!important}html[data-theme] body.admin-saas #console .shell .topbar-right :is(.admin-icon-action,.connect-mode-toggle){width:33px!important;min-width:33px!important;max-width:33px!important;height:36px!important}}
 @media(prefers-reduced-motion:reduce){#console .ca-spinner{animation:none}}
+
+/* Only the first authenticated entry animates. Keep viewport and navigation geometry fixed. */
+#console .shell.ca-enter-ready #admin-view{animation:ca-auth-enter 240ms cubic-bezier(.2,.7,.3,1) both}
+#console .shell.ca-enter-ready .topbar{animation:ca-auth-toolbar 180ms ease-out both}
+@keyframes ca-auth-enter{from{opacity:.35;transform:translateY(7px)}to{opacity:1;transform:none}}
+@keyframes ca-auth-toolbar{from{opacity:.65}to{opacity:1}}
+html[data-motion-level=light] #console .shell.ca-enter-ready #admin-view{animation-duration:160ms}
+html[data-motion-level=high] #console .shell.ca-enter-ready #admin-view{animation-duration:320ms}
+html[data-connect-motion=off] #console .shell.ca-enter-ready :is(#admin-view,.topbar){animation:none!important}
+@media(prefers-reduced-motion:reduce){#console .shell.ca-enter-ready :is(#admin-view,.topbar){animation:none!important}}
