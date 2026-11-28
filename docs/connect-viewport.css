@@ -67,3 +67,49 @@ html[data-theme] body #app .cn-toolbar-actions{flex:0 0 auto;min-width:0;max-wid
  html[data-theme] body #app>.cn-shell>.cn-dock .cn-nav-icon svg{width:18px!important;height:18px!important}
 }
 @media(max-width:350px){html[data-theme] body #app>.cn-shell>.cn-main.app-main{--connect-page-inset:8px}html[data-theme] body #app>.cn-shell>.cn-main>.cn-toolbar .cn-toolbar-title h1{font-size:16px!important}}
+
+/* Keep the document's layout width independent of whichever feature is mounted.
+   Inline-size containment does not create a containing block for fixed dialogs. */
+html[data-theme]:has(#app>.cn-shell.app-shell),
+html[data-theme]:has(#app>.cn-shell.app-shell) body{
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ min-width:0!important;overflow-x:clip!important;
+}
+html[data-theme] body #app:has(>.cn-shell.app-shell),
+html[data-theme] body #app>.cn-shell.app-shell,
+html[data-theme] body #app>.cn-shell.app-shell>.cn-main.app-main{
+ box-sizing:border-box!important;inline-size:100%!important;min-inline-size:0!important;
+ max-inline-size:100%!important;contain:inline-size;
+}
+html[data-theme] body #app>.cn-shell.app-shell>.cn-main.app-main>#view-content.cn-view{
+ min-inline-size:0!important;max-inline-size:100%!important;contain:inline-size;
+ animation:none!important;transition:none!important;transform:none!important;scale:none!important;
+}
+html[data-theme] body #app>.cn-shell.app-shell,
+html[data-theme] body #app>.cn-shell.app-shell>.cn-main.app-main{
+ animation:none!important;transition:none!important;transform:none!important;scale:none!important;
+}
+html[data-theme] body #app>.cn-shell.app-shell:not(:has(.ce-session,.cp-permanent-chat,#view-content[data-section="rooms"])){
+ overflow-x:clip!important;
+}
+html[data-theme] body #app>.cn-shell.app-shell>.cn-main.app-main:not(:has(.ce-session,.cp-permanent-chat,#view-content[data-section="rooms"],.cp-match-footer)){
+ overflow-x:clip!important;
+}
+html[data-theme] body #app>.cn-shell.app-shell>.cn-main.app-main>#view-content.cn-view{
+ overflow-wrap:anywhere;
+}
+html[data-theme] body :is(#entreTouchLayer,.entre-celebration){
+ position:fixed!important;inset:0!important;width:100%!important;max-width:100%!important;
+ height:100%!important;overflow:hidden!important;pointer-events:none!important;
+}
+@media(max-width:900px){
+ html[data-theme] body #app>.cn-shell.app-shell>.cn-main.app-main>#view-content.cn-view{
+  width:100%!important;margin-inline:auto!important;
+ }
+ html[data-theme] body #app>.cn-shell.app-shell>.cn-main.app-main>.cn-toolbar{
+  flex-basis:var(--connect-toolbar-height,58px)!important;
+ }
+ html[data-theme] body #app>.cn-shell.app-shell>.cn-dock{
+  flex-shrink:0!important;
+ }
+}
