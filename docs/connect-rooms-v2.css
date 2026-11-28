@@ -95,3 +95,14 @@ html[data-theme] #app .cr-rooms .rooms-cooldown{margin:0!important;font-size:10p
 #roomsFilterOverlay .cr-filter-field-heading{font-size:14px;color:var(--ui-text)}
 #roomsFilterOverlay .cr-filter-description{font-size:13px;line-height:1.5;color:var(--ui-muted);margin:0}
 #roomsFilterOverlay .cr-unified-filter{box-sizing:border-box;max-width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain}
+
+/* Single-purpose filter pages: the category menu disappears while choosing a region. */
+#roomsFilterOverlay .cr-filter-heading-copy{display:flex;align-items:center;gap:10px;min-width:0}
+#roomsFilterOverlay .cr-filter-heading-copy>div{min-width:0}
+#roomsFilterOverlay .cr-filter-heading-copy .cr-filter-back{flex:none;display:grid!important;place-items:center;width:40px!important;height:40px!important;min-width:40px!important;padding:0!important;border:1px solid var(--ui-line)!important;border-radius:12px!important;background:var(--ui-panel-alt)!important;color:var(--ui-text)!important}
+#roomsFilterOverlay .cr-filter-options{grid-template-columns:minmax(0,1fr)}
+#roomsFilterOverlay .cr-filter-option{min-height:49px;padding:11px;gap:10px}
+#roomsFilterOverlay .cr-filter-option>span{flex:1;min-width:0}
+#roomsFilterOverlay .cr-filter-fields{margin:0;padding:0;border:0}
+#roomsFilterOverlay #roomsCitySearch{box-sizing:border-box;width:100%;min-width:0;min-height:46px;padding:11px 12px;border:1px solid var(--ui-line);border-radius:12px;background:var(--ui-panel-alt);color:var(--ui-text);font-size:16px}
+#roomsFilterOverlay .cr-city-retry[hidden]{display:none!important}
