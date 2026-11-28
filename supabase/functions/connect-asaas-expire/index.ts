@@ -70,6 +70,47 @@ async function recover(e,db,row){
  if(out.status==="DELETED"&&expired(row))out.status="EXPIRED";
  return out;
 }
+const sid=v=>typeof v==="string"&&/^sub_[A-Za-z0-9_]+$/.test(v);
+const rt="connect_asaas_recurring";
+const recRef=r=>"connect-monthly:"+r.id;
+const checkoutUrl=id=>"https://asaas.com/checkoutSession/show?id="+encodeURIComponent(id);
+const good=["creating","open","active"];
+async function lookup(db,key,value){if(!value)return null;const {data,error}=await db.from(rt).select("*").eq(key,value).maybeSingle();if(error)throw Error("recurring_lookup_failed");return data;}
+async function updateRec(db,id,patch,allowed){let q=db.from(rt).update({...patch,updated_at:new Date().toISOString()}).eq("id",id);if(allowed)q=q.in("status",allowed);const {error}=await q;if(error)throw Error("recurring_update_failed");}
+async function verifyCharge(e,db,p,row=null){
+ if(!sid(p?.subscription)||!pid(p?.id))return false;
+ if(!row)row=await lookup(db,"subscription_id",p.subscription)||await lookup(db,"checkout_id",p.checkoutSession);
+ let sub=null;
+ if(!row||!row.subscription_id){
+  sub=await api(e,"/subscriptions/"+p.subscription);
+  if(!row)row=await lookup(db,"checkout_id",sub?.checkoutSession);
+ }
+ if(!row)return false;
+ if(p.billingType!=="CREDIT_CARD"||!cid(p.customer)||Math.round(Number(p.value)*100)!==row.amount_cents||!/^\d{4}-\d{2}-\d{2}$/.test(p.dueDate||""))throw Error("recurring_charge_identity");
+ if(!row.subscription_id&&(!sub||sub.id!==p.subscription||sub.checkoutSession!==row.checkout_id||sub.customer!==p.customer||sub.cycle!=="MONTHLY"||Math.round(Number(sub.value)*100)!==row.amount_cents))throw Error("recurring_subscription_identity");
+ const status=p.deleted===true?"DELETED":String(p.status||"");
+ if(!/^[A-Z_]{2,60}$/.test(status))throw Error("recurring_invalid_status");
+ const {data,error}=await db.rpc("connect_asaas_recurring_sync",{_id:row.id,_checkout:row.checkout_id,_subscription:p.subscription,_customer:p.customer,_payment:p.id,_cents:row.amount_cents,_due:p.dueDate,_status:status});
+ if(error||data!==true)throw Error("recurring_sync_failed");return true;
+}
+async function reconcile(e,db,row){
+ if(!row)return null;
+ if(row.checkout_id||row.subscription_id){
+  const query=row.subscription_id?"subscription="+encodeURIComponent(row.subscription_id):"checkoutSession="+encodeURIComponent(row.checkout_id);
+  const list=await api(e,"/payments?"+query+"&limit=10");
+  if(!Array.isArray(list?.data))throw Error("recurring_payment_list_failed");
+  for(const item of list.data){if(!pid(item.id))continue;const pay=await api(e,"/payments/"+item.id);await verifyCharge(e,db,pay,row);row=await lookup(db,"id",row.id);}
+ }
+ if(row.subscription_id&&row.status==="active"){
+  try{const sub=await api(e,"/subscriptions/"+row.subscription_id);if(sub?.id===row.subscription_id&&(sub.deleted===true||["INACTIVE","EXPIRED"].includes(sub.status)))await updateRec(db,row.id,{status:"cancelled"},["active"]);}
+  catch(err){if(err.http!==404)throw err;}
+ }
+ // A checkout's 30-minute validity is controlled by Asaas. A 5-minute grace
+ // period plus an authoritative charge lookup prevents replacing live checkouts.
+ if(["creating","open"].includes(row.status)&&Date.now()-Date.parse(row.created_at)>35*60000)await updateRec(db,row.id,{status:"expired"},["creating","open"]);
+ return await lookup(db,"id",row.id);
+}
+
 Deno.serve(async req=>{
  if(req.method!=="POST")return reply({error:"method_not_allowed"},405);
  const e=env();if(!configured(e))return reply({error:"production_configuration_missing"},503);
@@ -77,9 +118,19 @@ Deno.serve(async req=>{
   const secret=req.headers.get("x-connect-expire-token");if(!secret||secret.length!==64)return reply({error:"unauthorized"},401);
   const db=createClient(e.url,e.service,{auth:{persistSession:false}});
   const {data:allowed,error:authError}=await db.rpc("connect_asaas_expiry_authorize",{_token:secret});if(authError||allowed!==true)return reply({error:"unauthorized"},401);
-  const {data:rows,error}=await db.from(table).select("*").in("status",["creating","PENDING","OVERDUE"]).lt("created_at",new Date(Date.now()-ttl).toISOString()).order("updated_at",{ascending:true}).limit(10);
+  const {data:rows,error}=await db.from(table).select("*").in("status",["creating","PENDING","OVERDUE"]).lt("updated_at",new Date(Date.now()-120000).toISOString()).order("updated_at",{ascending:true}).limit(5);
   if(error)throw Error("db_read_failed");let done=0,failed=0;
-  for(const row of rows||[]){try{await recover(e,db,row);done++;}catch(err){failed++;console.warn("asaas_expiration_retry",String(err.message||"failed"));await db.from(table).update({updated_at:new Date().toISOString()}).eq("id",row.id);}}
-  return reply({checked:done,failed});
+  for(const row of rows||[]){try{await recover(e,db,row);done++;}catch(err){failed++;console.warn("asaas_reconciliation_retry",String(err.message||"failed"));}finally{await db.from(table).update({updated_at:new Date().toISOString()}).eq("id",row.id).in("status",["creating","PENDING","OVERDUE"]);}}
+  let recurringChecked=0;
+  const now=Date.now();
+  const {data:pending,error:pe}=await db.from(rt).select("*").in("status",["open"]).lt("updated_at",new Date(now-120000).toISOString()).order("updated_at",{ascending:true}).limit(2);
+  const {data:active,error:ae}=await db.from(rt).select("*").eq("status","active").lt("updated_at",new Date(now-6*3600000).toISOString()).order("updated_at",{ascending:true}).limit(1);
+  if(pe||ae)throw Error("recurring_db_read_failed");
+  for(const row of [...(pending||[]),...(active||[])]){
+   try{await reconcile(e,db,row);recurringChecked++;}
+   catch(err){failed++;console.warn("asaas_recurring_reconciliation_retry",String(err.message||"failed"));}
+   finally{await db.from(rt).update({updated_at:new Date().toISOString()}).eq("id",row.id).in("status",["open","active"]);}
+  }
+  return reply({checked:done,recurring_checked:recurringChecked,failed},failed?503:200);
  }catch(err){console.warn("asaas_expiration_worker",String(err.message||"failed"));return reply({error:"expiration_worker_failed"},503);}
 });
